@@ -1,6 +1,6 @@
 import { existsSync } from "node:fs";
 import { readFile, writeFile } from "node:fs/promises";
-import type { ForgeSymbol } from "@codluv/forge-core";
+import type { ForgeSymbol } from "@forge-ts/core";
 
 const SECTION_START = "<!-- forge-ts:start -->";
 const SECTION_END = "<!-- forge-ts:end -->";

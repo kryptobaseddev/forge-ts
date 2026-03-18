@@ -1,12 +1,12 @@
 {
 	"name": "@forge-ts/enforcer",
-	"version": "0.2.0",
+	"version": "0.2.1",
 	"type": "module",
 	"description": "TSDoc enforcement linter for forge-ts",
 	"license": "MIT",
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/codluv/forge-ts"
+		"url": "https://github.com/kryptobaseddev/forge-ts"
 	},
 	"publishConfig": {
 		"access": "public"
@@ -30,7 +30,7 @@
 		"typecheck": "tsc --noEmit"
 	},
 	"dependencies": {
-		"@codluv/forge-core": "workspace:*"
+		"@forge-ts/core": "workspace:*"
 	},
 	"devDependencies": {
 		"tsup": "^8.3.5",

@@ -1,5 +1,11 @@
 # @forge-ts/core
 
+## 0.2.1
+
+### Patch Changes
+
+- Fix package metadata: add per-package READMEs, correct repository URLs to kryptobaseddev/forge-ts, remove stale codluv references.
+
 ## 0.2.0
 
 ### Minor Changes

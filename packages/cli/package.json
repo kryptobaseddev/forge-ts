@@ -1,12 +1,12 @@
 {
 	"name": "@forge-ts/cli",
-	"version": "0.2.0",
+	"version": "0.2.1",
 	"type": "module",
 	"description": "CLI entry point for forge-ts",
 	"license": "MIT",
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/codluv/forge-ts"
+		"url": "https://github.com/kryptobaseddev/forge-ts"
 	},
 	"publishConfig": {
 		"access": "public"
@@ -33,11 +33,11 @@
 	},
 	"dependencies": {
 		"@cleocode/lafs-protocol": "^1.7.0",
-		"@codluv/forge-api": "workspace:*",
-		"@codluv/forge-core": "workspace:*",
-		"@codluv/forge-doctest": "workspace:*",
-		"@codluv/forge-enforcer": "workspace:*",
-		"@codluv/forge-gen": "workspace:*",
+		"@forge-ts/api": "workspace:*",
+		"@forge-ts/core": "workspace:*",
+		"@forge-ts/doctest": "workspace:*",
+		"@forge-ts/enforcer": "workspace:*",
+		"@forge-ts/gen": "workspace:*",
 		"citty": "^0.2.1"
 	},
 	"devDependencies": {

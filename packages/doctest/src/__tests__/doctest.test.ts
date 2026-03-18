@@ -1,8 +1,8 @@
 import { mkdir, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import type { ForgeSymbol } from "@codluv/forge-core";
-import { Visibility } from "@codluv/forge-core";
+import type { ForgeSymbol } from "@forge-ts/core";
+import { Visibility } from "@forge-ts/core";
 import { describe, expect, it } from "vitest";
 import { extractExamples } from "../extractor.js";
 import { generateTestFiles } from "../generator.js";

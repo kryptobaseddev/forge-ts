@@ -1,5 +1,5 @@
 /**
- * @codluv/forge-cli — Command-line interface for the forge-ts toolchain.
+ * @forge-ts/cli — Command-line interface for the forge-ts toolchain.
  *
  * Usage:
  *   forge-ts check [--cwd <dir>] [--strict] [--verbose]

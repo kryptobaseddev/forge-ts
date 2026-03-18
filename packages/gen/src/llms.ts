@@ -1,4 +1,4 @@
-import type { ForgeConfig, ForgeSymbol } from "@codluv/forge-core";
+import type { ForgeConfig, ForgeSymbol } from "@forge-ts/core";
 
 /**
  * Derives a compact one-line signature for routing manifest entries.

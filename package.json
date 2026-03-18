@@ -12,7 +12,7 @@
 	"packageManager": "pnpm@10.6.0",
 	"scripts": {
 		"build": "pnpm -r build",
-		"test": "vitest run",
+		"test": "vitest run --config vitest.config.ts",
 		"check": "tsc --build --noEmit",
 		"lint": "biome check .",
 		"lint:fix": "biome check --write .",

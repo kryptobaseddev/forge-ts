@@ -1,5 +1,18 @@
 # @forge-ts/cli
 
+## 0.2.1
+
+### Patch Changes
+
+- Fix package metadata: add per-package READMEs, correct repository URLs to kryptobaseddev/forge-ts, remove stale codluv references.
+
+- Updated dependencies []:
+  - @forge-ts/core@0.2.1
+  - @forge-ts/enforcer@0.2.1
+  - @forge-ts/doctest@0.2.1
+  - @forge-ts/api@0.2.1
+  - @forge-ts/gen@0.2.1
+
 ## 0.2.0
 
 ### Minor Changes

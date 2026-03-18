@@ -34,6 +34,9 @@ The validated tooling stack (as of March 2026):
 | Vitest | 4.1.0 | Unit test layer (28M weekly downloads, stable browser mode) |
 | Biome | 2.4 | Linting + formatting — replaces ESLint + Prettier, 10-100x faster, 423+ rules |
 | @microsoft/tsdoc | 0.16.0 | TSDoc comment parsing |
+| citty | 0.2.1 | Type-safe CLI framework (zero deps, 2.9kB) |
+| @cleocode/lafs-protocol | 1.7.0 | LLM-Agent-First output layer |
+| @changesets/cli | 2.x | Monorepo versioning with fixed version strategy |
 | tsup | 8.5.x | ESM bundling + `.d.ts` generation |
 
 ### Future-Proofing: TypeScript 7.0

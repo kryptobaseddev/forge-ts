@@ -34,21 +34,24 @@ To build a modern, high-performance SSoT documentation toolchain, we must abando
 - **Result:** Blazing fast, zero-dependency validation that fails the build if public APIs are undocumented.
 
 ### 3.2 The DocTest Engine
-- **Extraction:** Use `ts-morph` and `@microsoft/tsdoc` to safely extract ````ts ... ```` code blocks from `@example` tags.
+- **Extraction:** Use the raw TypeScript Compiler API (`ts.createProgram`, `ts.getJSDocTags`) and `@microsoft/tsdoc` to safely extract ````ts ... ```` code blocks from `@example` tags.
 - **Virtualization:** Auto-generate ES module imports for the parent symbol and wrap the snippets in standard test blocks (using `node:test` or `vitest`). Write these to a hidden `.cache/forge-ts/doctests` directory.
 - **Source Mapping:** Crucially, generate inline source maps linking the virtual test assertions back to the exact line/column of the original TSDoc comment to ensure great developer UX on test failure.
 
 ### 3.3 The API & LLM Generation Pipeline
 A 3-pronged output generator:
 1. **Human Docs:** Integrate a streamlined markdown generator (bypassing heavy HTML generation).
-2. **API Specs:** Integrate with or provide an adapter for `tsoa` (preferred for SSoT) or a Zod-AST transformer to output OpenAPI specs.
+2. **API Specs:** Built a custom OpenAPI 3.1 generator (`@forge-ts/api`) operating directly on the `ForgeSymbol` graph — no tsoa, no decorators. A typed `schema-mapper` converts TypeScript type signatures to OpenAPI schemas, producing a complete `openapi.json` with visibility filtering.
 3. **Agent Context:** Automatically compile an `llms.txt` router and `llms-full.txt` (concatenated Markdown + OpenAPI spec) pre-loaded with repository guidelines (e.g., cursorrules).
 
 ## 4. Next Steps for Development
-1. **Initialize the Monorepo:** Set up the package structure (`@forge-ts/cli`, `@forge-ts/enforcer`, `@forge-ts/doctest`, `@forge-ts/api`, `@forge-ts/gen`).
-2. **Build the AST Walker:** Implement the core zero-config Build Gate (`@forge-ts/enforcer`) using `typescript` and `@microsoft/tsdoc`.
-3. **Prototype DocTesting:** Build the extraction and source-mapping logic for virtualizing `@example` blocks (`@forge-ts/doctest`).
-4. **Integrate Output Generators:** Build the Markdown, MDX, API, and `llms.txt` formatters (`@forge-ts/gen`).
+
+> **Note (March 2026): All four steps below are COMPLETED.**
+
+1. **Initialize the Monorepo:** Set up the package structure (`@forge-ts/cli`, `@forge-ts/enforcer`, `@forge-ts/doctest`, `@forge-ts/api`, `@forge-ts/gen`). _(Completed: March 2026)_
+2. **Build the AST Walker:** Implement the core zero-config Build Gate (`@forge-ts/enforcer`) using `typescript` and `@microsoft/tsdoc`. _(Completed: March 2026)_
+3. **Prototype DocTesting:** Build the extraction and source-mapping logic for virtualizing `@example` blocks (`@forge-ts/doctest`). _(Completed: March 2026)_
+4. **Integrate Output Generators:** Build the Markdown, MDX, API, and `llms.txt` formatters (`@forge-ts/gen`). _(Completed: March 2026)_
 
 ## 5. Research Conclusions (March 2026)
 

@@ -1,0 +1,55 @@
+---
+title: api — Types
+outline: deep
+description: Type contracts for the api package
+---
+
+# api — Types
+
+Type contracts exported by this package: interfaces, type aliases, and enums.
+
+## SDKProperty
+
+A single property extracted from an interface or class symbol.
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| `name` | `string` | Yes | The property name. |
+| `type` | `string` | Yes | The TypeScript type string of the property. |
+| `description` | `string \| undefined` | No | TSDoc summary for this property. |
+| `required` | `boolean` | Yes | Whether the property is required (not optional). |
+| `deprecated` | `string \| undefined` | No | Deprecation notice, if present. |
+
+## SDKType
+
+An SDK type descriptor extracted from the symbol graph.
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| `name` | `string` | Yes | The symbol name. |
+| `kind` | `"class" \| "interface" \| "type" \| "enum"` | Yes | Syntactic kind of the type. |
+| `signature` | `string \| undefined` | No | Human-readable type signature. |
+| `description` | `string \| undefined` | No | TSDoc summary. |
+| `deprecated` | `string \| undefined` | No | Deprecation notice, if present. |
+| `visibility` | `Visibility` | Yes | Resolved visibility level. |
+| `properties` | `SDKProperty[]` | Yes | Extracted properties (for interfaces, classes) or values (for enums). |
+| `sourceFile` | `string` | Yes | Absolute path to the source file. |
+
+## ReferenceEntry
+
+A single entry in the generated API reference.
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| `name` | `string` | Yes | Symbol name. |
+| `kind` | `"function" \| "class" \| "interface" \| "type" \| "enum" \| "variable" \| "method" \| "property"` | Yes | Symbol kind. |
+| `summary` | `string \| undefined` | No | TSDoc summary. |
+| `signature` | `string \| undefined` | No | Human-readable type signature. |
+| `visibility` | `Visibility` | Yes | Resolved visibility level. |
+| `deprecated` | `string \| undefined` | No | Deprecation notice, if present. |
+| `params` | `{ name: string; description: string; type?: string \| undefined; }[] \| undefined` | No | Documented parameters. |
+| `returns` | `{ description: string; type?: string \| undefined; } \| undefined` | No | Documented return value. |
+| `throws` | `{ type?: string \| undefined; description: string; }[] \| undefined` | No | Documented thrown exceptions. |
+| `examples` | `{ code: string; language: string; }[] \| undefined` | No | Code examples from TSDoc `@example` tags. |
+| `children` | `ReferenceEntry[] \| undefined` | No | Nested child symbols (class methods, interface properties, enum members). |
+| `location` | `{ filePath: string; line: number; }` | Yes | Source file location. |

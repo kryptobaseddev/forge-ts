@@ -1,0 +1,35 @@
+---
+title: core
+outline: deep
+description: core package overview
+---
+
+# core
+
+## Exported Symbols
+
+| Symbol | Kind | Description |
+|--------|------|-------------|
+| [`Visibility`](./api-reference.md#visibility) | enum | Visibility levels for exported symbols. Derived from TSDoc release tags (public, beta, internal). |
+| [`ForgeSymbol`](./api-reference.md#forgesymbol) | interface | A single extracted and annotated symbol from the TypeScript AST. |
+| [`ForgeConfig`](./api-reference.md#forgeconfig) | interface | Full configuration for a forge-ts run. Loaded from forge-ts.config.ts or the "forge-ts" key in package.json. |
+| [`ForgeResult`](./api-reference.md#forgeresult) | interface | The result of a forge-ts compilation pass. |
+| [`ForgeError`](./api-reference.md#forgeerror) | interface | A diagnostic error produced during a forge-ts run. |
+| [`ForgeWarning`](./api-reference.md#forgewarning) | interface | A diagnostic warning produced during a forge-ts run. |
+| [`defaultConfig()`](./api-reference.md#defaultconfig) | function | Constructs a sensible default  rooted at `rootDir`. |
+| [`loadConfig()`](./api-reference.md#loadconfig) | function | Loads the forge-ts configuration for a project.  Resolution order: 1. `<rootDir>/forge-ts.config.ts` 2. `<rootDir>/forge-ts.config.js` 3. `"forge-ts"` key inside `<rootDir>/package.json` 4. Built-in defaults (returned when none of the above is found) |
+| [`OpenAPISchemaObject`](./api-reference.md#openapischemaobject) | interface | OpenAPI 3.2 schema object. |
+| [`OpenAPIInfoObject`](./api-reference.md#openapiinfoobject) | interface | OpenAPI 3.2 info object. |
+| [`OpenAPITagObject`](./api-reference.md#openapitagobject) | interface | OpenAPI 3.2 tag object. |
+| [`OpenAPIPathItemObject`](./api-reference.md#openapipathitemobject) | interface | OpenAPI 3.2 path item object. |
+| [`OpenAPIOperationObject`](./api-reference.md#openapioperationobject) | interface | OpenAPI 3.2 operation object. |
+| [`OpenAPIParameterObject`](./api-reference.md#openapiparameterobject) | interface | OpenAPI 3.2 parameter object. |
+| [`OpenAPIEncodingObject`](./api-reference.md#openapiencodingobject) | interface | OpenAPI 3.2 encoding object. |
+| [`OpenAPIMediaTypeObject`](./api-reference.md#openapimediatypeobject) | interface | OpenAPI 3.2 media type object. |
+| [`OpenAPIResponseObject`](./api-reference.md#openapiresponseobject) | interface | OpenAPI 3.2 response object. |
+| [`OpenAPIDocument`](./api-reference.md#openapidocument) | interface | Complete OpenAPI 3.2 document. |
+| [`resolveVisibility()`](./api-reference.md#resolvevisibility) | function | Determines the visibility level of a symbol from its TSDoc release tags.  The precedence order is: 1. `@internal`  →  2. `@beta`      →  3. `@public`    →  4. (no tag)     →  (default for exports) |
+| [`meetsVisibility()`](./api-reference.md#meetsvisibility) | function | Returns whether `candidate` meets or exceeds the required minimum visibility.  "Meets" means the symbol is at least as visible as `minVisibility`. For example, `Public` meets a minimum of `Public`, but `Internal` does not. |
+| [`filterByVisibility()`](./api-reference.md#filterbyvisibility) | function | Filters an array of  objects to only include symbols whose visibility meets or exceeds `minVisibility`. |
+| [`ASTWalker`](./api-reference.md#astwalker) | interface | The return type of . |
+| [`createWalker()`](./api-reference.md#createwalker) | function | Creates an  configured for the given forge config.  The walker uses the TypeScript Compiler API to create a `ts.Program` from the project's tsconfig, then visits every source file to extract exported declarations.  TSDoc comments are parsed with `@microsoft/tsdoc` to populate the `documentation` field on each . |

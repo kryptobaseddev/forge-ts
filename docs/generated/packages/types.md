@@ -1,0 +1,48 @@
+---
+title: . — Types
+outline: deep
+description: Type contracts for the . package
+---
+
+# . — Types
+
+Type contracts exported by this package: interfaces, type aliases, and enums.
+
+## CalculatorConfig
+
+Configuration for the calculator.
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| `precision` | `number` | Yes | Number of decimal places. |
+| `mode` | `"standard" \| "scientific"` | Yes | Calculator mode. |
+| `label` | `string \| undefined` | No | Optional label. |
+
+## Operation
+
+Supported operations.
+
+```typescript
+typeof Operation
+```
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| `Add` | `Operation.Add` | Yes |  |
+| `Subtract` | `Operation.Subtract` | Yes |  |
+| `Multiply` | `Operation.Multiply` | Yes |  |
+| `Divide` | `Operation.Divide` | Yes |  |
+
+## LegacyConfig
+
+> **Deprecated**: Use `CalculatorConfig` instead.
+
+```typescript
+any
+```
+
+## NoDocsInterface
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| `value` | `string` | Yes |  |

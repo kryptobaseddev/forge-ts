@@ -55,7 +55,7 @@ export async function generate(config: ForgeConfig): Promise<ForgeResult> {
 		await writeFile(join(config.outDir, `api-reference.${ext}`), content, "utf8");
 	}
 
-	// Multi-page site output
+	// Multi-page site output — writes directly to outDir
 	const projectName = config.rootDir.split("/").pop() ?? "Project";
 	const symbolsByPackage = groupSymbolsByPackage(symbols, config.rootDir);
 
@@ -66,11 +66,8 @@ export async function generate(config: ForgeConfig): Promise<ForgeResult> {
 			projectName,
 		});
 
-		const generatedDir = join(config.outDir, "generated");
-		await mkdir(generatedDir, { recursive: true });
-
 		for (const page of pages) {
-			const pagePath = join(generatedDir, page.path);
+			const pagePath = join(config.outDir, page.path);
 			const pageDir = pagePath.substring(0, pagePath.lastIndexOf("/"));
 			await mkdir(pageDir, { recursive: true });
 			await writeFile(pagePath, page.content, "utf8");
@@ -79,7 +76,7 @@ export async function generate(config: ForgeConfig): Promise<ForgeResult> {
 		if (config.gen.ssgTarget) {
 			const configFiles = generateSSGConfigs(pages, config.gen.ssgTarget, projectName);
 			for (const configFile of configFiles) {
-				const configPath = join(generatedDir, configFile.path);
+				const configPath = join(config.outDir, configFile.path);
 				const configDir = configPath.substring(0, configPath.lastIndexOf("/"));
 				await mkdir(configDir, { recursive: true });
 				await writeFile(configPath, configFile.content, "utf8");

@@ -1,9 +1,4 @@
-import {
-	type ForgeConfig,
-	type ForgeResult,
-	type ForgeSymbol,
-	Visibility,
-} from "@forge-ts/core";
+import { type ForgeConfig, type ForgeResult, type ForgeSymbol, Visibility } from "@forge-ts/core";
 import { describe, expect, it, vi } from "vitest";
 import { enforce } from "../enforcer.js";
 

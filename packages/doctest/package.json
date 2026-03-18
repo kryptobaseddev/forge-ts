@@ -1,6 +1,6 @@
 {
-	"name": "@codluv/forge-doctest",
-	"version": "0.1.0",
+	"name": "@forge-ts/doctest",
+	"version": "0.2.0",
 	"type": "module",
 	"description": "TSDoc @example block extractor and test runner for forge-ts",
 	"license": "MIT",

@@ -1,5 +1,5 @@
-import type { ForgeConfig, ForgeSymbol } from "@forge-ts/core";
-import { Visibility } from "@forge-ts/core";
+import type { ForgeConfig, ForgeSymbol } from "@codluv/forge-core";
+import { Visibility } from "@codluv/forge-core";
 import { describe, expect, it } from "vitest";
 import { generateOpenAPISpec } from "../openapi.js";
 import { buildReference } from "../reference.js";

@@ -1,5 +1,5 @@
-import type { ForgeConfig, ForgeResult, ForgeSymbol } from "@forge-ts/core";
-import { Visibility } from "@forge-ts/core";
+import type { ForgeConfig, ForgeResult, ForgeSymbol } from "@codluv/forge-core";
+import { Visibility } from "@codluv/forge-core";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { runBuild } from "../commands/build.js";
 import { runCheck } from "../commands/check.js";
@@ -11,40 +11,40 @@ import { type CommandOutput, emitResult, resolveExitCode } from "../output.js";
 // Module mocks
 // ---------------------------------------------------------------------------
 
-vi.mock("@forge-ts/core", async (importOriginal) => {
-	const actual = await importOriginal<typeof import("@forge-ts/core")>();
+vi.mock("@codluv/forge-core", async (importOriginal) => {
+	const actual = await importOriginal<typeof import("@codluv/forge-core")>();
 	return {
 		...actual,
 		loadConfig: vi.fn(),
 	};
 });
 
-vi.mock("@forge-ts/enforcer", async (importOriginal) => {
-	const actual = await importOriginal<typeof import("@forge-ts/enforcer")>();
+vi.mock("@codluv/forge-enforcer", async (importOriginal) => {
+	const actual = await importOriginal<typeof import("@codluv/forge-enforcer")>();
 	return {
 		...actual,
 		enforce: vi.fn(),
 	};
 });
 
-vi.mock("@forge-ts/doctest", async (importOriginal) => {
-	const actual = await importOriginal<typeof import("@forge-ts/doctest")>();
+vi.mock("@codluv/forge-doctest", async (importOriginal) => {
+	const actual = await importOriginal<typeof import("@codluv/forge-doctest")>();
 	return {
 		...actual,
 		doctest: vi.fn(),
 	};
 });
 
-vi.mock("@forge-ts/api", async (importOriginal) => {
-	const actual = await importOriginal<typeof import("@forge-ts/api")>();
+vi.mock("@codluv/forge-api", async (importOriginal) => {
+	const actual = await importOriginal<typeof import("@codluv/forge-api")>();
 	return {
 		...actual,
 		generateApi: vi.fn(),
 	};
 });
 
-vi.mock("@forge-ts/gen", async (importOriginal) => {
-	const actual = await importOriginal<typeof import("@forge-ts/gen")>();
+vi.mock("@codluv/forge-gen", async (importOriginal) => {
+	const actual = await importOriginal<typeof import("@codluv/forge-gen")>();
 	return {
 		...actual,
 		generate: vi.fn(),
@@ -106,8 +106,8 @@ describe("runCheck", () => {
 	});
 
 	it("returns success=true for a project with no exported symbols", async () => {
-		const { loadConfig } = await import("@forge-ts/core");
-		const { enforce } = await import("@forge-ts/enforcer");
+		const { loadConfig } = await import("@codluv/forge-core");
+		const { enforce } = await import("@codluv/forge-enforcer");
 
 		vi.mocked(loadConfig).mockResolvedValue(makeConfig());
 		vi.mocked(enforce).mockResolvedValue(makeResult({ symbols: [] }));
@@ -118,8 +118,8 @@ describe("runCheck", () => {
 	});
 
 	it("returns success=true when all symbols are documented", async () => {
-		const { loadConfig } = await import("@forge-ts/core");
-		const { enforce } = await import("@forge-ts/enforcer");
+		const { loadConfig } = await import("@codluv/forge-core");
+		const { enforce } = await import("@codluv/forge-enforcer");
 
 		const sym = makeSymbol("doThing", {
 			documentation: { summary: "Does a thing." },
@@ -135,8 +135,8 @@ describe("runCheck", () => {
 	});
 
 	it("returns success=false when enforce produces errors", async () => {
-		const { loadConfig } = await import("@forge-ts/core");
-		const { enforce } = await import("@forge-ts/enforcer");
+		const { loadConfig } = await import("@codluv/forge-core");
+		const { enforce } = await import("@codluv/forge-enforcer");
 
 		vi.mocked(loadConfig).mockResolvedValue(makeConfig());
 		vi.mocked(enforce).mockResolvedValue(
@@ -162,8 +162,8 @@ describe("runCheck", () => {
 	});
 
 	it("returns success=false in strict mode when result is failure", async () => {
-		const { loadConfig } = await import("@forge-ts/core");
-		const { enforce } = await import("@forge-ts/enforcer");
+		const { loadConfig } = await import("@codluv/forge-core");
+		const { enforce } = await import("@codluv/forge-enforcer");
 
 		const config = makeConfig();
 		vi.mocked(loadConfig).mockResolvedValue(config);
@@ -190,8 +190,8 @@ describe("runCheck", () => {
 	});
 
 	it("passes verbose flag through (no throw)", async () => {
-		const { loadConfig } = await import("@forge-ts/core");
-		const { enforce } = await import("@forge-ts/enforcer");
+		const { loadConfig } = await import("@codluv/forge-core");
+		const { enforce } = await import("@codluv/forge-enforcer");
 
 		vi.mocked(loadConfig).mockResolvedValue(makeConfig());
 		vi.mocked(enforce).mockResolvedValue(makeResult());
@@ -201,8 +201,8 @@ describe("runCheck", () => {
 	});
 
 	it("result includes typed errors and warnings", async () => {
-		const { loadConfig } = await import("@forge-ts/core");
-		const { enforce } = await import("@forge-ts/enforcer");
+		const { loadConfig } = await import("@codluv/forge-core");
+		const { enforce } = await import("@codluv/forge-enforcer");
 
 		vi.mocked(loadConfig).mockResolvedValue(makeConfig());
 		vi.mocked(enforce).mockResolvedValue(
@@ -247,9 +247,9 @@ describe("runBuild", () => {
 	});
 
 	it("returns success=true and skips disabled api/gen by default", async () => {
-		const { loadConfig } = await import("@forge-ts/core");
-		const { generateApi } = await import("@forge-ts/api");
-		const { generate } = await import("@forge-ts/gen");
+		const { loadConfig } = await import("@codluv/forge-core");
+		const { generateApi } = await import("@codluv/forge-api");
+		const { generate } = await import("@codluv/forge-gen");
 
 		vi.mocked(loadConfig).mockResolvedValue(
 			makeConfig({
@@ -265,8 +265,8 @@ describe("runBuild", () => {
 	});
 
 	it("calls generateApi when api.enabled is true", async () => {
-		const { loadConfig } = await import("@forge-ts/core");
-		const { generateApi } = await import("@forge-ts/api");
+		const { loadConfig } = await import("@codluv/forge-core");
+		const { generateApi } = await import("@codluv/forge-api");
 
 		vi.mocked(loadConfig).mockResolvedValue(
 			makeConfig({
@@ -282,8 +282,8 @@ describe("runBuild", () => {
 	});
 
 	it("returns success=false when generateApi fails", async () => {
-		const { loadConfig } = await import("@forge-ts/core");
-		const { generateApi } = await import("@forge-ts/api");
+		const { loadConfig } = await import("@codluv/forge-core");
+		const { generateApi } = await import("@codluv/forge-api");
 
 		vi.mocked(loadConfig).mockResolvedValue(
 			makeConfig({
@@ -303,8 +303,8 @@ describe("runBuild", () => {
 	});
 
 	it("calls generate when gen.enabled is true", async () => {
-		const { loadConfig } = await import("@forge-ts/core");
-		const { generate } = await import("@forge-ts/gen");
+		const { loadConfig } = await import("@codluv/forge-core");
+		const { generate } = await import("@codluv/forge-gen");
 
 		vi.mocked(loadConfig).mockResolvedValue(
 			makeConfig({
@@ -319,8 +319,8 @@ describe("runBuild", () => {
 	});
 
 	it("skips api when skipApi flag is set", async () => {
-		const { loadConfig } = await import("@forge-ts/core");
-		const { generateApi } = await import("@forge-ts/api");
+		const { loadConfig } = await import("@codluv/forge-core");
+		const { generateApi } = await import("@codluv/forge-api");
 
 		vi.mocked(loadConfig).mockResolvedValue(
 			makeConfig({
@@ -334,8 +334,8 @@ describe("runBuild", () => {
 	});
 
 	it("skips gen when skipGen flag is set", async () => {
-		const { loadConfig } = await import("@forge-ts/core");
-		const { generate } = await import("@forge-ts/gen");
+		const { loadConfig } = await import("@codluv/forge-core");
+		const { generate } = await import("@codluv/forge-gen");
 
 		vi.mocked(loadConfig).mockResolvedValue(
 			makeConfig({
@@ -349,8 +349,8 @@ describe("runBuild", () => {
 	});
 
 	it("result includes typed steps", async () => {
-		const { loadConfig } = await import("@forge-ts/core");
-		const { generateApi } = await import("@forge-ts/api");
+		const { loadConfig } = await import("@codluv/forge-core");
+		const { generateApi } = await import("@codluv/forge-api");
 
 		vi.mocked(loadConfig).mockResolvedValue(
 			makeConfig({
@@ -376,8 +376,8 @@ describe("runTest", () => {
 	});
 
 	it("returns success=true when all doctests pass", async () => {
-		const { loadConfig } = await import("@forge-ts/core");
-		const { doctest } = await import("@forge-ts/doctest");
+		const { loadConfig } = await import("@codluv/forge-core");
+		const { doctest } = await import("@codluv/forge-doctest");
 
 		vi.mocked(loadConfig).mockResolvedValue(makeConfig());
 		vi.mocked(doctest).mockResolvedValue(makeResult({ duration: 10 }));
@@ -389,8 +389,8 @@ describe("runTest", () => {
 	});
 
 	it("returns success=false when doctests fail", async () => {
-		const { loadConfig } = await import("@forge-ts/core");
-		const { doctest } = await import("@forge-ts/doctest");
+		const { loadConfig } = await import("@codluv/forge-core");
+		const { doctest } = await import("@codluv/forge-doctest");
 
 		vi.mocked(loadConfig).mockResolvedValue(makeConfig());
 		vi.mocked(doctest).mockResolvedValue(

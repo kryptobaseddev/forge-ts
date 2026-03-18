@@ -1,4 +1,9 @@
-import { type ForgeConfig, type ForgeResult, type ForgeSymbol, Visibility } from "@forge-ts/core";
+import {
+	type ForgeConfig,
+	type ForgeResult,
+	type ForgeSymbol,
+	Visibility,
+} from "@codluv/forge-core";
 import { describe, expect, it, vi } from "vitest";
 import { enforce } from "../enforcer.js";
 
@@ -43,14 +48,14 @@ function makeSymbol(overrides: Partial<ForgeSymbol> & { name: string }): ForgeSy
 }
 
 /**
- * Mocks `createWalker` from `@forge-ts/core` so the enforcer uses the
+ * Mocks `createWalker` from `@codluv/forge-core` so the enforcer uses the
  * provided symbol list instead of touching the real TypeScript compiler.
  */
 async function runEnforce(
 	symbols: ForgeSymbol[],
 	configOverrides?: Partial<ForgeConfig["enforce"]>,
 ): Promise<ForgeResult> {
-	const { createWalker } = await import("@forge-ts/core");
+	const { createWalker } = await import("@codluv/forge-core");
 	vi.mocked(createWalker).mockReturnValue({ walk: () => symbols });
 	return enforce(makeConfig(configOverrides));
 }
@@ -59,8 +64,8 @@ async function runEnforce(
 // Module mock — replaces the real walker with a controllable stub
 // ---------------------------------------------------------------------------
 
-vi.mock("@forge-ts/core", async (importOriginal) => {
-	const actual = await importOriginal<typeof import("@forge-ts/core")>();
+vi.mock("@codluv/forge-core", async (importOriginal) => {
+	const actual = await importOriginal<typeof import("@codluv/forge-core")>();
 	return {
 		...actual,
 		createWalker: vi.fn(),

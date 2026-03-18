@@ -3,8 +3,8 @@ import type {
 	OpenAPIDocument,
 	OpenAPIInfoObject,
 	OpenAPISchemaObject,
-} from "@forge-ts/core";
-import { Visibility } from "@forge-ts/core";
+} from "@codluv/forge-core";
+import { Visibility } from "@codluv/forge-core";
 import { signatureToSchema } from "./schema-mapper.js";
 import type { SDKProperty, SDKType } from "./sdk-extractor.js";
 

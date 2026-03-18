@@ -1,7 +1,7 @@
 import { resolve } from "node:path";
-import { extractSDKTypes, generateOpenAPISpec } from "@forge-ts/api";
-import { enforce } from "@forge-ts/enforcer";
-import { generateLlmsTxt, generateMarkdown } from "@forge-ts/gen";
+import { extractSDKTypes, generateOpenAPISpec } from "@codluv/forge-api";
+import { enforce } from "@codluv/forge-enforcer";
+import { generateLlmsTxt, generateMarkdown } from "@codluv/forge-gen";
 import { describe, expect, it } from "vitest";
 import { createWalker, type ForgeConfig, filterByVisibility, Visibility } from "../index.js";
 

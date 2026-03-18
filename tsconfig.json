@@ -16,12 +16,12 @@
 		"outDir": "dist",
 		"rootDir": ".",
 		"paths": {
-			"@forge-ts/core": ["./packages/core/dist/index.d.ts"],
-			"@forge-ts/enforcer": ["./packages/enforcer/dist/index.d.ts"],
-			"@forge-ts/doctest": ["./packages/doctest/dist/index.d.ts"],
-			"@forge-ts/api": ["./packages/api/dist/index.d.ts"],
-			"@forge-ts/gen": ["./packages/gen/dist/index.d.ts"],
-			"@forge-ts/cli": ["./packages/cli/dist/index.d.ts"]
+			"@codluv/forge-core": ["./packages/core/dist/index.d.ts"],
+			"@codluv/forge-enforcer": ["./packages/enforcer/dist/index.d.ts"],
+			"@codluv/forge-doctest": ["./packages/doctest/dist/index.d.ts"],
+			"@codluv/forge-api": ["./packages/api/dist/index.d.ts"],
+			"@codluv/forge-gen": ["./packages/gen/dist/index.d.ts"],
+			"@codluv/forge-cli": ["./packages/cli/dist/index.d.ts"]
 		}
 	},
 	"references": [

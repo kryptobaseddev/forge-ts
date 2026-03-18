@@ -1,5 +1,5 @@
 import { relative } from "node:path";
-import type { ForgeConfig, ForgeSymbol } from "@forge-ts/core";
+import type { ForgeConfig, ForgeSymbol } from "@codluv/forge-core";
 
 /**
  * Options controlling Markdown output.

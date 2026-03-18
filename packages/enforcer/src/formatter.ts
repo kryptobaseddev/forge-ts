@@ -1,4 +1,4 @@
-import type { ForgeResult } from "@forge-ts/core";
+import type { ForgeResult } from "@codluv/forge-core";
 
 // ---------------------------------------------------------------------------
 // Types

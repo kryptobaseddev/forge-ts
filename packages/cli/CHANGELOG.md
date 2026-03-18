@@ -1,5 +1,23 @@
 # @forge-ts/cli
 
+## 0.4.0
+
+### Patch Changes
+
+- [`c072beb`](https://github.com/kryptobaseddev/forge-ts/commit/c072beb925961adf9b16be584389897f98909a2f) Thanks [@kryptobaseddev](https://github.com/kryptobaseddev)! - v0.4 release: configurable rules, dead link validation, OpenAPI path extraction, deprecation tracking.
+
+  - Per-rule configuration: toggle E001-E008 individually as error/warn/off
+  - E008: {@link} dead link validation against the project symbol graph
+  - @route TSDoc tag → OpenAPI path entries with parameters and responses
+  - W004: cross-monorepo deprecation tracking for @deprecated imports
+
+- Updated dependencies [[`c072beb`](https://github.com/kryptobaseddev/forge-ts/commit/c072beb925961adf9b16be584389897f98909a2f)]:
+  - @forge-ts/core@0.4.0
+  - @forge-ts/enforcer@0.4.0
+  - @forge-ts/api@0.4.0
+  - @forge-ts/doctest@0.4.0
+  - @forge-ts/gen@0.4.0
+
 ## 0.3.1
 
 ### Patch Changes

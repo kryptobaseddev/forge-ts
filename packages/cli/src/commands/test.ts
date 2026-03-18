@@ -60,6 +60,12 @@ export interface TestResult {
  *
  * @param args - CLI arguments for the test command.
  * @returns A typed `CommandOutput<TestResult>`.
+ * @example
+ * ```typescript
+ * import { runTest } from "@forge-ts/cli/commands/test";
+ * const output = await runTest({ cwd: process.cwd() });
+ * console.log(output.data.summary.passed); // number of passing doctests
+ * ```
  * @public
  */
 export async function runTest(args: TestArgs): Promise<CommandOutput<TestResult>> {

@@ -9,6 +9,12 @@ import { type ForgeConfig, Visibility } from "./types.js";
  *
  * @param rootDir - Absolute path to the project root.
  * @returns A fully-populated default configuration.
+ * @example
+ * ```typescript
+ * import { defaultConfig } from "@forge-ts/core";
+ * const config = defaultConfig("/path/to/project");
+ * console.log(config.enforce.enabled); // true
+ * ```
  * @public
  */
 export function defaultConfig(rootDir: string): ForgeConfig {
@@ -120,6 +126,12 @@ async function loadPackageJsonConfig(pkgPath: string): Promise<Partial<ForgeConf
  *
  * @param rootDir - The project root to search for config.  Defaults to `process.cwd()`.
  * @returns A fully-resolved {@link ForgeConfig}.
+ * @example
+ * ```typescript
+ * import { loadConfig } from "@forge-ts/core";
+ * const config = await loadConfig("/path/to/project");
+ * // config is fully resolved with defaults
+ * ```
  * @public
  */
 export async function loadConfig(rootDir?: string): Promise<ForgeConfig> {

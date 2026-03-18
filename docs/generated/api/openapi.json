@@ -364,28 +364,34 @@
               {
                 "type": "object"
               }
-            ]
+            ],
+            "description": "The data type of the schema (e.g., \"string\", \"number\", \"object\", \"array\")."
           },
           "format": {
-            "type": "string"
+            "type": "string",
+            "description": "A format hint for the data type (e.g., \"int32\", \"date-time\", \"email\", \"uuid\")."
           },
           "description": {
-            "type": "string"
+            "type": "string",
+            "description": "A human-readable description of the schema's purpose or constraints."
           },
           "properties": {
             "type": "object",
             "additionalProperties": {
               "type": "object"
-            }
+            },
+            "description": "Property definitions for object-type schemas. Maps each property name to its schema."
           },
           "required": {
             "type": "array",
             "items": {
               "type": "string"
-            }
+            },
+            "description": "List of property names that must be present on the object."
           },
           "items": {
-            "type": "object"
+            "type": "object",
+            "description": "Schema definition for the elements of an array-type schema. Required when `type` is \"array\"."
           },
           "additionalProperties": {
             "oneOf": [
@@ -395,37 +401,44 @@
               {
                 "type": "object"
               }
-            ]
+            ],
+            "description": "Controls whether additional properties are allowed (`true`/`false`) or defines their schema."
           },
           "enum": {
             "type": "array",
             "items": {
               "type": "object"
-            }
+            },
+            "description": "Restricts the value to one of the listed constants."
           },
           "oneOf": {
             "type": "array",
             "items": {
               "type": "object"
-            }
+            },
+            "description": "Validates the value against exactly one of the listed sub-schemas."
           },
           "allOf": {
             "type": "array",
             "items": {
               "type": "object"
-            }
+            },
+            "description": "Validates the value against all of the listed sub-schemas (intersection)."
           },
           "anyOf": {
             "type": "array",
             "items": {
               "type": "object"
-            }
+            },
+            "description": "Validates the value against at least one of the listed sub-schemas."
           },
           "nullable": {
-            "type": "boolean"
+            "type": "boolean",
+            "description": "Indicates that the value may be `null` in addition to its declared type."
           },
           "deprecated": {
-            "type": "boolean"
+            "type": "boolean",
+            "description": "Marks the schema as deprecated, signalling that it may be removed in a future version."
           },
           "default": {
             "oneOf": [
@@ -438,10 +451,12 @@
               {
                 "type": "boolean"
               }
-            ]
+            ],
+            "description": "The default value to use when the property is absent."
           },
           "$ref": {
-            "type": "string"
+            "type": "string",
+            "description": "A JSON Reference (`$ref`) pointing to another schema definition in the document."
           }
         },
         "required": [
@@ -467,19 +482,24 @@
         "type": "object",
         "properties": {
           "title": {
-            "type": "string"
+            "type": "string",
+            "description": "The human-readable name of the API."
           },
           "version": {
-            "type": "string"
+            "type": "string",
+            "description": "The version string for the API (e.g., \"1.0.0\")."
           },
           "description": {
-            "type": "string"
+            "type": "string",
+            "description": "A detailed description of the API, supporting CommonMark markdown."
           },
           "summary": {
-            "type": "string"
+            "type": "string",
+            "description": "A short summary of the API, intended for display in tooling."
           },
           "license": {
-            "type": "object"
+            "type": "object",
+            "description": "Licensing information for the exposed API, including name, URL, and SPDX identifier."
           }
         },
         "required": [
@@ -494,10 +514,12 @@
         "type": "object",
         "properties": {
           "name": {
-            "type": "string"
+            "type": "string",
+            "description": "The name of the tag, used to group operations in the document."
           },
           "description": {
-            "type": "string"
+            "type": "string",
+            "description": "An optional description of the tag, supporting CommonMark markdown."
           }
         },
         "required": [
@@ -510,43 +532,55 @@
         "type": "object",
         "properties": {
           "summary": {
-            "type": "string"
+            "type": "string",
+            "description": "A short summary of the path item, intended for tooling display."
           },
           "description": {
-            "type": "string"
+            "type": "string",
+            "description": "A detailed description of the path item, supporting CommonMark markdown."
           },
           "get": {
-            "type": "object"
+            "type": "object",
+            "description": "The operation definition for HTTP GET requests to this path."
           },
           "post": {
-            "type": "object"
+            "type": "object",
+            "description": "The operation definition for HTTP POST requests to this path."
           },
           "put": {
-            "type": "object"
+            "type": "object",
+            "description": "The operation definition for HTTP PUT requests to this path."
           },
           "delete": {
-            "type": "object"
+            "type": "object",
+            "description": "The operation definition for HTTP DELETE requests to this path."
           },
           "patch": {
-            "type": "object"
+            "type": "object",
+            "description": "The operation definition for HTTP PATCH requests to this path."
           },
           "options": {
-            "type": "object"
+            "type": "object",
+            "description": "The operation definition for HTTP OPTIONS requests to this path."
           },
           "head": {
-            "type": "object"
+            "type": "object",
+            "description": "The operation definition for HTTP HEAD requests to this path."
           },
           "trace": {
-            "type": "object"
+            "type": "object",
+            "description": "The operation definition for HTTP TRACE requests to this path."
           },
           "query": {
-            "type": "object"
+            "type": "object",
+            "description": "The operation definition for HTTP QUERY requests to this path (OpenAPI 3.2 extension)."
           },
           "additionalOperations": {
             "type": "object",
             "additionalProperties": {
               "type": "object"
-            }
+            },
+            "description": "Additional non-standard HTTP method operations keyed by method name."
           }
         },
         "required": [
@@ -569,31 +603,37 @@
         "type": "object",
         "properties": {
           "operationId": {
-            "type": "string"
+            "type": "string",
+            "description": "A unique string identifier for the operation, used by tooling to reference it."
           },
           "summary": {
-            "type": "string"
+            "type": "string",
+            "description": "A short, human-readable summary of what the operation does."
           },
           "description": {
-            "type": "string"
+            "type": "string",
+            "description": "A detailed description of the operation's behaviour, supporting CommonMark markdown."
           },
           "tags": {
             "type": "array",
             "items": {
               "type": "string"
-            }
+            },
+            "description": "A list of tag names that logically group this operation in documentation and tooling."
           },
           "parameters": {
             "type": "array",
             "items": {
               "type": "object"
-            }
+            },
+            "description": "The list of parameters applicable to this operation."
           },
           "responses": {
             "type": "object",
             "additionalProperties": {
               "type": "object"
-            }
+            },
+            "description": "The possible responses returned by this operation, keyed by HTTP status code or \"default\"."
           }
         },
         "required": [
@@ -610,7 +650,8 @@
         "type": "object",
         "properties": {
           "name": {
-            "type": "string"
+            "type": "string",
+            "description": "The name of the parameter, case-sensitive."
           },
           "in": {
             "oneOf": [
@@ -629,19 +670,24 @@
               {
                 "type": "object"
               }
-            ]
+            ],
+            "description": "The location of the parameter: path, query, header, cookie, or querystring."
           },
           "description": {
-            "type": "string"
+            "type": "string",
+            "description": "A human-readable description of the parameter's purpose, supporting CommonMark markdown."
           },
           "required": {
-            "type": "boolean"
+            "type": "boolean",
+            "description": "Whether the parameter is mandatory. Required for `in: \"path\"` parameters."
           },
           "schema": {
-            "type": "object"
+            "type": "object",
+            "description": "The schema defining the type and constraints of the parameter value."
           },
           "deprecated": {
-            "type": "boolean"
+            "type": "boolean",
+            "description": "Marks the parameter as deprecated; clients should avoid using it."
           }
         },
         "required": [
@@ -658,22 +704,27 @@
         "type": "object",
         "properties": {
           "contentType": {
-            "type": "string"
+            "type": "string",
+            "description": "The MIME type to use for encoding a specific property (e.g., \"application/json\")."
           },
           "headers": {
             "type": "object",
             "additionalProperties": {
               "type": "object"
-            }
+            },
+            "description": "Additional headers to send alongside the encoded part, keyed by header name."
           },
           "style": {
-            "type": "string"
+            "type": "string",
+            "description": "The serialization style for the encoded value (e.g., \"form\", \"spaceDelimited\")."
           },
           "explode": {
-            "type": "boolean"
+            "type": "boolean",
+            "description": "Whether arrays and objects should be exploded into separate query parameters."
           },
           "allowReserved": {
-            "type": "boolean"
+            "type": "boolean",
+            "description": "Whether reserved characters in the encoded value should be allowed without percent-encoding."
           }
         },
         "required": [
@@ -689,13 +740,15 @@
         "type": "object",
         "properties": {
           "schema": {
-            "type": "object"
+            "type": "object",
+            "description": "The schema defining the structure and type of the media type's payload."
           },
           "encoding": {
             "type": "object",
             "additionalProperties": {
               "type": "object"
-            }
+            },
+            "description": "Encoding information for specific properties of a `multipart` or `application/x-www-form-urlencoded` request body."
           }
         },
         "required": [
@@ -708,19 +761,22 @@
         "type": "object",
         "properties": {
           "description": {
-            "type": "string"
+            "type": "string",
+            "description": "A required human-readable description of the response, supporting CommonMark markdown."
           },
           "headers": {
             "type": "object",
             "additionalProperties": {
               "type": "object"
-            }
+            },
+            "description": "HTTP headers returned with this response, keyed by header name."
           },
           "content": {
             "type": "object",
             "additionalProperties": {
               "type": "object"
-            }
+            },
+            "description": "The response body content, keyed by media type (e.g., \"application/json\")."
           }
         },
         "required": [
@@ -734,28 +790,34 @@
         "type": "object",
         "properties": {
           "openapi": {
-            "type": "object"
+            "type": "object",
+            "description": "The OpenAPI specification version this document conforms to. Must be \"3.2.0\"."
           },
           "$self": {
-            "type": "string"
+            "type": "string",
+            "description": "An optional self-referencing URL for this document, used for tooling and resolution."
           },
           "info": {
-            "type": "object"
+            "type": "object",
+            "description": "Metadata about the API including title, version, and description."
           },
           "paths": {
             "type": "object",
             "additionalProperties": {
               "type": "object"
-            }
+            },
+            "description": "The available paths and their operations, keyed by path template (e.g., \"/users/id\")."
           },
           "components": {
-            "type": "object"
+            "type": "object",
+            "description": "Reusable schema and media type definitions shared across the document."
           },
           "tags": {
             "type": "array",
             "items": {
               "type": "object"
-            }
+            },
+            "description": "A list of tags used to group operations, with optional descriptions."
           }
         },
         "required": [
@@ -1161,28 +1223,34 @@
         "type": "object",
         "properties": {
           "operation": {
-            "type": "string"
+            "type": "string",
+            "description": "Name of the command that produced this output (e.g., \"check\", \"build\")."
           },
           "success": {
-            "type": "boolean"
+            "type": "boolean",
+            "description": "Whether the command completed successfully."
           },
           "data": {
-            "type": "object"
+            "type": "object",
+            "description": "Strongly-typed command-specific result payload."
           },
           "errors": {
             "type": "array",
             "items": {
               "type": "object"
-            }
+            },
+            "description": "Structured errors produced by the command, if any."
           },
           "warnings": {
             "type": "array",
             "items": {
               "type": "object"
-            }
+            },
+            "description": "Structured warnings produced by the command, if any."
           },
           "duration": {
-            "type": "number"
+            "type": "number",
+            "description": "Wall-clock duration of the command in milliseconds."
           }
         },
         "required": [
@@ -1199,19 +1267,24 @@
         "type": "object",
         "properties": {
           "code": {
-            "type": "string"
+            "type": "string",
+            "description": "Machine-readable error code (e.g., \"E004\")."
           },
           "message": {
-            "type": "string"
+            "type": "string",
+            "description": "Human-readable error description."
           },
           "filePath": {
-            "type": "string"
+            "type": "string",
+            "description": "Absolute path to the source file containing the error, if applicable."
           },
           "line": {
-            "type": "number"
+            "type": "number",
+            "description": "1-based line number of the error, if applicable."
           },
           "column": {
-            "type": "number"
+            "type": "number",
+            "description": "0-based column number of the error, if applicable."
           }
         },
         "required": [
@@ -1227,19 +1300,24 @@
         "type": "object",
         "properties": {
           "code": {
-            "type": "string"
+            "type": "string",
+            "description": "Machine-readable warning code."
           },
           "message": {
-            "type": "string"
+            "type": "string",
+            "description": "Human-readable warning description."
           },
           "filePath": {
-            "type": "string"
+            "type": "string",
+            "description": "Absolute path to the source file containing the warning, if applicable."
           },
           "line": {
-            "type": "number"
+            "type": "number",
+            "description": "1-based line number of the warning, if applicable."
           },
           "column": {
-            "type": "number"
+            "type": "number",
+            "description": "0-based column number of the warning, if applicable."
           }
         },
         "required": [
@@ -1255,16 +1333,20 @@
         "type": "object",
         "properties": {
           "json": {
-            "type": "boolean"
+            "type": "boolean",
+            "description": "Emit output as a LAFS JSON envelope instead of human-readable text."
           },
           "human": {
-            "type": "boolean"
+            "type": "boolean",
+            "description": "Emit output as formatted human-readable text."
           },
           "quiet": {
-            "type": "boolean"
+            "type": "boolean",
+            "description": "Suppress all output regardless of format."
           },
           "mvi": {
-            "type": "string"
+            "type": "string",
+            "description": "MVI verbosity level: \"minimal\", \"standard\", or \"full\"."
           }
         },
         "required": [
@@ -1279,7 +1361,8 @@
         "type": "object",
         "properties": {
           "name": {
-            "type": "string"
+            "type": "string",
+            "description": "Internal step name, e.g. \"api\" or \"gen\"."
           },
           "status": {
             "oneOf": [
@@ -1292,19 +1375,23 @@
               {
                 "type": "object"
               }
-            ]
+            ],
+            "description": "Outcome of this step."
           },
           "outputPath": {
-            "type": "string"
+            "type": "string",
+            "description": "Path to the primary output file produced by this step, if applicable."
           },
           "duration": {
-            "type": "number"
+            "type": "number",
+            "description": "Wall-clock duration of this step in milliseconds."
           },
           "errors": {
             "type": "array",
             "items": {
               "type": "object"
-            }
+            },
+            "description": "Errors produced by this step when status is \"failed\"."
           }
         },
         "required": [

@@ -23,6 +23,14 @@ Generates an `llms.txt` routing manifest from the extracted symbols.  The file f
 
 **Returns**: The generated `llms.txt` content as a string.
 
+**Examples**
+
+```typescript
+import { generateLlmsTxt } from "@forge-ts/gen";
+const txt = generateLlmsTxt(symbols, config);
+console.log(txt.startsWith("# ")); // true
+```
+
 
 ### `generateLlmsFullTxt()`
 
@@ -38,6 +46,14 @@ Generates an `llms-full.txt` dense context file from the extracted symbols.  Unl
 - `config` — The resolved .
 
 **Returns**: The generated `llms-full.txt` content as a string.
+
+**Examples**
+
+```typescript
+import { generateLlmsFullTxt } from "@forge-ts/gen";
+const fullTxt = generateLlmsFullTxt(symbols, config);
+console.log(fullTxt.includes("Full Context")); // true
+```
 
 
 ### `generateMarkdown()`
@@ -56,6 +72,14 @@ Generates a Markdown (or MDX) string from a list of symbols.
 
 **Returns**: The generated Markdown string.
 
+**Examples**
+
+```typescript
+import { generateMarkdown } from "@forge-ts/gen";
+const md = generateMarkdown(symbols, config, { mdx: false });
+console.log(md.startsWith("# API Reference")); // true
+```
+
 
 ### `syncReadme()`
 
@@ -73,6 +97,14 @@ Injects a summary of exported symbols into a `README.md` file.  The content is p
 
 **Returns**: `true` if the file was modified, `false` otherwise.
 
+**Examples**
+
+```typescript
+import { syncReadme } from "@forge-ts/gen";
+const modified = await syncReadme("/path/to/README.md", symbols);
+console.log(modified); // true if README was updated
+```
+
 
 ### `groupSymbolsByPackage()`
 
@@ -88,6 +120,14 @@ Groups symbols by their package based on file path.  For monorepos (symbols unde
 - `rootDir` — Absolute path to the project root.
 
 **Returns**: A map from package name to symbol list.
+
+**Examples**
+
+```typescript
+import { groupSymbolsByPackage } from "@forge-ts/gen";
+const grouped = groupSymbolsByPackage(symbols, "/path/to/project");
+console.log(grouped.has("core")); // true for monorepo
+```
 
 
 ### `generateDocSite()`
@@ -106,6 +146,15 @@ Generates a full multi-page documentation site from symbols grouped by package. 
 
 **Returns**: An array of  objects ready to be written to disk.
 
+**Examples**
+
+```typescript
+import { generateDocSite, groupSymbolsByPackage } from "@forge-ts/gen";
+const grouped = groupSymbolsByPackage(symbols, config.rootDir);
+const pages = generateDocSite(grouped, config, { format: "markdown", projectName: "my-project" });
+console.log(pages.length > 0); // true
+```
+
 
 ### `generateSSGConfigs()`
 
@@ -123,6 +172,14 @@ Generate navigation configuration file(s) for the given SSG target.  Returns one
 
 **Returns**: An array of  objects ready to be written to disk.
 
+**Examples**
+
+```typescript
+import { generateSSGConfigs } from "@forge-ts/gen";
+const configs = generateSSGConfigs(pages, "vitepress", "my-project");
+console.log(configs[0].path); // ".vitepress/sidebar.json"
+```
+
 
 ### `generate()`
 
@@ -137,6 +194,14 @@ Runs the full generation pipeline: walk → render → write.
 - `config` — The resolved  for the project.
 
 **Returns**: A  describing the outcome.
+
+**Examples**
+
+```typescript
+import { generate } from "@forge-ts/gen";
+const result = await generate(config);
+console.log(result.success); // true if all files were written
+```
 
 
 ## Interfaces

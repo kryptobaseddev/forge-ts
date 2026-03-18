@@ -36,7 +36,14 @@ import { generateSSGConfigs } from "./ssg-config.js";
  *
  * @param config - The resolved {@link ForgeConfig} for the project.
  * @returns A {@link ForgeResult} describing the outcome.
+ * @example
+ * ```typescript
+ * import { generate } from "@forge-ts/gen";
+ * const result = await generate(config);
+ * console.log(result.success); // true if all files were written
+ * ```
  * @public
+ * @packageDocumentation
  */
 export async function generate(config: ForgeConfig): Promise<ForgeResult> {
 	const start = Date.now();

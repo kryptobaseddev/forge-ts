@@ -8,4 +8,63 @@ description: Usage examples for the api package
 
 All usage examples from the package, aggregated for quick reference.
 
-_No examples documented yet._
+## `signatureToSchema()`
+
+_Maps a TypeScript type signature string to an OpenAPI 3.2 schema object.  Handles common primitives, arrays, unions, `Record<K, V>`, and falls back to `{ type: "object" }` for anything it cannot parse._
+
+[View in API reference](./api-reference.md#signaturetoschema)
+
+```typescript
+import { signatureToSchema } from "@forge-ts/api";
+const schema = signatureToSchema("string[]");
+// { type: "array", items: { type: "string" } }
+```
+
+## `extractSDKTypes()`
+
+_Extracts SDK-relevant types (interfaces, type aliases, classes, enums) from a list of  objects.  Only exported symbols whose visibility is not  or  are included._
+
+[View in API reference](./api-reference.md#extractsdktypes)
+
+```typescript
+import { extractSDKTypes } from "@forge-ts/api";
+const sdkTypes = extractSDKTypes(symbols);
+console.log(sdkTypes.length); // number of public SDK types
+```
+
+## `generateOpenAPISpec()`
+
+_Generates a production-quality OpenAPI 3.2 document from the extracted SDK types.  The document is populated with: - An `info` block sourced from the config or reasonable defaults. - A `components.schemas` section with one schema per exported type. - `tags` derived from unique source file paths (grouping by file). - Visibility filtering: `@internal` symbols are never emitted.  HTTP paths are not yet emitted (`paths` is always `{}`); route extraction will be added in a future release._
+
+[View in API reference](./api-reference.md#generateopenapispec)
+
+```typescript
+import { generateOpenAPISpec } from "@forge-ts/api";
+import { extractSDKTypes } from "@forge-ts/api";
+const spec = generateOpenAPISpec(config, extractSDKTypes(symbols));
+console.log(spec.openapi); // "3.2.0"
+```
+
+## `buildReference()`
+
+_Builds a structured API reference from a list of exported symbols.  Unlike the minimal stub, this version includes nested children (class methods, interface properties) and all available TSDoc metadata.  Symbols with  or  are excluded from the top-level results. Children with private/internal visibility are also filtered out._
+
+[View in API reference](./api-reference.md#buildreference)
+
+```typescript
+import { buildReference } from "@forge-ts/api";
+const entries = buildReference(symbols);
+console.log(entries[0].name); // first symbol name, alphabetically
+```
+
+## `generateApi()`
+
+_Runs the API generation pipeline: walk → extract → generate → write._
+
+[View in API reference](./api-reference.md#generateapi)
+
+```typescript
+import { generateApi } from "@forge-ts/api";
+const result = await generateApi(config);
+console.log(result.success); // true if spec was written successfully
+```

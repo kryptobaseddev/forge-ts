@@ -1,7 +1,7 @@
 # . - Full Context
 
 Root: .
-Generated: 2026-03-18T23:09:20.725Z
+Generated: 2026-03-18T23:22:35.403Z
 
 ## Functions
 
@@ -16,6 +16,11 @@ Parameters:
 
 Returns: A fully-populated default configuration.
 
+Example:
+  import { defaultConfig } from "@forge-ts/core";
+  const config = defaultConfig("/path/to/project");
+  console.log(config.enforce.enabled); // true
+
 ### loadConfig()
 
 (rootDir?: string | undefined) => Promise<ForgeConfig>
@@ -27,6 +32,11 @@ Parameters:
 
 Returns: A fully-resolved .
 
+Example:
+  import { loadConfig } from "@forge-ts/core";
+  const config = await loadConfig("/path/to/project");
+  // config is fully resolved with defaults
+
 ### resolveVisibility()
 
 (tags: Record<string, string[]> | undefined) => Visibility
@@ -37,6 +47,11 @@ Parameters:
 - tags: The parsed `tags` map from `ForgeSymbol.documentation`.
 
 Returns: The resolved  value.
+
+Example:
+  import { resolveVisibility } from "@forge-ts/core";
+  const vis = resolveVisibility({ internal: [] });
+  // vis === Visibility.Internal
 
 ### meetsVisibility()
 
@@ -50,6 +65,11 @@ Parameters:
 
 Returns: `true` if `candidate` is at least as visible as `minVisibility`.
 
+Example:
+  import { meetsVisibility, Visibility } from "@forge-ts/core";
+  meetsVisibility(Visibility.Public, Visibility.Public); // true
+  meetsVisibility(Visibility.Internal, Visibility.Public); // false
+
 ### filterByVisibility()
 
 (symbols: ForgeSymbol[], minVisibility: Visibility) => ForgeSymbol[]
@@ -62,6 +82,10 @@ Parameters:
 
 Returns: A new array containing only symbols that pass the visibility check.
 
+Example:
+  import { filterByVisibility, Visibility } from "@forge-ts/core";
+  const publicOnly = filterByVisibility(symbols, Visibility.Public);
+
 ### createWalker()
 
 (config: ForgeConfig) => ASTWalker
@@ -72,6 +96,13 @@ Parameters:
 - config: The resolved  for the project.
 
 Returns: An  instance whose `walk()` method performs the extraction.
+
+Example:
+  import { loadConfig, createWalker } from "@forge-ts/core";
+  const config = await loadConfig();
+  const walker = createWalker(config);
+  const symbols = walker.walk();
+  console.log(`Found ${symbols.length} symbols`);
 
 ### add()
 
@@ -127,6 +158,11 @@ Parameters:
 
 Returns: An OpenAPI schema object.
 
+Example:
+  import { signatureToSchema } from "@forge-ts/api";
+  const schema = signatureToSchema("string[]");
+  // { type: "array", items: { type: "string" } }
+
 ### extractSDKTypes()
 
 (symbols: ForgeSymbol[]) => SDKType[]
@@ -137,6 +173,11 @@ Parameters:
 - symbols: The symbols produced by the core AST walker.
 
 Returns: An array of  objects for public-facing type definitions.
+
+Example:
+  import { extractSDKTypes } from "@forge-ts/api";
+  const sdkTypes = extractSDKTypes(symbols);
+  console.log(sdkTypes.length); // number of public SDK types
 
 ### generateOpenAPISpec()
 
@@ -150,6 +191,12 @@ Parameters:
 
 Returns: An  object.
 
+Example:
+  import { generateOpenAPISpec } from "@forge-ts/api";
+  import { extractSDKTypes } from "@forge-ts/api";
+  const spec = generateOpenAPISpec(config, extractSDKTypes(symbols));
+  console.log(spec.openapi); // "3.2.0"
+
 ### buildReference()
 
 (symbols: ForgeSymbol[]) => ReferenceEntry[]
@@ -161,6 +208,11 @@ Parameters:
 
 Returns: An array of  objects sorted by name.
 
+Example:
+  import { buildReference } from "@forge-ts/api";
+  const entries = buildReference(symbols);
+  console.log(entries[0].name); // first symbol name, alphabetically
+
 ### generateApi()
 
 (config: ForgeConfig) => Promise<ForgeResult>
@@ -171,6 +223,11 @@ Parameters:
 - config: The resolved  for the project.
 
 Returns: A  with success/failure and any diagnostics.
+
+Example:
+  import { generateApi } from "@forge-ts/api";
+  const result = await generateApi(config);
+  console.log(result.success); // true if spec was written successfully
 
 ### generateLlmsTxt()
 
@@ -184,6 +241,11 @@ Parameters:
 
 Returns: The generated `llms.txt` content as a string.
 
+Example:
+  import { generateLlmsTxt } from "@forge-ts/gen";
+  const txt = generateLlmsTxt(symbols, config);
+  console.log(txt.startsWith("# ")); // true
+
 ### generateLlmsFullTxt()
 
 (symbols: ForgeSymbol[], config: ForgeConfig) => string
@@ -195,6 +257,11 @@ Parameters:
 - config: The resolved .
 
 Returns: The generated `llms-full.txt` content as a string.
+
+Example:
+  import { generateLlmsFullTxt } from "@forge-ts/gen";
+  const fullTxt = generateLlmsFullTxt(symbols, config);
+  console.log(fullTxt.includes("Full Context")); // true
 
 ### generateMarkdown()
 
@@ -209,6 +276,11 @@ Parameters:
 
 Returns: The generated Markdown string.
 
+Example:
+  import { generateMarkdown } from "@forge-ts/gen";
+  const md = generateMarkdown(symbols, config, { mdx: false });
+  console.log(md.startsWith("# API Reference")); // true
+
 ### syncReadme()
 
 (readmePath: string, symbols: ForgeSymbol[], options?: ReadmeSyncOptions) => Promise<boolean>
@@ -222,6 +294,11 @@ Parameters:
 
 Returns: `true` if the file was modified, `false` otherwise.
 
+Example:
+  import { syncReadme } from "@forge-ts/gen";
+  const modified = await syncReadme("/path/to/README.md", symbols);
+  console.log(modified); // true if README was updated
+
 ### groupSymbolsByPackage()
 
 (symbols: ForgeSymbol[], rootDir: string) => Map<string, ForgeSymbol[]>
@@ -233,6 +310,11 @@ Parameters:
 - rootDir: Absolute path to the project root.
 
 Returns: A map from package name to symbol list.
+
+Example:
+  import { groupSymbolsByPackage } from "@forge-ts/gen";
+  const grouped = groupSymbolsByPackage(symbols, "/path/to/project");
+  console.log(grouped.has("core")); // true for monorepo
 
 ### generateDocSite()
 
@@ -247,6 +329,12 @@ Parameters:
 
 Returns: An array of  objects ready to be written to disk.
 
+Example:
+  import { generateDocSite, groupSymbolsByPackage } from "@forge-ts/gen";
+  const grouped = groupSymbolsByPackage(symbols, config.rootDir);
+  const pages = generateDocSite(grouped, config, { format: "markdown", projectName: "my-project" });
+  console.log(pages.length > 0); // true
+
 ### generateSSGConfigs()
 
 (pages: DocPage[], target: "docusaurus" | "mintlify" | "nextra" | "vitepress", projectName: string) => SSGConfigFile[]
@@ -260,6 +348,11 @@ Parameters:
 
 Returns: An array of  objects ready to be written to disk.
 
+Example:
+  import { generateSSGConfigs } from "@forge-ts/gen";
+  const configs = generateSSGConfigs(pages, "vitepress", "my-project");
+  console.log(configs[0].path); // ".vitepress/sidebar.json"
+
 ### generate()
 
 (config: ForgeConfig) => Promise<ForgeResult>
@@ -270,6 +363,11 @@ Parameters:
 - config: The resolved  for the project.
 
 Returns: A  describing the outcome.
+
+Example:
+  import { generate } from "@forge-ts/gen";
+  const result = await generate(config);
+  console.log(result.success); // true if all files were written
 
 ### createLogger()
 
@@ -294,6 +392,10 @@ Parameters:
 - flags: Output format flags from citty args.
 - humanFormatter: Produces a human-readable string for TTY consumers.
 
+Example:
+  import { emitResult } from "@forge-ts/cli/output";
+  emitResult(output, { human: true }, (data) => `Done: ${data.summary.duration}ms`);
+
 ### resolveExitCode()
 
 (output: CommandOutput<unknown>) => number
@@ -316,6 +418,11 @@ Parameters:
 
 Returns: A typed `CommandOutput<BuildResult>`.
 
+Example:
+  import { runBuild } from "@forge-ts/cli/commands/build";
+  const output = await runBuild({ cwd: process.cwd() });
+  console.log(output.success); // true if all steps succeeded
+
 ### enforce()
 
 (config: ForgeConfig) => Promise<ForgeResult>
@@ -326,6 +433,15 @@ Parameters:
 - config: The resolved  for the project.
 
 Returns: A  describing which symbols passed or failed.
+
+Example:
+  import { loadConfig } from "@forge-ts/core";
+  import { enforce } from "@forge-ts/enforcer";
+  const config = await loadConfig();
+  const result = await enforce(config);
+  if (!result.success) {
+    console.error(`${result.errors.length} errors found`);
+  }
 
 ### formatResults()
 
@@ -339,6 +455,14 @@ Parameters:
 
 Returns: A formatted string ready to write to stdout or stderr.
 
+Example:
+  import { enforce } from "@forge-ts/enforcer";
+  import { formatResults } from "@forge-ts/enforcer";
+  import { loadConfig } from "@forge-ts/core";
+  const config = await loadConfig();
+  const result = await enforce(config);
+  console.log(formatResults(result, { colors: true, verbose: false }));
+
 ### runCheck()
 
 (args: CheckArgs) => Promise<CommandOutput<CheckResult>>
@@ -350,6 +474,11 @@ Parameters:
 
 Returns: A typed `CommandOutput<CheckResult>`.
 
+Example:
+  import { runCheck } from "@forge-ts/cli/commands/check";
+  const output = await runCheck({ cwd: process.cwd() });
+  console.log(output.data.summary.errors); // number of TSDoc errors found
+
 ### extractExamples()
 
 (symbols: ForgeSymbol[]) => ExtractedExample[]
@@ -360,6 +489,14 @@ Parameters:
 - symbols: The symbols produced by the core AST walker.
 
 Returns: A flat array of  objects, one per code block.
+
+Example:
+  import { createWalker, loadConfig } from "@forge-ts/core";
+  import { extractExamples } from "@forge-ts/doctest";
+  const config = await loadConfig();
+  const symbols = createWalker(config).walk();
+  const examples = extractExamples(symbols);
+  console.log(`Found ${examples.length} examples`);
 
 ### generateTestFiles()
 
@@ -373,6 +510,11 @@ Parameters:
 
 Returns: An array of  objects (one per source file).
 
+Example:
+  import { generateTestFiles } from "@forge-ts/doctest";
+  const files = generateTestFiles(examples, { cacheDir: "/tmp/doctest-cache" });
+  console.log(`Generated ${files.length} test file(s)`);
+
 ### runTests()
 
 (files: VirtualTestFile[]) => Promise<RunResult>
@@ -383,6 +525,13 @@ Parameters:
 - files: The virtual test files to write and run.
 
 Returns: A  summarising the test outcome.
+
+Example:
+  import { runTests } from "@forge-ts/doctest";
+  const result = await runTests(virtualFiles);
+  if (!result.success) {
+    console.error(`${result.failed} doctest(s) failed`);
+  }
 
 ### doctest()
 
@@ -395,6 +544,15 @@ Parameters:
 
 Returns: A  with success/failure and any diagnostics.
 
+Example:
+  import { loadConfig } from "@forge-ts/core";
+  import { doctest } from "@forge-ts/doctest";
+  const config = await loadConfig();
+  const result = await doctest(config);
+  if (!result.success) {
+    console.error(`${result.errors.length} doctest failure(s)`);
+  }
+
 ### runTest()
 
 (args: TestArgs) => Promise<CommandOutput<TestResult>>
@@ -405,6 +563,11 @@ Parameters:
 - args: CLI arguments for the test command.
 
 Returns: A typed `CommandOutput<TestResult>`.
+
+Example:
+  import { runTest } from "@forge-ts/cli/commands/test";
+  const output = await runTest({ cwd: process.cwd() });
+  console.log(output.data.summary.passed); // number of passing doctests
 
 ## Interfaces
 
@@ -670,61 +833,91 @@ Members:
 
 "string" | "number" | "boolean" | "object" | "integer" | "array" | "null" | undefined
 
+The data type of the schema (e.g., "string", "number", "object", "array").
+
 #### format
 
 string | undefined
+
+A format hint for the data type (e.g., "int32", "date-time", "email", "uuid").
 
 #### description
 
 string | undefined
 
+A human-readable description of the schema's purpose or constraints.
+
 #### properties
 
 Record<string, OpenAPISchemaObject> | undefined
+
+Property definitions for object-type schemas. Maps each property name to its schema.
 
 #### required
 
 string[] | undefined
 
+List of property names that must be present on the object.
+
 #### items
 
 OpenAPISchemaObject | undefined
+
+Schema definition for the elements of an array-type schema. Required when `type` is "array".
 
 #### additionalProperties
 
 boolean | OpenAPISchemaObject | undefined
 
+Controls whether additional properties are allowed (`true`/`false`) or defines their schema.
+
 #### enum
 
 (string | number | boolean)[] | undefined
+
+Restricts the value to one of the listed constants.
 
 #### oneOf
 
 OpenAPISchemaObject[] | undefined
 
+Validates the value against exactly one of the listed sub-schemas.
+
 #### allOf
 
 OpenAPISchemaObject[] | undefined
+
+Validates the value against all of the listed sub-schemas (intersection).
 
 #### anyOf
 
 OpenAPISchemaObject[] | undefined
 
+Validates the value against at least one of the listed sub-schemas.
+
 #### nullable
 
 boolean | undefined
+
+Indicates that the value may be `null` in addition to its declared type.
 
 #### deprecated
 
 boolean | undefined
 
+Marks the schema as deprecated, signalling that it may be removed in a future version.
+
 #### default
 
 string | number | boolean | null | undefined
 
+The default value to use when the property is absent.
+
 #### $ref
 
 string | undefined
+
+A JSON Reference (`$ref`) pointing to another schema definition in the document.
 
 ### OpenAPIInfoObject
 
@@ -738,21 +931,31 @@ Members:
 
 string
 
+The human-readable name of the API.
+
 #### version
 
 string
+
+The version string for the API (e.g., "1.0.0").
 
 #### description
 
 string | undefined
 
+A detailed description of the API, supporting CommonMark markdown.
+
 #### summary
 
 string | undefined
 
+A short summary of the API, intended for display in tooling.
+
 #### license
 
 { name: string; url?: string | undefined; identifier?: string | undefined; } | undefined
+
+Licensing information for the exposed API, including name, URL, and SPDX identifier.
 
 ### OpenAPITagObject
 
@@ -766,9 +969,13 @@ Members:
 
 string
 
+The name of the tag, used to group operations in the document.
+
 #### description
 
 string | undefined
+
+An optional description of the tag, supporting CommonMark markdown.
 
 ### OpenAPIPathItemObject
 
@@ -782,49 +989,73 @@ Members:
 
 string | undefined
 
+A short summary of the path item, intended for tooling display.
+
 #### description
 
 string | undefined
+
+A detailed description of the path item, supporting CommonMark markdown.
 
 #### get
 
 OpenAPIOperationObject | undefined
 
+The operation definition for HTTP GET requests to this path.
+
 #### post
 
 OpenAPIOperationObject | undefined
+
+The operation definition for HTTP POST requests to this path.
 
 #### put
 
 OpenAPIOperationObject | undefined
 
+The operation definition for HTTP PUT requests to this path.
+
 #### delete
 
 OpenAPIOperationObject | undefined
+
+The operation definition for HTTP DELETE requests to this path.
 
 #### patch
 
 OpenAPIOperationObject | undefined
 
+The operation definition for HTTP PATCH requests to this path.
+
 #### options
 
 OpenAPIOperationObject | undefined
+
+The operation definition for HTTP OPTIONS requests to this path.
 
 #### head
 
 OpenAPIOperationObject | undefined
 
+The operation definition for HTTP HEAD requests to this path.
+
 #### trace
 
 OpenAPIOperationObject | undefined
+
+The operation definition for HTTP TRACE requests to this path.
 
 #### query
 
 OpenAPIOperationObject | undefined
 
+The operation definition for HTTP QUERY requests to this path (OpenAPI 3.2 extension).
+
 #### additionalOperations
 
 Record<string, OpenAPIOperationObject> | undefined
+
+Additional non-standard HTTP method operations keyed by method name.
 
 ### OpenAPIOperationObject
 
@@ -838,25 +1069,37 @@ Members:
 
 string | undefined
 
+A unique string identifier for the operation, used by tooling to reference it.
+
 #### summary
 
 string | undefined
+
+A short, human-readable summary of what the operation does.
 
 #### description
 
 string | undefined
 
+A detailed description of the operation's behaviour, supporting CommonMark markdown.
+
 #### tags
 
 string[] | undefined
+
+A list of tag names that logically group this operation in documentation and tooling.
 
 #### parameters
 
 OpenAPIParameterObject[] | undefined
 
+The list of parameters applicable to this operation.
+
 #### responses
 
 Record<string, OpenAPIResponseObject> | undefined
+
+The possible responses returned by this operation, keyed by HTTP status code or "default".
 
 ### OpenAPIParameterObject
 
@@ -870,25 +1113,37 @@ Members:
 
 string
 
+The name of the parameter, case-sensitive.
+
 #### in
 
 "query" | "header" | "path" | "cookie" | "querystring"
+
+The location of the parameter: path, query, header, cookie, or querystring.
 
 #### description
 
 string | undefined
 
+A human-readable description of the parameter's purpose, supporting CommonMark markdown.
+
 #### required
 
 boolean | undefined
+
+Whether the parameter is mandatory. Required for `in: "path"` parameters.
 
 #### schema
 
 OpenAPISchemaObject | undefined
 
+The schema defining the type and constraints of the parameter value.
+
 #### deprecated
 
 boolean | undefined
+
+Marks the parameter as deprecated; clients should avoid using it.
 
 ### OpenAPIEncodingObject
 
@@ -902,21 +1157,31 @@ Members:
 
 string | undefined
 
+The MIME type to use for encoding a specific property (e.g., "application/json").
+
 #### headers
 
 Record<string, OpenAPIParameterObject> | undefined
+
+Additional headers to send alongside the encoded part, keyed by header name.
 
 #### style
 
 string | undefined
 
+The serialization style for the encoded value (e.g., "form", "spaceDelimited").
+
 #### explode
 
 boolean | undefined
 
+Whether arrays and objects should be exploded into separate query parameters.
+
 #### allowReserved
 
 boolean | undefined
+
+Whether reserved characters in the encoded value should be allowed without percent-encoding.
 
 ### OpenAPIMediaTypeObject
 
@@ -930,9 +1195,13 @@ Members:
 
 OpenAPISchemaObject | undefined
 
+The schema defining the structure and type of the media type's payload.
+
 #### encoding
 
 Record<string, OpenAPIEncodingObject> | undefined
+
+Encoding information for specific properties of a `multipart` or `application/x-www-form-urlencoded` request body.
 
 ### OpenAPIResponseObject
 
@@ -946,13 +1215,19 @@ Members:
 
 string
 
+A required human-readable description of the response, supporting CommonMark markdown.
+
 #### headers
 
 Record<string, OpenAPIParameterObject> | undefined
 
+HTTP headers returned with this response, keyed by header name.
+
 #### content
 
 Record<string, OpenAPIMediaTypeObject> | undefined
+
+The response body content, keyed by media type (e.g., "application/json").
 
 ### OpenAPIDocument
 
@@ -966,25 +1241,37 @@ Members:
 
 "3.2.0"
 
+The OpenAPI specification version this document conforms to. Must be "3.2.0".
+
 #### $self
 
 string | undefined
+
+An optional self-referencing URL for this document, used for tooling and resolution.
 
 #### info
 
 OpenAPIInfoObject
 
+Metadata about the API including title, version, and description.
+
 #### paths
 
 Record<string, OpenAPIPathItemObject>
+
+The available paths and their operations, keyed by path template (e.g., "/users/id").
 
 #### components
 
 { schemas: Record<string, OpenAPISchemaObject>; mediaTypes?: Record<string, OpenAPIMediaTypeObject> | undefined; }
 
+Reusable schema and media type definitions shared across the document.
+
 #### tags
 
 OpenAPITagObject[] | undefined
+
+A list of tags used to group operations, with optional descriptions.
 
 ### ASTWalker
 
@@ -1383,25 +1670,37 @@ Members:
 
 string
 
+Name of the command that produced this output (e.g., "check", "build").
+
 #### success
 
 boolean
+
+Whether the command completed successfully.
 
 #### data
 
 T
 
+Strongly-typed command-specific result payload.
+
 #### errors
 
 ForgeCliError[] | undefined
+
+Structured errors produced by the command, if any.
 
 #### warnings
 
 ForgeCliWarning[] | undefined
 
+Structured warnings produced by the command, if any.
+
 #### duration
 
 number | undefined
+
+Wall-clock duration of the command in milliseconds.
 
 ### ForgeCliError
 
@@ -1415,21 +1714,31 @@ Members:
 
 string
 
+Machine-readable error code (e.g., "E004").
+
 #### message
 
 string
+
+Human-readable error description.
 
 #### filePath
 
 string | undefined
 
+Absolute path to the source file containing the error, if applicable.
+
 #### line
 
 number | undefined
 
+1-based line number of the error, if applicable.
+
 #### column
 
 number | undefined
+
+0-based column number of the error, if applicable.
 
 ### ForgeCliWarning
 
@@ -1443,21 +1752,31 @@ Members:
 
 string
 
+Machine-readable warning code.
+
 #### message
 
 string
+
+Human-readable warning description.
 
 #### filePath
 
 string | undefined
 
+Absolute path to the source file containing the warning, if applicable.
+
 #### line
 
 number | undefined
 
+1-based line number of the warning, if applicable.
+
 #### column
 
 number | undefined
+
+0-based column number of the warning, if applicable.
 
 ### OutputFlags
 
@@ -1471,17 +1790,25 @@ Members:
 
 boolean | undefined
 
+Emit output as a LAFS JSON envelope instead of human-readable text.
+
 #### human
 
 boolean | undefined
+
+Emit output as formatted human-readable text.
 
 #### quiet
 
 boolean | undefined
 
+Suppress all output regardless of format.
+
 #### mvi
 
 string | undefined
+
+MVI verbosity level: "minimal", "standard", or "full".
 
 ### BuildArgs
 
@@ -1527,21 +1854,31 @@ Members:
 
 string
 
+Internal step name, e.g. "api" or "gen".
+
 #### status
 
 "success" | "skipped" | "failed"
+
+Outcome of this step.
 
 #### outputPath
 
 string | undefined
 
+Path to the primary output file produced by this step, if applicable.
+
 #### duration
 
 number | undefined
 
+Wall-clock duration of this step in milliseconds.
+
 #### errors
 
 ForgeCliError[] | undefined
+
+Errors produced by this step when status is "failed".
 
 ### BuildResult
 

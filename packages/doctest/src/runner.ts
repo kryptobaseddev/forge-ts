@@ -87,6 +87,14 @@ function parseTapOutput(output: string): {
  *
  * @param files - The virtual test files to write and run.
  * @returns A {@link RunResult} summarising the test outcome.
+ * @example
+ * ```typescript
+ * import { runTests } from "@forge-ts/doctest";
+ * const result = await runTests(virtualFiles);
+ * if (!result.success) {
+ *   console.error(`${result.failed} doctest(s) failed`);
+ * }
+ * ```
  * @public
  */
 export async function runTests(files: VirtualTestFile[]): Promise<RunResult> {

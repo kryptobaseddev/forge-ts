@@ -80,6 +80,12 @@ function buildApiTable(symbols: ForgeSymbol[], includeExamples: boolean): string
  * @param symbols - Symbols to summarise in the README.
  * @param options - Options controlling sync behaviour.
  * @returns `true` if the file was modified, `false` otherwise.
+ * @example
+ * ```typescript
+ * import { syncReadme } from "@forge-ts/gen";
+ * const modified = await syncReadme("/path/to/README.md", symbols);
+ * console.log(modified); // true if README was updated
+ * ```
  * @public
  */
 export async function syncReadme(

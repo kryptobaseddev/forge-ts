@@ -24,6 +24,15 @@ export interface ExtractedExample {
  *
  * @param symbols - The symbols produced by the core AST walker.
  * @returns A flat array of {@link ExtractedExample} objects, one per code block.
+ * @example
+ * ```typescript
+ * import { createWalker, loadConfig } from "@forge-ts/core";
+ * import { extractExamples } from "@forge-ts/doctest";
+ * const config = await loadConfig();
+ * const symbols = createWalker(config).walk();
+ * const examples = extractExamples(symbols);
+ * console.log(`Found ${examples.length} examples`);
+ * ```
  * @public
  */
 export function extractExamples(symbols: ForgeSymbol[]): ExtractedExample[] {

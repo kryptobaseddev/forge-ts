@@ -135,6 +135,12 @@ function encodeVlq(value: number): string {
  * @param examples - Examples to include in the generated file.
  * @param options - Output configuration.
  * @returns An array of {@link VirtualTestFile} objects (one per source file).
+ * @example
+ * ```typescript
+ * import { generateTestFiles } from "@forge-ts/doctest";
+ * const files = generateTestFiles(examples, { cacheDir: "/tmp/doctest-cache" });
+ * console.log(`Generated ${files.length} test file(s)`);
+ * ```
  * @public
  */
 export function generateTestFiles(

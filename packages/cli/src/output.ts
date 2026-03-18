@@ -23,37 +23,57 @@ import {
 
 /** Typed result from a forge-ts command. */
 export interface CommandOutput<T> {
+	/** Name of the command that produced this output (e.g., "check", "build"). */
 	operation: string;
+	/** Whether the command completed successfully. */
 	success: boolean;
+	/** Strongly-typed command-specific result payload. */
 	data: T;
+	/** Structured errors produced by the command, if any. */
 	errors?: ForgeCliError[];
+	/** Structured warnings produced by the command, if any. */
 	warnings?: ForgeCliWarning[];
+	/** Wall-clock duration of the command in milliseconds. */
 	duration?: number;
 }
 
 /** Structured error for CLI commands. */
 export interface ForgeCliError {
+	/** Machine-readable error code (e.g., "E004"). */
 	code: string;
+	/** Human-readable error description. */
 	message: string;
+	/** Absolute path to the source file containing the error, if applicable. */
 	filePath?: string;
+	/** 1-based line number of the error, if applicable. */
 	line?: number;
+	/** 0-based column number of the error, if applicable. */
 	column?: number;
 }
 
 /** Structured warning for CLI commands. */
 export interface ForgeCliWarning {
+	/** Machine-readable warning code. */
 	code: string;
+	/** Human-readable warning description. */
 	message: string;
+	/** Absolute path to the source file containing the warning, if applicable. */
 	filePath?: string;
+	/** 1-based line number of the warning, if applicable. */
 	line?: number;
+	/** 0-based column number of the warning, if applicable. */
 	column?: number;
 }
 
 /** Output format flags passed through from citty args. */
 export interface OutputFlags {
+	/** Emit output as a LAFS JSON envelope instead of human-readable text. */
 	json?: boolean;
+	/** Emit output as formatted human-readable text. */
 	human?: boolean;
+	/** Suppress all output regardless of format. */
 	quiet?: boolean;
+	/** MVI verbosity level: "minimal", "standard", or "full". */
 	mvi?: string;
 }
 
@@ -71,6 +91,11 @@ export interface OutputFlags {
  * @param output - Typed result from the command.
  * @param flags - Output format flags from citty args.
  * @param humanFormatter - Produces a human-readable string for TTY consumers.
+ * @example
+ * ```typescript
+ * import { emitResult } from "@forge-ts/cli/output";
+ * emitResult(output, { human: true }, (data) => `Done: ${data.summary.duration}ms`);
+ * ```
  * @internal
  */
 export function emitResult<T>(

@@ -219,6 +219,12 @@ function buildToc(groups: Map<ForgeSymbol["kind"], ForgeSymbol[]>): string {
  * @param config - The resolved {@link ForgeConfig}.
  * @param options - Rendering options.
  * @returns The generated Markdown string.
+ * @example
+ * ```typescript
+ * import { generateMarkdown } from "@forge-ts/gen";
+ * const md = generateMarkdown(symbols, config, { mdx: false });
+ * console.log(md.startsWith("# API Reference")); // true
+ * ```
  * @public
  */
 export function generateMarkdown(

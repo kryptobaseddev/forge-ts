@@ -32,10 +32,15 @@ export interface BuildArgs {
  * @public
  */
 export interface BuildStep {
+	/** Internal step name, e.g. "api" or "gen". */
 	name: string;
+	/** Outcome of this step. */
 	status: "success" | "skipped" | "failed";
+	/** Path to the primary output file produced by this step, if applicable. */
 	outputPath?: string;
+	/** Wall-clock duration of this step in milliseconds. */
 	duration?: number;
+	/** Errors produced by this step when status is "failed". */
 	errors?: ForgeCliError[];
 }
 
@@ -72,6 +77,12 @@ export interface BuildResult {
  *
  * @param args - CLI arguments for the build command.
  * @returns A typed `CommandOutput<BuildResult>`.
+ * @example
+ * ```typescript
+ * import { runBuild } from "@forge-ts/cli/commands/build";
+ * const output = await runBuild({ cwd: process.cwd() });
+ * console.log(output.success); // true if all steps succeeded
+ * ```
  * @public
  */
 export async function runBuild(args: BuildArgs): Promise<CommandOutput<BuildResult>> {

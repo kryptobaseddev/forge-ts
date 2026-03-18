@@ -22,6 +22,14 @@ Constructs a sensible default  rooted at `rootDir`.
 
 **Returns**: A fully-populated default configuration.
 
+**Examples**
+
+```typescript
+import { defaultConfig } from "@forge-ts/core";
+const config = defaultConfig("/path/to/project");
+console.log(config.enforce.enabled); // true
+```
+
 
 ### `loadConfig()`
 
@@ -37,6 +45,14 @@ Loads the forge-ts configuration for a project.  Resolution order: 1. `<rootDir>
 
 **Returns**: A fully-resolved .
 
+**Examples**
+
+```typescript
+import { loadConfig } from "@forge-ts/core";
+const config = await loadConfig("/path/to/project");
+// config is fully resolved with defaults
+```
+
 
 ### `resolveVisibility()`
 
@@ -51,6 +67,14 @@ Determines the visibility level of a symbol from its TSDoc release tags.  The pr
 - `tags` — The parsed `tags` map from `ForgeSymbol.documentation`.
 
 **Returns**: The resolved  value.
+
+**Examples**
+
+```typescript
+import { resolveVisibility } from "@forge-ts/core";
+const vis = resolveVisibility({ internal: [] });
+// vis === Visibility.Internal
+```
 
 
 ### `meetsVisibility()`
@@ -68,6 +92,14 @@ Returns whether `candidate` meets or exceeds the required minimum visibility.  "
 
 **Returns**: `true` if `candidate` is at least as visible as `minVisibility`.
 
+**Examples**
+
+```typescript
+import { meetsVisibility, Visibility } from "@forge-ts/core";
+meetsVisibility(Visibility.Public, Visibility.Public); // true
+meetsVisibility(Visibility.Internal, Visibility.Public); // false
+```
+
 
 ### `filterByVisibility()`
 
@@ -84,6 +116,13 @@ Filters an array of  objects to only include symbols whose visibility meets or e
 
 **Returns**: A new array containing only symbols that pass the visibility check.
 
+**Examples**
+
+```typescript
+import { filterByVisibility, Visibility } from "@forge-ts/core";
+const publicOnly = filterByVisibility(symbols, Visibility.Public);
+```
+
 
 ### `createWalker()`
 
@@ -98,6 +137,16 @@ Creates an  configured for the given forge config.  The walker uses the TypeScri
 - `config` — The resolved  for the project.
 
 **Returns**: An  instance whose `walk()` method performs the extraction.
+
+**Examples**
+
+```typescript
+import { loadConfig, createWalker } from "@forge-ts/core";
+const config = await loadConfig();
+const walker = createWalker(config);
+const symbols = walker.walk();
+console.log(`Found ${symbols.length} symbols`);
+```
 
 
 ## Interfaces
@@ -441,11 +490,15 @@ OpenAPI 3.2 schema object.
 "string" | "number" | "boolean" | "object" | "integer" | "array" | "null" | undefined
 ```
 
+The data type of the schema (e.g., "string", "number", "object", "array").
+
 #### `format`
 
 ```typescript
 string | undefined
 ```
+
+A format hint for the data type (e.g., "int32", "date-time", "email", "uuid").
 
 #### `description`
 
@@ -453,11 +506,15 @@ string | undefined
 string | undefined
 ```
 
+A human-readable description of the schema's purpose or constraints.
+
 #### `properties`
 
 ```typescript
 Record<string, OpenAPISchemaObject> | undefined
 ```
+
+Property definitions for object-type schemas. Maps each property name to its schema.
 
 #### `required`
 
@@ -465,11 +522,15 @@ Record<string, OpenAPISchemaObject> | undefined
 string[] | undefined
 ```
 
+List of property names that must be present on the object.
+
 #### `items`
 
 ```typescript
 OpenAPISchemaObject | undefined
 ```
+
+Schema definition for the elements of an array-type schema. Required when `type` is "array".
 
 #### `additionalProperties`
 
@@ -477,11 +538,15 @@ OpenAPISchemaObject | undefined
 boolean | OpenAPISchemaObject | undefined
 ```
 
+Controls whether additional properties are allowed (`true`/`false`) or defines their schema.
+
 #### `enum`
 
 ```typescript
 (string | number | boolean)[] | undefined
 ```
+
+Restricts the value to one of the listed constants.
 
 #### `oneOf`
 
@@ -489,11 +554,15 @@ boolean | OpenAPISchemaObject | undefined
 OpenAPISchemaObject[] | undefined
 ```
 
+Validates the value against exactly one of the listed sub-schemas.
+
 #### `allOf`
 
 ```typescript
 OpenAPISchemaObject[] | undefined
 ```
+
+Validates the value against all of the listed sub-schemas (intersection).
 
 #### `anyOf`
 
@@ -501,11 +570,15 @@ OpenAPISchemaObject[] | undefined
 OpenAPISchemaObject[] | undefined
 ```
 
+Validates the value against at least one of the listed sub-schemas.
+
 #### `nullable`
 
 ```typescript
 boolean | undefined
 ```
+
+Indicates that the value may be `null` in addition to its declared type.
 
 #### `deprecated`
 
@@ -513,17 +586,23 @@ boolean | undefined
 boolean | undefined
 ```
 
+Marks the schema as deprecated, signalling that it may be removed in a future version.
+
 #### `default`
 
 ```typescript
 string | number | boolean | null | undefined
 ```
 
+The default value to use when the property is absent.
+
 #### `$ref`
 
 ```typescript
 string | undefined
 ```
+
+A JSON Reference (`$ref`) pointing to another schema definition in the document.
 
 
 ### `OpenAPIInfoObject`
@@ -540,11 +619,15 @@ OpenAPI 3.2 info object.
 string
 ```
 
+The human-readable name of the API.
+
 #### `version`
 
 ```typescript
 string
 ```
+
+The version string for the API (e.g., "1.0.0").
 
 #### `description`
 
@@ -552,17 +635,23 @@ string
 string | undefined
 ```
 
+A detailed description of the API, supporting CommonMark markdown.
+
 #### `summary`
 
 ```typescript
 string | undefined
 ```
 
+A short summary of the API, intended for display in tooling.
+
 #### `license`
 
 ```typescript
 { name: string; url?: string | undefined; identifier?: string | undefined; } | undefined
 ```
+
+Licensing information for the exposed API, including name, URL, and SPDX identifier.
 
 
 ### `OpenAPITagObject`
@@ -579,11 +668,15 @@ OpenAPI 3.2 tag object.
 string
 ```
 
+The name of the tag, used to group operations in the document.
+
 #### `description`
 
 ```typescript
 string | undefined
 ```
+
+An optional description of the tag, supporting CommonMark markdown.
 
 
 ### `OpenAPIPathItemObject`
@@ -600,11 +693,15 @@ OpenAPI 3.2 path item object.
 string | undefined
 ```
 
+A short summary of the path item, intended for tooling display.
+
 #### `description`
 
 ```typescript
 string | undefined
 ```
+
+A detailed description of the path item, supporting CommonMark markdown.
 
 #### `get`
 
@@ -612,11 +709,15 @@ string | undefined
 OpenAPIOperationObject | undefined
 ```
 
+The operation definition for HTTP GET requests to this path.
+
 #### `post`
 
 ```typescript
 OpenAPIOperationObject | undefined
 ```
+
+The operation definition for HTTP POST requests to this path.
 
 #### `put`
 
@@ -624,11 +725,15 @@ OpenAPIOperationObject | undefined
 OpenAPIOperationObject | undefined
 ```
 
+The operation definition for HTTP PUT requests to this path.
+
 #### `delete`
 
 ```typescript
 OpenAPIOperationObject | undefined
 ```
+
+The operation definition for HTTP DELETE requests to this path.
 
 #### `patch`
 
@@ -636,11 +741,15 @@ OpenAPIOperationObject | undefined
 OpenAPIOperationObject | undefined
 ```
 
+The operation definition for HTTP PATCH requests to this path.
+
 #### `options`
 
 ```typescript
 OpenAPIOperationObject | undefined
 ```
+
+The operation definition for HTTP OPTIONS requests to this path.
 
 #### `head`
 
@@ -648,11 +757,15 @@ OpenAPIOperationObject | undefined
 OpenAPIOperationObject | undefined
 ```
 
+The operation definition for HTTP HEAD requests to this path.
+
 #### `trace`
 
 ```typescript
 OpenAPIOperationObject | undefined
 ```
+
+The operation definition for HTTP TRACE requests to this path.
 
 #### `query`
 
@@ -660,11 +773,15 @@ OpenAPIOperationObject | undefined
 OpenAPIOperationObject | undefined
 ```
 
+The operation definition for HTTP QUERY requests to this path (OpenAPI 3.2 extension).
+
 #### `additionalOperations`
 
 ```typescript
 Record<string, OpenAPIOperationObject> | undefined
 ```
+
+Additional non-standard HTTP method operations keyed by method name.
 
 
 ### `OpenAPIOperationObject`
@@ -681,11 +798,15 @@ OpenAPI 3.2 operation object.
 string | undefined
 ```
 
+A unique string identifier for the operation, used by tooling to reference it.
+
 #### `summary`
 
 ```typescript
 string | undefined
 ```
+
+A short, human-readable summary of what the operation does.
 
 #### `description`
 
@@ -693,11 +814,15 @@ string | undefined
 string | undefined
 ```
 
+A detailed description of the operation's behaviour, supporting CommonMark markdown.
+
 #### `tags`
 
 ```typescript
 string[] | undefined
 ```
+
+A list of tag names that logically group this operation in documentation and tooling.
 
 #### `parameters`
 
@@ -705,11 +830,15 @@ string[] | undefined
 OpenAPIParameterObject[] | undefined
 ```
 
+The list of parameters applicable to this operation.
+
 #### `responses`
 
 ```typescript
 Record<string, OpenAPIResponseObject> | undefined
 ```
+
+The possible responses returned by this operation, keyed by HTTP status code or "default".
 
 
 ### `OpenAPIParameterObject`
@@ -726,11 +855,15 @@ OpenAPI 3.2 parameter object.
 string
 ```
 
+The name of the parameter, case-sensitive.
+
 #### `in`
 
 ```typescript
 "query" | "header" | "path" | "cookie" | "querystring"
 ```
+
+The location of the parameter: path, query, header, cookie, or querystring.
 
 #### `description`
 
@@ -738,11 +871,15 @@ string
 string | undefined
 ```
 
+A human-readable description of the parameter's purpose, supporting CommonMark markdown.
+
 #### `required`
 
 ```typescript
 boolean | undefined
 ```
+
+Whether the parameter is mandatory. Required for `in: "path"` parameters.
 
 #### `schema`
 
@@ -750,11 +887,15 @@ boolean | undefined
 OpenAPISchemaObject | undefined
 ```
 
+The schema defining the type and constraints of the parameter value.
+
 #### `deprecated`
 
 ```typescript
 boolean | undefined
 ```
+
+Marks the parameter as deprecated; clients should avoid using it.
 
 
 ### `OpenAPIEncodingObject`
@@ -771,11 +912,15 @@ OpenAPI 3.2 encoding object.
 string | undefined
 ```
 
+The MIME type to use for encoding a specific property (e.g., "application/json").
+
 #### `headers`
 
 ```typescript
 Record<string, OpenAPIParameterObject> | undefined
 ```
+
+Additional headers to send alongside the encoded part, keyed by header name.
 
 #### `style`
 
@@ -783,17 +928,23 @@ Record<string, OpenAPIParameterObject> | undefined
 string | undefined
 ```
 
+The serialization style for the encoded value (e.g., "form", "spaceDelimited").
+
 #### `explode`
 
 ```typescript
 boolean | undefined
 ```
 
+Whether arrays and objects should be exploded into separate query parameters.
+
 #### `allowReserved`
 
 ```typescript
 boolean | undefined
 ```
+
+Whether reserved characters in the encoded value should be allowed without percent-encoding.
 
 
 ### `OpenAPIMediaTypeObject`
@@ -810,11 +961,15 @@ OpenAPI 3.2 media type object.
 OpenAPISchemaObject | undefined
 ```
 
+The schema defining the structure and type of the media type's payload.
+
 #### `encoding`
 
 ```typescript
 Record<string, OpenAPIEncodingObject> | undefined
 ```
+
+Encoding information for specific properties of a `multipart` or `application/x-www-form-urlencoded` request body.
 
 
 ### `OpenAPIResponseObject`
@@ -831,17 +986,23 @@ OpenAPI 3.2 response object.
 string
 ```
 
+A required human-readable description of the response, supporting CommonMark markdown.
+
 #### `headers`
 
 ```typescript
 Record<string, OpenAPIParameterObject> | undefined
 ```
 
+HTTP headers returned with this response, keyed by header name.
+
 #### `content`
 
 ```typescript
 Record<string, OpenAPIMediaTypeObject> | undefined
 ```
+
+The response body content, keyed by media type (e.g., "application/json").
 
 
 ### `OpenAPIDocument`
@@ -858,11 +1019,15 @@ Complete OpenAPI 3.2 document.
 "3.2.0"
 ```
 
+The OpenAPI specification version this document conforms to. Must be "3.2.0".
+
 #### `$self`
 
 ```typescript
 string | undefined
 ```
+
+An optional self-referencing URL for this document, used for tooling and resolution.
 
 #### `info`
 
@@ -870,11 +1035,15 @@ string | undefined
 OpenAPIInfoObject
 ```
 
+Metadata about the API including title, version, and description.
+
 #### `paths`
 
 ```typescript
 Record<string, OpenAPIPathItemObject>
 ```
+
+The available paths and their operations, keyed by path template (e.g., "/users/id").
 
 #### `components`
 
@@ -882,11 +1051,15 @@ Record<string, OpenAPIPathItemObject>
 { schemas: Record<string, OpenAPISchemaObject>; mediaTypes?: Record<string, OpenAPIMediaTypeObject> | undefined; }
 ```
 
+Reusable schema and media type definitions shared across the document.
+
 #### `tags`
 
 ```typescript
 OpenAPITagObject[] | undefined
 ```
+
+A list of tags used to group operations, with optional descriptions.
 
 
 ### `ASTWalker`

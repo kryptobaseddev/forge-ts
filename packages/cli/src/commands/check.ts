@@ -197,6 +197,12 @@ function buildCheckResult(
  *
  * @param args - CLI arguments for the check command.
  * @returns A typed `CommandOutput<CheckResult>`.
+ * @example
+ * ```typescript
+ * import { runCheck } from "@forge-ts/cli/commands/check";
+ * const output = await runCheck({ cwd: process.cwd() });
+ * console.log(output.data.summary.errors); // number of TSDoc errors found
+ * ```
  * @public
  */
 export async function runCheck(args: CheckArgs): Promise<CommandOutput<CheckResult>> {

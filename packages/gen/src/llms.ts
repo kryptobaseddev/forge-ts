@@ -21,6 +21,12 @@ function compactEntry(symbol: ForgeSymbol): string {
  * @param symbols - The symbols to include.
  * @param config - The resolved {@link ForgeConfig}.
  * @returns The generated `llms.txt` content as a string.
+ * @example
+ * ```typescript
+ * import { generateLlmsTxt } from "@forge-ts/gen";
+ * const txt = generateLlmsTxt(symbols, config);
+ * console.log(txt.startsWith("# ")); // true
+ * ```
  * @public
  */
 export function generateLlmsTxt(symbols: ForgeSymbol[], config: ForgeConfig): string {
@@ -155,6 +161,12 @@ function renderFullSymbol(symbol: ForgeSymbol, depth: number): string {
  * @param symbols - The symbols to include.
  * @param config - The resolved {@link ForgeConfig}.
  * @returns The generated `llms-full.txt` content as a string.
+ * @example
+ * ```typescript
+ * import { generateLlmsFullTxt } from "@forge-ts/gen";
+ * const fullTxt = generateLlmsFullTxt(symbols, config);
+ * console.log(fullTxt.includes("Full Context")); // true
+ * ```
  * @public
  */
 export function generateLlmsFullTxt(symbols: ForgeSymbol[], config: ForgeConfig): string {

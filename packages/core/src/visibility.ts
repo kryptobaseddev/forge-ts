@@ -11,6 +11,12 @@ import { type ForgeSymbol, Visibility } from "./types.js";
  *
  * @param tags - The parsed `tags` map from `ForgeSymbol.documentation`.
  * @returns The resolved {@link Visibility} value.
+ * @example
+ * ```typescript
+ * import { resolveVisibility } from "@forge-ts/core";
+ * const vis = resolveVisibility({ internal: [] });
+ * // vis === Visibility.Internal
+ * ```
  * @public
  */
 export function resolveVisibility(tags: Record<string, string[]> | undefined): Visibility {
@@ -44,6 +50,12 @@ const VISIBILITY_RANK: Record<Visibility, number> = {
  * @param candidate - The visibility of the symbol being tested.
  * @param minVisibility - The minimum visibility threshold.
  * @returns `true` if `candidate` is at least as visible as `minVisibility`.
+ * @example
+ * ```typescript
+ * import { meetsVisibility, Visibility } from "@forge-ts/core";
+ * meetsVisibility(Visibility.Public, Visibility.Public); // true
+ * meetsVisibility(Visibility.Internal, Visibility.Public); // false
+ * ```
  * @public
  */
 export function meetsVisibility(candidate: Visibility, minVisibility: Visibility): boolean {
@@ -57,6 +69,11 @@ export function meetsVisibility(candidate: Visibility, minVisibility: Visibility
  * @param symbols - The full list of symbols to filter.
  * @param minVisibility - The minimum visibility threshold to keep.
  * @returns A new array containing only symbols that pass the visibility check.
+ * @example
+ * ```typescript
+ * import { filterByVisibility, Visibility } from "@forge-ts/core";
+ * const publicOnly = filterByVisibility(symbols, Visibility.Public);
+ * ```
  * @public
  */
 export function filterByVisibility(

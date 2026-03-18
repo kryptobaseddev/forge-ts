@@ -121,6 +121,9 @@ function parseTSDoc(rawComment: string, startLine: number): ForgeSymbol["documen
 	if (comment.modifierTagSet.hasTag(StandardTags.alpha)) {
 		tags.alpha = [];
 	}
+	if (comment.modifierTagSet.hasTag(StandardTags.packageDocumentation)) {
+		tags.packageDocumentation = [];
+	}
 
 	// @deprecated
 	let deprecated: string | undefined;
@@ -366,6 +369,14 @@ function extractSymbolsFromFile(
  *
  * @param config - The resolved {@link ForgeConfig} for the project.
  * @returns An {@link ASTWalker} instance whose `walk()` method performs the extraction.
+ * @example
+ * ```typescript
+ * import { loadConfig, createWalker } from "@forge-ts/core";
+ * const config = await loadConfig();
+ * const walker = createWalker(config);
+ * const symbols = walker.walk();
+ * console.log(`Found ${symbols.length} symbols`);
+ * ```
  * @public
  */
 export function createWalker(config: ForgeConfig): ASTWalker {

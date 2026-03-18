@@ -45,6 +45,13 @@ Wraps a command result in a LAFS envelope and emits it.  - JSON mode: writes the
 | `flags` | — | Output format flags from citty args. |
 | `humanFormatter` | — | Produces a human-readable string for TTY consumers. |
 
+**Example**
+
+```typescript
+import { emitResult } from "@forge-ts/cli/output";
+emitResult(output, { human: true }, (data) => `Done: ${data.summary.duration}ms`);
+```
+
 ## resolveExitCode(output)
 
 Returns the LAFS-compliant exit code for a command output.
@@ -81,6 +88,14 @@ Runs the full build pipeline and returns a typed command output.
 
 **Returns** — A typed `CommandOutput<BuildResult>`.
 
+**Example**
+
+```typescript
+import { runBuild } from "@forge-ts/cli/commands/build";
+const output = await runBuild({ cwd: process.cwd() });
+console.log(output.success); // true if all steps succeeded
+```
+
 ## runCheck(args)
 
 Runs the TSDoc enforcement pass and returns a typed command output.
@@ -99,6 +114,14 @@ Runs the TSDoc enforcement pass and returns a typed command output.
 
 **Returns** — A typed `CommandOutput<CheckResult>`.
 
+**Example**
+
+```typescript
+import { runCheck } from "@forge-ts/cli/commands/check";
+const output = await runCheck({ cwd: process.cwd() });
+console.log(output.data.summary.errors); // number of TSDoc errors found
+```
+
 ## runTest(args)
 
 Runs the doctest pipeline and returns a typed command output.
@@ -116,3 +139,11 @@ Runs the doctest pipeline and returns a typed command output.
 | `args` | — | CLI arguments for the test command. |
 
 **Returns** — A typed `CommandOutput<TestResult>`.
+
+**Example**
+
+```typescript
+import { runTest } from "@forge-ts/cli/commands/test";
+const output = await runTest({ cwd: process.cwd() });
+console.log(output.data.summary.passed); // number of passing doctests
+```

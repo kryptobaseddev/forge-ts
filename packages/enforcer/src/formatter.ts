@@ -91,6 +91,15 @@ function renderDiagnostic(diag: Diagnostic, opts: FormatOptions): string {
  * @param result  - The result produced by {@link enforce}.
  * @param options - Rendering options (colours, verbosity).
  * @returns A formatted string ready to write to stdout or stderr.
+ * @example
+ * ```typescript
+ * import { enforce } from "@forge-ts/enforcer";
+ * import { formatResults } from "@forge-ts/enforcer";
+ * import { loadConfig } from "@forge-ts/core";
+ * const config = await loadConfig();
+ * const result = await enforce(config);
+ * console.log(formatResults(result, { colors: true, verbose: false }));
+ * ```
  * @public
  */
 export function formatResults(result: ForgeResult, options: FormatOptions): string {

@@ -157,6 +157,16 @@ function deprecatedWithoutReason(symbol: ForgeSymbol): boolean {
  *
  * @param config - The resolved {@link ForgeConfig} for the project.
  * @returns A {@link ForgeResult} describing which symbols passed or failed.
+ * @example
+ * ```typescript
+ * import { loadConfig } from "@forge-ts/core";
+ * import { enforce } from "@forge-ts/enforcer";
+ * const config = await loadConfig();
+ * const result = await enforce(config);
+ * if (!result.success) {
+ *   console.error(`${result.errors.length} errors found`);
+ * }
+ * ```
  * @public
  */
 export async function enforce(config: ForgeConfig): Promise<ForgeResult> {

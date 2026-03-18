@@ -259,6 +259,12 @@ function generateVitePressConfig(pages: DocPage[], _projectName: string): SSGCon
  * @param target - The SSG target.
  * @param projectName - The project name (used in config metadata).
  * @returns An array of {@link SSGConfigFile} objects ready to be written to disk.
+ * @example
+ * ```typescript
+ * import { generateSSGConfigs } from "@forge-ts/gen";
+ * const configs = generateSSGConfigs(pages, "vitepress", "my-project");
+ * console.log(configs[0].path); // ".vitepress/sidebar.json"
+ * ```
  * @public
  */
 export function generateSSGConfigs(

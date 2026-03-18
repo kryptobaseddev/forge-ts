@@ -5,7 +5,6 @@
  * generates virtual `node:test` test files, and executes them.
  *
  * @packageDocumentation
- * @public
  */
 
 export { type ExtractedExample, extractExamples } from "./extractor.js";
@@ -26,6 +25,17 @@ import { runTests } from "./runner.js";
  *
  * @param config - The resolved {@link ForgeConfig} for the project.
  * @returns A {@link ForgeResult} with success/failure and any diagnostics.
+ * @example
+ * ```typescript
+ * import { loadConfig } from "@forge-ts/core";
+ * import { doctest } from "@forge-ts/doctest";
+ * const config = await loadConfig();
+ * const result = await doctest(config);
+ * if (!result.success) {
+ *   console.error(`${result.errors.length} doctest failure(s)`);
+ * }
+ * ```
+ * @packageDocumentation
  * @public
  */
 export async function doctest(config: ForgeConfig): Promise<ForgeResult> {

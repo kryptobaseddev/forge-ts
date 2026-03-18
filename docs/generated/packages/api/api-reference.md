@@ -22,6 +22,14 @@ Maps a TypeScript type signature string to an OpenAPI 3.2 schema object.  Handle
 
 **Returns**: An OpenAPI schema object.
 
+**Examples**
+
+```typescript
+import { signatureToSchema } from "@forge-ts/api";
+const schema = signatureToSchema("string[]");
+// { type: "array", items: { type: "string" } }
+```
+
 
 ### `extractSDKTypes()`
 
@@ -36,6 +44,14 @@ Extracts SDK-relevant types (interfaces, type aliases, classes, enums) from a li
 - `symbols` — The symbols produced by the core AST walker.
 
 **Returns**: An array of  objects for public-facing type definitions.
+
+**Examples**
+
+```typescript
+import { extractSDKTypes } from "@forge-ts/api";
+const sdkTypes = extractSDKTypes(symbols);
+console.log(sdkTypes.length); // number of public SDK types
+```
 
 
 ### `generateOpenAPISpec()`
@@ -53,6 +69,15 @@ Generates a production-quality OpenAPI 3.2 document from the extracted SDK types
 
 **Returns**: An  object.
 
+**Examples**
+
+```typescript
+import { generateOpenAPISpec } from "@forge-ts/api";
+import { extractSDKTypes } from "@forge-ts/api";
+const spec = generateOpenAPISpec(config, extractSDKTypes(symbols));
+console.log(spec.openapi); // "3.2.0"
+```
+
 
 ### `buildReference()`
 
@@ -68,6 +93,14 @@ Builds a structured API reference from a list of exported symbols.  Unlike the m
 
 **Returns**: An array of  objects sorted by name.
 
+**Examples**
+
+```typescript
+import { buildReference } from "@forge-ts/api";
+const entries = buildReference(symbols);
+console.log(entries[0].name); // first symbol name, alphabetically
+```
+
 
 ### `generateApi()`
 
@@ -82,6 +115,14 @@ Runs the API generation pipeline: walk → extract → generate → write.
 - `config` — The resolved  for the project.
 
 **Returns**: A  with success/failure and any diagnostics.
+
+**Examples**
+
+```typescript
+import { generateApi } from "@forge-ts/api";
+const result = await generateApi(config);
+console.log(result.success); // true if spec was written successfully
+```
 
 
 ## Interfaces

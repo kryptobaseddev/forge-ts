@@ -5,7 +5,6 @@
  * OpenAPI 3.2 document and a structured API reference.
  *
  * @packageDocumentation
- * @public
  */
 
 export { generateOpenAPISpec, type OpenAPIDocument } from "./openapi.js";
@@ -24,7 +23,14 @@ import { extractSDKTypes } from "./sdk-extractor.js";
  *
  * @param config - The resolved {@link ForgeConfig} for the project.
  * @returns A {@link ForgeResult} with success/failure and any diagnostics.
+ * @example
+ * ```typescript
+ * import { generateApi } from "@forge-ts/api";
+ * const result = await generateApi(config);
+ * console.log(result.success); // true if spec was written successfully
+ * ```
  * @public
+ * @packageDocumentation
  */
 export async function generateApi(config: ForgeConfig): Promise<ForgeResult> {
 	const start = Date.now();

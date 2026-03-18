@@ -99,21 +99,21 @@ OpenAPI 3.2 schema object.
 
 | Property | Type | Required | Description |
 |----------|------|----------|-------------|
-| `type` | `"string" \| "number" \| "boolean" \| "object" \| "integer" \| "array" \| "null" \| undefined` | No |  |
-| `format` | `string \| undefined` | No |  |
-| `description` | `string \| undefined` | No |  |
-| `properties` | `Record<string, OpenAPISchemaObject> \| undefined` | No |  |
-| `required` | `string[] \| undefined` | No |  |
-| `items` | `OpenAPISchemaObject \| undefined` | No |  |
-| `additionalProperties` | `boolean \| OpenAPISchemaObject \| undefined` | No |  |
-| `enum` | `(string \| number \| boolean)[] \| undefined` | No |  |
-| `oneOf` | `OpenAPISchemaObject[] \| undefined` | No |  |
-| `allOf` | `OpenAPISchemaObject[] \| undefined` | No |  |
-| `anyOf` | `OpenAPISchemaObject[] \| undefined` | No |  |
-| `nullable` | `boolean \| undefined` | No |  |
-| `deprecated` | `boolean \| undefined` | No |  |
-| `default` | `string \| number \| boolean \| null \| undefined` | No |  |
-| `$ref` | `string \| undefined` | No |  |
+| `type` | `"string" \| "number" \| "boolean" \| "object" \| "integer" \| "array" \| "null" \| undefined` | No | The data type of the schema (e.g., "string", "number", "object", "array"). |
+| `format` | `string \| undefined` | No | A format hint for the data type (e.g., "int32", "date-time", "email", "uuid"). |
+| `description` | `string \| undefined` | No | A human-readable description of the schema's purpose or constraints. |
+| `properties` | `Record<string, OpenAPISchemaObject> \| undefined` | No | Property definitions for object-type schemas. Maps each property name to its schema. |
+| `required` | `string[] \| undefined` | No | List of property names that must be present on the object. |
+| `items` | `OpenAPISchemaObject \| undefined` | No | Schema definition for the elements of an array-type schema. Required when `type` is "array". |
+| `additionalProperties` | `boolean \| OpenAPISchemaObject \| undefined` | No | Controls whether additional properties are allowed (`true`/`false`) or defines their schema. |
+| `enum` | `(string \| number \| boolean)[] \| undefined` | No | Restricts the value to one of the listed constants. |
+| `oneOf` | `OpenAPISchemaObject[] \| undefined` | No | Validates the value against exactly one of the listed sub-schemas. |
+| `allOf` | `OpenAPISchemaObject[] \| undefined` | No | Validates the value against all of the listed sub-schemas (intersection). |
+| `anyOf` | `OpenAPISchemaObject[] \| undefined` | No | Validates the value against at least one of the listed sub-schemas. |
+| `nullable` | `boolean \| undefined` | No | Indicates that the value may be `null` in addition to its declared type. |
+| `deprecated` | `boolean \| undefined` | No | Marks the schema as deprecated, signalling that it may be removed in a future version. |
+| `default` | `string \| number \| boolean \| null \| undefined` | No | The default value to use when the property is absent. |
+| `$ref` | `string \| undefined` | No | A JSON Reference (`$ref`) pointing to another schema definition in the document. |
 
 ## OpenAPIInfoObject
 
@@ -121,11 +121,11 @@ OpenAPI 3.2 info object.
 
 | Property | Type | Required | Description |
 |----------|------|----------|-------------|
-| `title` | `string` | Yes |  |
-| `version` | `string` | Yes |  |
-| `description` | `string \| undefined` | No |  |
-| `summary` | `string \| undefined` | No |  |
-| `license` | `{ name: string; url?: string \| undefined; identifier?: string \| undefined; } \| undefined` | No |  |
+| `title` | `string` | Yes | The human-readable name of the API. |
+| `version` | `string` | Yes | The version string for the API (e.g., "1.0.0"). |
+| `description` | `string \| undefined` | No | A detailed description of the API, supporting CommonMark markdown. |
+| `summary` | `string \| undefined` | No | A short summary of the API, intended for display in tooling. |
+| `license` | `{ name: string; url?: string \| undefined; identifier?: string \| undefined; } \| undefined` | No | Licensing information for the exposed API, including name, URL, and SPDX identifier. |
 
 ## OpenAPITagObject
 
@@ -133,8 +133,8 @@ OpenAPI 3.2 tag object.
 
 | Property | Type | Required | Description |
 |----------|------|----------|-------------|
-| `name` | `string` | Yes |  |
-| `description` | `string \| undefined` | No |  |
+| `name` | `string` | Yes | The name of the tag, used to group operations in the document. |
+| `description` | `string \| undefined` | No | An optional description of the tag, supporting CommonMark markdown. |
 
 ## OpenAPIPathItemObject
 
@@ -142,18 +142,18 @@ OpenAPI 3.2 path item object.
 
 | Property | Type | Required | Description |
 |----------|------|----------|-------------|
-| `summary` | `string \| undefined` | No |  |
-| `description` | `string \| undefined` | No |  |
-| `get` | `OpenAPIOperationObject \| undefined` | No |  |
-| `post` | `OpenAPIOperationObject \| undefined` | No |  |
-| `put` | `OpenAPIOperationObject \| undefined` | No |  |
-| `delete` | `OpenAPIOperationObject \| undefined` | No |  |
-| `patch` | `OpenAPIOperationObject \| undefined` | No |  |
-| `options` | `OpenAPIOperationObject \| undefined` | No |  |
-| `head` | `OpenAPIOperationObject \| undefined` | No |  |
-| `trace` | `OpenAPIOperationObject \| undefined` | No |  |
-| `query` | `OpenAPIOperationObject \| undefined` | No |  |
-| `additionalOperations` | `Record<string, OpenAPIOperationObject> \| undefined` | No |  |
+| `summary` | `string \| undefined` | No | A short summary of the path item, intended for tooling display. |
+| `description` | `string \| undefined` | No | A detailed description of the path item, supporting CommonMark markdown. |
+| `get` | `OpenAPIOperationObject \| undefined` | No | The operation definition for HTTP GET requests to this path. |
+| `post` | `OpenAPIOperationObject \| undefined` | No | The operation definition for HTTP POST requests to this path. |
+| `put` | `OpenAPIOperationObject \| undefined` | No | The operation definition for HTTP PUT requests to this path. |
+| `delete` | `OpenAPIOperationObject \| undefined` | No | The operation definition for HTTP DELETE requests to this path. |
+| `patch` | `OpenAPIOperationObject \| undefined` | No | The operation definition for HTTP PATCH requests to this path. |
+| `options` | `OpenAPIOperationObject \| undefined` | No | The operation definition for HTTP OPTIONS requests to this path. |
+| `head` | `OpenAPIOperationObject \| undefined` | No | The operation definition for HTTP HEAD requests to this path. |
+| `trace` | `OpenAPIOperationObject \| undefined` | No | The operation definition for HTTP TRACE requests to this path. |
+| `query` | `OpenAPIOperationObject \| undefined` | No | The operation definition for HTTP QUERY requests to this path (OpenAPI 3.2 extension). |
+| `additionalOperations` | `Record<string, OpenAPIOperationObject> \| undefined` | No | Additional non-standard HTTP method operations keyed by method name. |
 
 ## OpenAPIOperationObject
 
@@ -161,12 +161,12 @@ OpenAPI 3.2 operation object.
 
 | Property | Type | Required | Description |
 |----------|------|----------|-------------|
-| `operationId` | `string \| undefined` | No |  |
-| `summary` | `string \| undefined` | No |  |
-| `description` | `string \| undefined` | No |  |
-| `tags` | `string[] \| undefined` | No |  |
-| `parameters` | `OpenAPIParameterObject[] \| undefined` | No |  |
-| `responses` | `Record<string, OpenAPIResponseObject> \| undefined` | No |  |
+| `operationId` | `string \| undefined` | No | A unique string identifier for the operation, used by tooling to reference it. |
+| `summary` | `string \| undefined` | No | A short, human-readable summary of what the operation does. |
+| `description` | `string \| undefined` | No | A detailed description of the operation's behaviour, supporting CommonMark markdown. |
+| `tags` | `string[] \| undefined` | No | A list of tag names that logically group this operation in documentation and tooling. |
+| `parameters` | `OpenAPIParameterObject[] \| undefined` | No | The list of parameters applicable to this operation. |
+| `responses` | `Record<string, OpenAPIResponseObject> \| undefined` | No | The possible responses returned by this operation, keyed by HTTP status code or "default". |
 
 ## OpenAPIParameterObject
 
@@ -174,12 +174,12 @@ OpenAPI 3.2 parameter object.
 
 | Property | Type | Required | Description |
 |----------|------|----------|-------------|
-| `name` | `string` | Yes |  |
-| `in` | `"query" \| "header" \| "path" \| "cookie" \| "querystring"` | Yes |  |
-| `description` | `string \| undefined` | No |  |
-| `required` | `boolean \| undefined` | No |  |
-| `schema` | `OpenAPISchemaObject \| undefined` | No |  |
-| `deprecated` | `boolean \| undefined` | No |  |
+| `name` | `string` | Yes | The name of the parameter, case-sensitive. |
+| `in` | `"query" \| "header" \| "path" \| "cookie" \| "querystring"` | Yes | The location of the parameter: path, query, header, cookie, or querystring. |
+| `description` | `string \| undefined` | No | A human-readable description of the parameter's purpose, supporting CommonMark markdown. |
+| `required` | `boolean \| undefined` | No | Whether the parameter is mandatory. Required for `in: "path"` parameters. |
+| `schema` | `OpenAPISchemaObject \| undefined` | No | The schema defining the type and constraints of the parameter value. |
+| `deprecated` | `boolean \| undefined` | No | Marks the parameter as deprecated; clients should avoid using it. |
 
 ## OpenAPIEncodingObject
 
@@ -187,11 +187,11 @@ OpenAPI 3.2 encoding object.
 
 | Property | Type | Required | Description |
 |----------|------|----------|-------------|
-| `contentType` | `string \| undefined` | No |  |
-| `headers` | `Record<string, OpenAPIParameterObject> \| undefined` | No |  |
-| `style` | `string \| undefined` | No |  |
-| `explode` | `boolean \| undefined` | No |  |
-| `allowReserved` | `boolean \| undefined` | No |  |
+| `contentType` | `string \| undefined` | No | The MIME type to use for encoding a specific property (e.g., "application/json"). |
+| `headers` | `Record<string, OpenAPIParameterObject> \| undefined` | No | Additional headers to send alongside the encoded part, keyed by header name. |
+| `style` | `string \| undefined` | No | The serialization style for the encoded value (e.g., "form", "spaceDelimited"). |
+| `explode` | `boolean \| undefined` | No | Whether arrays and objects should be exploded into separate query parameters. |
+| `allowReserved` | `boolean \| undefined` | No | Whether reserved characters in the encoded value should be allowed without percent-encoding. |
 
 ## OpenAPIMediaTypeObject
 
@@ -199,8 +199,8 @@ OpenAPI 3.2 media type object.
 
 | Property | Type | Required | Description |
 |----------|------|----------|-------------|
-| `schema` | `OpenAPISchemaObject \| undefined` | No |  |
-| `encoding` | `Record<string, OpenAPIEncodingObject> \| undefined` | No |  |
+| `schema` | `OpenAPISchemaObject \| undefined` | No | The schema defining the structure and type of the media type's payload. |
+| `encoding` | `Record<string, OpenAPIEncodingObject> \| undefined` | No | Encoding information for specific properties of a `multipart` or `application/x-www-form-urlencoded` request body. |
 
 ## OpenAPIResponseObject
 
@@ -208,9 +208,9 @@ OpenAPI 3.2 response object.
 
 | Property | Type | Required | Description |
 |----------|------|----------|-------------|
-| `description` | `string` | Yes |  |
-| `headers` | `Record<string, OpenAPIParameterObject> \| undefined` | No |  |
-| `content` | `Record<string, OpenAPIMediaTypeObject> \| undefined` | No |  |
+| `description` | `string` | Yes | A required human-readable description of the response, supporting CommonMark markdown. |
+| `headers` | `Record<string, OpenAPIParameterObject> \| undefined` | No | HTTP headers returned with this response, keyed by header name. |
+| `content` | `Record<string, OpenAPIMediaTypeObject> \| undefined` | No | The response body content, keyed by media type (e.g., "application/json"). |
 
 ## OpenAPIDocument
 
@@ -218,12 +218,12 @@ Complete OpenAPI 3.2 document.
 
 | Property | Type | Required | Description |
 |----------|------|----------|-------------|
-| `openapi` | `"3.2.0"` | Yes |  |
-| `$self` | `string \| undefined` | No |  |
-| `info` | `OpenAPIInfoObject` | Yes |  |
-| `paths` | `Record<string, OpenAPIPathItemObject>` | Yes |  |
-| `components` | `{ schemas: Record<string, OpenAPISchemaObject>; mediaTypes?: Record<string, OpenAPIMediaTypeObject> \| undefined; }` | No |  |
-| `tags` | `OpenAPITagObject[] \| undefined` | No |  |
+| `openapi` | `"3.2.0"` | Yes | The OpenAPI specification version this document conforms to. Must be "3.2.0". |
+| `$self` | `string \| undefined` | No | An optional self-referencing URL for this document, used for tooling and resolution. |
+| `info` | `OpenAPIInfoObject` | Yes | Metadata about the API including title, version, and description. |
+| `paths` | `Record<string, OpenAPIPathItemObject>` | Yes | The available paths and their operations, keyed by path template (e.g., "/users/id"). |
+| `components` | `{ schemas: Record<string, OpenAPISchemaObject>; mediaTypes?: Record<string, OpenAPIMediaTypeObject> \| undefined; }` | No | Reusable schema and media type definitions shared across the document. |
+| `tags` | `OpenAPITagObject[] \| undefined` | No | A list of tags used to group operations, with optional descriptions. |
 
 ## ASTWalker
 

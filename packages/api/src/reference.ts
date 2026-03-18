@@ -44,6 +44,12 @@ export interface ReferenceEntry {
  *
  * @param symbols - All symbols from the AST walker.
  * @returns An array of {@link ReferenceEntry} objects sorted by name.
+ * @example
+ * ```typescript
+ * import { buildReference } from "@forge-ts/api";
+ * const entries = buildReference(symbols);
+ * console.log(entries[0].name); // first symbol name, alphabetically
+ * ```
  * @public
  */
 export function buildReference(symbols: ForgeSymbol[]): ReferenceEntry[] {

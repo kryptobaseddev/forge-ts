@@ -119,6 +119,12 @@ function buildFrontmatterFields(
  * @param symbols - All extracted symbols.
  * @param rootDir - Absolute path to the project root.
  * @returns A map from package name to symbol list.
+ * @example
+ * ```typescript
+ * import { groupSymbolsByPackage } from "@forge-ts/gen";
+ * const grouped = groupSymbolsByPackage(symbols, "/path/to/project");
+ * console.log(grouped.has("core")); // true for monorepo
+ * ```
  * @public
  */
 export function groupSymbolsByPackage(
@@ -671,6 +677,13 @@ function renderGettingStartedPage(
  * @param config - The resolved {@link ForgeConfig}.
  * @param options - Site generation options.
  * @returns An array of {@link DocPage} objects ready to be written to disk.
+ * @example
+ * ```typescript
+ * import { generateDocSite, groupSymbolsByPackage } from "@forge-ts/gen";
+ * const grouped = groupSymbolsByPackage(symbols, config.rootDir);
+ * const pages = generateDocSite(grouped, config, { format: "markdown", projectName: "my-project" });
+ * console.log(pages.length > 0); // true
+ * ```
  * @public
  */
 export function generateDocSite(

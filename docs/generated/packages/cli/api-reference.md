@@ -38,6 +38,13 @@ Wraps a command result in a LAFS envelope and emits it.  - JSON mode: writes the
 - `flags` — Output format flags from citty args.
 - `humanFormatter` — Produces a human-readable string for TTY consumers.
 
+**Examples**
+
+```typescript
+import { emitResult } from "@forge-ts/cli/output";
+emitResult(output, { human: true }, (data) => `Done: ${data.summary.duration}ms`);
+```
+
 
 ### `resolveExitCode()`
 
@@ -68,6 +75,14 @@ Runs the full build pipeline and returns a typed command output.
 
 **Returns**: A typed `CommandOutput<BuildResult>`.
 
+**Examples**
+
+```typescript
+import { runBuild } from "@forge-ts/cli/commands/build";
+const output = await runBuild({ cwd: process.cwd() });
+console.log(output.success); // true if all steps succeeded
+```
+
 
 ### `runCheck()`
 
@@ -83,6 +98,14 @@ Runs the TSDoc enforcement pass and returns a typed command output.
 
 **Returns**: A typed `CommandOutput<CheckResult>`.
 
+**Examples**
+
+```typescript
+import { runCheck } from "@forge-ts/cli/commands/check";
+const output = await runCheck({ cwd: process.cwd() });
+console.log(output.data.summary.errors); // number of TSDoc errors found
+```
+
 
 ### `runTest()`
 
@@ -97,6 +120,14 @@ Runs the doctest pipeline and returns a typed command output.
 - `args` — CLI arguments for the test command.
 
 **Returns**: A typed `CommandOutput<TestResult>`.
+
+**Examples**
+
+```typescript
+import { runTest } from "@forge-ts/cli/commands/test";
+const output = await runTest({ cwd: process.cwd() });
+console.log(output.data.summary.passed); // number of passing doctests
+```
 
 
 ## Interfaces
@@ -170,11 +201,15 @@ Typed result from a forge-ts command.
 string
 ```
 
+Name of the command that produced this output (e.g., "check", "build").
+
 #### `success`
 
 ```typescript
 boolean
 ```
+
+Whether the command completed successfully.
 
 #### `data`
 
@@ -182,11 +217,15 @@ boolean
 T
 ```
 
+Strongly-typed command-specific result payload.
+
 #### `errors`
 
 ```typescript
 ForgeCliError[] | undefined
 ```
+
+Structured errors produced by the command, if any.
 
 #### `warnings`
 
@@ -194,11 +233,15 @@ ForgeCliError[] | undefined
 ForgeCliWarning[] | undefined
 ```
 
+Structured warnings produced by the command, if any.
+
 #### `duration`
 
 ```typescript
 number | undefined
 ```
+
+Wall-clock duration of the command in milliseconds.
 
 
 ### `ForgeCliError`
@@ -215,11 +258,15 @@ Structured error for CLI commands.
 string
 ```
 
+Machine-readable error code (e.g., "E004").
+
 #### `message`
 
 ```typescript
 string
 ```
+
+Human-readable error description.
 
 #### `filePath`
 
@@ -227,17 +274,23 @@ string
 string | undefined
 ```
 
+Absolute path to the source file containing the error, if applicable.
+
 #### `line`
 
 ```typescript
 number | undefined
 ```
 
+1-based line number of the error, if applicable.
+
 #### `column`
 
 ```typescript
 number | undefined
 ```
+
+0-based column number of the error, if applicable.
 
 
 ### `ForgeCliWarning`
@@ -254,11 +307,15 @@ Structured warning for CLI commands.
 string
 ```
 
+Machine-readable warning code.
+
 #### `message`
 
 ```typescript
 string
 ```
+
+Human-readable warning description.
 
 #### `filePath`
 
@@ -266,17 +323,23 @@ string
 string | undefined
 ```
 
+Absolute path to the source file containing the warning, if applicable.
+
 #### `line`
 
 ```typescript
 number | undefined
 ```
 
+1-based line number of the warning, if applicable.
+
 #### `column`
 
 ```typescript
 number | undefined
 ```
+
+0-based column number of the warning, if applicable.
 
 
 ### `OutputFlags`
@@ -293,11 +356,15 @@ Output format flags passed through from citty args.
 boolean | undefined
 ```
 
+Emit output as a LAFS JSON envelope instead of human-readable text.
+
 #### `human`
 
 ```typescript
 boolean | undefined
 ```
+
+Emit output as formatted human-readable text.
 
 #### `quiet`
 
@@ -305,11 +372,15 @@ boolean | undefined
 boolean | undefined
 ```
 
+Suppress all output regardless of format.
+
 #### `mvi`
 
 ```typescript
 string | undefined
 ```
+
+MVI verbosity level: "minimal", "standard", or "full".
 
 
 ### `BuildArgs`
@@ -367,11 +438,15 @@ A single step in the build pipeline.
 string
 ```
 
+Internal step name, e.g. "api" or "gen".
+
 #### `status`
 
 ```typescript
 "success" | "skipped" | "failed"
 ```
+
+Outcome of this step.
 
 #### `outputPath`
 
@@ -379,17 +454,23 @@ string
 string | undefined
 ```
 
+Path to the primary output file produced by this step, if applicable.
+
 #### `duration`
 
 ```typescript
 number | undefined
 ```
 
+Wall-clock duration of this step in milliseconds.
+
 #### `errors`
 
 ```typescript
 ForgeCliError[] | undefined
 ```
+
+Errors produced by this step when status is "failed".
 
 
 ### `BuildResult`

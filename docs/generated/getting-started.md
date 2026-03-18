@@ -16,12 +16,12 @@ npm install .
 
 ## Quick Start
 
-The following example demonstrates `add` from the `.` package.
+The following example demonstrates `defaultConfig` from the `core` package.
 
-```ts
-import { add } from "./math.js";
-const result = add(1, 2);
-// => 3
+```typescript
+import { defaultConfig } from "@forge-ts/core";
+const config = defaultConfig("/path/to/project");
+console.log(config.enforce.enabled); // true
 ```
 
 ## Next Steps

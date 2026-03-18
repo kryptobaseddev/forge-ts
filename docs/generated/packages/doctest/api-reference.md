@@ -22,6 +22,17 @@ Extracts all `@example` blocks from a list of  objects.
 
 **Returns**: A flat array of  objects, one per code block.
 
+**Examples**
+
+```typescript
+import { createWalker, loadConfig } from "@forge-ts/core";
+import { extractExamples } from "@forge-ts/doctest";
+const config = await loadConfig();
+const symbols = createWalker(config).walk();
+const examples = extractExamples(symbols);
+console.log(`Found ${examples.length} examples`);
+```
+
 
 ### `generateTestFiles()`
 
@@ -38,6 +49,14 @@ Generates a virtual test file for a set of extracted examples.  Each example is 
 
 **Returns**: An array of  objects (one per source file).
 
+**Examples**
+
+```typescript
+import { generateTestFiles } from "@forge-ts/doctest";
+const files = generateTestFiles(examples, { cacheDir: "/tmp/doctest-cache" });
+console.log(`Generated ${files.length} test file(s)`);
+```
+
 
 ### `runTests()`
 
@@ -53,6 +72,16 @@ Writes virtual test files to disk and executes them with Node 24 native TypeScri
 
 **Returns**: A  summarising the test outcome.
 
+**Examples**
+
+```typescript
+import { runTests } from "@forge-ts/doctest";
+const result = await runTests(virtualFiles);
+if (!result.success) {
+  console.error(`${result.failed} doctest(s) failed`);
+}
+```
+
 
 ### `doctest()`
 
@@ -67,6 +96,18 @@ Runs the full doctest pipeline: extract → generate → run.
 - `config` — The resolved  for the project.
 
 **Returns**: A  with success/failure and any diagnostics.
+
+**Examples**
+
+```typescript
+import { loadConfig } from "@forge-ts/core";
+import { doctest } from "@forge-ts/doctest";
+const config = await loadConfig();
+const result = await doctest(config);
+if (!result.success) {
+  console.error(`${result.errors.length} doctest failure(s)`);
+}
+```
 
 
 ## Interfaces

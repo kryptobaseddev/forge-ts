@@ -50,6 +50,12 @@ export interface SDKType {
  *
  * @param symbols - The symbols produced by the core AST walker.
  * @returns An array of {@link SDKType} objects for public-facing type definitions.
+ * @example
+ * ```typescript
+ * import { extractSDKTypes } from "@forge-ts/api";
+ * const sdkTypes = extractSDKTypes(symbols);
+ * console.log(sdkTypes.length); // number of public SDK types
+ * ```
  * @public
  */
 export function extractSDKTypes(symbols: ForgeSymbol[]): SDKType[] {

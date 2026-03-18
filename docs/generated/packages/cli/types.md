@@ -26,12 +26,12 @@ Typed result from a forge-ts command.
 
 | Property | Type | Required | Description |
 |----------|------|----------|-------------|
-| `operation` | `string` | Yes |  |
-| `success` | `boolean` | Yes |  |
-| `data` | `T` | Yes |  |
-| `errors` | `ForgeCliError[] \| undefined` | No |  |
-| `warnings` | `ForgeCliWarning[] \| undefined` | No |  |
-| `duration` | `number \| undefined` | No |  |
+| `operation` | `string` | Yes | Name of the command that produced this output (e.g., "check", "build"). |
+| `success` | `boolean` | Yes | Whether the command completed successfully. |
+| `data` | `T` | Yes | Strongly-typed command-specific result payload. |
+| `errors` | `ForgeCliError[] \| undefined` | No | Structured errors produced by the command, if any. |
+| `warnings` | `ForgeCliWarning[] \| undefined` | No | Structured warnings produced by the command, if any. |
+| `duration` | `number \| undefined` | No | Wall-clock duration of the command in milliseconds. |
 
 ## ForgeCliError
 
@@ -39,11 +39,11 @@ Structured error for CLI commands.
 
 | Property | Type | Required | Description |
 |----------|------|----------|-------------|
-| `code` | `string` | Yes |  |
-| `message` | `string` | Yes |  |
-| `filePath` | `string \| undefined` | No |  |
-| `line` | `number \| undefined` | No |  |
-| `column` | `number \| undefined` | No |  |
+| `code` | `string` | Yes | Machine-readable error code (e.g., "E004"). |
+| `message` | `string` | Yes | Human-readable error description. |
+| `filePath` | `string \| undefined` | No | Absolute path to the source file containing the error, if applicable. |
+| `line` | `number \| undefined` | No | 1-based line number of the error, if applicable. |
+| `column` | `number \| undefined` | No | 0-based column number of the error, if applicable. |
 
 ## ForgeCliWarning
 
@@ -51,11 +51,11 @@ Structured warning for CLI commands.
 
 | Property | Type | Required | Description |
 |----------|------|----------|-------------|
-| `code` | `string` | Yes |  |
-| `message` | `string` | Yes |  |
-| `filePath` | `string \| undefined` | No |  |
-| `line` | `number \| undefined` | No |  |
-| `column` | `number \| undefined` | No |  |
+| `code` | `string` | Yes | Machine-readable warning code. |
+| `message` | `string` | Yes | Human-readable warning description. |
+| `filePath` | `string \| undefined` | No | Absolute path to the source file containing the warning, if applicable. |
+| `line` | `number \| undefined` | No | 1-based line number of the warning, if applicable. |
+| `column` | `number \| undefined` | No | 0-based column number of the warning, if applicable. |
 
 ## OutputFlags
 
@@ -63,10 +63,10 @@ Output format flags passed through from citty args.
 
 | Property | Type | Required | Description |
 |----------|------|----------|-------------|
-| `json` | `boolean \| undefined` | No |  |
-| `human` | `boolean \| undefined` | No |  |
-| `quiet` | `boolean \| undefined` | No |  |
-| `mvi` | `string \| undefined` | No |  |
+| `json` | `boolean \| undefined` | No | Emit output as a LAFS JSON envelope instead of human-readable text. |
+| `human` | `boolean \| undefined` | No | Emit output as formatted human-readable text. |
+| `quiet` | `boolean \| undefined` | No | Suppress all output regardless of format. |
+| `mvi` | `string \| undefined` | No | MVI verbosity level: "minimal", "standard", or "full". |
 
 ## BuildArgs
 
@@ -85,11 +85,11 @@ A single step in the build pipeline.
 
 | Property | Type | Required | Description |
 |----------|------|----------|-------------|
-| `name` | `string` | Yes |  |
-| `status` | `"success" \| "skipped" \| "failed"` | Yes |  |
-| `outputPath` | `string \| undefined` | No |  |
-| `duration` | `number \| undefined` | No |  |
-| `errors` | `ForgeCliError[] \| undefined` | No |  |
+| `name` | `string` | Yes | Internal step name, e.g. "api" or "gen". |
+| `status` | `"success" \| "skipped" \| "failed"` | Yes | Outcome of this step. |
+| `outputPath` | `string \| undefined` | No | Path to the primary output file produced by this step, if applicable. |
+| `duration` | `number \| undefined` | No | Wall-clock duration of this step in milliseconds. |
+| `errors` | `ForgeCliError[] \| undefined` | No | Errors produced by this step when status is "failed". |
 
 ## BuildResult
 

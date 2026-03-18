@@ -16,6 +16,12 @@ export type { OpenAPISchemaObject };
  * @param signature - A TypeScript type signature string, e.g. `"string"`, `"number[]"`,
  *   `"string | number"`, `"Record<string, boolean>"`.
  * @returns An OpenAPI schema object.
+ * @example
+ * ```typescript
+ * import { signatureToSchema } from "@forge-ts/api";
+ * const schema = signatureToSchema("string[]");
+ * // { type: "array", items: { type: "string" } }
+ * ```
  * @public
  */
 export function signatureToSchema(signature: string): OpenAPISchemaObject {

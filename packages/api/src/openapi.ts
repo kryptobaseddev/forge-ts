@@ -26,6 +26,13 @@ export type { OpenAPIDocument };
  * @param config - The resolved {@link ForgeConfig}.
  * @param sdkTypes - SDK types to include as component schemas.
  * @returns An {@link OpenAPIDocument} object.
+ * @example
+ * ```typescript
+ * import { generateOpenAPISpec } from "@forge-ts/api";
+ * import { extractSDKTypes } from "@forge-ts/api";
+ * const spec = generateOpenAPISpec(config, extractSDKTypes(symbols));
+ * console.log(spec.openapi); // "3.2.0"
+ * ```
  * @public
  */
 export function generateOpenAPISpec(config: ForgeConfig, sdkTypes: SDKType[]): OpenAPIDocument {

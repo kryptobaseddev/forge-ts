@@ -26,6 +26,18 @@ Runs the TSDoc enforcement pass against a project.  The enforcer walks all expor
 
 **Returns** — A  describing which symbols passed or failed.
 
+**Example**
+
+```typescript
+import { loadConfig } from "@forge-ts/core";
+import { enforce } from "@forge-ts/enforcer";
+const config = await loadConfig();
+const result = await enforce(config);
+if (!result.success) {
+  console.error(`${result.errors.length} errors found`);
+}
+```
+
 ## formatResults(result, options)
 
 Formats a  into a human-readable string suitable for printing to a terminal.  Diagnostics are grouped by source file.  Each file heading shows the relative-ish path, followed by indented error and warning lines.  A summary line is appended at the end.
@@ -44,3 +56,14 @@ Formats a  into a human-readable string suitable for printing to a terminal.  Di
 | `options` | — | Rendering options (colours, verbosity). |
 
 **Returns** — A formatted string ready to write to stdout or stderr.
+
+**Example**
+
+```typescript
+import { enforce } from "@forge-ts/enforcer";
+import { formatResults } from "@forge-ts/enforcer";
+import { loadConfig } from "@forge-ts/core";
+const config = await loadConfig();
+const result = await enforce(config);
+console.log(formatResults(result, { colors: true, verbose: false }));
+```

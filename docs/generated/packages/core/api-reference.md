@@ -210,7 +210,7 @@ number
 #### `documentation`
 
 ```typescript
-{ summary?: string | undefined; params?: { name: string; description: string; type?: string | undefined; }[] | undefined; returns?: { description: string; type?: string | undefined; } | undefined; throws?: { ...; }[] | undefined; examples?: { ...; }[] | undefined; tags?: Record<...> | undefined; deprecated?: string ...
+{ summary?: string | undefined; params?: { name: string; description: string; type?: string | undefined; }[] | undefined; returns?: { description: string; type?: string | undefined; } | undefined; ... 4 more ...; links?: { ...; }[] | undefined; } | undefined
 ```
 
 Parsed TSDoc documentation, if present.
@@ -238,6 +238,77 @@ boolean
 ```
 
 Whether this symbol is part of the public module exports.
+
+
+### `EnforceRules`
+
+```typescript
+any
+```
+
+Per-rule severity configuration for the TSDoc enforcer. Each key corresponds to one of the E001–E007 rule codes.
+
+#### `"require-summary"`
+
+```typescript
+RuleSeverity
+```
+
+E001: Exported symbol missing TSDoc summary.
+
+#### `"require-param"`
+
+```typescript
+RuleSeverity
+```
+
+E002: Function parameter missing
+
+**Parameters**
+
+- `` — tag.
+
+#### `"require-returns"`
+
+```typescript
+RuleSeverity
+```
+
+E003: Non-void function missing
+
+**Returns**: tag.
+
+#### `"require-example"`
+
+```typescript
+RuleSeverity
+```
+
+E004: Exported function missing
+
+#### `"require-package-doc"`
+
+```typescript
+RuleSeverity
+```
+
+E005: Entry point missing packageDocumentation.
+
+#### `"require-class-member-doc"`
+
+```typescript
+RuleSeverity
+```
+
+E006: Class member missing documentation.
+
+#### `"require-interface-member-doc"`
+
+```typescript
+RuleSeverity
+```
+
+E007: Interface/type member missing documentation.
 
 
 ### `ForgeConfig`
@@ -275,7 +346,7 @@ Output directory for generated files.
 #### `enforce`
 
 ```typescript
-{ enabled: boolean; minVisibility: Visibility; strict: boolean; }
+{ enabled: boolean; minVisibility: Visibility; strict: boolean; rules: EnforceRules; }
 ```
 
 Enforce TSDoc on all public exports.
@@ -1077,6 +1148,17 @@ The return type of .
 ```
 
 Walk all source files referenced by the configured tsconfig and return one  per exported declaration.
+
+
+## Types
+
+### `RuleSeverity`
+
+```typescript
+any
+```
+
+Severity level for an individual enforcement rule. - `"error"` — violation fails the build. - `"warn"`  — violation is reported but does not fail the build. - `"off"`   — rule is disabled entirely.
 
 
 ## Enums

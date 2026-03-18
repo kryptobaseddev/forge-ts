@@ -156,6 +156,18 @@ function parseTSDoc(rawComment: string, startLine: number): ForgeSymbol["documen
 		}
 	}
 
+	// @route blocks - format: "METHOD /path"
+	for (const block of comment.customBlocks) {
+		if (block.blockTag.tagName.toLowerCase() === "@route") {
+			const routeText = renderBlock(block).trim();
+			const match = routeText.match(/^(GET|POST|PUT|DELETE|PATCH|OPTIONS|HEAD)\s+(\S+)/i);
+			if (match) {
+				if (!tags.route) tags.route = [];
+				tags.route.push(`${match[1].toUpperCase()} ${match[2]}`);
+			}
+		}
+	}
+
 	// @example blocks
 	const examples = extractExamples(comment, startLine);
 

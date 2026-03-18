@@ -1,7 +1,7 @@
 # . - Full Context
 
 Root: .
-Generated: 2026-03-18T23:22:35.403Z
+Generated: 2026-03-18T23:56:23.631Z
 
 ## Functions
 
@@ -104,6 +104,19 @@ Example:
   const symbols = walker.walk();
   console.log(`Found ${symbols.length} symbols`);
 
+### calculate()
+
+(operation: string, a: number, b: number) => number
+
+Get a calculator result.   GET /calculate/operation
+
+Parameters:
+- operation: The math operation to perform.
+- a: First operand.
+- b: Second operand.
+
+Returns: The calculation result.
+
 ### add()
 
 (a: number, b: number) => number
@@ -181,20 +194,21 @@ Example:
 
 ### generateOpenAPISpec()
 
-(config: ForgeConfig, sdkTypes: SDKType[]) => OpenAPIDocument
+(config: ForgeConfig, sdkTypes: SDKType[], symbols?: ForgeSymbol[]) => OpenAPIDocument
 
 Generates a production-quality OpenAPI 3.2 document from the extracted SDK types.  The document is populated with: - An `info` block sourced from the config or reasonable defaults. - A `components.schemas` section with one schema per exported type. - `tags` derived from unique source file paths (grouping by file). - Visibility filtering: `@internal` symbols are never emitted.  HTTP paths are not yet emitted (`paths` is always `{}`); route extraction will be added in a future release.
 
 Parameters:
 - config: The resolved .
 - sdkTypes: SDK types to include as component schemas.
+- symbols: Raw symbols used to extract HTTP route paths from `@route` tags.
 
 Returns: An  object.
 
 Example:
   import { generateOpenAPISpec } from "@forge-ts/api";
   import { extractSDKTypes } from "@forge-ts/api";
-  const spec = generateOpenAPISpec(config, extractSDKTypes(symbols));
+  const spec = generateOpenAPISpec(config, extractSDKTypes(symbols), symbols);
   console.log(spec.openapi); // "3.2.0"
 
 ### buildReference()
@@ -423,6 +437,17 @@ Example:
   const output = await runBuild({ cwd: process.cwd() });
   console.log(output.success); // true if all steps succeeded
 
+### findDeprecatedUsages()
+
+(symbols: ForgeSymbol[]) => DeprecatedUsage[]
+
+Scans symbols for imports of deprecated exports from other packages.
+
+Parameters:
+- symbols: All symbols from the walker across the entire project.
+
+Returns: Array of deprecated usages found.
+
 ### enforce()
 
 (config: ForgeConfig) => Promise<ForgeResult>
@@ -617,7 +642,7 @@ number
 
 #### documentation
 
-{ summary?: string | undefined; params?: { name: string; description: string; type?: string | undefined; }[] | undefined; returns?: { description: string; type?: string | undefined; } | undefined; throws?: { ...; }[] | undefined; examples?: { ...; }[] | undefined; tags?: Record<...> | undefined; deprecated?: string ...
+{ summary?: string | undefined; params?: { name: string; description: string; type?: string | undefined; }[] | undefined; returns?: { description: string; type?: string | undefined; } | undefined; ... 4 more ...; links?: { ...; }[] | undefined; } | undefined
 
 Parsed TSDoc documentation, if present.
 
@@ -638,6 +663,61 @@ Child symbols (e.g., class members, enum values).
 boolean
 
 Whether this symbol is part of the public module exports.
+
+### EnforceRules
+
+any
+
+Per-rule severity configuration for the TSDoc enforcer. Each key corresponds to one of the E001–E007 rule codes.
+
+Members:
+
+#### "require-summary"
+
+RuleSeverity
+
+E001: Exported symbol missing TSDoc summary.
+
+#### "require-param"
+
+RuleSeverity
+
+E002: Function parameter missing
+
+Parameters:
+- : tag.
+
+#### "require-returns"
+
+RuleSeverity
+
+E003: Non-void function missing
+
+Returns: tag.
+
+#### "require-example"
+
+RuleSeverity
+
+E004: Exported function missing
+
+#### "require-package-doc"
+
+RuleSeverity
+
+E005: Entry point missing packageDocumentation.
+
+#### "require-class-member-doc"
+
+RuleSeverity
+
+E006: Class member missing documentation.
+
+#### "require-interface-member-doc"
+
+RuleSeverity
+
+E007: Interface/type member missing documentation.
 
 ### ForgeConfig
 
@@ -667,7 +747,7 @@ Output directory for generated files.
 
 #### enforce
 
-{ enabled: boolean; minVisibility: Visibility; strict: boolean; }
+{ enabled: boolean; minVisibility: Visibility; strict: boolean; rules: EnforceRules; }
 
 Enforce TSDoc on all public exports.
 
@@ -1912,6 +1992,44 @@ string[] | undefined
 
 Files written during the build — present at standard and full MVI levels.
 
+### DeprecatedUsage
+
+any
+
+A detected usage of a deprecated symbol.
+
+Members:
+
+#### deprecatedSymbol
+
+string
+
+The deprecated symbol being consumed.
+
+#### sourcePackage
+
+string
+
+The package that exports the deprecated symbol.
+
+#### consumingFile
+
+string
+
+The file importing the deprecated symbol.
+
+#### line
+
+number
+
+Line number of the import.
+
+#### deprecationMessage
+
+string
+
+The deprecation message.
+
 ### FormatOptions
 
 any
@@ -2325,6 +2443,12 @@ TestFailure[] | undefined
 Per-failure details — present at standard and full MVI levels.
 
 ## Types
+
+### RuleSeverity
+
+any
+
+Severity level for an individual enforcement rule. - `"error"` — violation fails the build. - `"warn"`  — violation is reported but does not fail the build. - `"off"`   — rule is disabled entirely.
 
 ### LegacyConfig
 

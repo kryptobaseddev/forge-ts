@@ -60,14 +60,14 @@ const sdkTypes = extractSDKTypes(symbols);
 console.log(sdkTypes.length); // number of public SDK types
 ```
 
-## generateOpenAPISpec(config, sdkTypes)
+## generateOpenAPISpec(config, sdkTypes, symbols)
 
 Generates a production-quality OpenAPI 3.2 document from the extracted SDK types.  The document is populated with: - An `info` block sourced from the config or reasonable defaults. - A `components.schemas` section with one schema per exported type. - `tags` derived from unique source file paths (grouping by file). - Visibility filtering: `@internal` symbols are never emitted.  HTTP paths are not yet emitted (`paths` is always `{}`); route extraction will be added in a future release.
 
 **Signature**
 
 ```typescript
-(config: ForgeConfig, sdkTypes: SDKType[]) => OpenAPIDocument
+(config: ForgeConfig, sdkTypes: SDKType[], symbols?: ForgeSymbol[]) => OpenAPIDocument
 ```
 
 **Parameters**
@@ -76,6 +76,7 @@ Generates a production-quality OpenAPI 3.2 document from the extracted SDK types
 |------|------|-------------|
 | `config` | — | The resolved . |
 | `sdkTypes` | — | SDK types to include as component schemas. |
+| `symbols` | — | Raw symbols used to extract HTTP route paths from `@route` tags. |
 
 **Returns** — An  object.
 
@@ -84,7 +85,7 @@ Generates a production-quality OpenAPI 3.2 document from the extracted SDK types
 ```typescript
 import { generateOpenAPISpec } from "@forge-ts/api";
 import { extractSDKTypes } from "@forge-ts/api";
-const spec = generateOpenAPISpec(config, extractSDKTypes(symbols));
+const spec = generateOpenAPISpec(config, extractSDKTypes(symbols), symbols);
 console.log(spec.openapi); // "3.2.0"
 ```
 

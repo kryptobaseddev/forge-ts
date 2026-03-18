@@ -1,7 +1,11 @@
 import type {
 	ForgeConfig,
+	ForgeSymbol,
 	OpenAPIDocument,
 	OpenAPIInfoObject,
+	OpenAPIOperationObject,
+	OpenAPIParameterObject,
+	OpenAPIPathItemObject,
 	OpenAPISchemaObject,
 } from "@forge-ts/core";
 import { Visibility } from "@forge-ts/core";
@@ -25,17 +29,22 @@ export type { OpenAPIDocument };
  *
  * @param config - The resolved {@link ForgeConfig}.
  * @param sdkTypes - SDK types to include as component schemas.
+ * @param symbols - Raw symbols used to extract HTTP route paths from `@route` tags.
  * @returns An {@link OpenAPIDocument} object.
  * @example
  * ```typescript
  * import { generateOpenAPISpec } from "@forge-ts/api";
  * import { extractSDKTypes } from "@forge-ts/api";
- * const spec = generateOpenAPISpec(config, extractSDKTypes(symbols));
+ * const spec = generateOpenAPISpec(config, extractSDKTypes(symbols), symbols);
  * console.log(spec.openapi); // "3.2.0"
  * ```
  * @public
  */
-export function generateOpenAPISpec(config: ForgeConfig, sdkTypes: SDKType[]): OpenAPIDocument {
+export function generateOpenAPISpec(
+	config: ForgeConfig,
+	sdkTypes: SDKType[],
+	symbols: ForgeSymbol[] = [],
+): OpenAPIDocument {
 	// Visibility filtering: never emit @internal or @private symbols.
 	const visibleTypes = sdkTypes.filter(
 		(t) => t.visibility !== Visibility.Internal && t.visibility !== Visibility.Private,
@@ -50,11 +59,13 @@ export function generateOpenAPISpec(config: ForgeConfig, sdkTypes: SDKType[]): O
 	const tagNames = deriveTagNames(visibleTypes);
 	const tags = tagNames.map((name) => ({ name }));
 
+	const paths = extractPaths(symbols);
+
 	return {
 		openapi: "3.2.0",
 		info: buildInfo(config),
 		...(tags.length > 0 ? { tags } : {}),
-		paths: {},
+		paths,
 		components: { schemas },
 	};
 }
@@ -226,6 +237,106 @@ function buildTypeAliasSchema(sdkType: SDKType): OpenAPISchemaObject {
 		equalsIndex !== -1 ? sdkType.signature.slice(equalsIndex + 1).trim() : sdkType.signature;
 
 	return signatureToSchema(rawType);
+}
+
+// ---------------------------------------------------------------------------
+// Path extraction
+// ---------------------------------------------------------------------------
+
+/**
+ * Builds OpenAPI path items from symbols that carry `@route` TSDoc tags.
+ *
+ * Each `@route` tag must be in the format `METHOD /path` (e.g. `GET /users/{id}`).
+ * Path template variables like `{id}` are emitted as required path parameters.
+ * Any `@param` entries not matched to a path variable become query parameters.
+ *
+ * @param symbols - All {@link ForgeSymbol} instances from the walker.
+ * @returns A map of path template strings to their OpenAPI path item objects.
+ * @internal
+ */
+function extractPaths(symbols: ForgeSymbol[]): Record<string, OpenAPIPathItemObject> {
+	const paths: Record<string, OpenAPIPathItemObject> = {};
+
+	for (const symbol of symbols) {
+		const routeTags: string[] = symbol.documentation?.tags?.route ?? [];
+		for (const routeTag of routeTags) {
+			const match = routeTag.match(
+				/^(GET|POST|PUT|DELETE|PATCH|OPTIONS|HEAD)\s+(\S+)/i,
+			);
+			if (!match) continue;
+
+			const method = match[1].toLowerCase() as
+				| "get"
+				| "post"
+				| "put"
+				| "delete"
+				| "patch"
+				| "options"
+				| "head";
+			const path = match[2];
+
+			if (!paths[path]) {
+				paths[path] = {};
+			}
+
+			const fileBasename =
+				symbol.filePath.split("/").pop()?.replace(/\.ts$/, "") ?? "default";
+
+			const operation: OpenAPIOperationObject = {
+				operationId: symbol.name,
+				summary: symbol.documentation?.summary,
+				description: symbol.documentation?.summary,
+				tags: [fileBasename],
+			};
+
+			// Extract path template variables like {id}
+			const pathParams = [...path.matchAll(/\{(\w+)\}/g)].map((m) => m[1]);
+			const parameters: OpenAPIParameterObject[] = [];
+
+			for (const paramName of pathParams) {
+				const paramDoc = symbol.documentation?.params?.find(
+					(p) => p.name === paramName,
+				);
+				parameters.push({
+					name: paramName,
+					in: "path",
+					required: true,
+					description: paramDoc?.description ?? `The ${paramName} parameter`,
+					schema: { type: "string" },
+				});
+			}
+
+			// Non-path @param entries become query parameters
+			const nonPathParams = (symbol.documentation?.params ?? []).filter(
+				(p) => !pathParams.includes(p.name),
+			);
+			for (const param of nonPathParams) {
+				parameters.push({
+					name: param.name,
+					in: "query",
+					description: param.description,
+					schema: { type: "string" },
+				});
+			}
+
+			if (parameters.length > 0) {
+				operation.parameters = parameters;
+			}
+
+			// @returns becomes the 200 response description
+			if (symbol.documentation?.returns) {
+				operation.responses = {
+					"200": {
+						description: symbol.documentation.returns.description,
+					},
+				};
+			}
+
+			paths[path][method] = operation;
+		}
+	}
+
+	return paths;
 }
 
 // ---------------------------------------------------------------------------

@@ -38,7 +38,7 @@ export async function generateApi(config: ForgeConfig): Promise<ForgeResult> {
 	const walker = createWalker(config);
 	const symbols = walker.walk();
 	const sdkTypes = extractSDKTypes(symbols);
-	const spec = generateOpenAPISpec(config, sdkTypes);
+	const spec = generateOpenAPISpec(config, sdkTypes, symbols);
 
 	await mkdir(dirname(config.api.openapiPath), { recursive: true });
 	await writeFile(config.api.openapiPath, JSON.stringify(spec, null, 2), "utf8");

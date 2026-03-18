@@ -13,6 +13,9 @@
       "name": "check"
     },
     {
+      "name": "deprecation-tracker"
+    },
+    {
       "name": "extractor"
     },
     {
@@ -157,6 +160,52 @@
           "signature",
           "children",
           "exported"
+        ]
+      },
+      "RuleSeverity": {
+        "description": "Severity level for an individual enforcement rule. - `\"error\"` — violation fails the build. - `\"warn\"`  — violation is reported but does not fail the build. - `\"off\"`   — rule is disabled entirely."
+      },
+      "EnforceRules": {
+        "description": "Per-rule severity configuration for the TSDoc enforcer. Each key corresponds to one of the E001–E007 rule codes.",
+        "type": "object",
+        "properties": {
+          "\"require-summary\"": {
+            "type": "object",
+            "description": "E001: Exported symbol missing TSDoc summary."
+          },
+          "\"require-param\"": {
+            "type": "object",
+            "description": "E002: Function parameter missing"
+          },
+          "\"require-returns\"": {
+            "type": "object",
+            "description": "E003: Non-void function missing"
+          },
+          "\"require-example\"": {
+            "type": "object",
+            "description": "E004: Exported function missing"
+          },
+          "\"require-package-doc\"": {
+            "type": "object",
+            "description": "E005: Entry point missing packageDocumentation."
+          },
+          "\"require-class-member-doc\"": {
+            "type": "object",
+            "description": "E006: Class member missing documentation."
+          },
+          "\"require-interface-member-doc\"": {
+            "type": "object",
+            "description": "E007: Interface/type member missing documentation."
+          }
+        },
+        "required": [
+          "\"require-summary\"",
+          "\"require-param\"",
+          "\"require-returns\"",
+          "\"require-example\"",
+          "\"require-package-doc\"",
+          "\"require-class-member-doc\"",
+          "\"require-interface-member-doc\""
         ]
       },
       "ForgeConfig": {
@@ -1434,6 +1483,39 @@
           "summary",
           "steps",
           "generatedFiles"
+        ]
+      },
+      "DeprecatedUsage": {
+        "description": "A detected usage of a deprecated symbol.",
+        "type": "object",
+        "properties": {
+          "deprecatedSymbol": {
+            "type": "string",
+            "description": "The deprecated symbol being consumed."
+          },
+          "sourcePackage": {
+            "type": "string",
+            "description": "The package that exports the deprecated symbol."
+          },
+          "consumingFile": {
+            "type": "string",
+            "description": "The file importing the deprecated symbol."
+          },
+          "line": {
+            "type": "number",
+            "description": "Line number of the import."
+          },
+          "deprecationMessage": {
+            "type": "string",
+            "description": "The deprecation message."
+          }
+        },
+        "required": [
+          "deprecatedSymbol",
+          "sourcePackage",
+          "consumingFile",
+          "line",
+          "deprecationMessage"
         ]
       },
       "FormatOptions": {

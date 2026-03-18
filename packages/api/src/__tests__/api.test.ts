@@ -179,6 +179,189 @@ describe("generateOpenAPISpec", () => {
 });
 
 // ---------------------------------------------------------------------------
+// generateOpenAPISpec — route / path extraction
+// ---------------------------------------------------------------------------
+
+describe("generateOpenAPISpec — route extraction", () => {
+	it("produces empty paths when no symbols have @route tags", () => {
+		const config = makeConfig();
+		const spec = generateOpenAPISpec(config, [], []);
+		expect(spec.paths).toEqual({});
+	});
+
+	it("generates a path entry from a symbol with a @route tag", () => {
+		const config = makeConfig();
+		const symbol = makeSymbol({
+			name: "getUser",
+			kind: "function",
+			filePath: "/project/src/users.ts",
+			documentation: {
+				summary: "Get a user by ID.",
+				tags: { route: ["GET /users/{id}"], public: [] },
+				params: [{ name: "id", description: "The user's unique identifier." }],
+				returns: { description: "The user object." },
+			},
+		});
+
+		const spec = generateOpenAPISpec(config, [], [symbol]);
+
+		expect(spec.paths["/users/{id}"]).toBeDefined();
+		expect(spec.paths["/users/{id}"].get).toBeDefined();
+	});
+
+	it("sets operationId, summary, and description from symbol", () => {
+		const config = makeConfig();
+		const symbol = makeSymbol({
+			name: "getUser",
+			kind: "function",
+			filePath: "/project/src/users.ts",
+			documentation: {
+				summary: "Get a user by ID.",
+				tags: { route: ["GET /users/{id}"], public: [] },
+			},
+		});
+
+		const spec = generateOpenAPISpec(config, [], [symbol]);
+		const op = spec.paths["/users/{id}"].get;
+
+		expect(op?.operationId).toBe("getUser");
+		expect(op?.summary).toBe("Get a user by ID.");
+		expect(op?.description).toBe("Get a user by ID.");
+	});
+
+	it("extracts path parameters from {param} template variables", () => {
+		const config = makeConfig();
+		const symbol = makeSymbol({
+			name: "getUser",
+			kind: "function",
+			filePath: "/project/src/users.ts",
+			documentation: {
+				summary: "Get a user.",
+				tags: { route: ["GET /users/{id}"], public: [] },
+				params: [{ name: "id", description: "The user ID." }],
+			},
+		});
+
+		const spec = generateOpenAPISpec(config, [], [symbol]);
+		const params = spec.paths["/users/{id}"].get?.parameters ?? [];
+
+		expect(params).toHaveLength(1);
+		expect(params[0].name).toBe("id");
+		expect(params[0].in).toBe("path");
+		expect(params[0].required).toBe(true);
+		expect(params[0].description).toBe("The user ID.");
+	});
+
+	it("emits non-path @param entries as query parameters", () => {
+		const config = makeConfig();
+		const symbol = makeSymbol({
+			name: "calculate",
+			kind: "function",
+			filePath: "/project/src/api.ts",
+			documentation: {
+				summary: "Get a calculator result.",
+				tags: { route: ["GET /calculate/{operation}"], public: [] },
+				params: [
+					{ name: "operation", description: "The math operation." },
+					{ name: "a", description: "First operand." },
+					{ name: "b", description: "Second operand." },
+				],
+			},
+		});
+
+		const spec = generateOpenAPISpec(config, [], [symbol]);
+		const params = spec.paths["/calculate/{operation}"].get?.parameters ?? [];
+
+		const pathParam = params.find((p) => p.name === "operation");
+		const queryA = params.find((p) => p.name === "a");
+		const queryB = params.find((p) => p.name === "b");
+
+		expect(pathParam?.in).toBe("path");
+		expect(queryA?.in).toBe("query");
+		expect(queryB?.in).toBe("query");
+	});
+
+	it("maps @returns to a 200 response description", () => {
+		const config = makeConfig();
+		const symbol = makeSymbol({
+			name: "getUser",
+			kind: "function",
+			filePath: "/project/src/users.ts",
+			documentation: {
+				summary: "Get a user.",
+				tags: { route: ["GET /users/{id}"], public: [] },
+				returns: { description: "The user object." },
+			},
+		});
+
+		const spec = generateOpenAPISpec(config, [], [symbol]);
+		const responses = spec.paths["/users/{id}"].get?.responses ?? {};
+
+		expect(responses["200"]).toBeDefined();
+		expect(responses["200"].description).toBe("The user object.");
+	});
+
+	it("supports multiple routes on different symbols", () => {
+		const config = makeConfig();
+		const getUser = makeSymbol({
+			name: "getUser",
+			kind: "function",
+			filePath: "/project/src/users.ts",
+			documentation: {
+				summary: "Get a user.",
+				tags: { route: ["GET /users/{id}"], public: [] },
+			},
+		});
+		const createUser = makeSymbol({
+			name: "createUser",
+			kind: "function",
+			filePath: "/project/src/users.ts",
+			documentation: {
+				summary: "Create a user.",
+				tags: { route: ["POST /users"], public: [] },
+			},
+		});
+
+		const spec = generateOpenAPISpec(config, [], [getUser, createUser]);
+
+		expect(spec.paths["/users/{id}"]).toBeDefined();
+		expect(spec.paths["/users"]).toBeDefined();
+		expect(spec.paths["/users/{id}"].get?.operationId).toBe("getUser");
+		expect(spec.paths["/users"].post?.operationId).toBe("createUser");
+	});
+
+	it("uses file basename (without extension) as operation tag", () => {
+		const config = makeConfig();
+		const symbol = makeSymbol({
+			name: "listItems",
+			kind: "function",
+			filePath: "/project/src/inventory.ts",
+			documentation: {
+				summary: "List items.",
+				tags: { route: ["GET /items"], public: [] },
+			},
+		});
+
+		const spec = generateOpenAPISpec(config, [], [symbol]);
+		const opTags = spec.paths["/items"].get?.tags ?? [];
+
+		expect(opTags).toContain("inventory");
+	});
+
+	it("is backward compatible — symbols without @route leave paths empty", () => {
+		const config = makeConfig();
+		const symbol = makeSymbol({
+			name: "Helper",
+			kind: "function",
+			documentation: { summary: "A helper.", tags: { public: [] } },
+		});
+
+		const spec = generateOpenAPISpec(config, [], [symbol]);
+		expect(spec.paths).toEqual({});
+	});
+});
+
+// ---------------------------------------------------------------------------
 // signatureToSchema
 // ---------------------------------------------------------------------------
 

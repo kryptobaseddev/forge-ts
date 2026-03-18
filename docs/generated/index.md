@@ -9,11 +9,11 @@ outline: deep
 
 ### [core](./packages/core/index.md)
 
-23 exported symbol(s).
+25 exported symbol(s).
 
 ### [.](./packages/./index.md)
 
-9 exported symbol(s).
+10 exported symbol(s).
 
 ### [api](./packages/api/index.md)
 
@@ -29,7 +29,7 @@ outline: deep
 
 ### [enforcer](./packages/enforcer/index.md)
 
-3 exported symbol(s).
+5 exported symbol(s).
 
 ### [doctest](./packages/doctest/index.md)
 

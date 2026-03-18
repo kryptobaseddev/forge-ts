@@ -35,10 +35,32 @@ A single extracted and annotated symbol from the TypeScript AST.
 | `filePath` | `string` | Yes | Absolute path to the source file. |
 | `line` | `number` | Yes | 1-based line number of the declaration. |
 | `column` | `number` | Yes | 0-based column of the declaration. |
-| `documentation` | `{ summary?: string \| undefined; params?: { name: string; description: string; type?: string \| undefined; }[] \| undefined; returns?: { description: string; type?: string \| undefined; } \| undefined; throws?: { ...; }[] \| undefined; examples?: { ...; }[] \| undefined; tags?: Record<...> \| undefined; deprecated?: string ...` | No | Parsed TSDoc documentation, if present. |
+| `documentation` | `{ summary?: string \| undefined; params?: { name: string; description: string; type?: string \| undefined; }[] \| undefined; returns?: { description: string; type?: string \| undefined; } \| undefined; ... 4 more ...; links?: { ...; }[] \| undefined; } \| undefined` | No | Parsed TSDoc documentation, if present. |
 | `signature` | `string \| undefined` | No | Human-readable type signature of the symbol. |
 | `children` | `ForgeSymbol[] \| undefined` | No | Child symbols (e.g., class members, enum values). |
 | `exported` | `boolean` | Yes | Whether this symbol is part of the public module exports. |
+
+## RuleSeverity
+
+Severity level for an individual enforcement rule. - `"error"` — violation fails the build. - `"warn"`  — violation is reported but does not fail the build. - `"off"`   — rule is disabled entirely.
+
+```typescript
+any
+```
+
+## EnforceRules
+
+Per-rule severity configuration for the TSDoc enforcer. Each key corresponds to one of the E001–E007 rule codes.
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| `"require-summary"` | `RuleSeverity` | Yes | E001: Exported symbol missing TSDoc summary. |
+| `"require-param"` | `RuleSeverity` | Yes | E002: Function parameter missing |
+| `"require-returns"` | `RuleSeverity` | Yes | E003: Non-void function missing |
+| `"require-example"` | `RuleSeverity` | Yes | E004: Exported function missing |
+| `"require-package-doc"` | `RuleSeverity` | Yes | E005: Entry point missing packageDocumentation. |
+| `"require-class-member-doc"` | `RuleSeverity` | Yes | E006: Class member missing documentation. |
+| `"require-interface-member-doc"` | `RuleSeverity` | Yes | E007: Interface/type member missing documentation. |
 
 ## ForgeConfig
 
@@ -49,7 +71,7 @@ Full configuration for a forge-ts run. Loaded from forge-ts.config.ts or the "fo
 | `rootDir` | `string` | Yes | Root directory of the project. |
 | `tsconfig` | `string` | Yes | Path to the tsconfig.json to compile against. |
 | `outDir` | `string` | Yes | Output directory for generated files. |
-| `enforce` | `{ enabled: boolean; minVisibility: Visibility; strict: boolean; }` | Yes | Enforce TSDoc on all public exports. |
+| `enforce` | `{ enabled: boolean; minVisibility: Visibility; strict: boolean; rules: EnforceRules; }` | Yes | Enforce TSDoc on all public exports. |
 | `doctest` | `{ enabled: boolean; cacheDir: string; }` | Yes | DocTest configuration. |
 | `api` | `{ enabled: boolean; openapi: boolean; openapiPath: string; }` | Yes | API generation configuration. |
 | `gen` | `{ enabled: boolean; formats: ("markdown" \| "mdx")[]; llmsTxt: boolean; readmeSync: boolean; ssgTarget?: "docusaurus" \| "mintlify" \| "nextra" \| "vitepress" \| undefined; }` | No | Output generation configuration. |

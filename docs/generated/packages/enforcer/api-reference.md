@@ -8,6 +8,21 @@ description: Full API reference for the enforcer package
 
 ## Functions
 
+### `findDeprecatedUsages()`
+
+```typescript
+(symbols: ForgeSymbol[]) => DeprecatedUsage[]
+```
+
+Scans symbols for imports of deprecated exports from other packages.
+
+**Parameters**
+
+- `symbols` — All symbols from the walker across the entire project.
+
+**Returns**: Array of deprecated usages found.
+
+
 ### `enforce()`
 
 ```typescript
@@ -63,6 +78,55 @@ console.log(formatResults(result, { colors: true, verbose: false }));
 
 
 ## Interfaces
+
+### `DeprecatedUsage`
+
+```typescript
+any
+```
+
+A detected usage of a deprecated symbol.
+
+#### `deprecatedSymbol`
+
+```typescript
+string
+```
+
+The deprecated symbol being consumed.
+
+#### `sourcePackage`
+
+```typescript
+string
+```
+
+The package that exports the deprecated symbol.
+
+#### `consumingFile`
+
+```typescript
+string
+```
+
+The file importing the deprecated symbol.
+
+#### `line`
+
+```typescript
+number
+```
+
+Line number of the import.
+
+#### `deprecationMessage`
+
+```typescript
+string
+```
+
+The deprecation message.
+
 
 ### `FormatOptions`
 

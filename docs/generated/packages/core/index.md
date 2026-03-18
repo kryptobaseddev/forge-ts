@@ -12,6 +12,8 @@ description: core package overview
 |--------|------|-------------|
 | [`Visibility`](./api-reference.md#visibility) | enum | Visibility levels for exported symbols. Derived from TSDoc release tags (public, beta, internal). |
 | [`ForgeSymbol`](./api-reference.md#forgesymbol) | interface | A single extracted and annotated symbol from the TypeScript AST. |
+| [`RuleSeverity`](./api-reference.md#ruleseverity) | type | Severity level for an individual enforcement rule. - `"error"` — violation fails the build. - `"warn"`  — violation is reported but does not fail the build. - `"off"`   — rule is disabled entirely. |
+| [`EnforceRules`](./api-reference.md#enforcerules) | interface | Per-rule severity configuration for the TSDoc enforcer. Each key corresponds to one of the E001–E007 rule codes. |
 | [`ForgeConfig`](./api-reference.md#forgeconfig) | interface | Full configuration for a forge-ts run. Loaded from forge-ts.config.ts or the "forge-ts" key in package.json. |
 | [`ForgeResult`](./api-reference.md#forgeresult) | interface | The result of a forge-ts compilation pass. |
 | [`ForgeError`](./api-reference.md#forgeerror) | interface | A diagnostic error produced during a forge-ts run. |

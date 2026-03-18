@@ -8,6 +8,7 @@ import {
 	type ForgeWarning,
 	filterByVisibility,
 } from "@forge-ts/core";
+import { findDeprecatedUsages } from "./deprecation-tracker.js";
 
 // ---------------------------------------------------------------------------
 // Internal helpers
@@ -412,6 +413,23 @@ export async function enforce(config: ForgeConfig): Promise<ForgeResult> {
 				);
 			}
 		}
+	}
+
+	// W004 — Cross-package deprecated symbol usage
+	const deprecatedUsages = findDeprecatedUsages(allSymbols);
+	for (const usage of deprecatedUsages) {
+		emit(
+			"W004",
+			`Import of deprecated symbol "${usage.deprecatedSymbol}" from package "${usage.sourcePackage}": ${usage.deprecationMessage}`,
+			usage.consumingFile,
+			usage.line,
+			0,
+			{
+				suggestedFix: `Replace usage of "${usage.deprecatedSymbol}" with its recommended replacement.`,
+				symbolName: usage.deprecatedSymbol,
+				symbolKind: "variable",
+			},
+		);
 	}
 
 	const success = errors.length === 0;

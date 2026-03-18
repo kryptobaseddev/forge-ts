@@ -8,6 +8,26 @@ description: Functions and classes for the . package
 
 Functions and classes exported by this package.
 
+## calculate(operation, a, b)
+
+Get a calculator result.   GET /calculate/operation
+
+**Signature**
+
+```typescript
+(operation: string, a: number, b: number) => number
+```
+
+**Parameters**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `operation` | — | The math operation to perform. |
+| `a` | — | First operand. |
+| `b` | — | Second operand. |
+
+**Returns** — The calculation result.
+
 ## add(a, b)
 
 Adds two numbers together.

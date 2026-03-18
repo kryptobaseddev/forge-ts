@@ -6,6 +6,7 @@ import {
 	Visibility,
 } from "@forge-ts/core";
 import { describe, expect, it, vi } from "vitest";
+import { findDeprecatedUsages } from "../deprecation-tracker.js";
 import { enforce } from "../enforcer.js";
 
 // ---------------------------------------------------------------------------
@@ -923,5 +924,296 @@ describe("enforce — per-rule configuration", () => {
 		expect(e005Warn).toHaveLength(1);
 		// Should still succeed since there are no errors
 		expect(result.success).toBe(true);
+	});
+});
+
+// ---------------------------------------------------------------------------
+// findDeprecatedUsages unit tests
+// ---------------------------------------------------------------------------
+
+describe("findDeprecatedUsages — unit", () => {
+	it("returns empty array when no symbols are deprecated", () => {
+		const sym = makeSymbol({
+			name: "activeApi",
+			filePath: "/project/packages/core/src/api.ts",
+			exported: true,
+			documentation: { summary: "An active API." },
+		});
+		const result = findDeprecatedUsages([sym]);
+		expect(result).toHaveLength(0);
+	});
+
+	it("returns empty array when there are no links", () => {
+		const deprecated = makeSymbol({
+			name: "oldApi",
+			filePath: "/project/packages/core/src/old.ts",
+			exported: true,
+			documentation: { summary: "Old API.", deprecated: "Use newApi instead." },
+		});
+		const consumer = makeSymbol({
+			name: "consumer",
+			filePath: "/project/packages/cli/src/app.ts",
+			exported: true,
+			documentation: { summary: "Consumer." },
+		});
+		const result = findDeprecatedUsages([deprecated, consumer]);
+		expect(result).toHaveLength(0);
+	});
+
+	it("returns a usage when a cross-package link targets a deprecated symbol", () => {
+		const deprecated = makeSymbol({
+			name: "oldApi",
+			filePath: "/project/packages/core/src/old.ts",
+			exported: true,
+			documentation: { summary: "Old API.", deprecated: "Use newApi instead." },
+		});
+		const consumer = makeSymbol({
+			name: "consumer",
+			filePath: "/project/packages/cli/src/app.ts",
+			exported: true,
+			documentation: {
+				summary: "Consumer.",
+				links: [{ target: "oldApi", line: 5 }],
+			},
+		});
+		const result = findDeprecatedUsages([deprecated, consumer]);
+		expect(result).toHaveLength(1);
+		expect(result[0].deprecatedSymbol).toBe("oldApi");
+		expect(result[0].sourcePackage).toBe("core");
+		expect(result[0].consumingFile).toBe("/project/packages/cli/src/app.ts");
+		expect(result[0].line).toBe(5);
+		expect(result[0].deprecationMessage).toBe("Use newApi instead.");
+	});
+
+	it("does not flag a same-package link to a deprecated symbol", () => {
+		const deprecated = makeSymbol({
+			name: "oldHelper",
+			filePath: "/project/packages/core/src/old.ts",
+			exported: true,
+			documentation: { summary: "Old helper.", deprecated: "Use newHelper instead." },
+		});
+		const consumer = makeSymbol({
+			name: "wrapper",
+			filePath: "/project/packages/core/src/wrapper.ts",
+			exported: true,
+			documentation: {
+				summary: "Wrapper.",
+				links: [{ target: "oldHelper", line: 3 }],
+			},
+		});
+		const result = findDeprecatedUsages([deprecated, consumer]);
+		expect(result).toHaveLength(0);
+	});
+
+	it("does not flag a link that targets a non-deprecated symbol", () => {
+		const activeSymbol = makeSymbol({
+			name: "activeApi",
+			filePath: "/project/packages/core/src/api.ts",
+			exported: true,
+			documentation: { summary: "An active API." },
+		});
+		const consumer = makeSymbol({
+			name: "consumer",
+			filePath: "/project/packages/cli/src/app.ts",
+			exported: true,
+			documentation: {
+				summary: "Consumer.",
+				links: [{ target: "activeApi", line: 7 }],
+			},
+		});
+		const result = findDeprecatedUsages([activeSymbol, consumer]);
+		expect(result).toHaveLength(0);
+	});
+
+	it("does not flag a link from the same file as the deprecated symbol", () => {
+		const deprecated = makeSymbol({
+			name: "oldApi",
+			filePath: "/project/packages/core/src/old.ts",
+			exported: true,
+			documentation: { summary: "Old API.", deprecated: "Use newApi instead." },
+		});
+		const sameFile = makeSymbol({
+			name: "relatedDoc",
+			filePath: "/project/packages/core/src/old.ts",
+			exported: true,
+			documentation: {
+				summary: "Related doc in same file.",
+				links: [{ target: "oldApi", line: 2 }],
+			},
+		});
+		const result = findDeprecatedUsages([deprecated, sameFile]);
+		expect(result).toHaveLength(0);
+	});
+});
+
+// ---------------------------------------------------------------------------
+// W004 integration tests (via enforce)
+// ---------------------------------------------------------------------------
+
+describe("enforce — W004 cross-package deprecated symbol usage", () => {
+	it("emits no W004 when there are no deprecated symbols", async () => {
+		const sym = makeSymbol({
+			name: "activeApi",
+			filePath: "/project/packages/core/src/api.ts",
+			documentation: {
+				summary: "An active API.",
+				examples: [{ code: "activeApi();", language: "typescript", line: 5 }],
+			},
+		});
+		const result = await runEnforce([sym]);
+		const w004 = result.warnings.filter((w) => w.code === "W004");
+		expect(w004).toHaveLength(0);
+	});
+
+	it("emits no W004 for same-package reference to a deprecated symbol", async () => {
+		const deprecatedSymbol = makeSymbol({
+			name: "oldApi",
+			filePath: "/project/packages/core/src/old.ts",
+			documentation: {
+				summary: "Old API.",
+				deprecated: "Use newApi instead.",
+				examples: [{ code: "oldApi();", language: "typescript", line: 5 }],
+			},
+		});
+		const consumingSymbol = makeSymbol({
+			name: "consumer",
+			filePath: "/project/packages/core/src/wrapper.ts",
+			documentation: {
+				summary: "Uses the old API within same package.",
+				examples: [{ code: "consumer();", language: "typescript", line: 5 }],
+				links: [{ target: "oldApi", line: 3 }],
+			},
+		});
+		const result = await runEnforce([deprecatedSymbol, consumingSymbol]);
+		const w004 = result.warnings.filter((w) => w.code === "W004");
+		expect(w004).toHaveLength(0);
+	});
+
+	it("emits W004 for a cross-package reference to a deprecated symbol", async () => {
+		const deprecatedSymbol = makeSymbol({
+			name: "oldApi",
+			filePath: "/project/packages/core/src/old.ts",
+			documentation: {
+				summary: "Old API.",
+				deprecated: "Use newApi instead.",
+				examples: [{ code: "oldApi();", language: "typescript", line: 5 }],
+			},
+		});
+		const consumingSymbol = makeSymbol({
+			name: "consumer",
+			filePath: "/project/packages/cli/src/app.ts",
+			documentation: {
+				summary: "Uses the old API.",
+				examples: [{ code: "consumer();", language: "typescript", line: 5 }],
+				links: [{ target: "oldApi", line: 5 }],
+			},
+		});
+		const result = await runEnforce([deprecatedSymbol, consumingSymbol]);
+		const w004 = result.warnings.filter((w) => w.code === "W004");
+		expect(w004).toHaveLength(1);
+		expect(w004[0].message).toContain("oldApi");
+		expect(w004[0].message).toContain("core");
+		expect(w004[0].message).toContain("Use newApi instead.");
+	});
+
+	it("includes the deprecation message in the W004 warning", async () => {
+		const deprecatedSymbol = makeSymbol({
+			name: "legacyFn",
+			filePath: "/project/packages/core/src/legacy.ts",
+			documentation: {
+				summary: "Legacy function.",
+				deprecated: "Migrate to modernFn for better performance.",
+				examples: [{ code: "legacyFn();", language: "typescript", line: 5 }],
+			},
+		});
+		const consumingSymbol = makeSymbol({
+			name: "caller",
+			filePath: "/project/packages/cli/src/cmd.ts",
+			documentation: {
+				summary: "Calls the legacy function.",
+				examples: [{ code: "caller();", language: "typescript", line: 5 }],
+				links: [{ target: "legacyFn", line: 8 }],
+			},
+		});
+		const result = await runEnforce([deprecatedSymbol, consumingSymbol]);
+		const w004 = result.warnings.filter((w) => w.code === "W004");
+		expect(w004).toHaveLength(1);
+		expect(w004[0].message).toContain("Migrate to modernFn for better performance.");
+	});
+
+	it("W004 is a warning not an error, so success remains true", async () => {
+		const deprecatedSymbol = makeSymbol({
+			name: "oldApi",
+			filePath: "/project/packages/core/src/old.ts",
+			documentation: {
+				summary: "Old API.",
+				deprecated: "Use newApi instead.",
+				examples: [{ code: "oldApi();", language: "typescript", line: 5 }],
+			},
+		});
+		const consumingSymbol = makeSymbol({
+			name: "consumer",
+			filePath: "/project/packages/cli/src/app.ts",
+			documentation: {
+				summary: "Uses the old API.",
+				examples: [{ code: "consumer();", language: "typescript", line: 5 }],
+				links: [{ target: "oldApi", line: 5 }],
+			},
+		});
+		const result = await runEnforce([deprecatedSymbol, consumingSymbol]);
+		expect(result.success).toBe(true);
+		expect(result.errors.filter((e) => e.code === "W004")).toHaveLength(0);
+		expect(result.warnings.filter((w) => w.code === "W004")).toHaveLength(1);
+	});
+
+	it("W004 is promoted to an error in strict mode", async () => {
+		const deprecatedSymbol = makeSymbol({
+			name: "oldApi",
+			filePath: "/project/packages/core/src/old.ts",
+			documentation: {
+				summary: "Old API.",
+				deprecated: "Use newApi instead.",
+				examples: [{ code: "oldApi();", language: "typescript", line: 5 }],
+			},
+		});
+		const consumingSymbol = makeSymbol({
+			name: "consumer",
+			filePath: "/project/packages/cli/src/app.ts",
+			documentation: {
+				summary: "Uses the old API.",
+				examples: [{ code: "consumer();", language: "typescript", line: 5 }],
+				links: [{ target: "oldApi", line: 5 }],
+			},
+		});
+		const result = await runEnforce([deprecatedSymbol, consumingSymbol], { strict: true });
+		const w004AsError = result.errors.filter((e) => e.code === "W004");
+		expect(w004AsError).toHaveLength(1);
+		expect(result.warnings.filter((w) => w.code === "W004")).toHaveLength(0);
+	});
+
+	it("populates suggestedFix and symbolName on W004 warnings", async () => {
+		const deprecatedSymbol = makeSymbol({
+			name: "oldApi",
+			filePath: "/project/packages/core/src/old.ts",
+			documentation: {
+				summary: "Old API.",
+				deprecated: "Use newApi instead.",
+				examples: [{ code: "oldApi();", language: "typescript", line: 5 }],
+			},
+		});
+		const consumingSymbol = makeSymbol({
+			name: "consumer",
+			filePath: "/project/packages/cli/src/app.ts",
+			documentation: {
+				summary: "Uses the old API.",
+				examples: [{ code: "consumer();", language: "typescript", line: 5 }],
+				links: [{ target: "oldApi", line: 5 }],
+			},
+		});
+		const result = await runEnforce([deprecatedSymbol, consumingSymbol]);
+		const w004 = result.warnings.find((w) => w.code === "W004");
+		expect(w004?.suggestedFix).toBeDefined();
+		expect(w004?.suggestedFix).toContain("oldApi");
+		expect(w004?.symbolName).toBe("oldApi");
 	});
 });

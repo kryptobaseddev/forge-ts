@@ -8,6 +8,23 @@ description: Full API reference for the . package
 
 ## Functions
 
+### `calculate()`
+
+```typescript
+(operation: string, a: number, b: number) => number
+```
+
+Get a calculator result.   GET /calculate/operation
+
+**Parameters**
+
+- `operation` — The math operation to perform.
+- `a` — First operand.
+- `b` — Second operand.
+
+**Returns**: The calculation result.
+
+
 ### `add()`
 
 ```typescript

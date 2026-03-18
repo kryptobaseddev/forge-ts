@@ -41,7 +41,7 @@ _Generates a production-quality OpenAPI 3.2 document from the extracted SDK type
 ```typescript
 import { generateOpenAPISpec } from "@forge-ts/api";
 import { extractSDKTypes } from "@forge-ts/api";
-const spec = generateOpenAPISpec(config, extractSDKTypes(symbols));
+const spec = generateOpenAPISpec(config, extractSDKTypes(symbols), symbols);
 console.log(spec.openapi); // "3.2.0"
 ```
 

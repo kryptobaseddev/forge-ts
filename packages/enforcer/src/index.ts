@@ -8,5 +8,6 @@
  * @public
  */
 
+export { type DeprecatedUsage, findDeprecatedUsages } from "./deprecation-tracker.js";
 export { enforce } from "./enforcer.js";
 export { type FormatOptions, formatResults } from "./formatter.js";

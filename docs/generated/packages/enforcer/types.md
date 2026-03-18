@@ -8,6 +8,18 @@ description: Type contracts for the enforcer package
 
 Type contracts exported by this package: interfaces, type aliases, and enums.
 
+## DeprecatedUsage
+
+A detected usage of a deprecated symbol.
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| `deprecatedSymbol` | `string` | Yes | The deprecated symbol being consumed. |
+| `sourcePackage` | `string` | Yes | The package that exports the deprecated symbol. |
+| `consumingFile` | `string` | Yes | The file importing the deprecated symbol. |
+| `line` | `number` | Yes | Line number of the import. |
+| `deprecationMessage` | `string` | Yes | The deprecation message. |
+
 ## FormatOptions
 
 Options that control how  renders its output.

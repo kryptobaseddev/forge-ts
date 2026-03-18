@@ -10,6 +10,7 @@ description: . package overview
 
 | Symbol | Kind | Description |
 |--------|------|-------------|
+| [`calculate()`](./api-reference.md#calculate) | function | Get a calculator result.   GET /calculate/operation |
 | [`add()`](./api-reference.md#add) | function | Adds two numbers together. |
 | [`subtract()`](./api-reference.md#subtract) | function | Subtracts the second number from the first. |
 | [`multiply()`](./api-reference.md#multiply) | function | Multiplies two numbers. |

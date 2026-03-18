@@ -8,6 +8,24 @@ description: Functions and classes for the enforcer package
 
 Functions and classes exported by this package.
 
+## findDeprecatedUsages(symbols)
+
+Scans symbols for imports of deprecated exports from other packages.
+
+**Signature**
+
+```typescript
+(symbols: ForgeSymbol[]) => DeprecatedUsage[]
+```
+
+**Parameters**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `symbols` | — | All symbols from the walker across the entire project. |
+
+**Returns** — Array of deprecated usages found.
+
 ## enforce(config)
 
 Runs the TSDoc enforcement pass against a project.  The enforcer walks all exported symbols that meet the configured minimum visibility threshold and emits diagnostics for any documentation deficiencies it finds.  ### Error codes | Code | Severity | Condition | |------|----------|-----------| | E001 | error    | Exported symbol is missing a TSDoc summary. | | E002 | error    | Function/method parameter lacks a `@param` tag. | | E003 | error    | Non-void function/method lacks a `@returns` tag. | | E004 | error    | Exported function/method is missing an `@example` block. | | E005 | error    | Package entry point (index.ts) is missing `@packageDocumentation`. | | E006 | error    | Public/protected class member is missing a TSDoc comment. | | E007 | error    | Interface/type alias property is missing a TSDoc comment. | | W001 | warning  | TSDoc comment contains parse errors. | | W002 | warning  | Function body throws but has no `@throws` tag. | | W003 | warning  | `@deprecated` tag is present without explanation. |  When `config.enforce.strict` is `true` all warnings are promoted to errors.

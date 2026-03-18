@@ -31,7 +31,7 @@
 		"@changesets/changelog-github": "^0.6.0",
 		"@changesets/cli": "^2.30.0",
 		"@cleocode/lafs-protocol": "^1.7.0",
-		"@forge-ts/cli": "workspace:*",
+		"@forge-ts/cli": "^0.2.1",
 		"@microsoft/tsdoc": "^0.16.0",
 		"@types/node": "^25.5.0",
 		"tsup": "^8.5.0",

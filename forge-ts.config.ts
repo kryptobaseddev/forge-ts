@@ -1,4 +1,4 @@
-import type { ForgeConfig } from "@forge-ts/core";
+import type { ForgeConfig } from "@codluv/forge-core";
 
 export default {
 	rootDir: ".",

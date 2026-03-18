@@ -1,5 +1,5 @@
 /**
- * @forge-ts/enforcer — TSDoc enforcement linter.
+ * @codluv/forge-enforcer — TSDoc enforcement linter.
  *
  * Walks all exported symbols and verifies that each one carries sufficient
  * TSDoc documentation at the required visibility level.

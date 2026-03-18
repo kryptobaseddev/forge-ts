@@ -1,5 +1,5 @@
 /**
- * @forge-ts/doctest — TSDoc `@example` block extractor and test runner.
+ * @codluv/forge-doctest — TSDoc `@example` block extractor and test runner.
  *
  * Extracts fenced code blocks from `@example` tags in TSDoc comments,
  * generates virtual `node:test` test files, and executes them.
@@ -16,7 +16,7 @@ export {
 } from "./generator.js";
 export { type RunResult, runTests, type TestCaseResult } from "./runner.js";
 
-import { createWalker, type ForgeConfig, type ForgeResult } from "@forge-ts/core";
+import { createWalker, type ForgeConfig, type ForgeResult } from "@codluv/forge-core";
 import { extractExamples } from "./extractor.js";
 import { generateTestFiles } from "./generator.js";
 import { runTests } from "./runner.js";

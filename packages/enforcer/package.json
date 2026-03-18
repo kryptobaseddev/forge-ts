@@ -1,6 +1,6 @@
 {
-	"name": "@codluv/forge-enforcer",
-	"version": "0.1.0",
+	"name": "@forge-ts/enforcer",
+	"version": "0.2.0",
 	"type": "module",
 	"description": "TSDoc enforcement linter for forge-ts",
 	"license": "MIT",

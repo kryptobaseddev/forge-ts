@@ -1,5 +1,5 @@
-import { loadConfig } from "@forge-ts/core";
-import { doctest } from "@forge-ts/doctest";
+import { loadConfig } from "@codluv/forge-core";
+import { doctest } from "@codluv/forge-doctest";
 import { defineCommand } from "citty";
 import {
 	type CommandOutput,

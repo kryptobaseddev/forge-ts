@@ -1,5 +1,5 @@
-import { loadConfig } from "@forge-ts/core";
-import { enforce } from "@forge-ts/enforcer";
+import { loadConfig } from "@codluv/forge-core";
+import { enforce } from "@codluv/forge-enforcer";
 import { defineCommand } from "citty";
 import {
 	type CommandOutput,

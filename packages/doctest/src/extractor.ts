@@ -1,4 +1,4 @@
-import type { ForgeSymbol } from "@forge-ts/core";
+import type { ForgeSymbol } from "@codluv/forge-core";
 
 /**
  * A single extracted `@example` block ready for test generation.

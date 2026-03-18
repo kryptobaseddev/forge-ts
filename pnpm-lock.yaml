@@ -41,7 +41,7 @@ importers:
 
   packages/api:
     dependencies:
-      '@forge-ts/core':
+      '@codluv/forge-core':
         specifier: workspace:*
         version: link:../core
     devDependencies:
@@ -60,19 +60,19 @@ importers:
       '@cleocode/lafs-protocol':
         specifier: ^1.7.0
         version: 1.7.0
-      '@forge-ts/api':
+      '@codluv/forge-api':
         specifier: workspace:*
         version: link:../api
-      '@forge-ts/core':
+      '@codluv/forge-core':
         specifier: workspace:*
         version: link:../core
-      '@forge-ts/doctest':
+      '@codluv/forge-doctest':
         specifier: workspace:*
         version: link:../doctest
-      '@forge-ts/enforcer':
+      '@codluv/forge-enforcer':
         specifier: workspace:*
         version: link:../enforcer
-      '@forge-ts/gen':
+      '@codluv/forge-gen':
         specifier: workspace:*
         version: link:../gen
       citty:
@@ -95,13 +95,13 @@ importers:
         specifier: ^5.8.2
         version: 5.9.3
     devDependencies:
-      '@forge-ts/api':
+      '@codluv/forge-api':
         specifier: workspace:*
         version: link:../api
-      '@forge-ts/enforcer':
+      '@codluv/forge-enforcer':
         specifier: workspace:*
         version: link:../enforcer
-      '@forge-ts/gen':
+      '@codluv/forge-gen':
         specifier: workspace:*
         version: link:../gen
       tsup:
@@ -110,7 +110,7 @@ importers:
 
   packages/doctest:
     dependencies:
-      '@forge-ts/core':
+      '@codluv/forge-core':
         specifier: workspace:*
         version: link:../core
     devDependencies:
@@ -126,7 +126,7 @@ importers:
 
   packages/enforcer:
     dependencies:
-      '@forge-ts/core':
+      '@codluv/forge-core':
         specifier: workspace:*
         version: link:../core
     devDependencies:
@@ -142,7 +142,7 @@ importers:
 
   packages/gen:
     dependencies:
-      '@forge-ts/core':
+      '@codluv/forge-core':
         specifier: workspace:*
         version: link:../core
     devDependencies:

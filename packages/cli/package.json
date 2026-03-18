@@ -1,6 +1,6 @@
 {
-	"name": "@codluv/forge-cli",
-	"version": "0.1.0",
+	"name": "@forge-ts/cli",
+	"version": "0.2.0",
 	"type": "module",
 	"description": "CLI entry point for forge-ts",
 	"license": "MIT",

@@ -509,7 +509,7 @@ _Defined in `src/openapi-types.ts:15`_
 any
 ```
 
-OpenAPI 3.1 schema object.
+OpenAPI 3.2 schema object.
 
 #### `type`
 
@@ -639,7 +639,7 @@ _Defined in `src/openapi-types.ts:37`_
 any
 ```
 
-OpenAPI 3.1 info object.
+OpenAPI 3.2 info object.
 
 #### `title`
 
@@ -681,7 +681,7 @@ _Defined in `src/openapi-types.ts:48`_
 any
 ```
 
-OpenAPI 3.1 tag object.
+OpenAPI 3.2 tag object.
 
 #### `name`
 
@@ -707,7 +707,7 @@ _Defined in `src/openapi-types.ts:57`_
 any
 ```
 
-OpenAPI 3.1 path item object.
+OpenAPI 3.2 path item object.
 
 #### `summary`
 
@@ -773,7 +773,7 @@ _Defined in `src/openapi-types.ts:71`_
 any
 ```
 
-OpenAPI 3.1 operation object.
+OpenAPI 3.2 operation object.
 
 #### `operationId`
 
@@ -831,7 +831,7 @@ _Defined in `src/openapi-types.ts:84`_
 any
 ```
 
-OpenAPI 3.1 parameter object.
+OpenAPI 3.2 parameter object.
 
 #### `name`
 
@@ -881,7 +881,7 @@ _Defined in `src/openapi-types.ts:96`_
 any
 ```
 
-OpenAPI 3.1 response object.
+OpenAPI 3.2 response object.
 
 #### `description`
 
@@ -907,14 +907,14 @@ _Defined in `src/openapi-types.ts:105`_
 any
 ```
 
-Complete OpenAPI 3.1 document.
+Complete OpenAPI 3.2 document.
 
 #### `openapi`
 
 _Defined in `src/openapi-types.ts:106`_
 
 ```typescript
-"3.1.0"
+"3.2.0"
 ```
 
 #### `info`

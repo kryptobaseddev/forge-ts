@@ -2,7 +2,7 @@
  * @forge-ts/api — OpenAPI spec and API reference generator.
  *
  * Extracts public SDK types from the symbol graph and generates an
- * OpenAPI 3.1 document and a structured API reference.
+ * OpenAPI 3.2 document and a structured API reference.
  *
  * @packageDocumentation
  * @public

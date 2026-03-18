@@ -25,7 +25,7 @@ packages/
   core/       # Shared types, config loader, and AST walker
   enforcer/   # TSDoc enforcement (the build gate)
   doctest/    # @example block extraction and test execution
-  api/        # OpenAPI 3.1 spec generation
+  api/        # OpenAPI 3.2 spec generation
   gen/        # Markdown, MDX, and llms.txt generation
   cli/        # Unified CLI entry point
 fixtures/

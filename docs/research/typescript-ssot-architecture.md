@@ -41,7 +41,7 @@ To build a modern, high-performance SSoT documentation toolchain, we must abando
 ### 3.3 The API & LLM Generation Pipeline
 A 3-pronged output generator:
 1. **Human Docs:** Integrate a streamlined markdown generator (bypassing heavy HTML generation).
-2. **API Specs:** Built a custom OpenAPI 3.1 generator (`@forge-ts/api`) operating directly on the `ForgeSymbol` graph — no tsoa, no decorators. A typed `schema-mapper` converts TypeScript type signatures to OpenAPI schemas, producing a complete `openapi.json` with visibility filtering.
+2. **API Specs:** Built a custom OpenAPI 3.2 generator (`@forge-ts/api`) operating directly on the `ForgeSymbol` graph — no tsoa, no decorators. A typed `schema-mapper` converts TypeScript type signatures to OpenAPI schemas, producing a complete `openapi.json` with visibility filtering.
 3. **Agent Context:** Automatically compile an `llms.txt` router and `llms-full.txt` (concatenated Markdown + OpenAPI spec) pre-loaded with repository guidelines (e.g., cursorrules).
 
 ## 4. Next Steps for Development

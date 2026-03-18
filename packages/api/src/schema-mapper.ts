@@ -1,5 +1,5 @@
 /**
- * Utility for mapping TypeScript type signatures to OpenAPI 3.1 schemas.
+ * Utility for mapping TypeScript type signatures to OpenAPI 3.2 schemas.
  * @public
  */
 
@@ -8,7 +8,7 @@ import type { OpenAPISchemaObject } from "@forge-ts/core";
 export type { OpenAPISchemaObject };
 
 /**
- * Maps a TypeScript type signature string to an OpenAPI 3.1 schema object.
+ * Maps a TypeScript type signature string to an OpenAPI 3.2 schema object.
  *
  * Handles common primitives, arrays, unions, `Record<K, V>`, and falls back
  * to `{ type: "object" }` for anything it cannot parse.

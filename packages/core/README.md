@@ -17,7 +17,7 @@ npm install @forge-ts/core
 - **`createWalker(config)`** - AST walker using the TypeScript Compiler API + `@microsoft/tsdoc`
 - **`loadConfig(rootDir?)`** - Zero-config loader (reads `forge-ts.config.ts` or `package.json`)
 - **`filterByVisibility(symbols, minVisibility)`** - Filter by `@public`, `@beta`, `@internal` tags
-- **OpenAPI 3.1 types** - `OpenAPIDocument`, `OpenAPISchemaObject`, etc.
+- **OpenAPI 3.2 types** - `OpenAPIDocument`, `OpenAPISchemaObject`, etc.
 
 ## Example
 

@@ -11,7 +11,7 @@ import type { SDKProperty, SDKType } from "./sdk-extractor.js";
 export type { OpenAPIDocument };
 
 /**
- * Generates a production-quality OpenAPI 3.1 document from the extracted SDK
+ * Generates a production-quality OpenAPI 3.2 document from the extracted SDK
  * types.
  *
  * The document is populated with:
@@ -44,7 +44,7 @@ export function generateOpenAPISpec(config: ForgeConfig, sdkTypes: SDKType[]): O
 	const tags = tagNames.map((name) => ({ name }));
 
 	return {
-		openapi: "3.1.0",
+		openapi: "3.2.0",
 		info: buildInfo(config),
 		...(tags.length > 0 ? { tags } : {}),
 		paths: {},

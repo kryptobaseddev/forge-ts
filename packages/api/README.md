@@ -1,6 +1,6 @@
 # @forge-ts/api
 
-OpenAPI 3.1 spec and API reference generator for the [forge-ts](https://github.com/kryptobaseddev/forge-ts) toolchain.
+OpenAPI 3.2 spec and API reference generator for the [forge-ts](https://github.com/kryptobaseddev/forge-ts) toolchain.
 
 ## When to use this package
 
@@ -12,7 +12,7 @@ npm install @forge-ts/api
 
 ## What it generates
 
-- **OpenAPI 3.1 JSON** from your exported interfaces, types, classes, and enums
+- **OpenAPI 3.2 JSON** from your exported interfaces, types, classes, and enums
 - **Typed schema mapping** - TypeScript signatures mapped to OpenAPI schemas
 - **Visibility filtering** - `@internal` symbols never appear in specs
 - **Structured API Reference** with full TSDoc metadata

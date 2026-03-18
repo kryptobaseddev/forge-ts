@@ -47,10 +47,10 @@ exports
 - **Execution:** Runs the generated tests via the native Node 24 `node:test` runner. Failures point directly to the JSDoc comment in the source file.
 
 ### 3.3 The API Generator (`@forge-ts/api`)
-- **Role:** Converts exported TypeScript symbols into a complete OpenAPI 3.1 spec or a structured API Reference, depending on project type.
+- **Role:** Converts exported TypeScript symbols into a complete OpenAPI 3.2 spec or a structured API Reference, depending on project type.
 - **Mechanism:** Operates entirely from the `ForgeSymbol` graph produced by the AST traversal — no tsoa, no decorators, no runtime reflection.
   1. **Symbol extraction:** Collects exported interfaces, types, classes, and enums from the symbol graph.
-  2. **Schema mapping:** Maps TypeScript type signatures to OpenAPI 3.1 schemas via a typed `schema-mapper`, handling generics, unions, intersections, and enums.
+  2. **Schema mapping:** Maps TypeScript type signatures to OpenAPI 3.2 schemas via a typed `schema-mapper`, handling generics, unions, intersections, and enums.
   3. **OpenAPI output:** Generates a complete `openapi.json` with proper schemas, operation tags, and visibility filtering (respects `@public`, `@beta`, `@internal`).
   4. **API Reference output:** For non-API projects (SDKs, CLIs), produces a structured API Reference JSON from the same symbol data.
 

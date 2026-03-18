@@ -12,7 +12,7 @@ npm install -D @forge-ts/cli
 
 Write your TypeScript. Write your TSDoc comments. Run one command. Get everything:
 
-- **OpenAPI 3.1 specs** from your exported types and interfaces
+- **OpenAPI 3.2 specs** from your exported types and interfaces
 - **Executable doctests** from your `@example` blocks
 - **AI context** (`llms.txt` / `llms-full.txt`) for LLM agents
 - **Markdown/MDX docs** for Docusaurus, Mintlify, Nextra, or VitePress

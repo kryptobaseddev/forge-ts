@@ -24,7 +24,7 @@ Your TypeScript + TSDoc
    ┌────┴────────────────────────────────────────┐
    │                                              │
    ▼                ▼              ▼              ▼
-OpenAPI 3.1    Doctests       AI Context     Markdown/MDX
+OpenAPI 3.2    Doctests       AI Context     Markdown/MDX
   specs       (@example      (llms.txt /    (Docusaurus /
 (openapi.json)  blocks)     llms-full.txt)  Mintlify /
                                              Nextra /
@@ -33,7 +33,7 @@ OpenAPI 3.1    Doctests       AI Context     Markdown/MDX
 
 | Output | Description |
 |--------|-------------|
-| **OpenAPI 3.1** | Machine-readable API specs generated from your exported types and interfaces |
+| **OpenAPI 3.2** | Machine-readable API specs generated from your exported types and interfaces |
 | **Doctests** | `@example` blocks extracted and executed as real tests via Node's test runner |
 | **AI context** | `llms.txt` and `llms-full.txt` for feeding LLM agents accurate project context |
 | **Markdown/MDX** | SSG-ready docs for Docusaurus, Mintlify, Nextra, or VitePress |
@@ -197,7 +197,7 @@ Set `gen.ssgTarget` in your config to target your documentation platform:
 | `@forge-ts/core` | Shared types, config loader, and AST walker |
 | `@forge-ts/enforcer` | TSDoc enforcement — the build gate |
 | `@forge-ts/doctest` | `@example` block extraction and test execution |
-| `@forge-ts/api` | OpenAPI 3.1 spec generation from TypeScript types |
+| `@forge-ts/api` | OpenAPI 3.2 spec generation from TypeScript types |
 | `@forge-ts/gen` | Markdown, MDX, and `llms.txt` generation |
 | `@forge-ts/cli` | Unified CLI entry point |
 

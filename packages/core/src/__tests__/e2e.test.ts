@@ -273,7 +273,7 @@ describe("E2E — gen integration", () => {
 		const sdkTypes = extractSDKTypes(symbols);
 		const spec = generateOpenAPISpec(config, sdkTypes);
 
-		expect(spec.openapi).toBe("3.1.0");
+		expect(spec.openapi).toBe("3.2.0");
 		expect(spec.info).toBeDefined();
 		expect(spec.components).toBeDefined();
 		expect(spec.components.schemas).toBeDefined();

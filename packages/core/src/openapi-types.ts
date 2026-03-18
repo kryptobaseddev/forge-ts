@@ -1,5 +1,5 @@
 /**
- * OpenAPI 3.1 type contracts shared across the forge-ts toolchain.
+ * OpenAPI 3.2 type contracts shared across the forge-ts toolchain.
  *
  * All OpenAPI-related types are defined here so that consumers never resort
  * to `Record<string, unknown>` or inline structural types.
@@ -9,7 +9,7 @@
  */
 
 /**
- * OpenAPI 3.1 schema object.
+ * OpenAPI 3.2 schema object.
  * @public
  */
 export interface OpenAPISchemaObject {
@@ -31,18 +31,19 @@ export interface OpenAPISchemaObject {
 }
 
 /**
- * OpenAPI 3.1 info object.
+ * OpenAPI 3.2 info object.
  * @public
  */
 export interface OpenAPIInfoObject {
 	title: string;
 	version: string;
 	description?: string;
-	license?: { name: string; url?: string };
+	summary?: string;
+	license?: { name: string; url?: string; identifier?: string };
 }
 
 /**
- * OpenAPI 3.1 tag object.
+ * OpenAPI 3.2 tag object.
  * @public
  */
 export interface OpenAPITagObject {
@@ -51,7 +52,7 @@ export interface OpenAPITagObject {
 }
 
 /**
- * OpenAPI 3.1 path item object.
+ * OpenAPI 3.2 path item object.
  * @public
  */
 export interface OpenAPIPathItemObject {
@@ -62,10 +63,15 @@ export interface OpenAPIPathItemObject {
 	put?: OpenAPIOperationObject;
 	delete?: OpenAPIOperationObject;
 	patch?: OpenAPIOperationObject;
+	options?: OpenAPIOperationObject;
+	head?: OpenAPIOperationObject;
+	trace?: OpenAPIOperationObject;
+	query?: OpenAPIOperationObject;
+	additionalOperations?: Record<string, OpenAPIOperationObject>;
 }
 
 /**
- * OpenAPI 3.1 operation object.
+ * OpenAPI 3.2 operation object.
  * @public
  */
 export interface OpenAPIOperationObject {
@@ -78,36 +84,61 @@ export interface OpenAPIOperationObject {
 }
 
 /**
- * OpenAPI 3.1 parameter object.
+ * OpenAPI 3.2 parameter object.
  * @public
  */
 export interface OpenAPIParameterObject {
 	name: string;
-	in: "query" | "header" | "path" | "cookie";
+	in: "query" | "header" | "path" | "cookie" | "querystring";
 	description?: string;
 	required?: boolean;
 	schema?: OpenAPISchemaObject;
+	deprecated?: boolean;
 }
 
 /**
- * OpenAPI 3.1 response object.
+ * OpenAPI 3.2 encoding object.
+ * @public
+ */
+export interface OpenAPIEncodingObject {
+	contentType?: string;
+	headers?: Record<string, OpenAPIParameterObject>;
+	style?: string;
+	explode?: boolean;
+	allowReserved?: boolean;
+}
+
+/**
+ * OpenAPI 3.2 media type object.
+ * @public
+ */
+export interface OpenAPIMediaTypeObject {
+	schema?: OpenAPISchemaObject;
+	encoding?: Record<string, OpenAPIEncodingObject>;
+}
+
+/**
+ * OpenAPI 3.2 response object.
  * @public
  */
 export interface OpenAPIResponseObject {
 	description: string;
-	content?: Record<string, { schema: OpenAPISchemaObject }>;
+	headers?: Record<string, OpenAPIParameterObject>;
+	content?: Record<string, OpenAPIMediaTypeObject>;
 }
 
 /**
- * Complete OpenAPI 3.1 document.
+ * Complete OpenAPI 3.2 document.
  * @public
  */
 export interface OpenAPIDocument {
-	openapi: "3.1.0";
+	openapi: "3.2.0";
+	$self?: string;
 	info: OpenAPIInfoObject;
 	paths: Record<string, OpenAPIPathItemObject>;
 	components: {
 		schemas: Record<string, OpenAPISchemaObject>;
+		mediaTypes?: Record<string, OpenAPIMediaTypeObject>;
 	};
 	tags?: OpenAPITagObject[];
 }

@@ -50,11 +50,11 @@ function makeProperty(name: string, type: string, required = true): ForgeSymbol 
 // ---------------------------------------------------------------------------
 
 describe("generateOpenAPISpec", () => {
-	it("generates a valid OpenAPI 3.1 structure", () => {
+	it("generates a valid OpenAPI 3.2 structure", () => {
 		const config = makeConfig();
 		const spec = generateOpenAPISpec(config, []);
 
-		expect(spec.openapi).toBe("3.1.0");
+		expect(spec.openapi).toBe("3.2.0");
 		expect(spec.info).toBeDefined();
 		expect(spec.info.title).toBeTypeOf("string");
 		expect(spec.info.version).toBeTypeOf("string");

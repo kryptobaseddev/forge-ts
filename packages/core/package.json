@@ -1,12 +1,12 @@
 {
-	"name": "@forge-ts/core",
+	"name": "@codluv/forge-core",
 	"version": "0.1.0",
 	"type": "module",
 	"description": "Shared types, interfaces, and core AST walker for forge-ts",
 	"license": "MIT",
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/forge-ts/forge-ts"
+		"url": "https://github.com/codluv/forge-ts"
 	},
 	"publishConfig": {
 		"access": "public"
@@ -33,9 +33,9 @@
 		"typescript": "^5.8.2"
 	},
 	"devDependencies": {
-		"@forge-ts/api": "workspace:*",
-		"@forge-ts/enforcer": "workspace:*",
-		"@forge-ts/gen": "workspace:*",
+		"@codluv/forge-api": "workspace:*",
+		"@codluv/forge-enforcer": "workspace:*",
+		"@codluv/forge-gen": "workspace:*",
 		"tsup": "^8.3.5"
 	}
 }

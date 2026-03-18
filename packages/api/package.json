@@ -1,12 +1,12 @@
 {
-	"name": "@forge-ts/api",
+	"name": "@codluv/forge-api",
 	"version": "0.1.0",
 	"type": "module",
 	"description": "OpenAPI spec and API reference generator for forge-ts",
 	"license": "MIT",
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/forge-ts/forge-ts"
+		"url": "https://github.com/codluv/forge-ts"
 	},
 	"publishConfig": {
 		"access": "public"
@@ -30,7 +30,7 @@
 		"typecheck": "tsc --noEmit"
 	},
 	"dependencies": {
-		"@forge-ts/core": "workspace:*"
+		"@codluv/forge-core": "workspace:*"
 	},
 	"devDependencies": {
 		"tsup": "^8.3.5",

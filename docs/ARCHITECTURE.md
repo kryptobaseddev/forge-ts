@@ -26,7 +26,7 @@ The architecture is composed of four primary subsystems:
    |                   |                   |                   |
 Validates         Extracts & runs     Generates         Generates Markdown,
 TSDoc presence    @example blocks     openapi.json &    MDX, READMEs, and
-on public         as Virtual Tests    tsoa routes       llms.txt contexts
+on public         as Virtual Tests    API Reference     llms.txt contexts
 exports
 ```
 
@@ -47,15 +47,19 @@ exports
 - **Execution:** Runs the generated tests via the native Node 24 `node:test` runner. Failures point directly to the JSDoc comment in the source file.
 
 ### 3.3 The API Generator (`@forge-ts/api`)
-- **Role:** Converts controllers, interfaces, and types into runtime routing and SSoT OpenAPI specs.
-- **Mechanism:** Wraps `tsoa` compiler logic for backend projects. Defines controllers with `@Route()` decorators and uses SSoT interfaces to natively generate `openapi.json` and `routes.ts` without runtime reflection overhead. For non-API projects (like SDKs), it maps types to standard API Reference JSON.
+- **Role:** Converts exported TypeScript symbols into a complete OpenAPI 3.1 spec or a structured API Reference, depending on project type.
+- **Mechanism:** Operates entirely from the `ForgeSymbol` graph produced by the AST traversal — no tsoa, no decorators, no runtime reflection.
+  1. **Symbol extraction:** Collects exported interfaces, types, classes, and enums from the symbol graph.
+  2. **Schema mapping:** Maps TypeScript type signatures to OpenAPI 3.1 schemas via a typed `schema-mapper`, handling generics, unions, intersections, and enums.
+  3. **OpenAPI output:** Generates a complete `openapi.json` with proper schemas, operation tags, and visibility filtering (respects `@public`, `@beta`, `@internal`).
+  4. **API Reference output:** For non-API projects (SDKs, CLIs), produces a structured API Reference JSON from the same symbol data.
 
 ### 3.4 The Output Generator (`@forge-ts/gen`)
 - **Role:** Delivers the Consumer Docs (Markdown/MDX) and AI Context (`llms.txt`).
 - **Mechanism:**
   1. Takes the parsed TSDoc comments and generated API JSON.
   2. **Consumer Docs:** Emits clean, formatted Markdown/MDX files ready for Docusaurus, Mintlify, or Nextra. Syncs code examples into the project's root `README.md`.
-  3. **AI Context:** Strips human-centric UI artifacts and emits `docs/llms.txt` (the routing manifest) and `docs/llms-full.txt` (dense context file), automatically injecting `cursorrules` or repository guidelines.
+  3. **AI Context:** Strips human-centric UI artifacts and emits `docs/llms.txt` (a routing manifest listing available context files) and `docs/llms-full.txt` (a dense context file with full type signatures, parameter docs, return types, and code examples).
 
 ## 4. Technology Stack (March 2026, Research-Validated)
 
@@ -65,17 +69,37 @@ exports
 | TypeScript | 6.0 (beta/RC) | Compiler API — last JS-based release. New defaults: `strict=true`, `target=es2025`, `module=esnext`, `esModuleInterop` always enabled. `types` defaults to `[]` (must explicitly add `@types/node`). |
 | pnpm | 10.x | Monorepo workspaces; topological build ordering via `pnpm -r` |
 | @microsoft/tsdoc | 0.16.0 | TSDoc comment parsing (stable, 181 dependents) |
-| tsoa | 6.x | Controller-to-OpenAPI generation |
+| citty | 0.2.1 | Type-safe CLI framework (zero deps, 2.9kB) |
+| @cleocode/lafs-protocol | 1.7.0 | LLM-Agent-First output layer |
+| @changesets/cli | 2.x | Monorepo versioning with fixed version strategy |
 | Vitest | 4.1.0 | Unit tests — stable browser mode, 28M weekly downloads |
 | node:test | Built-in (Node 24) | DocTest execution — automatic subtest awaiting, `--test-rerun-failures`, per-test timeouts, smarter watch mode |
 | Biome | 2.4 | Linting + formatting — replaces ESLint + Prettier; 10-100x faster, 423+ lint rules, type-aware linting |
 | tsup | 8.5.x | ESM bundling + `.d.ts` declaration file generation |
 
 ## 5. Execution Flow
+
+### 5.1 Standard Scripts
 Developers add standard scripts to their `package.json`:
 - `"check": "forge-ts check"` -> Runs the Enforcer.
 - `"test:docs": "forge-ts test"` -> Runs the DocTests.
 - `"docs:build": "forge-ts build"` -> Generates `openapi.json`, Consumer Markdown, and `llms.txt`.
+
+### 5.5 CLI LAFS Integration (Agent-First Output)
+The CLI is built on `citty 0.2.1` and integrates `@cleocode/lafs-protocol 1.7.0` to produce machine-readable output for LLM agents alongside human-readable output.
+
+**Output mode flags** (available on all commands):
+
+| Flag | Behavior |
+|------|----------|
+| `--json` | Emits a `LAFSEnvelope` JSON object to stdout; all human text goes to stderr |
+| `--human` | Forces plain human-readable output (default in TTY contexts) |
+| `--quiet` | Suppresses all non-error output |
+| `--mvi` | Machine-Verifiable Intent — includes a structured `intent` block in the envelope for agent verification |
+
+**LAFSEnvelope structure:** Every `--json` response wraps the command result in a typed envelope with `status`, `data`, `warnings`, and optional `intent` fields. This allows agents to parse forge-ts output reliably without scraping human-formatted text.
+
+**Design principle:** forge-ts treats agents as first-class consumers. When running in a CI/CD pipeline or under an LLM agent, pass `--json` to get structured, parseable output. Human display is opt-in, not the default for programmatic use.
 
 ## 6. Tooling Rationale
 

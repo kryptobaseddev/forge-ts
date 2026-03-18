@@ -32,7 +32,7 @@ jobs:
           node-version: 24
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: pnpm -r build
+      - run: pnpm build
       - run: pnpm check
 
   test:
@@ -46,7 +46,7 @@ jobs:
           node-version: 24
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: pnpm -r build
+      - run: pnpm build
       - run: pnpm test
 
   dogfood:
@@ -61,7 +61,7 @@ jobs:
           node-version: 24
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: pnpm -r build
+      - run: pnpm build
       - name: Run forge-ts check on self
         run: node packages/cli/dist/index.js check --cwd packages/core --human
       - name: Run forge-ts build on self

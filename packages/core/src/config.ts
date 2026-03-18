@@ -26,6 +26,15 @@ export function defaultConfig(rootDir: string): ForgeConfig {
 			enabled: true,
 			minVisibility: Visibility.Public,
 			strict: false,
+			rules: {
+				"require-summary": "error",
+				"require-param": "error",
+				"require-returns": "error",
+				"require-example": "error",
+				"require-package-doc": "warn",
+				"require-class-member-doc": "error",
+				"require-interface-member-doc": "error",
+			},
 		},
 		doctest: {
 			enabled: true,
@@ -58,7 +67,11 @@ function mergeWithDefaults(rootDir: string, partial: Partial<ForgeConfig>): Forg
 	return {
 		...defaults,
 		...partial,
-		enforce: { ...defaults.enforce, ...partial.enforce },
+		enforce: {
+			...defaults.enforce,
+			...partial.enforce,
+			rules: { ...defaults.enforce.rules, ...partial.enforce?.rules },
+		},
 		doctest: { ...defaults.doctest, ...partial.doctest },
 		api: { ...defaults.api, ...partial.api },
 		gen: { ...defaults.gen, ...partial.gen },

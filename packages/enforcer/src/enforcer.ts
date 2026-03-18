@@ -1,5 +1,6 @@
 import {
 	createWalker,
+	type EnforceRules,
 	type ForgeConfig,
 	type ForgeError,
 	type ForgeResult,
@@ -129,6 +130,24 @@ function deprecatedWithoutReason(symbol: ForgeSymbol): boolean {
 }
 
 // ---------------------------------------------------------------------------
+// Rule map
+// ---------------------------------------------------------------------------
+
+/**
+ * Maps E-code strings to their corresponding {@link EnforceRules} key.
+ * @internal
+ */
+const RULE_MAP: Record<string, keyof EnforceRules> = {
+	E001: "require-summary",
+	E002: "require-param",
+	E003: "require-returns",
+	E004: "require-example",
+	E005: "require-package-doc",
+	E006: "require-class-member-doc",
+	E007: "require-interface-member-doc",
+};
+
+// ---------------------------------------------------------------------------
 // Public API
 // ---------------------------------------------------------------------------
 
@@ -179,11 +198,11 @@ export async function enforce(config: ForgeConfig): Promise<ForgeResult> {
 	const symbols = filterByVisibility(allSymbols, config.enforce.minVisibility);
 
 	/**
-	 * Emit a diagnostic.  When `strict` is enabled every warning becomes an
-	 * error so the build gate fails hard.
+	 * Emit a diagnostic.  The configured per-rule severity determines whether
+	 * the diagnostic is an error or warning; "off" suppresses it entirely.
+	 * When `strict` is enabled every warning is promoted to an error.
 	 */
 	function emit(
-		severity: "error" | "warning",
 		code: string,
 		message: string,
 		filePath: string,
@@ -191,11 +210,30 @@ export async function enforce(config: ForgeConfig): Promise<ForgeResult> {
 		column: number,
 		guidance?: { suggestedFix?: string; symbolName?: string; symbolKind?: string },
 	): void {
+		const ruleKey = RULE_MAP[code];
+
+		// For rule codes tracked in the map, honour the per-rule severity.
+		if (ruleKey !== undefined) {
+			const configuredSeverity = config.enforce.rules[ruleKey];
+			if (configuredSeverity === "off") return;
+			const effectiveSeverity = config.enforce.strict ? "error" : configuredSeverity;
+			const diag = { code, message, filePath, line, column, ...guidance };
+			if (effectiveSeverity === "error") {
+				errors.push(diag);
+			} else {
+				warnings.push(diag);
+			}
+			return;
+		}
+
+		// For codes not in the map (W003, E008, etc.) fall back to the old
+		// behaviour: always emit, respect strict mode for warnings.
 		const diag = { code, message, filePath, line, column, ...guidance };
-		if (severity === "error" || config.enforce.strict) {
-			errors.push(diag);
-		} else {
+		// Codes starting with "W" are warnings by default.
+		if (code.startsWith("W") && !config.enforce.strict) {
 			warnings.push(diag);
+		} else {
+			errors.push(diag);
 		}
 	}
 
@@ -207,7 +245,6 @@ export async function enforce(config: ForgeConfig): Promise<ForgeResult> {
 		// E001 — Missing summary
 		if (!hasSummary(symbol)) {
 			emit(
-				"error",
 				"E001",
 				`Exported symbol "${symbol.name}" is missing a TSDoc summary comment.`,
 				symbol.filePath,
@@ -226,7 +263,6 @@ export async function enforce(config: ForgeConfig): Promise<ForgeResult> {
 			const missing = undocumentedParams(symbol);
 			for (const paramName of missing) {
 				emit(
-					"error",
 					"E002",
 					`Parameter "${paramName}" of "${symbol.name}" is not documented with a @param tag.`,
 					symbol.filePath,
@@ -244,7 +280,6 @@ export async function enforce(config: ForgeConfig): Promise<ForgeResult> {
 		// E003 — Missing @returns
 		if (isFunctionLike && missingReturns(symbol)) {
 			emit(
-				"error",
 				"E003",
 				`"${symbol.name}" has a non-void return type but is missing a @returns tag.`,
 				symbol.filePath,
@@ -263,7 +298,6 @@ export async function enforce(config: ForgeConfig): Promise<ForgeResult> {
 			const hasExample = (symbol.documentation.examples ?? []).length > 0;
 			if (!hasExample) {
 				emit(
-					"error",
 					"E004",
 					`Exported function "${symbol.name}" is missing an @example block. Add a fenced code block showing usage.`,
 					symbol.filePath,
@@ -286,7 +320,6 @@ export async function enforce(config: ForgeConfig): Promise<ForgeResult> {
 				if (child.kind === "property" || child.kind === "method") {
 					if (!hasSummary(child)) {
 						emit(
-							"error",
 							errorCode,
 							`Member "${child.name}" of ${symbol.kind} "${symbol.name}" is missing a TSDoc comment.`,
 							child.filePath,
@@ -306,7 +339,6 @@ export async function enforce(config: ForgeConfig): Promise<ForgeResult> {
 		// W003 — @deprecated without reason
 		if (deprecatedWithoutReason(symbol)) {
 			emit(
-				"warning",
 				"W003",
 				`"${symbol.name}" is marked @deprecated but provides no explanation.`,
 				symbol.filePath,
@@ -336,7 +368,6 @@ export async function enforce(config: ForgeConfig): Promise<ForgeResult> {
 		);
 		if (!hasPackageDoc) {
 			emit(
-				"error",
 				"E005",
 				`Package entry point "${filePath}" is missing a @packageDocumentation TSDoc comment.`,
 				filePath,
@@ -346,6 +377,40 @@ export async function enforce(config: ForgeConfig): Promise<ForgeResult> {
 					suggestedFix: `/**\n * @packageDocumentation\n * [Package overview description]\n */`,
 				},
 			);
+		}
+	}
+
+	// E008 — Dead {@link} references
+	// Build a set of all known symbol names (simple and qualified).
+	const knownSymbols = new Set<string>();
+	for (const s of allSymbols) {
+		knownSymbols.add(s.name);
+		if (s.children) {
+			for (const child of s.children) {
+				knownSymbols.add(`${s.name}.${child.name}`);
+				knownSymbols.add(child.name);
+			}
+		}
+	}
+
+	// Check all {@link} references across every symbol (not just filtered ones).
+	for (const symbol of allSymbols) {
+		const docLinks = symbol.documentation?.links ?? [];
+		for (const link of docLinks) {
+			if (!knownSymbols.has(link.target)) {
+				emit(
+					"E008",
+					`{@link ${link.target}} in "${symbol.name}" references a symbol that does not exist in this project.`,
+					symbol.filePath,
+					link.line,
+					symbol.column,
+					{
+						suggestedFix: `Remove or update the {@link ${link.target}} reference to point to an existing symbol.`,
+						symbolName: symbol.name,
+						symbolKind: symbol.kind,
+					},
+				);
+			}
 		}
 	}
 

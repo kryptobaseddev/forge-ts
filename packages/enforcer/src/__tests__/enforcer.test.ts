@@ -1,4 +1,10 @@
-import { type ForgeConfig, type ForgeResult, type ForgeSymbol, Visibility } from "@forge-ts/core";
+import {
+	type EnforceRules,
+	type ForgeConfig,
+	type ForgeResult,
+	type ForgeSymbol,
+	Visibility,
+} from "@forge-ts/core";
 import { describe, expect, it, vi } from "vitest";
 import { enforce } from "../enforcer.js";
 
@@ -6,10 +12,24 @@ import { enforce } from "../enforcer.js";
 // Helpers
 // ---------------------------------------------------------------------------
 
+/** Default per-rule severities that match the production defaults. */
+const DEFAULT_RULES: EnforceRules = {
+	"require-summary": "error",
+	"require-param": "error",
+	"require-returns": "error",
+	"require-example": "error",
+	"require-package-doc": "warn",
+	"require-class-member-doc": "error",
+	"require-interface-member-doc": "error",
+};
+
 /**
  * Returns a minimal valid {@link ForgeConfig} for tests.
+ * Rules default to the production defaults; pass `rules` inside `overrides`
+ * to override individual entries.
  */
 function makeConfig(overrides?: Partial<ForgeConfig["enforce"]>): ForgeConfig {
+	const { rules: ruleOverrides, ...restOverrides } = overrides ?? {};
 	return {
 		rootDir: "/fake",
 		tsconfig: "/fake/tsconfig.json",
@@ -18,7 +38,8 @@ function makeConfig(overrides?: Partial<ForgeConfig["enforce"]>): ForgeConfig {
 			enabled: true,
 			minVisibility: Visibility.Public,
 			strict: false,
-			...overrides,
+			rules: { ...DEFAULT_RULES, ...ruleOverrides },
+			...restOverrides,
 		},
 		doctest: { enabled: false, cacheDir: "/fake/.cache" },
 		api: { enabled: false, openapi: false, openapiPath: "/fake/docs/openapi.json" },
@@ -376,13 +397,30 @@ describe("enforce — E004 missing @example", () => {
 });
 
 describe("enforce — E005 missing @packageDocumentation", () => {
-	it("emits E005 for an index.ts file with no @packageDocumentation tag", async () => {
+	it("emits E005 as a warning for an index.ts file with no @packageDocumentation tag (default severity is warn)", async () => {
 		const sym = makeSymbol({
 			name: "doThing",
 			filePath: "/fake/src/index.ts",
 			documentation: { summary: "Does a thing." },
 		});
 		const result = await runEnforce([sym]);
+		// require-package-doc defaults to "warn", so E005 lands in warnings
+		const e005 = result.warnings.filter((w) => w.code === "E005");
+		expect(e005).toHaveLength(1);
+		expect(e005[0].filePath).toBe("/fake/src/index.ts");
+		// Must not appear in errors
+		expect(result.errors.filter((e) => e.code === "E005")).toHaveLength(0);
+	});
+
+	it("emits E005 as an error when require-package-doc is set to error", async () => {
+		const sym = makeSymbol({
+			name: "doThing",
+			filePath: "/fake/src/index.ts",
+			documentation: { summary: "Does a thing." },
+		});
+		const result = await runEnforce([sym], {
+			rules: { "require-package-doc": "error" },
+		});
 		const e005 = result.errors.filter((e) => e.code === "E005");
 		expect(e005).toHaveLength(1);
 		expect(e005[0].filePath).toBe("/fake/src/index.ts");
@@ -398,8 +436,10 @@ describe("enforce — E005 missing @packageDocumentation", () => {
 			},
 		});
 		const result = await runEnforce([sym]);
-		const e005 = result.errors.filter((e) => e.code === "E005");
-		expect(e005).toHaveLength(0);
+		const e005Errors = result.errors.filter((e) => e.code === "E005");
+		const e005Warns = result.warnings.filter((w) => w.code === "E005");
+		expect(e005Errors).toHaveLength(0);
+		expect(e005Warns).toHaveLength(0);
 	});
 
 	it("does not emit E005 for non-index.ts files", async () => {
@@ -409,8 +449,8 @@ describe("enforce — E005 missing @packageDocumentation", () => {
 			documentation: { summary: "A helper." },
 		});
 		const result = await runEnforce([sym]);
-		const e005 = result.errors.filter((e) => e.code === "E005");
-		expect(e005).toHaveLength(0);
+		expect(result.errors.filter((e) => e.code === "E005")).toHaveLength(0);
+		expect(result.warnings.filter((w) => w.code === "E005")).toHaveLength(0);
 	});
 });
 
@@ -642,6 +682,115 @@ describe("enforce — suggestedFix population", () => {
 	});
 });
 
+describe("enforce — E008 dead {@link} references", () => {
+	it("passes when {@link} targets an existing symbol", async () => {
+		const sym = makeSymbol({
+			name: "doThing",
+			documentation: {
+				summary: "Does a thing.",
+				examples: [{ code: "doThing();", language: "typescript", line: 5 }],
+				links: [{ target: "doThing", line: 1 }],
+			},
+		});
+		const result = await runEnforce([sym]);
+		const e008 = result.errors.filter((e) => e.code === "E008");
+		expect(e008).toHaveLength(0);
+	});
+
+	it("emits E008 when {@link NonExistent} references an unknown symbol", async () => {
+		const sym = makeSymbol({
+			name: "doThing",
+			documentation: {
+				summary: "Does a thing.",
+				examples: [{ code: "doThing();", language: "typescript", line: 5 }],
+				links: [{ target: "NonExistent", line: 3 }],
+			},
+		});
+		const result = await runEnforce([sym]);
+		const e008 = result.errors.filter((e) => e.code === "E008");
+		expect(e008).toHaveLength(1);
+		expect(e008[0].message).toContain("NonExistent");
+		expect(e008[0].message).toContain("doThing");
+	});
+
+	it("passes when {@link ClassName.method} references an existing qualified name", async () => {
+		const parentSym = makeSymbol({
+			name: "MyService",
+			kind: "class",
+			documentation: {
+				summary: "A service.",
+				links: [{ target: "MyService.connect", line: 1 }],
+			},
+			children: [
+				makeSymbol({
+					name: "connect",
+					kind: "method",
+					filePath: "/fake/src/module.ts",
+					line: 20,
+					documentation: { summary: "Connects the service." },
+				}),
+			],
+		});
+		const result = await runEnforce([parentSym]);
+		const e008 = result.errors.filter((e) => e.code === "E008");
+		expect(e008).toHaveLength(0);
+	});
+
+	it("emits E008 when {@link ClassName.missingMethod} references an unknown qualified name", async () => {
+		const parentSym = makeSymbol({
+			name: "MyService",
+			kind: "class",
+			documentation: {
+				summary: "A service.",
+				links: [{ target: "MyService.disconnect", line: 1 }],
+			},
+			children: [
+				makeSymbol({
+					name: "connect",
+					kind: "method",
+					filePath: "/fake/src/module.ts",
+					line: 20,
+					documentation: { summary: "Connects the service." },
+				}),
+			],
+		});
+		const result = await runEnforce([parentSym]);
+		const e008 = result.errors.filter((e) => e.code === "E008");
+		expect(e008).toHaveLength(1);
+		expect(e008[0].message).toContain("MyService.disconnect");
+	});
+
+	it("populates suggestedFix on E008 errors", async () => {
+		const sym = makeSymbol({
+			name: "helper",
+			documentation: {
+				summary: "A helper.",
+				examples: [{ code: "helper();", language: "typescript", line: 5 }],
+				links: [{ target: "GoneSymbol", line: 2 }],
+			},
+		});
+		const result = await runEnforce([sym]);
+		const e008 = result.errors.find((e) => e.code === "E008");
+		expect(e008?.suggestedFix).toBeDefined();
+		expect(e008?.suggestedFix).toContain("GoneSymbol");
+		expect(e008?.symbolName).toBe("helper");
+		expect(e008?.symbolKind).toBe("function");
+	});
+
+	it("does not emit E008 when the symbol has no links", async () => {
+		const sym = makeSymbol({
+			name: "standalone",
+			documentation: {
+				summary: "No links here.",
+				examples: [{ code: "standalone();", language: "typescript", line: 5 }],
+			},
+		});
+		const result = await runEnforce([sym]);
+		const e008 = result.errors.filter((e) => e.code === "E008");
+		expect(e008).toHaveLength(0);
+	});
+});
+
 describe("enforce — W003 deprecated without reason", () => {
 	it("emits W003 when @deprecated tag has no explanation", async () => {
 		const sym = makeSymbol({
@@ -667,5 +816,112 @@ describe("enforce — W003 deprecated without reason", () => {
 		const result = await runEnforce([sym]);
 		const w003 = result.warnings.filter((w) => w.code === "W003");
 		expect(w003).toHaveLength(0);
+	});
+});
+
+describe("enforce — per-rule configuration", () => {
+	it('rule set to "off" suppresses that check entirely', async () => {
+		const sym = makeSymbol({ name: "noSummary", documentation: undefined });
+		const result = await runEnforce([sym], {
+			rules: { "require-summary": "off" },
+		});
+		const e001 = result.errors.filter((e) => e.code === "E001");
+		expect(e001).toHaveLength(0);
+	});
+
+	it('rule set to "warn" produces a warning instead of an error', async () => {
+		const sym = makeSymbol({
+			name: "noExample",
+			kind: "function",
+			signature: "(x: string) => void",
+			documentation: {
+				summary: "Does something.",
+				params: [{ name: "x", description: "The input." }],
+			},
+		});
+		const result = await runEnforce([sym], {
+			rules: { "require-example": "warn" },
+		});
+		const e004 = result.errors.filter((e) => e.code === "E004");
+		const w004 = result.warnings.filter((w) => w.code === "E004");
+		expect(e004).toHaveLength(0);
+		expect(w004).toHaveLength(1);
+	});
+
+	it('rule set to "error" produces an error', async () => {
+		const sym = makeSymbol({ name: "noSummary", documentation: undefined });
+		const result = await runEnforce([sym], {
+			rules: { "require-summary": "error" },
+		});
+		const e001 = result.errors.filter((e) => e.code === "E001");
+		expect(e001).toHaveLength(1);
+		expect(result.success).toBe(false);
+	});
+
+	it('strict mode promotes "warn" rules to errors', async () => {
+		const sym = makeSymbol({
+			name: "noExample",
+			kind: "function",
+			signature: "(x: string) => void",
+			documentation: {
+				summary: "Does something.",
+				params: [{ name: "x", description: "The input." }],
+			},
+		});
+		const result = await runEnforce([sym], {
+			strict: true,
+			rules: { "require-example": "warn" },
+		});
+		// With strict=true the "warn" should be promoted to "error"
+		const e004AsError = result.errors.filter((e) => e.code === "E004");
+		expect(e004AsError).toHaveLength(1);
+		expect(result.warnings.filter((w) => w.code === "E004")).toHaveLength(0);
+	});
+
+	it("default rules match expected severities", async () => {
+		expect(DEFAULT_RULES["require-summary"]).toBe("error");
+		expect(DEFAULT_RULES["require-param"]).toBe("error");
+		expect(DEFAULT_RULES["require-returns"]).toBe("error");
+		expect(DEFAULT_RULES["require-example"]).toBe("error");
+		expect(DEFAULT_RULES["require-package-doc"]).toBe("warn");
+		expect(DEFAULT_RULES["require-class-member-doc"]).toBe("error");
+		expect(DEFAULT_RULES["require-interface-member-doc"]).toBe("error");
+	});
+
+	it("custom rules override defaults while keeping other defaults intact", async () => {
+		// Turn off require-example; require-summary should still be "error"
+		const sym = makeSymbol({
+			name: "noSummaryNoExample",
+			kind: "function",
+			documentation: undefined,
+		});
+		const result = await runEnforce([sym], {
+			rules: { "require-example": "off" },
+		});
+		// E001 (require-summary) still fires as an error
+		const e001 = result.errors.filter((e) => e.code === "E001");
+		expect(e001).toHaveLength(1);
+		// E004 (require-example) is suppressed
+		const e004 = result.errors.filter((e) => e.code === "E004");
+		expect(e004).toHaveLength(0);
+	});
+
+	it("require-package-doc defaults to warn, not error", async () => {
+		// An index.ts symbol without @packageDocumentation should produce a warning only
+		const sym = makeSymbol({
+			name: "doThing",
+			filePath: "/fake/src/index.ts",
+			documentation: {
+				summary: "Does a thing.",
+				examples: [{ code: "doThing();", language: "typescript", line: 5 }],
+			},
+		});
+		const result = await runEnforce([sym]);
+		const e005Error = result.errors.filter((e) => e.code === "E005");
+		const e005Warn = result.warnings.filter((w) => w.code === "E005");
+		expect(e005Error).toHaveLength(0);
+		expect(e005Warn).toHaveLength(1);
+		// Should still succeed since there are no errors
+		expect(result.success).toBe(true);
 	});
 });

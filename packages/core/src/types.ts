@@ -36,6 +36,8 @@ export interface ForgeSymbol {
 		examples?: Array<{ code: string; language: string; line: number }>;
 		tags?: Record<string, string[]>;
 		deprecated?: string;
+		/** {@link} cross-references found in this symbol's TSDoc. */
+		links?: Array<{ target: string; line: number }>;
 	};
 	/** Human-readable type signature of the symbol. */
 	signature?: string;
@@ -43,6 +45,37 @@ export interface ForgeSymbol {
 	children?: ForgeSymbol[];
 	/** Whether this symbol is part of the public module exports. */
 	exported: boolean;
+}
+
+/**
+ * Severity level for an individual enforcement rule.
+ * - `"error"` — violation fails the build.
+ * - `"warn"`  — violation is reported but does not fail the build.
+ * - `"off"`   — rule is disabled entirely.
+ * @public
+ */
+export type RuleSeverity = "error" | "warn" | "off";
+
+/**
+ * Per-rule severity configuration for the TSDoc enforcer.
+ * Each key corresponds to one of the E001–E007 rule codes.
+ * @public
+ */
+export interface EnforceRules {
+	/** E001: Exported symbol missing TSDoc summary. */
+	"require-summary": RuleSeverity;
+	/** E002: Function parameter missing @param tag. */
+	"require-param": RuleSeverity;
+	/** E003: Non-void function missing @returns tag. */
+	"require-returns": RuleSeverity;
+	/** E004: Exported function missing @example block. */
+	"require-example": RuleSeverity;
+	/** E005: Entry point missing @packageDocumentation. */
+	"require-package-doc": RuleSeverity;
+	/** E006: Class member missing documentation. */
+	"require-class-member-doc": RuleSeverity;
+	/** E007: Interface/type member missing documentation. */
+	"require-interface-member-doc": RuleSeverity;
 }
 
 /**
@@ -64,6 +97,8 @@ export interface ForgeConfig {
 		minVisibility: Visibility;
 		/** Fail on warnings rather than only on errors. */
 		strict: boolean;
+		/** Per-rule severity overrides. When strict is true, all "warn" become "error". */
+		rules: EnforceRules;
 	};
 	/** DocTest configuration. */
 	doctest: {

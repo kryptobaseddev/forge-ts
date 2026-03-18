@@ -5,6 +5,7 @@ import {
 	type DocCodeSpan,
 	type DocComment,
 	type DocFencedCode,
+	type DocLinkTag,
 	type DocNode,
 	DocNodeKind,
 	type DocParagraph,
@@ -158,6 +159,27 @@ function parseTSDoc(rawComment: string, startLine: number): ForgeSymbol["documen
 	// @example blocks
 	const examples = extractExamples(comment, startLine);
 
+	// Extract {@link} references
+	const links: Array<{ target: string; line: number }> = [];
+	function walkForLinks(node: DocNode): void {
+		if (node.kind === DocNodeKind.LinkTag) {
+			const linkTag = node as DocLinkTag;
+			if (linkTag.codeDestination) {
+				const target = linkTag.codeDestination.memberReferences
+					.map((ref) => ref.memberIdentifier?.identifier ?? "")
+					.filter(Boolean)
+					.join(".");
+				if (target) {
+					links.push({ target, line: startLine });
+				}
+			}
+		}
+		for (const child of node.getChildNodes()) {
+			walkForLinks(child);
+		}
+	}
+	walkForLinks(comment);
+
 	const summary = renderDocSection(comment.summarySection);
 
 	return {
@@ -168,6 +190,7 @@ function parseTSDoc(rawComment: string, startLine: number): ForgeSymbol["documen
 		examples: examples.length > 0 ? examples : undefined,
 		tags: Object.keys(tags).length > 0 ? tags : undefined,
 		deprecated,
+		links: links.length > 0 ? links : undefined,
 	};
 }
 

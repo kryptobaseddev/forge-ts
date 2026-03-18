@@ -3,7 +3,13 @@ import { extractSDKTypes, generateOpenAPISpec } from "@forge-ts/api";
 import { enforce } from "@forge-ts/enforcer";
 import { generateLlmsTxt, generateMarkdown } from "@forge-ts/gen";
 import { describe, expect, it } from "vitest";
-import { createWalker, type ForgeConfig, filterByVisibility, Visibility } from "../index.js";
+import {
+	createWalker,
+	type EnforceRules,
+	type ForgeConfig,
+	filterByVisibility,
+	Visibility,
+} from "../index.js";
 
 // ---------------------------------------------------------------------------
 // Fixture path
@@ -14,6 +20,16 @@ const FIXTURE_DIR = resolve(
 	"../../../../fixtures/sample-project",
 );
 
+const DEFAULT_E2E_RULES: EnforceRules = {
+	"require-summary": "error",
+	"require-param": "error",
+	"require-returns": "error",
+	"require-example": "error",
+	"require-package-doc": "warn",
+	"require-class-member-doc": "error",
+	"require-interface-member-doc": "error",
+};
+
 function makeFixtureConfig(overrides: Partial<ForgeConfig> = {}): ForgeConfig {
 	return {
 		rootDir: FIXTURE_DIR,
@@ -23,6 +39,7 @@ function makeFixtureConfig(overrides: Partial<ForgeConfig> = {}): ForgeConfig {
 			enabled: true,
 			minVisibility: Visibility.Public,
 			strict: false,
+			rules: DEFAULT_E2E_RULES,
 		},
 		doctest: { enabled: false, cacheDir: resolve(FIXTURE_DIR, ".cache") },
 		api: {

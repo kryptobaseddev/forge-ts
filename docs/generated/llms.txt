@@ -1,0 +1,100 @@
+# .
+> Auto-generated API documentation
+
+## Sections
+
+- [API Reference](./api-reference.md): Full API documentation
+- [Full Context](./llms-full.txt): Dense context for LLM consumption
+
+## Quick Reference
+
+typeof Visibility - Visibility levels for exported symbols. Derived from TSDoc release tags (public, beta, internal).
+any - A single extracted and annotated symbol from the TypeScript AST.
+any - Full configuration for a forge-ts run. Loaded from forge-ts.config.ts or the "forge-ts" key in package.json.
+any - The result of a forge-ts compilation pass.
+any - A diagnostic error produced during a forge-ts run.
+any - A diagnostic warning produced during a forge-ts run.
+(rootDir: string) => ForgeConfig - Constructs a sensible default  rooted at `rootDir`.
+(rootDir?: string | undefined) => Promise<ForgeConfig> - Loads the forge-ts configuration for a project.  Resolution order: 1. `<rootDir>/forge-ts.config.ts` 2. `<rootDir>/forge-ts.config.js` 3. `"forge-ts"` key inside `<rootDir>/package.json` 4. Built-in defaults (returned when none of the above is found)
+any - OpenAPI 3.2 schema object.
+any - OpenAPI 3.2 info object.
+any - OpenAPI 3.2 tag object.
+any - OpenAPI 3.2 path item object.
+any - OpenAPI 3.2 operation object.
+any - OpenAPI 3.2 parameter object.
+any - OpenAPI 3.2 encoding object.
+any - OpenAPI 3.2 media type object.
+any - OpenAPI 3.2 response object.
+any - Complete OpenAPI 3.2 document.
+(tags: Record<string, string[]> | undefined) => Visibility - Determines the visibility level of a symbol from its TSDoc release tags.  The precedence order is: 1. `@internal`  →  2. `@beta`      →  3. `@public`    →  4. (no tag)     →  (default for exports)
+(candidate: Visibility, minVisibility: Visibility) => boolean - Returns whether `candidate` meets or exceeds the required minimum visibility.  "Meets" means the symbol is at least as visible as `minVisibility`. For example, `Public` meets a minimum of `Public`, but `Internal` does not.
+(symbols: ForgeSymbol[], minVisibility: Visibility) => ForgeSymbol[] - Filters an array of  objects to only include symbols whose visibility meets or exceeds `minVisibility`.
+any - The return type of .
+(config: ForgeConfig) => ASTWalker - Creates an  configured for the given forge config.  The walker uses the TypeScript Compiler API to create a `ts.Program` from the project's tsconfig, then visits every source file to extract exported declarations.  TSDoc comments are parsed with `@microsoft/tsdoc` to populate the `documentation` field on each .
+(a: number, b: number) => number - Adds two numbers together.
+(a: number, b: number) => number - Subtracts the second number from the first.
+(a: number, b: number) => number - Multiplies two numbers.
+() => void
+any - Configuration for the calculator.
+typeof Operation - Supported operations.
+any
+(x: number) => number
+any
+(signature: string) => OpenAPISchemaObject - Maps a TypeScript type signature string to an OpenAPI 3.2 schema object.  Handles common primitives, arrays, unions, `Record<K, V>`, and falls back to `{ type: "object" }` for anything it cannot parse.
+any - A single property extracted from an interface or class symbol.
+any - An SDK type descriptor extracted from the symbol graph.
+(symbols: ForgeSymbol[]) => SDKType[] - Extracts SDK-relevant types (interfaces, type aliases, classes, enums) from a list of  objects.  Only exported symbols whose visibility is not  or  are included.
+(config: ForgeConfig, sdkTypes: SDKType[]) => OpenAPIDocument - Generates a production-quality OpenAPI 3.2 document from the extracted SDK types.  The document is populated with: - An `info` block sourced from the config or reasonable defaults. - A `components.schemas` section with one schema per exported type. - `tags` derived from unique source file paths (grouping by file). - Visibility filtering: `@internal` symbols are never emitted.  HTTP paths are not yet emitted (`paths` is always `{}`); route extraction will be added in a future release.
+any - A single entry in the generated API reference.
+(symbols: ForgeSymbol[]) => ReferenceEntry[] - Builds a structured API reference from a list of exported symbols.  Unlike the minimal stub, this version includes nested children (class methods, interface properties) and all available TSDoc metadata.  Symbols with  or  are excluded from the top-level results. Children with private/internal visibility are also filtered out.
+(config: ForgeConfig) => Promise<ForgeResult> - Runs the API generation pipeline: walk → extract → generate → write.
+(symbols: ForgeSymbol[], config: ForgeConfig) => string - Generates an `llms.txt` routing manifest from the extracted symbols.  The file follows the llms.txt specification: a compact, structured overview designed to help large language models navigate a project's documentation.
+(symbols: ForgeSymbol[], config: ForgeConfig) => string - Generates an `llms-full.txt` dense context file from the extracted symbols.  Unlike `llms.txt`, this file contains complete documentation for every exported symbol, intended for LLM ingestion that requires full context.
+any - Options controlling Markdown output.
+(symbols: ForgeSymbol[], config: ForgeConfig, options?: MarkdownOptions) => string - Generates a Markdown (or MDX) string from a list of symbols.
+any - Options controlling README sync behaviour.
+(readmePath: string, symbols: ForgeSymbol[], options?: ReadmeSyncOptions) => Promise<boolean> - Injects a summary of exported symbols into a `README.md` file.  The content is placed between `<!-- forge-ts:start -->` and `<!-- forge-ts:end -->` comment markers.  If neither marker exists, the summary is appended to the end of the file.
+any - A single generated documentation page.
+any - Options controlling the doc site generator.
+(symbols: ForgeSymbol[], rootDir: string) => Map<string, ForgeSymbol[]> - Groups symbols by their package based on file path.  For monorepos (symbols under `packages/<name>/`) the package name is derived from the directory segment immediately after `packages/`. For non-monorepo projects all symbols fall under the project name.
+(symbolsByPackage: Map<string, ForgeSymbol[]>, config: ForgeConfig, options: SiteGeneratorOptions) => DocPage[] - Generates a full multi-page documentation site from symbols grouped by package.  Produces an index page, a getting-started page, and per-package pages for the API reference, types, functions, and examples.
+any - A single generated SSG configuration file.
+(pages: DocPage[], target: "docusaurus" | "mintlify" | "nextra" | "vitepress", projectName: string) => SSGConfigFile[] - Generate navigation configuration file(s) for the given SSG target.  Returns one file for most targets, but multiple files for Nextra (which uses per-directory `_meta.json` files).
+(config: ForgeConfig) => Promise<ForgeResult> - Runs the full generation pipeline: walk → render → write.
+any - A minimal structured logger used throughout the CLI commands.
+(options?: { colors?: boolean | undefined; } | undefined) => Logger - Creates a  instance.
+any - Typed result from a forge-ts command.
+any - Structured error for CLI commands.
+any - Structured warning for CLI commands.
+any - Output format flags passed through from citty args.
+<T>(output: CommandOutput<T>, flags: OutputFlags, humanFormatter: (data: T, output: CommandOutput<T>) => string) => void - Wraps a command result in a LAFS envelope and emits it.  - JSON mode: writes the projected envelope to stdout as JSON. - Human mode: calls the provided formatter function. - Quiet mode: suppresses all output regardless of format.
+(output: CommandOutput<unknown>) => number - Returns the LAFS-compliant exit code for a command output.
+any - Arguments for the `build` command.
+any - A single step in the build pipeline.
+any - Typed result for the `build` command.
+(args: BuildArgs) => Promise<CommandOutput<BuildResult>> - Runs the full build pipeline and returns a typed command output.
+CommandDef<{ readonly cwd: { readonly type: "string"; readonly description: "Project root directory"; }; readonly "skip-api": { readonly type: "boolean"; readonly description: "Skip OpenAPI generation"; readonly default: false; }; ... 4 more ...; readonly mvi: { ...; }; }> - Citty command definition for `forge-ts build`.
+(config: ForgeConfig) => Promise<ForgeResult> - Runs the TSDoc enforcement pass against a project.  The enforcer walks all exported symbols that meet the configured minimum visibility threshold and emits diagnostics for any documentation deficiencies it finds.  ### Error codes | Code | Severity | Condition | |------|----------|-----------| | E001 | error    | Exported symbol is missing a TSDoc summary. | | E002 | error    | Function/method parameter lacks a `@param` tag. | | E003 | error    | Non-void function/method lacks a `@returns` tag. | | E004 | error    | Exported function/method is missing an `@example` block. | | E005 | error    | Package entry point (index.ts) is missing `@packageDocumentation`. | | E006 | error    | Public/protected class member is missing a TSDoc comment. | | E007 | error    | Interface/type alias property is missing a TSDoc comment. | | W001 | warning  | TSDoc comment contains parse errors. | | W002 | warning  | Function body throws but has no `@throws` tag. | | W003 | warning  | `@deprecated` tag is present without explanation. |  When `config.enforce.strict` is `true` all warnings are promoted to errors.
+any - Options that control how  renders its output.
+(result: ForgeResult, options: FormatOptions) => string - Formats a  into a human-readable string suitable for printing to a terminal.  Diagnostics are grouped by source file.  Each file heading shows the relative-ish path, followed by indented error and warning lines.  A summary line is appended at the end.
+any - Arguments for the `check` command.
+any - A single error entry within a file group, included at standard and full MVI levels.
+any - A single warning entry within a file group, included at standard and full MVI levels.
+any - Errors and warnings grouped by file, included at standard and full MVI levels.
+any - Typed result for the `check` command.
+(args: CheckArgs) => Promise<CommandOutput<CheckResult>> - Runs the TSDoc enforcement pass and returns a typed command output.
+CommandDef<{ readonly cwd: { readonly type: "string"; readonly description: "Project root directory"; }; readonly strict: { readonly type: "boolean"; readonly description: "Treat warnings as errors"; readonly default: false; }; ... 4 more ...; readonly mvi: { ...; }; }> - Citty command definition for `forge-ts check`.
+any - A single extracted `@example` block ready for test generation.
+(symbols: ForgeSymbol[]) => ExtractedExample[] - Extracts all `@example` blocks from a list of  objects.
+any - Options for virtual test file generation.
+any - A generated virtual test file.
+(examples: ExtractedExample[], options: GeneratorOptions) => VirtualTestFile[] - Generates a virtual test file for a set of extracted examples.  Each example is wrapped in an `it()` block using the Node built-in `node:test` runner so that no additional test framework is required. Auto-imports the tested symbol from the source file, processes `// =>` assertion patterns, and appends an inline source map.
+any - Result of running the generated test files.
+any - The result of a single test case.
+(files: VirtualTestFile[]) => Promise<RunResult> - Writes virtual test files to disk and executes them with Node 24 native TypeScript support (`--experimental-strip-types --test`).
+(config: ForgeConfig) => Promise<ForgeResult> - Runs the full doctest pipeline: extract → generate → run.
+any - Arguments for the `test` command.
+any - A single test failure entry, included at standard and full MVI levels.
+any - Typed result for the `test` command.
+(args: TestArgs) => Promise<CommandOutput<TestResult>> - Runs the doctest pipeline and returns a typed command output.
+CommandDef<{ readonly cwd: { readonly type: "string"; readonly description: "Project root directory"; }; readonly json: { readonly type: "boolean"; readonly description: "Output as LAFS JSON envelope (agent-friendly)"; readonly default: false; }; readonly human: { ...; }; readonly quiet: { ...; }; readonly mvi: { ..... - Citty command definition for `forge-ts test`.

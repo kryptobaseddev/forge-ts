@@ -33,7 +33,7 @@ export function defaultConfig(rootDir: string): ForgeConfig {
 		gen: {
 			enabled: true,
 			formats: ["markdown"],
-			llmsTxt: false,
+			llmsTxt: true,
 			readmeSync: false,
 		},
 	};

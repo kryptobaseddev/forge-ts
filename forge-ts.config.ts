@@ -1,4 +1,4 @@
-import type { ForgeConfig } from "@codluv/forge-core";
+import type { ForgeConfig } from "@forge-ts/core";
 
 export default {
 	rootDir: ".",
@@ -16,7 +16,7 @@ export default {
 	api: {
 		enabled: true,
 		openapi: true,
-		openapiPath: "./docs/generated/openapi.json",
+		openapiPath: "./docs/generated/api/openapi.json",
 	},
 	gen: {
 		enabled: true,

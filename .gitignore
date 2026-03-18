@@ -5,9 +5,6 @@ dist
 .DS_Store
 *.log
 
-# forge-ts generated output
-docs/generated/
-
 # CLEO internals
 .cleo/tasks.db*
 .cleo/brain.db*

@@ -1,0 +1,2066 @@
+# . - Full Context
+
+Root: .
+Generated: 2026-03-18T23:03:07.312Z
+
+## Functions
+
+### defaultConfig()
+
+(rootDir: string) => ForgeConfig
+
+Constructs a sensible default  rooted at `rootDir`.
+
+Parameters:
+- rootDir: Absolute path to the project root.
+
+Returns: A fully-populated default configuration.
+
+### loadConfig()
+
+(rootDir?: string | undefined) => Promise<ForgeConfig>
+
+Loads the forge-ts configuration for a project.  Resolution order: 1. `<rootDir>/forge-ts.config.ts` 2. `<rootDir>/forge-ts.config.js` 3. `"forge-ts"` key inside `<rootDir>/package.json` 4. Built-in defaults (returned when none of the above is found)
+
+Parameters:
+- rootDir: The project root to search for config.  Defaults to `process.cwd()`.
+
+Returns: A fully-resolved .
+
+### resolveVisibility()
+
+(tags: Record<string, string[]> | undefined) => Visibility
+
+Determines the visibility level of a symbol from its TSDoc release tags.  The precedence order is: 1. `@internal`  →  2. `@beta`      →  3. `@public`    →  4. (no tag)     →  (default for exports)
+
+Parameters:
+- tags: The parsed `tags` map from `ForgeSymbol.documentation`.
+
+Returns: The resolved  value.
+
+### meetsVisibility()
+
+(candidate: Visibility, minVisibility: Visibility) => boolean
+
+Returns whether `candidate` meets or exceeds the required minimum visibility.  "Meets" means the symbol is at least as visible as `minVisibility`. For example, `Public` meets a minimum of `Public`, but `Internal` does not.
+
+Parameters:
+- candidate: The visibility of the symbol being tested.
+- minVisibility: The minimum visibility threshold.
+
+Returns: `true` if `candidate` is at least as visible as `minVisibility`.
+
+### filterByVisibility()
+
+(symbols: ForgeSymbol[], minVisibility: Visibility) => ForgeSymbol[]
+
+Filters an array of  objects to only include symbols whose visibility meets or exceeds `minVisibility`.
+
+Parameters:
+- symbols: The full list of symbols to filter.
+- minVisibility: The minimum visibility threshold to keep.
+
+Returns: A new array containing only symbols that pass the visibility check.
+
+### createWalker()
+
+(config: ForgeConfig) => ASTWalker
+
+Creates an  configured for the given forge config.  The walker uses the TypeScript Compiler API to create a `ts.Program` from the project's tsconfig, then visits every source file to extract exported declarations.  TSDoc comments are parsed with `@microsoft/tsdoc` to populate the `documentation` field on each .
+
+Parameters:
+- config: The resolved  for the project.
+
+Returns: An  instance whose `walk()` method performs the extraction.
+
+### add()
+
+(a: number, b: number) => number
+
+Adds two numbers together.
+
+Parameters:
+- a: The first number.
+- b: The second number.
+
+Returns: The sum of `a` and `b`.
+
+Example:
+  import { add } from "./math.js";
+  const result = add(1, 2);
+  // => 3
+
+### subtract()
+
+(a: number, b: number) => number
+
+Subtracts the second number from the first.
+
+Parameters:
+- a: The number to subtract from.
+- b: The number to subtract.
+
+Returns: The difference `a - b`.
+
+### multiply()
+
+(a: number, b: number) => number
+
+Multiplies two numbers.
+
+### _internalHelper()
+
+() => void
+
+### noDocsFunction()
+
+(x: number) => number
+
+### signatureToSchema()
+
+(signature: string) => OpenAPISchemaObject
+
+Maps a TypeScript type signature string to an OpenAPI 3.2 schema object.  Handles common primitives, arrays, unions, `Record<K, V>`, and falls back to `{ type: "object" }` for anything it cannot parse.
+
+Parameters:
+- signature: A TypeScript type signature string, e.g. `"string"`, `"number[]"`,   `"string | number"`, `"Record<string, boolean>"`.
+
+Returns: An OpenAPI schema object.
+
+### extractSDKTypes()
+
+(symbols: ForgeSymbol[]) => SDKType[]
+
+Extracts SDK-relevant types (interfaces, type aliases, classes, enums) from a list of  objects.  Only exported symbols whose visibility is not  or  are included.
+
+Parameters:
+- symbols: The symbols produced by the core AST walker.
+
+Returns: An array of  objects for public-facing type definitions.
+
+### generateOpenAPISpec()
+
+(config: ForgeConfig, sdkTypes: SDKType[]) => OpenAPIDocument
+
+Generates a production-quality OpenAPI 3.2 document from the extracted SDK types.  The document is populated with: - An `info` block sourced from the config or reasonable defaults. - A `components.schemas` section with one schema per exported type. - `tags` derived from unique source file paths (grouping by file). - Visibility filtering: `@internal` symbols are never emitted.  HTTP paths are not yet emitted (`paths` is always `{}`); route extraction will be added in a future release.
+
+Parameters:
+- config: The resolved .
+- sdkTypes: SDK types to include as component schemas.
+
+Returns: An  object.
+
+### buildReference()
+
+(symbols: ForgeSymbol[]) => ReferenceEntry[]
+
+Builds a structured API reference from a list of exported symbols.  Unlike the minimal stub, this version includes nested children (class methods, interface properties) and all available TSDoc metadata.  Symbols with  or  are excluded from the top-level results. Children with private/internal visibility are also filtered out.
+
+Parameters:
+- symbols: All symbols from the AST walker.
+
+Returns: An array of  objects sorted by name.
+
+### generateApi()
+
+(config: ForgeConfig) => Promise<ForgeResult>
+
+Runs the API generation pipeline: walk → extract → generate → write.
+
+Parameters:
+- config: The resolved  for the project.
+
+Returns: A  with success/failure and any diagnostics.
+
+### generateLlmsTxt()
+
+(symbols: ForgeSymbol[], config: ForgeConfig) => string
+
+Generates an `llms.txt` routing manifest from the extracted symbols.  The file follows the llms.txt specification: a compact, structured overview designed to help large language models navigate a project's documentation.
+
+Parameters:
+- symbols: The symbols to include.
+- config: The resolved .
+
+Returns: The generated `llms.txt` content as a string.
+
+### generateLlmsFullTxt()
+
+(symbols: ForgeSymbol[], config: ForgeConfig) => string
+
+Generates an `llms-full.txt` dense context file from the extracted symbols.  Unlike `llms.txt`, this file contains complete documentation for every exported symbol, intended for LLM ingestion that requires full context.
+
+Parameters:
+- symbols: The symbols to include.
+- config: The resolved .
+
+Returns: The generated `llms-full.txt` content as a string.
+
+### generateMarkdown()
+
+(symbols: ForgeSymbol[], config: ForgeConfig, options?: MarkdownOptions) => string
+
+Generates a Markdown (or MDX) string from a list of symbols.
+
+Parameters:
+- symbols: The symbols to document.
+- config: The resolved .
+- options: Rendering options.
+
+Returns: The generated Markdown string.
+
+### syncReadme()
+
+(readmePath: string, symbols: ForgeSymbol[], options?: ReadmeSyncOptions) => Promise<boolean>
+
+Injects a summary of exported symbols into a `README.md` file.  The content is placed between `<!-- forge-ts:start -->` and `<!-- forge-ts:end -->` comment markers.  If neither marker exists, the summary is appended to the end of the file.
+
+Parameters:
+- readmePath: Absolute path to the `README.md` to update.
+- symbols: Symbols to summarise in the README.
+- options: Options controlling sync behaviour.
+
+Returns: `true` if the file was modified, `false` otherwise.
+
+### groupSymbolsByPackage()
+
+(symbols: ForgeSymbol[], rootDir: string) => Map<string, ForgeSymbol[]>
+
+Groups symbols by their package based on file path.  For monorepos (symbols under `packages/<name>/`) the package name is derived from the directory segment immediately after `packages/`. For non-monorepo projects all symbols fall under the project name.
+
+Parameters:
+- symbols: All extracted symbols.
+- rootDir: Absolute path to the project root.
+
+Returns: A map from package name to symbol list.
+
+### generateDocSite()
+
+(symbolsByPackage: Map<string, ForgeSymbol[]>, config: ForgeConfig, options: SiteGeneratorOptions) => DocPage[]
+
+Generates a full multi-page documentation site from symbols grouped by package.  Produces an index page, a getting-started page, and per-package pages for the API reference, types, functions, and examples.
+
+Parameters:
+- symbolsByPackage: Symbols grouped by package name.
+- config: The resolved .
+- options: Site generation options.
+
+Returns: An array of  objects ready to be written to disk.
+
+### generateSSGConfigs()
+
+(pages: DocPage[], target: "docusaurus" | "mintlify" | "nextra" | "vitepress", projectName: string) => SSGConfigFile[]
+
+Generate navigation configuration file(s) for the given SSG target.  Returns one file for most targets, but multiple files for Nextra (which uses per-directory `_meta.json` files).
+
+Parameters:
+- pages: The  array produced by `generateDocSite`.
+- target: The SSG target.
+- projectName: The project name (used in config metadata).
+
+Returns: An array of  objects ready to be written to disk.
+
+### generate()
+
+(config: ForgeConfig) => Promise<ForgeResult>
+
+Runs the full generation pipeline: walk → render → write.
+
+Parameters:
+- config: The resolved  for the project.
+
+Returns: A  describing the outcome.
+
+### createLogger()
+
+(options?: { colors?: boolean | undefined; } | undefined) => Logger
+
+Creates a  instance.
+
+Parameters:
+- options: Optional configuration.
+- : options.colors - Emit ANSI colour codes.  Defaults to `process.stdout.isTTY`.
+
+Returns: A configured logger.
+
+### emitResult()
+
+<T>(output: CommandOutput<T>, flags: OutputFlags, humanFormatter: (data: T, output: CommandOutput<T>) => string) => void
+
+Wraps a command result in a LAFS envelope and emits it.  - JSON mode: writes the projected envelope to stdout as JSON. - Human mode: calls the provided formatter function. - Quiet mode: suppresses all output regardless of format.
+
+Parameters:
+- output: Typed result from the command.
+- flags: Output format flags from citty args.
+- humanFormatter: Produces a human-readable string for TTY consumers.
+
+### resolveExitCode()
+
+(output: CommandOutput<unknown>) => number
+
+Returns the LAFS-compliant exit code for a command output.
+
+Parameters:
+- output: Typed result from the command.
+
+Returns: `0` on success, `1` on validation/check failure.
+
+### runBuild()
+
+(args: BuildArgs) => Promise<CommandOutput<BuildResult>>
+
+Runs the full build pipeline and returns a typed command output.
+
+Parameters:
+- args: CLI arguments for the build command.
+
+Returns: A typed `CommandOutput<BuildResult>`.
+
+### enforce()
+
+(config: ForgeConfig) => Promise<ForgeResult>
+
+Runs the TSDoc enforcement pass against a project.  The enforcer walks all exported symbols that meet the configured minimum visibility threshold and emits diagnostics for any documentation deficiencies it finds.  ### Error codes | Code | Severity | Condition | |------|----------|-----------| | E001 | error    | Exported symbol is missing a TSDoc summary. | | E002 | error    | Function/method parameter lacks a `@param` tag. | | E003 | error    | Non-void function/method lacks a `@returns` tag. | | E004 | error    | Exported function/method is missing an `@example` block. | | E005 | error    | Package entry point (index.ts) is missing `@packageDocumentation`. | | E006 | error    | Public/protected class member is missing a TSDoc comment. | | E007 | error    | Interface/type alias property is missing a TSDoc comment. | | W001 | warning  | TSDoc comment contains parse errors. | | W002 | warning  | Function body throws but has no `@throws` tag. | | W003 | warning  | `@deprecated` tag is present without explanation. |  When `config.enforce.strict` is `true` all warnings are promoted to errors.
+
+Parameters:
+- config: The resolved  for the project.
+
+Returns: A  describing which symbols passed or failed.
+
+### formatResults()
+
+(result: ForgeResult, options: FormatOptions) => string
+
+Formats a  into a human-readable string suitable for printing to a terminal.  Diagnostics are grouped by source file.  Each file heading shows the relative-ish path, followed by indented error and warning lines.  A summary line is appended at the end.
+
+Parameters:
+- result: The result produced by .
+- options: Rendering options (colours, verbosity).
+
+Returns: A formatted string ready to write to stdout or stderr.
+
+### runCheck()
+
+(args: CheckArgs) => Promise<CommandOutput<CheckResult>>
+
+Runs the TSDoc enforcement pass and returns a typed command output.
+
+Parameters:
+- args: CLI arguments for the check command.
+
+Returns: A typed `CommandOutput<CheckResult>`.
+
+### extractExamples()
+
+(symbols: ForgeSymbol[]) => ExtractedExample[]
+
+Extracts all `@example` blocks from a list of  objects.
+
+Parameters:
+- symbols: The symbols produced by the core AST walker.
+
+Returns: A flat array of  objects, one per code block.
+
+### generateTestFiles()
+
+(examples: ExtractedExample[], options: GeneratorOptions) => VirtualTestFile[]
+
+Generates a virtual test file for a set of extracted examples.  Each example is wrapped in an `it()` block using the Node built-in `node:test` runner so that no additional test framework is required. Auto-imports the tested symbol from the source file, processes `// =>` assertion patterns, and appends an inline source map.
+
+Parameters:
+- examples: Examples to include in the generated file.
+- options: Output configuration.
+
+Returns: An array of  objects (one per source file).
+
+### runTests()
+
+(files: VirtualTestFile[]) => Promise<RunResult>
+
+Writes virtual test files to disk and executes them with Node 24 native TypeScript support (`--experimental-strip-types --test`).
+
+Parameters:
+- files: The virtual test files to write and run.
+
+Returns: A  summarising the test outcome.
+
+### doctest()
+
+(config: ForgeConfig) => Promise<ForgeResult>
+
+Runs the full doctest pipeline: extract → generate → run.
+
+Parameters:
+- config: The resolved  for the project.
+
+Returns: A  with success/failure and any diagnostics.
+
+### runTest()
+
+(args: TestArgs) => Promise<CommandOutput<TestResult>>
+
+Runs the doctest pipeline and returns a typed command output.
+
+Parameters:
+- args: CLI arguments for the test command.
+
+Returns: A typed `CommandOutput<TestResult>`.
+
+## Interfaces
+
+### ForgeSymbol
+
+any
+
+A single extracted and annotated symbol from the TypeScript AST.
+
+Members:
+
+#### name
+
+string
+
+The declared name of the symbol.
+
+#### kind
+
+"function" | "class" | "interface" | "type" | "enum" | "variable" | "method" | "property"
+
+The syntactic kind of the symbol.
+
+#### visibility
+
+Visibility
+
+Resolved visibility from TSDoc release tags.
+
+#### filePath
+
+string
+
+Absolute path to the source file.
+
+#### line
+
+number
+
+1-based line number of the declaration.
+
+#### column
+
+number
+
+0-based column of the declaration.
+
+#### documentation
+
+{ summary?: string | undefined; params?: { name: string; description: string; type?: string | undefined; }[] | undefined; returns?: { description: string; type?: string | undefined; } | undefined; throws?: { ...; }[] | undefined; examples?: { ...; }[] | undefined; tags?: Record<...> | undefined; deprecated?: string ...
+
+Parsed TSDoc documentation, if present.
+
+#### signature
+
+string | undefined
+
+Human-readable type signature of the symbol.
+
+#### children
+
+ForgeSymbol[] | undefined
+
+Child symbols (e.g., class members, enum values).
+
+#### exported
+
+boolean
+
+Whether this symbol is part of the public module exports.
+
+### ForgeConfig
+
+any
+
+Full configuration for a forge-ts run. Loaded from forge-ts.config.ts or the "forge-ts" key in package.json.
+
+Members:
+
+#### rootDir
+
+string
+
+Root directory of the project.
+
+#### tsconfig
+
+string
+
+Path to the tsconfig.json to compile against.
+
+#### outDir
+
+string
+
+Output directory for generated files.
+
+#### enforce
+
+{ enabled: boolean; minVisibility: Visibility; strict: boolean; }
+
+Enforce TSDoc on all public exports.
+
+#### doctest
+
+{ enabled: boolean; cacheDir: string; }
+
+DocTest configuration.
+
+#### api
+
+{ enabled: boolean; openapi: boolean; openapiPath: string; }
+
+API generation configuration.
+
+#### gen
+
+{ enabled: boolean; formats: ("markdown" | "mdx")[]; llmsTxt: boolean; readmeSync: boolean; ssgTarget?: "docusaurus" | "mintlify" | "nextra" | "vitepress" | undefined; }
+
+Output generation configuration.
+
+### ForgeResult
+
+any
+
+The result of a forge-ts compilation pass.
+
+Members:
+
+#### success
+
+boolean
+
+Whether the run succeeded without errors.
+
+#### symbols
+
+ForgeSymbol[]
+
+All symbols extracted during this run.
+
+#### errors
+
+ForgeError[]
+
+Errors that caused or would cause failure.
+
+#### warnings
+
+ForgeWarning[]
+
+Non-fatal warnings.
+
+#### duration
+
+number
+
+Wall-clock duration of the run in milliseconds.
+
+### ForgeError
+
+any
+
+A diagnostic error produced during a forge-ts run.
+
+Members:
+
+#### code
+
+string
+
+Machine-readable error code (e.g. "E001").
+
+#### message
+
+string
+
+Human-readable description of the error.
+
+#### filePath
+
+string
+
+Absolute path of the file where the error occurred.
+
+#### line
+
+number
+
+1-based line number.
+
+#### column
+
+number
+
+0-based column.
+
+#### suggestedFix
+
+string | undefined
+
+Suggested fix for the agent — exact TSDoc block to add.
+
+#### symbolName
+
+string | undefined
+
+The symbol name that needs fixing.
+
+#### symbolKind
+
+string | undefined
+
+The symbol kind (function, class, interface, etc.).
+
+### ForgeWarning
+
+any
+
+A diagnostic warning produced during a forge-ts run.
+
+Members:
+
+#### code
+
+string
+
+Machine-readable warning code (e.g. "W001").
+
+#### message
+
+string
+
+Human-readable description of the warning.
+
+#### filePath
+
+string
+
+Absolute path of the file where the warning occurred.
+
+#### line
+
+number
+
+1-based line number.
+
+#### column
+
+number
+
+0-based column.
+
+### OpenAPISchemaObject
+
+any
+
+OpenAPI 3.2 schema object.
+
+Members:
+
+#### type
+
+"string" | "number" | "boolean" | "object" | "integer" | "array" | "null" | undefined
+
+#### format
+
+string | undefined
+
+#### description
+
+string | undefined
+
+#### properties
+
+Record<string, OpenAPISchemaObject> | undefined
+
+#### required
+
+string[] | undefined
+
+#### items
+
+OpenAPISchemaObject | undefined
+
+#### additionalProperties
+
+boolean | OpenAPISchemaObject | undefined
+
+#### enum
+
+(string | number | boolean)[] | undefined
+
+#### oneOf
+
+OpenAPISchemaObject[] | undefined
+
+#### allOf
+
+OpenAPISchemaObject[] | undefined
+
+#### anyOf
+
+OpenAPISchemaObject[] | undefined
+
+#### nullable
+
+boolean | undefined
+
+#### deprecated
+
+boolean | undefined
+
+#### default
+
+string | number | boolean | null | undefined
+
+#### $ref
+
+string | undefined
+
+### OpenAPIInfoObject
+
+any
+
+OpenAPI 3.2 info object.
+
+Members:
+
+#### title
+
+string
+
+#### version
+
+string
+
+#### description
+
+string | undefined
+
+#### summary
+
+string | undefined
+
+#### license
+
+{ name: string; url?: string | undefined; identifier?: string | undefined; } | undefined
+
+### OpenAPITagObject
+
+any
+
+OpenAPI 3.2 tag object.
+
+Members:
+
+#### name
+
+string
+
+#### description
+
+string | undefined
+
+### OpenAPIPathItemObject
+
+any
+
+OpenAPI 3.2 path item object.
+
+Members:
+
+#### summary
+
+string | undefined
+
+#### description
+
+string | undefined
+
+#### get
+
+OpenAPIOperationObject | undefined
+
+#### post
+
+OpenAPIOperationObject | undefined
+
+#### put
+
+OpenAPIOperationObject | undefined
+
+#### delete
+
+OpenAPIOperationObject | undefined
+
+#### patch
+
+OpenAPIOperationObject | undefined
+
+#### options
+
+OpenAPIOperationObject | undefined
+
+#### head
+
+OpenAPIOperationObject | undefined
+
+#### trace
+
+OpenAPIOperationObject | undefined
+
+#### query
+
+OpenAPIOperationObject | undefined
+
+#### additionalOperations
+
+Record<string, OpenAPIOperationObject> | undefined
+
+### OpenAPIOperationObject
+
+any
+
+OpenAPI 3.2 operation object.
+
+Members:
+
+#### operationId
+
+string | undefined
+
+#### summary
+
+string | undefined
+
+#### description
+
+string | undefined
+
+#### tags
+
+string[] | undefined
+
+#### parameters
+
+OpenAPIParameterObject[] | undefined
+
+#### responses
+
+Record<string, OpenAPIResponseObject> | undefined
+
+### OpenAPIParameterObject
+
+any
+
+OpenAPI 3.2 parameter object.
+
+Members:
+
+#### name
+
+string
+
+#### in
+
+"query" | "header" | "path" | "cookie" | "querystring"
+
+#### description
+
+string | undefined
+
+#### required
+
+boolean | undefined
+
+#### schema
+
+OpenAPISchemaObject | undefined
+
+#### deprecated
+
+boolean | undefined
+
+### OpenAPIEncodingObject
+
+any
+
+OpenAPI 3.2 encoding object.
+
+Members:
+
+#### contentType
+
+string | undefined
+
+#### headers
+
+Record<string, OpenAPIParameterObject> | undefined
+
+#### style
+
+string | undefined
+
+#### explode
+
+boolean | undefined
+
+#### allowReserved
+
+boolean | undefined
+
+### OpenAPIMediaTypeObject
+
+any
+
+OpenAPI 3.2 media type object.
+
+Members:
+
+#### schema
+
+OpenAPISchemaObject | undefined
+
+#### encoding
+
+Record<string, OpenAPIEncodingObject> | undefined
+
+### OpenAPIResponseObject
+
+any
+
+OpenAPI 3.2 response object.
+
+Members:
+
+#### description
+
+string
+
+#### headers
+
+Record<string, OpenAPIParameterObject> | undefined
+
+#### content
+
+Record<string, OpenAPIMediaTypeObject> | undefined
+
+### OpenAPIDocument
+
+any
+
+Complete OpenAPI 3.2 document.
+
+Members:
+
+#### openapi
+
+"3.2.0"
+
+#### $self
+
+string | undefined
+
+#### info
+
+OpenAPIInfoObject
+
+#### paths
+
+Record<string, OpenAPIPathItemObject>
+
+#### components
+
+{ schemas: Record<string, OpenAPISchemaObject>; mediaTypes?: Record<string, OpenAPIMediaTypeObject> | undefined; }
+
+#### tags
+
+OpenAPITagObject[] | undefined
+
+### ASTWalker
+
+any
+
+The return type of .
+
+Members:
+
+#### walk()
+
+() => ForgeSymbol[]
+
+Walk all source files referenced by the configured tsconfig and return one  per exported declaration.
+
+### CalculatorConfig
+
+any
+
+Configuration for the calculator.
+
+Example:
+  const config: CalculatorConfig = {
+    precision: 2,
+    mode: "standard",
+  };
+
+Members:
+
+#### precision
+
+number
+
+Number of decimal places.
+
+#### mode
+
+"standard" | "scientific"
+
+Calculator mode.
+
+#### label
+
+string | undefined
+
+Optional label.
+
+### NoDocsInterface
+
+any
+
+Members:
+
+#### value
+
+string
+
+### SDKProperty
+
+any
+
+A single property extracted from an interface or class symbol.
+
+Members:
+
+#### name
+
+string
+
+The property name.
+
+#### type
+
+string
+
+The TypeScript type string of the property.
+
+#### description
+
+string | undefined
+
+TSDoc summary for this property.
+
+#### required
+
+boolean
+
+Whether the property is required (not optional).
+
+#### deprecated
+
+string | undefined
+
+Deprecation notice, if present.
+
+### SDKType
+
+any
+
+An SDK type descriptor extracted from the symbol graph.
+
+Members:
+
+#### name
+
+string
+
+The symbol name.
+
+#### kind
+
+"class" | "interface" | "type" | "enum"
+
+Syntactic kind of the type.
+
+#### signature
+
+string | undefined
+
+Human-readable type signature.
+
+#### description
+
+string | undefined
+
+TSDoc summary.
+
+#### deprecated
+
+string | undefined
+
+Deprecation notice, if present.
+
+#### visibility
+
+Visibility
+
+Resolved visibility level.
+
+#### properties
+
+SDKProperty[]
+
+Extracted properties (for interfaces, classes) or values (for enums).
+
+#### sourceFile
+
+string
+
+Absolute path to the source file.
+
+### ReferenceEntry
+
+any
+
+A single entry in the generated API reference.
+
+Members:
+
+#### name
+
+string
+
+Symbol name.
+
+#### kind
+
+"function" | "class" | "interface" | "type" | "enum" | "variable" | "method" | "property"
+
+Symbol kind.
+
+#### summary
+
+string | undefined
+
+TSDoc summary.
+
+#### signature
+
+string | undefined
+
+Human-readable type signature.
+
+#### visibility
+
+Visibility
+
+Resolved visibility level.
+
+#### deprecated
+
+string | undefined
+
+Deprecation notice, if present.
+
+#### params
+
+{ name: string; description: string; type?: string | undefined; }[] | undefined
+
+Documented parameters.
+
+#### returns
+
+{ description: string; type?: string | undefined; } | undefined
+
+Documented return value.
+
+#### throws
+
+{ type?: string | undefined; description: string; }[] | undefined
+
+Documented thrown exceptions.
+
+#### examples
+
+{ code: string; language: string; }[] | undefined
+
+Code examples from TSDoc `@example` tags.
+
+#### children
+
+ReferenceEntry[] | undefined
+
+Nested child symbols (class methods, interface properties, enum members).
+
+#### location
+
+{ filePath: string; line: number; }
+
+Source file location.
+
+### MarkdownOptions
+
+any
+
+Options controlling Markdown output.
+
+Members:
+
+#### mdx
+
+boolean | undefined
+
+Whether to use MDX syntax (default: Markdown).
+
+### ReadmeSyncOptions
+
+any
+
+Options controlling README sync behaviour.
+
+Members:
+
+#### badge
+
+boolean | undefined
+
+Include a "Documented with forge-ts" badge above the API table.
+
+#### includeExamples
+
+boolean | undefined
+
+Include first
+
+### DocPage
+
+any
+
+A single generated documentation page.
+
+Members:
+
+#### path
+
+string
+
+Relative path from outDir (e.g., "packages/core/index.md")
+
+#### content
+
+string
+
+Page content (Markdown or MDX)
+
+#### frontmatter
+
+Record<string, string | number | boolean>
+
+Frontmatter fields
+
+### SiteGeneratorOptions
+
+any
+
+Options controlling the doc site generator.
+
+Members:
+
+#### format
+
+"markdown" | "mdx"
+
+Output format
+
+#### ssgTarget
+
+"docusaurus" | "mintlify" | "nextra" | "vitepress" | undefined
+
+SSG target for frontmatter
+
+#### projectName
+
+string
+
+Project name
+
+#### projectDescription
+
+string | undefined
+
+Project description
+
+### SSGConfigFile
+
+any
+
+A single generated SSG configuration file.
+
+Members:
+
+#### path
+
+string
+
+Relative path from outDir (e.g., "mint.json", "_meta.json")
+
+#### content
+
+string
+
+File content
+
+### Logger
+
+any
+
+A minimal structured logger used throughout the CLI commands.
+
+Members:
+
+#### info()
+
+(msg: string) => void
+
+Print an informational message.
+
+#### success()
+
+(msg: string) => void
+
+Print a success message (green ✓ prefix when colours are on).
+
+#### warn()
+
+(msg: string) => void
+
+Print a warning message (yellow prefix when colours are on).
+
+#### error()
+
+(msg: string) => void
+
+Print an error message (red ✗ prefix when colours are on).
+
+#### step()
+
+(label: string, detail: string, duration?: number | undefined) => void
+
+Print a build-step line.
+
+Parameters:
+- label: Short category label (e.g. "API", "Gen").
+- detail: Description of what was produced.
+- duration: Optional wall-clock time in milliseconds.
+
+### CommandOutput
+
+any
+
+Typed result from a forge-ts command.
+
+Members:
+
+#### operation
+
+string
+
+#### success
+
+boolean
+
+#### data
+
+T
+
+#### errors
+
+ForgeCliError[] | undefined
+
+#### warnings
+
+ForgeCliWarning[] | undefined
+
+#### duration
+
+number | undefined
+
+### ForgeCliError
+
+any
+
+Structured error for CLI commands.
+
+Members:
+
+#### code
+
+string
+
+#### message
+
+string
+
+#### filePath
+
+string | undefined
+
+#### line
+
+number | undefined
+
+#### column
+
+number | undefined
+
+### ForgeCliWarning
+
+any
+
+Structured warning for CLI commands.
+
+Members:
+
+#### code
+
+string
+
+#### message
+
+string
+
+#### filePath
+
+string | undefined
+
+#### line
+
+number | undefined
+
+#### column
+
+number | undefined
+
+### OutputFlags
+
+any
+
+Output format flags passed through from citty args.
+
+Members:
+
+#### json
+
+boolean | undefined
+
+#### human
+
+boolean | undefined
+
+#### quiet
+
+boolean | undefined
+
+#### mvi
+
+string | undefined
+
+### BuildArgs
+
+any
+
+Arguments for the `build` command.
+
+Members:
+
+#### cwd
+
+string | undefined
+
+Project root directory (default: cwd).
+
+#### skipApi
+
+boolean | undefined
+
+Skip API generation even if enabled in config.
+
+#### skipGen
+
+boolean | undefined
+
+Skip doc generation even if enabled in config.
+
+#### mvi
+
+string | undefined
+
+MVI verbosity level for structured output.
+
+### BuildStep
+
+any
+
+A single step in the build pipeline.
+
+Members:
+
+#### name
+
+string
+
+#### status
+
+"success" | "skipped" | "failed"
+
+#### outputPath
+
+string | undefined
+
+#### duration
+
+number | undefined
+
+#### errors
+
+ForgeCliError[] | undefined
+
+### BuildResult
+
+any
+
+Typed result for the `build` command.
+
+Members:
+
+#### success
+
+boolean
+
+Whether the build succeeded.
+
+#### summary
+
+{ steps: number; succeeded: number; failed: number; duration: number; }
+
+Aggregate pipeline counts — always present.
+
+#### steps
+
+BuildStep[]
+
+Per-step details.
+
+#### generatedFiles
+
+string[] | undefined
+
+Files written during the build — present at standard and full MVI levels.
+
+### FormatOptions
+
+any
+
+Options that control how  renders its output.
+
+Members:
+
+#### colors
+
+boolean
+
+Emit ANSI colour escape sequences when `true`.
+
+#### verbose
+
+boolean
+
+When `true`, include the symbol's type signature alongside each diagnostic so the reader has immediate context.
+
+### CheckArgs
+
+any
+
+Arguments for the `check` command.
+
+Members:
+
+#### cwd
+
+string | undefined
+
+Project root directory (default: cwd).
+
+#### strict
+
+boolean | undefined
+
+Exit with non-zero code on warnings as well as errors.
+
+#### verbose
+
+boolean | undefined
+
+Include symbol signatures alongside diagnostics.
+
+#### mvi
+
+string | undefined
+
+MVI verbosity level for structured output.
+
+### CheckFileError
+
+any
+
+A single error entry within a file group, included at standard and full MVI levels.
+
+Members:
+
+#### code
+
+string
+
+Machine-readable error code.
+
+#### symbol
+
+string
+
+Symbol name that needs fixing.
+
+#### kind
+
+string
+
+Symbol kind (function, class, interface, etc.).
+
+#### line
+
+number
+
+1-based line number of the error.
+
+#### message
+
+string
+
+Human-readable description.
+
+#### suggestedFix
+
+string | undefined
+
+Exact TSDoc block to add (full MVI level only).
+
+#### agentAction
+
+string | undefined
+
+Recommended agent action (full MVI level only).
+
+### CheckFileWarning
+
+any
+
+A single warning entry within a file group, included at standard and full MVI levels.
+
+Members:
+
+#### code
+
+string
+
+Machine-readable warning code.
+
+#### symbol
+
+string
+
+Symbol name that generated the warning.
+
+#### kind
+
+string
+
+Symbol kind (function, class, interface, etc.).
+
+#### line
+
+number
+
+1-based line number of the warning.
+
+#### message
+
+string
+
+Human-readable description.
+
+### CheckFileGroup
+
+any
+
+Errors and warnings grouped by file, included at standard and full MVI levels.
+
+Members:
+
+#### file
+
+string
+
+Absolute path to the source file.
+
+#### errors
+
+CheckFileError[]
+
+Errors in this file.
+
+#### warnings
+
+CheckFileWarning[]
+
+Warnings in this file.
+
+### CheckResult
+
+any
+
+Typed result for the `check` command.
+
+Members:
+
+#### success
+
+boolean
+
+Whether the check passed without errors.
+
+#### summary
+
+{ errors: number; warnings: number; files: number; symbols: number; duration: number; }
+
+Aggregate counts — always present regardless of MVI level.
+
+#### byFile
+
+CheckFileGroup[] | undefined
+
+Per-file breakdown — present at standard and full MVI levels.
+
+### ExtractedExample
+
+any
+
+A single extracted `@example` block ready for test generation.
+
+Members:
+
+#### symbolName
+
+string
+
+The symbol this example belongs to.
+
+#### filePath
+
+string
+
+Absolute path to the source file.
+
+#### line
+
+number
+
+1-based line number of the `@example` tag.
+
+#### code
+
+string
+
+The raw code inside the fenced block.
+
+#### language
+
+string
+
+The language identifier (e.g. `"typescript"`).
+
+#### index
+
+number
+
+Sequential index among examples for this symbol.
+
+### GeneratorOptions
+
+any
+
+Options for virtual test file generation.
+
+Members:
+
+#### cacheDir
+
+string
+
+Directory where virtual test files will be written.
+
+### VirtualTestFile
+
+any
+
+A generated virtual test file.
+
+Members:
+
+#### path
+
+string
+
+Absolute path where the file will be written.
+
+#### content
+
+string
+
+File contents (valid TypeScript).
+
+### RunResult
+
+any
+
+Result of running the generated test files.
+
+Members:
+
+#### success
+
+boolean
+
+Whether all tests passed.
+
+#### passed
+
+number
+
+Number of tests that passed.
+
+#### failed
+
+number
+
+Number of tests that failed.
+
+#### output
+
+string
+
+Combined stdout + stderr output from the test runner.
+
+#### tests
+
+TestCaseResult[]
+
+Individual test results with name and status.
+
+### TestCaseResult
+
+any
+
+The result of a single test case.
+
+Members:
+
+#### name
+
+string
+
+The full test name as reported by the runner.
+
+#### passed
+
+boolean
+
+Whether this test passed.
+
+#### sourceFile
+
+string | undefined
+
+The source file this test was generated from, if determinable.
+
+### TestArgs
+
+any
+
+Arguments for the `test` command.
+
+Members:
+
+#### cwd
+
+string | undefined
+
+Project root directory (default: cwd).
+
+#### mvi
+
+string | undefined
+
+MVI verbosity level for structured output.
+
+### TestFailure
+
+any
+
+A single test failure entry, included at standard and full MVI levels.
+
+Members:
+
+#### symbol
+
+string
+
+Symbol name where the doctest failed.
+
+#### file
+
+string
+
+Absolute path to the source file.
+
+#### line
+
+number
+
+1-based line number of the failing example.
+
+#### message
+
+string
+
+Human-readable failure message.
+
+### TestResult
+
+any
+
+Typed result for the `test` command.
+
+Members:
+
+#### success
+
+boolean
+
+Whether all doctests passed.
+
+#### summary
+
+{ passed: number; failed: number; total: number; duration: number; }
+
+Aggregate counts — always present regardless of MVI level.
+
+#### failures
+
+TestFailure[] | undefined
+
+Per-failure details — present at standard and full MVI levels.
+
+## Types
+
+### LegacyConfig
+
+any
+
+DEPRECATED: Use `CalculatorConfig` instead.
+
+## Enums
+
+### Visibility
+
+typeof Visibility
+
+Visibility levels for exported symbols. Derived from TSDoc release tags (public, beta, internal).
+
+Members:
+
+#### Public
+
+Visibility.Public
+
+#### Beta
+
+Visibility.Beta
+
+#### Internal
+
+Visibility.Internal
+
+#### Private
+
+Visibility.Private
+
+### Operation
+
+typeof Operation
+
+Supported operations.
+
+Members:
+
+#### Add
+
+Operation.Add
+
+#### Subtract
+
+Operation.Subtract
+
+#### Multiply
+
+Operation.Multiply
+
+#### Divide
+
+Operation.Divide
+
+## Variables
+
+### buildCommand
+
+CommandDef<{ readonly cwd: { readonly type: "string"; readonly description: "Project root directory"; }; readonly "skip-api": { readonly type: "boolean"; readonly description: "Skip OpenAPI generation"; readonly default: false; }; ... 4 more ...; readonly mvi: { ...; }; }>
+
+Citty command definition for `forge-ts build`.
+
+### checkCommand
+
+CommandDef<{ readonly cwd: { readonly type: "string"; readonly description: "Project root directory"; }; readonly strict: { readonly type: "boolean"; readonly description: "Treat warnings as errors"; readonly default: false; }; ... 4 more ...; readonly mvi: { ...; }; }>
+
+Citty command definition for `forge-ts check`.
+
+### testCommand
+
+CommandDef<{ readonly cwd: { readonly type: "string"; readonly description: "Project root directory"; }; readonly json: { readonly type: "boolean"; readonly description: "Output as LAFS JSON envelope (agent-friendly)"; readonly default: false; }; readonly human: { ...; }; readonly quiet: { ...; }; readonly mvi: { .....
+
+Citty command definition for `forge-ts test`.

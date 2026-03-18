@@ -34,7 +34,7 @@ function makeSymbol(overrides: Partial<ForgeSymbol> & { name: string }): ForgeSy
 	return {
 		kind: "function",
 		visibility: Visibility.Public,
-		filePath: "/fake/src/index.ts",
+		filePath: "/fake/src/module.ts",
 		line: 10,
 		column: 0,
 		exported: true,
@@ -75,7 +75,10 @@ describe("enforce — E001 missing summary", () => {
 	it("passes a symbol that has a full TSDoc summary", async () => {
 		const sym = makeSymbol({
 			name: "doThing",
-			documentation: { summary: "Does a thing." },
+			documentation: {
+				summary: "Does a thing.",
+				examples: [{ code: "doThing();", language: "typescript", line: 5 }],
+			},
 		});
 		const result = await runEnforce([sym]);
 		expect(result.success).toBe(true);
@@ -257,6 +260,7 @@ describe("enforce — strict mode", () => {
 			documentation: {
 				summary: "An old API.",
 				deprecated: "true",
+				examples: [{ code: "oldApi();", language: "typescript", line: 5 }],
 			},
 		});
 		const result = await runEnforce([sym], { strict: true });
@@ -272,6 +276,7 @@ describe("enforce — strict mode", () => {
 			documentation: {
 				summary: "An old API.",
 				deprecated: "true",
+				examples: [{ code: "oldApi();", language: "typescript", line: 5 }],
 			},
 		});
 		const result = await runEnforce([sym], { strict: false });
@@ -310,6 +315,330 @@ describe("enforce — multi-file grouping", () => {
 		const paths = result.errors.map((e) => e.filePath);
 		expect(paths).toContain("/fake/src/a.ts");
 		expect(paths).toContain("/fake/src/b.ts");
+	});
+});
+
+describe("enforce — E004 missing @example", () => {
+	it("emits E004 for an exported function with a summary but no @example block", async () => {
+		const sym = makeSymbol({
+			name: "parseConfig",
+			kind: "function",
+			signature: "(raw: string) => void",
+			documentation: {
+				summary: "Parses a config string.",
+				params: [{ name: "raw", description: "The raw config." }],
+			},
+		});
+		const result = await runEnforce([sym]);
+		const e004 = result.errors.filter((e) => e.code === "E004");
+		expect(e004).toHaveLength(1);
+		expect(e004[0].message).toContain("parseConfig");
+	});
+
+	it("passes when an exported function has at least one @example block", async () => {
+		const sym = makeSymbol({
+			name: "parseConfig",
+			kind: "function",
+			signature: "(raw: string) => void",
+			documentation: {
+				summary: "Parses a config string.",
+				params: [{ name: "raw", description: "The raw config." }],
+				examples: [{ code: "parseConfig('{}');", language: "typescript", line: 5 }],
+			},
+		});
+		const result = await runEnforce([sym]);
+		const e004 = result.errors.filter((e) => e.code === "E004");
+		expect(e004).toHaveLength(0);
+	});
+
+	it("does not emit E004 for a function with no documentation at all (E001 covers it)", async () => {
+		const sym = makeSymbol({
+			name: "parseConfig",
+			kind: "function",
+			documentation: undefined,
+		});
+		const result = await runEnforce([sym]);
+		const e004 = result.errors.filter((e) => e.code === "E004");
+		// E001 fires instead; E004 only fires when documentation exists but examples are absent
+		expect(e004).toHaveLength(0);
+	});
+
+	it("does not emit E004 for non-function symbols", async () => {
+		const sym = makeSymbol({
+			name: "MyConfig",
+			kind: "interface",
+			documentation: { summary: "A config type." },
+		});
+		const result = await runEnforce([sym]);
+		const e004 = result.errors.filter((e) => e.code === "E004");
+		expect(e004).toHaveLength(0);
+	});
+});
+
+describe("enforce — E005 missing @packageDocumentation", () => {
+	it("emits E005 for an index.ts file with no @packageDocumentation tag", async () => {
+		const sym = makeSymbol({
+			name: "doThing",
+			filePath: "/fake/src/index.ts",
+			documentation: { summary: "Does a thing." },
+		});
+		const result = await runEnforce([sym]);
+		const e005 = result.errors.filter((e) => e.code === "E005");
+		expect(e005).toHaveLength(1);
+		expect(e005[0].filePath).toBe("/fake/src/index.ts");
+	});
+
+	it("passes when an index.ts symbol carries the @packageDocumentation tag", async () => {
+		const sym = makeSymbol({
+			name: "doThing",
+			filePath: "/fake/src/index.ts",
+			documentation: {
+				summary: "Does a thing.",
+				tags: { packageDocumentation: [""] },
+			},
+		});
+		const result = await runEnforce([sym]);
+		const e005 = result.errors.filter((e) => e.code === "E005");
+		expect(e005).toHaveLength(0);
+	});
+
+	it("does not emit E005 for non-index.ts files", async () => {
+		const sym = makeSymbol({
+			name: "helperFn",
+			filePath: "/fake/src/helpers.ts",
+			documentation: { summary: "A helper." },
+		});
+		const result = await runEnforce([sym]);
+		const e005 = result.errors.filter((e) => e.code === "E005");
+		expect(e005).toHaveLength(0);
+	});
+});
+
+describe("enforce — E006 class member missing documentation", () => {
+	it("emits E006 for a class with an undocumented public member", async () => {
+		const sym = makeSymbol({
+			name: "MyService",
+			kind: "class",
+			documentation: { summary: "A service." },
+			children: [
+				makeSymbol({
+					name: "connect",
+					kind: "method",
+					filePath: "/fake/src/index.ts",
+					line: 20,
+					documentation: undefined,
+				}),
+			],
+		});
+		const result = await runEnforce([sym]);
+		const e006 = result.errors.filter((e) => e.code === "E006");
+		expect(e006).toHaveLength(1);
+		expect(e006[0].message).toContain("connect");
+		expect(e006[0].message).toContain("MyService");
+	});
+
+	it("passes when all class members have documentation", async () => {
+		const sym = makeSymbol({
+			name: "MyService",
+			kind: "class",
+			documentation: { summary: "A service." },
+			children: [
+				makeSymbol({
+					name: "connect",
+					kind: "method",
+					filePath: "/fake/src/index.ts",
+					line: 20,
+					documentation: { summary: "Establishes the connection." },
+				}),
+			],
+		});
+		const result = await runEnforce([sym]);
+		const e006 = result.errors.filter((e) => e.code === "E006");
+		expect(e006).toHaveLength(0);
+	});
+
+	it("does not emit E006 for interface symbols (E007 covers those)", async () => {
+		const sym = makeSymbol({
+			name: "MyInterface",
+			kind: "interface",
+			documentation: { summary: "An interface." },
+			children: [
+				makeSymbol({
+					name: "value",
+					kind: "property",
+					filePath: "/fake/src/index.ts",
+					line: 5,
+					documentation: undefined,
+				}),
+			],
+		});
+		const result = await runEnforce([sym]);
+		const e006 = result.errors.filter((e) => e.code === "E006");
+		expect(e006).toHaveLength(0);
+	});
+});
+
+describe("enforce — E007 interface member missing documentation", () => {
+	it("emits E007 for an interface with an undocumented property", async () => {
+		const sym = makeSymbol({
+			name: "ForgeOptions",
+			kind: "interface",
+			documentation: { summary: "Options for forge." },
+			children: [
+				makeSymbol({
+					name: "timeout",
+					kind: "property",
+					filePath: "/fake/src/index.ts",
+					line: 8,
+					documentation: undefined,
+				}),
+			],
+		});
+		const result = await runEnforce([sym]);
+		const e007 = result.errors.filter((e) => e.code === "E007");
+		expect(e007).toHaveLength(1);
+		expect(e007[0].message).toContain("timeout");
+		expect(e007[0].message).toContain("ForgeOptions");
+	});
+
+	it("passes when all interface properties have documentation", async () => {
+		const sym = makeSymbol({
+			name: "ForgeOptions",
+			kind: "interface",
+			documentation: { summary: "Options for forge." },
+			children: [
+				makeSymbol({
+					name: "timeout",
+					kind: "property",
+					filePath: "/fake/src/index.ts",
+					line: 8,
+					documentation: { summary: "The timeout in milliseconds." },
+				}),
+			],
+		});
+		const result = await runEnforce([sym]);
+		const e007 = result.errors.filter((e) => e.code === "E007");
+		expect(e007).toHaveLength(0);
+	});
+
+	it("does not emit E007 for class symbols (E006 covers those)", async () => {
+		const sym = makeSymbol({
+			name: "MyClass",
+			kind: "class",
+			documentation: { summary: "A class." },
+			children: [
+				makeSymbol({
+					name: "name",
+					kind: "property",
+					filePath: "/fake/src/index.ts",
+					line: 5,
+					documentation: undefined,
+				}),
+			],
+		});
+		const result = await runEnforce([sym]);
+		const e007 = result.errors.filter((e) => e.code === "E007");
+		expect(e007).toHaveLength(0);
+	});
+});
+
+describe("enforce — suggestedFix population", () => {
+	it("populates suggestedFix on E001 errors", async () => {
+		const sym = makeSymbol({ name: "doThing", documentation: undefined });
+		const result = await runEnforce([sym]);
+		const e001 = result.errors.find((e) => e.code === "E001");
+		expect(e001?.suggestedFix).toBeDefined();
+		expect(e001?.suggestedFix).toContain("doThing");
+		expect(e001?.symbolName).toBe("doThing");
+		expect(e001?.symbolKind).toBe("function");
+	});
+
+	it("populates suggestedFix on E002 errors", async () => {
+		const sym = makeSymbol({
+			name: "greet",
+			kind: "function",
+			signature: "(name: string) => void",
+			documentation: { summary: "Greets." },
+		});
+		const result = await runEnforce([sym]);
+		const e002 = result.errors.find((e) => e.code === "E002");
+		expect(e002?.suggestedFix).toBeDefined();
+		expect(e002?.suggestedFix).toContain("name");
+		expect(e002?.symbolName).toBe("greet");
+	});
+
+	it("populates suggestedFix on E003 errors", async () => {
+		const sym = makeSymbol({
+			name: "getCount",
+			kind: "function",
+			signature: "() => number",
+			documentation: { summary: "Returns the count." },
+		});
+		const result = await runEnforce([sym]);
+		const e003 = result.errors.find((e) => e.code === "E003");
+		expect(e003?.suggestedFix).toBeDefined();
+		expect(e003?.suggestedFix).toContain("@returns");
+	});
+
+	it("populates suggestedFix on E004 errors", async () => {
+		const sym = makeSymbol({
+			name: "parseConfig",
+			kind: "function",
+			signature: "(raw: string) => void",
+			documentation: {
+				summary: "Parses config.",
+				params: [{ name: "raw", description: "Raw string." }],
+			},
+		});
+		const result = await runEnforce([sym]);
+		const e004 = result.errors.find((e) => e.code === "E004");
+		expect(e004?.suggestedFix).toBeDefined();
+		expect(e004?.suggestedFix).toContain("@example");
+		expect(e004?.suggestedFix).toContain("parseConfig");
+	});
+
+	it("populates suggestedFix on E006 errors", async () => {
+		const sym = makeSymbol({
+			name: "MyClass",
+			kind: "class",
+			documentation: { summary: "A class." },
+			children: [
+				makeSymbol({
+					name: "run",
+					kind: "method",
+					filePath: "/fake/src/index.ts",
+					line: 15,
+					documentation: undefined,
+				}),
+			],
+		});
+		const result = await runEnforce([sym]);
+		const e006 = result.errors.find((e) => e.code === "E006");
+		expect(e006?.suggestedFix).toBeDefined();
+		expect(e006?.suggestedFix).toContain("run");
+		expect(e006?.symbolName).toBe("run");
+	});
+
+	it("populates suggestedFix on E007 errors", async () => {
+		const sym = makeSymbol({
+			name: "MyInterface",
+			kind: "interface",
+			documentation: { summary: "An interface." },
+			children: [
+				makeSymbol({
+					name: "enabled",
+					kind: "property",
+					filePath: "/fake/src/index.ts",
+					line: 6,
+					documentation: undefined,
+				}),
+			],
+		});
+		const result = await runEnforce([sym]);
+		const e007 = result.errors.find((e) => e.code === "E007");
+		expect(e007?.suggestedFix).toBeDefined();
+		expect(e007?.suggestedFix).toContain("enabled");
+		expect(e007?.symbolName).toBe("enabled");
 	});
 });
 

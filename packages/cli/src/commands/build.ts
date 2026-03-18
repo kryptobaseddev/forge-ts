@@ -1,3 +1,4 @@
+import { join } from "node:path";
 import { generateApi } from "@forge-ts/api";
 import { loadConfig } from "@forge-ts/core";
 import { generate } from "@forge-ts/gen";
@@ -22,6 +23,8 @@ export interface BuildArgs {
 	skipApi?: boolean;
 	/** Skip doc generation even if enabled in config. */
 	skipGen?: boolean;
+	/** MVI verbosity level for structured output. */
+	mvi?: string;
 }
 
 /**
@@ -41,9 +44,28 @@ export interface BuildStep {
  * @public
  */
 export interface BuildResult {
+	/** Whether the build succeeded. */
+	success: boolean;
+	/** Aggregate pipeline counts — always present. */
+	summary: {
+		/** Total number of pipeline steps. */
+		steps: number;
+		/** Steps that completed successfully. */
+		succeeded: number;
+		/** Steps that failed. */
+		failed: number;
+		/** Wall-clock duration in milliseconds. */
+		duration: number;
+	};
+	/** Per-step details. */
 	steps: BuildStep[];
-	duration: number;
+	/** Files written during the build — present at standard and full MVI levels. */
+	generatedFiles?: string[];
 }
+
+// ---------------------------------------------------------------------------
+// Public API
+// ---------------------------------------------------------------------------
 
 /**
  * Runs the full build pipeline and returns a typed command output.
@@ -55,9 +77,11 @@ export interface BuildResult {
 export async function runBuild(args: BuildArgs): Promise<CommandOutput<BuildResult>> {
 	const config = await loadConfig(args.cwd);
 	const buildStart = Date.now();
+	const mviLevel = args.mvi ?? "standard";
 
 	const steps: BuildStep[] = [];
 	const allErrors: ForgeCliError[] = [];
+	const generatedFiles: string[] = [];
 	let success = true;
 
 	if (config.api.enabled && !args.skipApi) {
@@ -86,6 +110,7 @@ export async function runBuild(args: BuildArgs): Promise<CommandOutput<BuildResu
 				outputPath: config.api.openapiPath,
 				duration: result.duration,
 			});
+			generatedFiles.push(config.api.openapiPath);
 		}
 	} else if (!config.api.enabled || args.skipApi) {
 		steps.push({ name: "api", status: "skipped" });
@@ -115,13 +140,39 @@ export async function runBuild(args: BuildArgs): Promise<CommandOutput<BuildResu
 				status: "success",
 				duration: result.duration,
 			});
+			// Track the generated output directory and standard files
+			for (const format of config.gen.formats) {
+				const ext = format === "mdx" ? "mdx" : "md";
+				generatedFiles.push(join(config.outDir, `api-reference.${ext}`));
+			}
+			if (config.gen.llmsTxt) {
+				generatedFiles.push(join(config.outDir, "llms.txt"));
+				generatedFiles.push(join(config.outDir, "llms-full.txt"));
+			}
 		}
 	} else if (!config.gen.enabled || args.skipGen) {
 		steps.push({ name: "gen", status: "skipped" });
 	}
 
 	const totalMs = Date.now() - buildStart;
-	const data: BuildResult = { steps, duration: totalMs };
+
+	const succeededCount = steps.filter((s) => s.status === "success").length;
+	const failedCount = steps.filter((s) => s.status === "failed").length;
+
+	const data: BuildResult = {
+		success,
+		summary: {
+			steps: steps.length,
+			succeeded: succeededCount,
+			failed: failedCount,
+			duration: totalMs,
+		},
+		steps,
+	};
+
+	if (mviLevel !== "minimal") {
+		data.generatedFiles = generatedFiles;
+	}
 
 	return {
 		operation: "build",
@@ -181,6 +232,7 @@ export const buildCommand = defineCommand({
 			cwd: args.cwd,
 			skipApi: args["skip-api"],
 			skipGen: args["skip-gen"],
+			mvi: args.mvi,
 		});
 
 		const flags: OutputFlags = {
@@ -206,7 +258,7 @@ export const buildCommand = defineCommand({
 				}
 			}
 			if (output.success) {
-				return `  Done in ${data.duration}ms`;
+				return `  Done in ${data.summary.duration}ms`;
 			}
 			return "";
 		});

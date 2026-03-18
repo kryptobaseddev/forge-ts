@@ -125,6 +125,12 @@ export interface ForgeError {
 	line: number;
 	/** 0-based column. */
 	column: number;
+	/** Suggested fix for the agent — exact TSDoc block to add. */
+	suggestedFix?: string;
+	/** The symbol name that needs fixing. */
+	symbolName?: string;
+	/** The symbol kind (function, class, interface, etc.). */
+	symbolKind?: string;
 }
 
 /**

@@ -1,13 +1,7 @@
 import { loadConfig } from "@forge-ts/core";
 import { doctest } from "@forge-ts/doctest";
 import { defineCommand } from "citty";
-import {
-	type CommandOutput,
-	emitResult,
-	type ForgeCliError,
-	type OutputFlags,
-	resolveExitCode,
-} from "../output.js";
+import { type CommandOutput, emitResult, type OutputFlags, resolveExitCode } from "../output.js";
 
 /**
  * Arguments for the `test` command.
@@ -16,6 +10,23 @@ import {
 export interface TestArgs {
 	/** Project root directory (default: cwd). */
 	cwd?: string;
+	/** MVI verbosity level for structured output. */
+	mvi?: string;
+}
+
+/**
+ * A single test failure entry, included at standard and full MVI levels.
+ * @public
+ */
+export interface TestFailure {
+	/** Symbol name where the doctest failed. */
+	symbol: string;
+	/** Absolute path to the source file. */
+	file: string;
+	/** 1-based line number of the failing example. */
+	line: number;
+	/** Human-readable failure message. */
+	message: string;
 }
 
 /**
@@ -23,12 +34,26 @@ export interface TestArgs {
  * @public
  */
 export interface TestResult {
-	passed: number;
-	failed: number;
-	total: number;
-	duration: number;
-	failures: ForgeCliError[];
+	/** Whether all doctests passed. */
+	success: boolean;
+	/** Aggregate counts — always present regardless of MVI level. */
+	summary: {
+		/** Number of passing doctests. */
+		passed: number;
+		/** Number of failing doctests. */
+		failed: number;
+		/** Total doctests run. */
+		total: number;
+		/** Wall-clock duration in milliseconds. */
+		duration: number;
+	};
+	/** Per-failure details — present at standard and full MVI levels. */
+	failures?: TestFailure[];
 }
+
+// ---------------------------------------------------------------------------
+// Public API
+// ---------------------------------------------------------------------------
 
 /**
  * Runs the doctest pipeline and returns a typed command output.
@@ -40,32 +65,34 @@ export interface TestResult {
 export async function runTest(args: TestArgs): Promise<CommandOutput<TestResult>> {
 	const config = await loadConfig(args.cwd);
 	const result = await doctest(config);
+	const mviLevel = args.mvi ?? "standard";
 
-	const failures: ForgeCliError[] = result.errors.map((e) => ({
-		code: e.code,
-		message: e.message,
-		filePath: e.filePath,
-		line: e.line,
-		column: e.column,
-	}));
-
-	const failCount = failures.length;
+	const failCount = result.errors.length;
 	const totalSymbols = result.symbols.length;
 	const passCount = totalSymbols - failCount > 0 ? totalSymbols - failCount : 0;
 
-	const data: TestResult = {
+	const summary = {
 		passed: passCount,
 		failed: failCount,
 		total: totalSymbols,
 		duration: result.duration,
-		failures,
 	};
+
+	const data: TestResult = { success: result.success, summary };
+
+	if (mviLevel !== "minimal") {
+		data.failures = result.errors.map((e) => ({
+			symbol: e.symbolName ?? "",
+			file: e.filePath ?? "",
+			line: e.line,
+			message: e.message,
+		}));
+	}
 
 	return {
 		operation: "test",
 		success: result.success,
 		data,
-		errors: failures,
 		duration: result.duration,
 	};
 }
@@ -105,7 +132,7 @@ export const testCommand = defineCommand({
 		},
 	},
 	async run({ args }) {
-		const output = await runTest({ cwd: args.cwd });
+		const output = await runTest({ cwd: args.cwd, mvi: args.mvi });
 
 		const flags: OutputFlags = {
 			json: args.json,
@@ -116,13 +143,13 @@ export const testCommand = defineCommand({
 
 		emitResult(output, flags, (data) => {
 			if (output.success) {
-				return `forge-ts test: all doctests passed. (${data.duration}ms)`;
+				return `forge-ts test: all doctests passed. (${data.summary.duration}ms)`;
 			}
 			const lines: string[] = [];
-			for (const err of data.failures) {
-				lines.push(err.message);
+			for (const f of data.failures ?? []) {
+				lines.push(f.message);
 			}
-			lines.push(`forge-ts test: ${data.failed} failure(s). (${data.duration}ms)`);
+			lines.push(`forge-ts test: ${data.summary.failed} failure(s). (${data.summary.duration}ms)`);
 			return lines.join("\n");
 		});
 

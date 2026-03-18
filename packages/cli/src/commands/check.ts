@@ -1,14 +1,7 @@
-import { loadConfig } from "@forge-ts/core";
+import { type ForgeError, type ForgeWarning, loadConfig } from "@forge-ts/core";
 import { enforce } from "@forge-ts/enforcer";
 import { defineCommand } from "citty";
-import {
-	type CommandOutput,
-	emitResult,
-	type ForgeCliError,
-	type ForgeCliWarning,
-	type OutputFlags,
-	resolveExitCode,
-} from "../output.js";
+import { type CommandOutput, emitResult, type OutputFlags, resolveExitCode } from "../output.js";
 
 /**
  * Arguments for the `check` command.
@@ -21,6 +14,59 @@ export interface CheckArgs {
 	strict?: boolean;
 	/** Include symbol signatures alongside diagnostics. */
 	verbose?: boolean;
+	/** MVI verbosity level for structured output. */
+	mvi?: string;
+}
+
+/**
+ * A single error entry within a file group, included at standard and full MVI levels.
+ * @public
+ */
+export interface CheckFileError {
+	/** Machine-readable error code. */
+	code: string;
+	/** Symbol name that needs fixing. */
+	symbol: string;
+	/** Symbol kind (function, class, interface, etc.). */
+	kind: string;
+	/** 1-based line number of the error. */
+	line: number;
+	/** Human-readable description. */
+	message: string;
+	/** Exact TSDoc block to add (full MVI level only). */
+	suggestedFix?: string;
+	/** Recommended agent action (full MVI level only). */
+	agentAction?: string;
+}
+
+/**
+ * A single warning entry within a file group, included at standard and full MVI levels.
+ * @public
+ */
+export interface CheckFileWarning {
+	/** Machine-readable warning code. */
+	code: string;
+	/** Symbol name that generated the warning. */
+	symbol: string;
+	/** Symbol kind (function, class, interface, etc.). */
+	kind: string;
+	/** 1-based line number of the warning. */
+	line: number;
+	/** Human-readable description. */
+	message: string;
+}
+
+/**
+ * Errors and warnings grouped by file, included at standard and full MVI levels.
+ * @public
+ */
+export interface CheckFileGroup {
+	/** Absolute path to the source file. */
+	file: string;
+	/** Errors in this file. */
+	errors: CheckFileError[];
+	/** Warnings in this file. */
+	warnings: CheckFileWarning[];
 }
 
 /**
@@ -28,13 +74,123 @@ export interface CheckArgs {
  * @public
  */
 export interface CheckResult {
-	symbolCount: number;
-	errorCount: number;
-	warningCount: number;
-	errors: ForgeCliError[];
-	warnings: ForgeCliWarning[];
-	duration: number;
+	/** Whether the check passed without errors. */
+	success: boolean;
+	/** Aggregate counts — always present regardless of MVI level. */
+	summary: {
+		/** Total number of errors. */
+		errors: number;
+		/** Total number of warnings. */
+		warnings: number;
+		/** Number of unique files with diagnostics. */
+		files: number;
+		/** Number of exported symbols checked. */
+		symbols: number;
+		/** Wall-clock duration in milliseconds. */
+		duration: number;
+	};
+	/** Per-file breakdown — present at standard and full MVI levels. */
+	byFile?: CheckFileGroup[];
 }
+
+// ---------------------------------------------------------------------------
+// Internal helpers
+// ---------------------------------------------------------------------------
+
+/**
+ * Determines the recommended agent action given a ForgeError.
+ * @internal
+ */
+function resolveAgentAction(_error: ForgeError): string {
+	return "retry_modified";
+}
+
+/**
+ * Groups errors and warnings by file path.
+ * @internal
+ */
+function groupByFile(
+	errors: ForgeError[],
+	warnings: ForgeWarning[],
+	includeFix: boolean,
+): CheckFileGroup[] {
+	const fileMap = new Map<string, CheckFileGroup>();
+
+	for (const e of errors) {
+		const fp = e.filePath ?? "";
+		if (!fileMap.has(fp)) {
+			fileMap.set(fp, { file: fp, errors: [], warnings: [] });
+		}
+		const entry: CheckFileError = {
+			code: e.code,
+			symbol: e.symbolName ?? "",
+			kind: e.symbolKind ?? "",
+			line: e.line,
+			message: e.message,
+		};
+		if (includeFix) {
+			if (e.suggestedFix !== undefined) {
+				entry.suggestedFix = e.suggestedFix;
+			}
+			entry.agentAction = resolveAgentAction(e);
+		}
+		fileMap.get(fp)?.errors.push(entry);
+	}
+
+	for (const w of warnings) {
+		const fp = w.filePath ?? "";
+		if (!fileMap.has(fp)) {
+			fileMap.set(fp, { file: fp, errors: [], warnings: [] });
+		}
+		fileMap.get(fp)?.warnings.push({
+			code: w.code,
+			symbol: "",
+			kind: "",
+			line: w.line,
+			message: w.message,
+		});
+	}
+
+	return Array.from(fileMap.values());
+}
+
+/**
+ * Builds an MVI-projected CheckResult from raw enforcer output.
+ * @internal
+ */
+function buildCheckResult(
+	rawErrors: ForgeError[],
+	rawWarnings: ForgeWarning[],
+	_symbolCount: number,
+	exportedSymbolCount: number,
+	duration: number,
+	success: boolean,
+	mviLevel: string,
+): CheckResult {
+	const uniqueFiles = new Set([
+		...rawErrors.map((e) => e.filePath),
+		...rawWarnings.map((w) => w.filePath),
+	]);
+
+	const summary = {
+		errors: rawErrors.length,
+		warnings: rawWarnings.length,
+		files: uniqueFiles.size,
+		symbols: exportedSymbolCount,
+		duration,
+	};
+
+	if (mviLevel === "minimal") {
+		return { success, summary };
+	}
+
+	const byFile = groupByFile(rawErrors, rawWarnings, mviLevel === "full");
+	return { success, summary, byFile };
+}
+
+// ---------------------------------------------------------------------------
+// Public API
+// ---------------------------------------------------------------------------
 
 /**
  * Runs the TSDoc enforcement pass and returns a typed command output.
@@ -50,40 +206,75 @@ export async function runCheck(args: CheckArgs): Promise<CommandOutput<CheckResu
 	}
 
 	const result = await enforce(config);
+	const mviLevel = args.mvi ?? "standard";
 
-	const errors: ForgeCliError[] = result.errors.map((e) => ({
-		code: e.code,
-		message: e.message,
-		filePath: e.filePath,
-		line: e.line,
-		column: e.column,
-	}));
+	const exportedSymbolCount = result.symbols.filter((s) => s.exported).length;
 
-	const warnings: ForgeCliWarning[] = result.warnings.map((w) => ({
-		code: w.code,
-		message: w.message,
-		filePath: w.filePath,
-		line: w.line,
-		column: w.column,
-	}));
-
-	const data: CheckResult = {
-		symbolCount: result.symbols.length,
-		errorCount: errors.length,
-		warningCount: warnings.length,
-		errors,
-		warnings,
-		duration: result.duration,
-	};
+	const data = buildCheckResult(
+		result.errors,
+		result.warnings,
+		result.symbols.length,
+		exportedSymbolCount,
+		result.duration,
+		result.success,
+		mviLevel,
+	);
 
 	return {
 		operation: "check",
 		success: result.success,
 		data,
-		errors,
-		warnings,
 		duration: result.duration,
 	};
+}
+
+// ---------------------------------------------------------------------------
+// Human formatter
+// ---------------------------------------------------------------------------
+
+/**
+ * Formats a CheckResult as human-readable text.
+ * @internal
+ */
+function formatCheckHuman(result: CheckResult): string {
+	const lines: string[] = [];
+
+	if (result.success) {
+		lines.push(
+			`forge-ts check: OK  (${result.summary.symbols} symbol(s) checked, ${result.summary.duration}ms)`,
+		);
+		return lines.join("\n");
+	}
+
+	lines.push("forge-ts check: FAILED\n");
+	lines.push(
+		`  ${result.summary.errors} error(s), ${result.summary.warnings} warning(s) across ${result.summary.files} file(s) (${result.summary.symbols} symbols checked)\n`,
+	);
+
+	if (result.byFile && result.byFile.length > 0) {
+		for (const group of result.byFile) {
+			if (group.errors.length > 0) {
+				lines.push(`  ${group.file} (${group.errors.length} error(s)):`);
+				for (const err of group.errors) {
+					const symbolPart = err.symbol
+						? `${err.symbol} (${err.kind}:${err.line})`
+						: `line ${err.line}`;
+					lines.push(`    ${err.code}  ${symbolPart} — ${err.message}`);
+				}
+			}
+			if (group.warnings.length > 0) {
+				lines.push(`  ${group.file} (${group.warnings.length} warning(s)):`);
+				for (const w of group.warnings) {
+					lines.push(`    ${w.code}  line ${w.line} — ${w.message}`);
+				}
+			}
+		}
+		lines.push("");
+	}
+
+	lines.push("  Run with --json --mvi full for exact fix suggestions.");
+
+	return lines.join("\n");
 }
 
 /**
@@ -135,6 +326,7 @@ export const checkCommand = defineCommand({
 			cwd: args.cwd,
 			strict: args.strict,
 			verbose: args.verbose,
+			mvi: args.mvi,
 		});
 
 		const flags: OutputFlags = {
@@ -144,28 +336,7 @@ export const checkCommand = defineCommand({
 			mvi: args.mvi,
 		};
 
-		emitResult(output, flags, (_data, cmd) => {
-			// Delegate to enforcer's own formatter for human output.
-			// Re-run enforce is not needed — we have the raw result embedded.
-			// However formatResults needs the ForgeResult shape; we reconstruct
-			// just enough to call it by printing the errors inline.
-			const lines: string[] = [];
-			for (const err of cmd.errors ?? []) {
-				const loc =
-					err.filePath != null ? `${err.filePath}:${err.line ?? 0}:${err.column ?? 0}` : "";
-				lines.push(loc ? `${loc} — ${err.message}` : err.message);
-			}
-			if (lines.length > 0) {
-				lines.push(
-					`\n${cmd.data.errorCount} error(s), ${cmd.data.warningCount} warning(s) in ${cmd.data.duration}ms`,
-				);
-			} else {
-				lines.push(
-					`forge-ts check: ${cmd.data.symbolCount} symbol(s) checked. (${cmd.data.duration}ms)`,
-				);
-			}
-			return lines.join("\n");
-		});
+		emitResult(output, flags, (data) => formatCheckHuman(data));
 
 		process.exit(resolveExitCode(output));
 	},

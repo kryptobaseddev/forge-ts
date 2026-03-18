@@ -130,7 +130,7 @@ describe("runCheck", () => {
 
 		const output = await runCheck({ cwd: "/fake" });
 		expect(output.success).toBe(true);
-		expect(output.data.symbolCount).toBe(1);
+		expect(output.data.summary.symbols).toBe(1);
 		expect(resolveExitCode(output)).toBe(0);
 	});
 
@@ -156,8 +156,7 @@ describe("runCheck", () => {
 
 		const output = await runCheck({ cwd: "/fake" });
 		expect(output.success).toBe(false);
-		expect(output.data.errorCount).toBe(1);
-		expect(output.errors?.[0]?.code).toBe("E001");
+		expect(output.data.summary.errors).toBe(1);
 		expect(resolveExitCode(output)).toBe(1);
 	});
 
@@ -200,7 +199,7 @@ describe("runCheck", () => {
 		expect(output.success).toBe(true);
 	});
 
-	it("result includes typed errors and warnings", async () => {
+	it("result summary includes error and warning counts", async () => {
 		const { loadConfig } = await import("@forge-ts/core");
 		const { enforce } = await import("@forge-ts/enforcer");
 
@@ -215,6 +214,8 @@ describe("runCheck", () => {
 						filePath: "/fake/src/a.ts",
 						line: 10,
 						column: 2,
+						symbolName: "fn",
+						symbolKind: "function",
 					},
 				],
 				warnings: [
@@ -230,10 +231,98 @@ describe("runCheck", () => {
 		);
 
 		const output = await runCheck({ cwd: "/fake" });
-		expect(output.data.errors[0]?.code).toBe("E002");
-		expect(output.data.errors[0]?.filePath).toBe("/fake/src/a.ts");
-		expect(output.data.warnings[0]?.code).toBe("W001");
-		expect(output.data.warningCount).toBe(1);
+		expect(output.data.summary.errors).toBe(1);
+		expect(output.data.summary.warnings).toBe(1);
+		expect(output.data.summary.files).toBe(1);
+	});
+
+	it("standard MVI level includes byFile array", async () => {
+		const { loadConfig } = await import("@forge-ts/core");
+		const { enforce } = await import("@forge-ts/enforcer");
+
+		vi.mocked(loadConfig).mockResolvedValue(makeConfig());
+		vi.mocked(enforce).mockResolvedValue(
+			makeResult({
+				success: false,
+				errors: [
+					{
+						code: "E004",
+						message: "Missing @example block",
+						filePath: "/fake/src/math.ts",
+						line: 15,
+						column: 0,
+						symbolName: "add",
+						symbolKind: "function",
+					},
+				],
+			}),
+		);
+
+		const output = await runCheck({ cwd: "/fake", mvi: "standard" });
+		expect(output.data.byFile).toBeDefined();
+		expect(output.data.byFile).toHaveLength(1);
+		expect(output.data.byFile?.[0]?.file).toBe("/fake/src/math.ts");
+		expect(output.data.byFile?.[0]?.errors[0]?.code).toBe("E004");
+		expect(output.data.byFile?.[0]?.errors[0]?.symbol).toBe("add");
+		expect(output.data.byFile?.[0]?.errors[0]?.kind).toBe("function");
+		expect(output.data.byFile?.[0]?.errors[0]?.suggestedFix).toBeUndefined();
+	});
+
+	it("minimal MVI level omits byFile", async () => {
+		const { loadConfig } = await import("@forge-ts/core");
+		const { enforce } = await import("@forge-ts/enforcer");
+
+		vi.mocked(loadConfig).mockResolvedValue(makeConfig());
+		vi.mocked(enforce).mockResolvedValue(
+			makeResult({
+				success: false,
+				errors: [
+					{
+						code: "E001",
+						message: "Missing summary",
+						filePath: "/fake/src/index.ts",
+						line: 1,
+						column: 0,
+					},
+				],
+			}),
+		);
+
+		const output = await runCheck({ cwd: "/fake", mvi: "minimal" });
+		expect(output.data.byFile).toBeUndefined();
+		expect(output.data.summary.errors).toBe(1);
+	});
+
+	it("full MVI level includes suggestedFix and agentAction", async () => {
+		const { loadConfig } = await import("@forge-ts/core");
+		const { enforce } = await import("@forge-ts/enforcer");
+
+		vi.mocked(loadConfig).mockResolvedValue(makeConfig());
+		vi.mocked(enforce).mockResolvedValue(
+			makeResult({
+				success: false,
+				errors: [
+					{
+						code: "E004",
+						message: "Missing @example block",
+						filePath: "/fake/src/math.ts",
+						line: 15,
+						column: 0,
+						symbolName: "add",
+						symbolKind: "function",
+						suggestedFix: "@example\n * add(1, 2); // 3",
+					},
+				],
+			}),
+		);
+
+		const output = await runCheck({ cwd: "/fake", mvi: "full" });
+		expect(output.data.byFile).toBeDefined();
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		const fileGroup = output.data.byFile?.[0];
+		const err = fileGroup?.errors[0];
+		expect(err?.suggestedFix).toBe("@example\n * add(1, 2); // 3");
+		expect(err?.agentAction).toBe("retry_modified");
 	});
 });
 
@@ -364,6 +453,54 @@ describe("runBuild", () => {
 		expect(apiStep?.status).toBe("success");
 		expect(apiStep?.outputPath).toBe("/fake/docs/openapi.json");
 	});
+
+	it("result includes summary with step counts", async () => {
+		const { loadConfig } = await import("@forge-ts/core");
+		const { generateApi } = await import("@forge-ts/api");
+
+		vi.mocked(loadConfig).mockResolvedValue(
+			makeConfig({
+				api: { enabled: true, openapi: true, openapiPath: "/fake/docs/openapi.json" },
+			}),
+		);
+		vi.mocked(generateApi).mockResolvedValue(makeResult({ duration: 42 }));
+
+		const output = await runBuild({ cwd: "/fake" });
+		expect(output.data.summary.steps).toBeGreaterThan(0);
+		expect(output.data.summary.succeeded).toBeGreaterThanOrEqual(0);
+		expect(output.data.summary.failed).toBe(0);
+	});
+
+	it("standard MVI level includes generatedFiles", async () => {
+		const { loadConfig } = await import("@forge-ts/core");
+		const { generateApi } = await import("@forge-ts/api");
+
+		vi.mocked(loadConfig).mockResolvedValue(
+			makeConfig({
+				api: { enabled: true, openapi: true, openapiPath: "/fake/docs/openapi.json" },
+			}),
+		);
+		vi.mocked(generateApi).mockResolvedValue(makeResult());
+
+		const output = await runBuild({ cwd: "/fake", mvi: "standard" });
+		expect(output.data.generatedFiles).toBeDefined();
+		expect(output.data.generatedFiles).toContain("/fake/docs/openapi.json");
+	});
+
+	it("minimal MVI level omits generatedFiles", async () => {
+		const { loadConfig } = await import("@forge-ts/core");
+		const { generateApi } = await import("@forge-ts/api");
+
+		vi.mocked(loadConfig).mockResolvedValue(
+			makeConfig({
+				api: { enabled: true, openapi: true, openapiPath: "/fake/docs/openapi.json" },
+			}),
+		);
+		vi.mocked(generateApi).mockResolvedValue(makeResult());
+
+		const output = await runBuild({ cwd: "/fake", mvi: "minimal" });
+		expect(output.data.generatedFiles).toBeUndefined();
+	});
 });
 
 // ---------------------------------------------------------------------------
@@ -384,7 +521,7 @@ describe("runTest", () => {
 
 		const output = await runTest({ cwd: "/fake" });
 		expect(output.success).toBe(true);
-		expect(output.data.failed).toBe(0);
+		expect(output.data.summary.failed).toBe(0);
 		expect(resolveExitCode(output)).toBe(0);
 	});
 
@@ -410,9 +547,59 @@ describe("runTest", () => {
 
 		const output = await runTest({ cwd: "/fake" });
 		expect(output.success).toBe(false);
-		expect(output.data.failed).toBe(1);
-		expect(output.data.failures[0]?.code).toBe("D001");
+		expect(output.data.summary.failed).toBe(1);
+		expect(output.data.failures?.[0]?.message).toBe("assertion failed");
 		expect(resolveExitCode(output)).toBe(1);
+	});
+
+	it("standard MVI level includes failures array", async () => {
+		const { loadConfig } = await import("@forge-ts/core");
+		const { doctest } = await import("@forge-ts/doctest");
+
+		vi.mocked(loadConfig).mockResolvedValue(makeConfig());
+		vi.mocked(doctest).mockResolvedValue(
+			makeResult({
+				success: false,
+				errors: [
+					{
+						code: "D001",
+						message: "assertion failed",
+						filePath: "/fake/src/a.ts",
+						line: 1,
+						column: 0,
+					},
+				],
+			}),
+		);
+
+		const output = await runTest({ cwd: "/fake", mvi: "standard" });
+		expect(output.data.failures).toBeDefined();
+		expect(output.data.failures).toHaveLength(1);
+	});
+
+	it("minimal MVI level omits failures array", async () => {
+		const { loadConfig } = await import("@forge-ts/core");
+		const { doctest } = await import("@forge-ts/doctest");
+
+		vi.mocked(loadConfig).mockResolvedValue(makeConfig());
+		vi.mocked(doctest).mockResolvedValue(
+			makeResult({
+				success: false,
+				errors: [
+					{
+						code: "D001",
+						message: "assertion failed",
+						filePath: "/fake/src/a.ts",
+						line: 1,
+						column: 0,
+					},
+				],
+			}),
+		);
+
+		const output = await runTest({ cwd: "/fake", mvi: "minimal" });
+		expect(output.data.failures).toBeUndefined();
+		expect(output.data.summary.failed).toBe(1);
 	});
 });
 

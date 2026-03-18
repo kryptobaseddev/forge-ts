@@ -14,6 +14,13 @@ export {
 	type MarkdownOptions,
 } from "./markdown.js";
 export { type ReadmeSyncOptions, syncReadme } from "./readme-sync.js";
+export {
+	type DocPage,
+	generateDocSite,
+	groupSymbolsByPackage,
+	type SiteGeneratorOptions,
+} from "./site-generator.js";
+export { generateSSGConfigs, type SSGConfigFile } from "./ssg-config.js";
 
 import { mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
@@ -21,6 +28,8 @@ import { createWalker, type ForgeConfig, type ForgeResult } from "@forge-ts/core
 import { generateLlmsFullTxt, generateLlmsTxt } from "./llms.js";
 import { generateMarkdown } from "./markdown.js";
 import { syncReadme } from "./readme-sync.js";
+import { generateDocSite, groupSymbolsByPackage } from "./site-generator.js";
+import { generateSSGConfigs } from "./ssg-config.js";
 
 /**
  * Runs the full generation pipeline: walk → render → write.
@@ -37,12 +46,45 @@ export async function generate(config: ForgeConfig): Promise<ForgeResult> {
 
 	await mkdir(config.outDir, { recursive: true });
 
+	// Legacy flat output — kept for backward compatibility
 	for (const format of config.gen.formats) {
 		const content = generateMarkdown(symbols, config, {
 			mdx: format === "mdx",
 		});
 		const ext = format === "mdx" ? "mdx" : "md";
 		await writeFile(join(config.outDir, `api-reference.${ext}`), content, "utf8");
+	}
+
+	// Multi-page site output
+	const projectName = config.rootDir.split("/").pop() ?? "Project";
+	const symbolsByPackage = groupSymbolsByPackage(symbols, config.rootDir);
+
+	for (const format of config.gen.formats) {
+		const pages = generateDocSite(symbolsByPackage, config, {
+			format,
+			ssgTarget: config.gen.ssgTarget,
+			projectName,
+		});
+
+		const generatedDir = join(config.outDir, "generated");
+		await mkdir(generatedDir, { recursive: true });
+
+		for (const page of pages) {
+			const pagePath = join(generatedDir, page.path);
+			const pageDir = pagePath.substring(0, pagePath.lastIndexOf("/"));
+			await mkdir(pageDir, { recursive: true });
+			await writeFile(pagePath, page.content, "utf8");
+		}
+
+		if (config.gen.ssgTarget) {
+			const configFiles = generateSSGConfigs(pages, config.gen.ssgTarget, projectName);
+			for (const configFile of configFiles) {
+				const configPath = join(generatedDir, configFile.path);
+				const configDir = configPath.substring(0, configPath.lastIndexOf("/"));
+				await mkdir(configDir, { recursive: true });
+				await writeFile(configPath, configFile.content, "utf8");
+			}
+		}
 	}
 
 	if (config.gen.llmsTxt) {

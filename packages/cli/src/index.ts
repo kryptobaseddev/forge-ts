@@ -15,9 +15,15 @@ import { buildCommand } from "./commands/build.js";
 import { checkCommand } from "./commands/check.js";
 import { testCommand } from "./commands/test.js";
 
-export { buildCommand } from "./commands/build.js";
-export { checkCommand } from "./commands/check.js";
-export { testCommand } from "./commands/test.js";
+export { type BuildResult, type BuildStep, buildCommand } from "./commands/build.js";
+export {
+	type CheckFileError,
+	type CheckFileGroup,
+	type CheckFileWarning,
+	type CheckResult,
+	checkCommand,
+} from "./commands/check.js";
+export { type TestFailure, type TestResult, testCommand } from "./commands/test.js";
 export { createLogger, type Logger } from "./logger.js";
 export {
 	type CommandOutput,

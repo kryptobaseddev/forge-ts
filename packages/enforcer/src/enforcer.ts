@@ -145,6 +145,10 @@ function deprecatedWithoutReason(symbol: ForgeSymbol): boolean {
  * | E001 | error    | Exported symbol is missing a TSDoc summary. |
  * | E002 | error    | Function/method parameter lacks a `@param` tag. |
  * | E003 | error    | Non-void function/method lacks a `@returns` tag. |
+ * | E004 | error    | Exported function/method is missing an `@example` block. |
+ * | E005 | error    | Package entry point (index.ts) is missing `@packageDocumentation`. |
+ * | E006 | error    | Public/protected class member is missing a TSDoc comment. |
+ * | E007 | error    | Interface/type alias property is missing a TSDoc comment. |
  * | W001 | warning  | TSDoc comment contains parse errors. |
  * | W002 | warning  | Function body throws but has no `@throws` tag. |
  * | W003 | warning  | `@deprecated` tag is present without explanation. |
@@ -175,8 +179,9 @@ export async function enforce(config: ForgeConfig): Promise<ForgeResult> {
 		filePath: string,
 		line: number,
 		column: number,
+		guidance?: { suggestedFix?: string; symbolName?: string; symbolKind?: string },
 	): void {
-		const diag = { code, message, filePath, line, column };
+		const diag = { code, message, filePath, line, column, ...guidance };
 		if (severity === "error" || config.enforce.strict) {
 			errors.push(diag);
 		} else {
@@ -198,6 +203,11 @@ export async function enforce(config: ForgeConfig): Promise<ForgeResult> {
 				symbol.filePath,
 				symbol.line,
 				symbol.column,
+				{
+					suggestedFix: `/**\n * [Description of ${symbol.name}]\n */`,
+					symbolName: symbol.name,
+					symbolKind: symbol.kind,
+				},
 			);
 		}
 
@@ -212,6 +222,11 @@ export async function enforce(config: ForgeConfig): Promise<ForgeResult> {
 					symbol.filePath,
 					symbol.line,
 					symbol.column,
+					{
+						suggestedFix: `@param ${paramName} - [Description of ${paramName}]`,
+						symbolName: symbol.name,
+						symbolKind: symbol.kind,
+					},
 				);
 			}
 		}
@@ -225,7 +240,57 @@ export async function enforce(config: ForgeConfig): Promise<ForgeResult> {
 				symbol.filePath,
 				symbol.line,
 				symbol.column,
+				{
+					suggestedFix: `@returns [Description of the return value]`,
+					symbolName: symbol.name,
+					symbolKind: symbol.kind,
+				},
 			);
+		}
+
+		// E004 — Missing @example
+		if (isFunctionLike && symbol.documentation) {
+			const hasExample = (symbol.documentation.examples ?? []).length > 0;
+			if (!hasExample) {
+				emit(
+					"error",
+					"E004",
+					`Exported function "${symbol.name}" is missing an @example block. Add a fenced code block showing usage.`,
+					symbol.filePath,
+					symbol.line,
+					symbol.column,
+					{
+						suggestedFix: `@example\n * \`\`\`typescript\n * // Usage of ${symbol.name}\n * ${symbol.name}();\n * \`\`\``,
+						symbolName: symbol.name,
+						symbolKind: symbol.kind,
+					},
+				);
+			}
+		}
+
+		// E006 — Class member missing documentation
+		// E007 — Interface/type member missing documentation
+		if (symbol.kind === "class" || symbol.kind === "interface") {
+			const errorCode = symbol.kind === "class" ? "E006" : "E007";
+			for (const child of symbol.children ?? []) {
+				if (child.kind === "property" || child.kind === "method") {
+					if (!hasSummary(child)) {
+						emit(
+							"error",
+							errorCode,
+							`Member "${child.name}" of ${symbol.kind} "${symbol.name}" is missing a TSDoc comment.`,
+							child.filePath,
+							child.line,
+							child.column,
+							{
+								suggestedFix: `/**\n * [Description of ${child.name}]\n */`,
+								symbolName: child.name,
+								symbolKind: child.kind,
+							},
+						);
+					}
+				}
+			}
 		}
 
 		// W003 — @deprecated without reason
@@ -237,6 +302,39 @@ export async function enforce(config: ForgeConfig): Promise<ForgeResult> {
 				symbol.filePath,
 				symbol.line,
 				symbol.column,
+				{
+					symbolName: symbol.name,
+					symbolKind: symbol.kind,
+				},
+			);
+		}
+	}
+
+	// E005 — Missing @packageDocumentation on index.ts entry points
+	// Group symbols by file to check if any index.ts file lacks @packageDocumentation.
+	const indexFiles = new Map<string, ForgeSymbol[]>();
+	for (const symbol of allSymbols) {
+		if (symbol.filePath.endsWith("index.ts")) {
+			const bucket = indexFiles.get(symbol.filePath) ?? [];
+			bucket.push(symbol);
+			indexFiles.set(symbol.filePath, bucket);
+		}
+	}
+	for (const [filePath, fileSymbols] of indexFiles) {
+		const hasPackageDoc = fileSymbols.some(
+			(s) => s.documentation?.tags?.packageDocumentation !== undefined,
+		);
+		if (!hasPackageDoc) {
+			emit(
+				"error",
+				"E005",
+				`Package entry point "${filePath}" is missing a @packageDocumentation TSDoc comment.`,
+				filePath,
+				1,
+				0,
+				{
+					suggestedFix: `/**\n * @packageDocumentation\n * [Package overview description]\n */`,
+				},
 			);
 		}
 	}

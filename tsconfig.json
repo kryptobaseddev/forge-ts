@@ -1,0 +1,36 @@
+{
+	"compilerOptions": {
+		"target": "ESNext",
+		"module": "NodeNext",
+		"moduleResolution": "NodeNext",
+		"lib": ["ESNext"],
+		"types": ["node"],
+		"strict": true,
+		"verbatimModuleSyntax": true,
+		"declaration": true,
+		"declarationMap": true,
+		"sourceMap": true,
+		"composite": true,
+		"incremental": true,
+		"skipLibCheck": true,
+		"outDir": "dist",
+		"rootDir": ".",
+		"paths": {
+			"@forge-ts/core": ["./packages/core/dist/index.d.ts"],
+			"@forge-ts/enforcer": ["./packages/enforcer/dist/index.d.ts"],
+			"@forge-ts/doctest": ["./packages/doctest/dist/index.d.ts"],
+			"@forge-ts/api": ["./packages/api/dist/index.d.ts"],
+			"@forge-ts/gen": ["./packages/gen/dist/index.d.ts"],
+			"@forge-ts/cli": ["./packages/cli/dist/index.d.ts"]
+		}
+	},
+	"references": [
+		{ "path": "./packages/core" },
+		{ "path": "./packages/enforcer" },
+		{ "path": "./packages/doctest" },
+		{ "path": "./packages/api" },
+		{ "path": "./packages/gen" },
+		{ "path": "./packages/cli" }
+	],
+	"exclude": ["node_modules", "packages/*/dist", "packages/*/node_modules"]
+}

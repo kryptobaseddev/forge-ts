@@ -1,0 +1,13 @@
+node_modules
+dist
+.cache
+*.tsbuildinfo
+.DS_Store
+*.log
+
+# CLEO internals
+.cleo/tasks.db*
+.cleo/brain.db*
+.cleo/backups/
+.cleo/.context-state.json
+.cleo/logs/

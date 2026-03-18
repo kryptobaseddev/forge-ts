@@ -1,0 +1,23 @@
+{
+	"$schema": "https://unpkg.com/@changesets/config@3.1.1/schema.json",
+	"changelog": ["@changesets/changelog-github", { "repo": "forge-ts/forge-ts" }],
+	"commit": false,
+	"fixed": [
+		[
+			"@forge-ts/core",
+			"@forge-ts/enforcer",
+			"@forge-ts/doctest",
+			"@forge-ts/api",
+			"@forge-ts/gen",
+			"@forge-ts/cli"
+		]
+	],
+	"linked": [],
+	"access": "public",
+	"baseBranch": "main",
+	"updateInternalDependencies": "patch",
+	"ignore": [],
+	"___experimentalUnsafeOptions_WILL_CHANGE_IN_PATCH": {
+		"onlyUpdatePeerDependentsWhenOutOfRange": false
+	}
+}

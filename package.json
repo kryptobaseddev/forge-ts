@@ -13,7 +13,7 @@
 	"scripts": {
 		"build": "pnpm --filter @forge-ts/core build && pnpm --filter '!@forge-ts/core' -r build",
 		"test": "vitest run --config vitest.config.ts",
-		"check": "pnpm -r --parallel exec tsc --noEmit",
+		"check": "pnpm build",
 		"lint": "biome check .",
 		"lint:fix": "biome check --write .",
 		"format": "biome format --write .",

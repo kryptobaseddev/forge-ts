@@ -19,7 +19,7 @@
 		"format": "biome format --write .",
 		"clean": "pnpm -r exec -- rm -rf dist .cache *.tsbuildinfo",
 		"changeset": "changeset",
-		"version": "changeset version",
+		"cs:version": "changeset version",
 		"release": "pnpm build && changeset publish",
 		"prerelease": "pnpm build && pnpm test",
 		"forge:check": "forge-ts check --cwd packages/core",

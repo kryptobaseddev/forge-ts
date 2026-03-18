@@ -1,0 +1,38 @@
+{
+	"name": "@forge-ts/gen",
+	"version": "0.1.0",
+	"type": "module",
+	"description": "Markdown/MDX and llms.txt generator for forge-ts",
+	"license": "MIT",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/forge-ts/forge-ts"
+	},
+	"publishConfig": {
+		"access": "public"
+	},
+	"files": [
+		"dist",
+		"README.md"
+	],
+	"main": "./dist/index.js",
+	"types": "./dist/index.d.ts",
+	"exports": {
+		".": {
+			"import": "./dist/index.js",
+			"types": "./dist/index.d.ts"
+		}
+	},
+	"scripts": {
+		"build": "tsup",
+		"dev": "tsup --watch",
+		"typecheck": "tsc --noEmit"
+	},
+	"dependencies": {
+		"@forge-ts/core": "workspace:*"
+	},
+	"devDependencies": {
+		"tsup": "^8.3.5",
+		"typescript": "^5.8.2"
+	}
+}

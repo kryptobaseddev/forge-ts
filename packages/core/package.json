@@ -30,7 +30,7 @@
 	},
 	"dependencies": {
 		"@microsoft/tsdoc": "^0.15.1",
-		"typescript": "^5.8.2"
+		"typescript": "^6.0.1-rc"
 	},
 	"devDependencies": {
 		"@forge-ts/api": "workspace:*",

@@ -11,7 +11,7 @@
 	},
 	"packageManager": "pnpm@10.6.0",
 	"scripts": {
-		"build": "pnpm -r build",
+		"build": "pnpm --filter @forge-ts/core build && pnpm --filter '!@forge-ts/core' -r build",
 		"test": "vitest run --config vitest.config.ts",
 		"check": "pnpm -r --parallel exec tsc --noEmit",
 		"lint": "biome check .",

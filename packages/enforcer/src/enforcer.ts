@@ -6,7 +6,7 @@ import {
 	type ForgeSymbol,
 	type ForgeWarning,
 	filterByVisibility,
-} from "@codluv/forge-core";
+} from "@forge-ts/core";
 
 // ---------------------------------------------------------------------------
 // Internal helpers

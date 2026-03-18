@@ -1,6 +1,6 @@
-import { generateApi } from "@codluv/forge-api";
-import { loadConfig } from "@codluv/forge-core";
-import { generate } from "@codluv/forge-gen";
+import { generateApi } from "@forge-ts/api";
+import { loadConfig } from "@forge-ts/core";
+import { generate } from "@forge-ts/gen";
 import { defineCommand } from "citty";
 import { createLogger } from "../logger.js";
 import {

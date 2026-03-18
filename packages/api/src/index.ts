@@ -1,5 +1,5 @@
 /**
- * @codluv/forge-api — OpenAPI spec and API reference generator.
+ * @forge-ts/api — OpenAPI spec and API reference generator.
  *
  * Extracts public SDK types from the symbol graph and generates an
  * OpenAPI 3.1 document and a structured API reference.
@@ -15,7 +15,7 @@ export { extractSDKTypes, type SDKProperty, type SDKType } from "./sdk-extractor
 
 import { mkdir, writeFile } from "node:fs/promises";
 import { dirname } from "node:path";
-import { createWalker, type ForgeConfig, type ForgeResult } from "@codluv/forge-core";
+import { createWalker, type ForgeConfig, type ForgeResult } from "@forge-ts/core";
 import { generateOpenAPISpec } from "./openapi.js";
 import { extractSDKTypes } from "./sdk-extractor.js";
 

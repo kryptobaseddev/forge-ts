@@ -1,5 +1,5 @@
-import type { ForgeSymbol } from "@codluv/forge-core";
-import { Visibility } from "@codluv/forge-core";
+import type { ForgeSymbol } from "@forge-ts/core";
+import { Visibility } from "@forge-ts/core";
 
 /**
  * A single entry in the generated API reference.

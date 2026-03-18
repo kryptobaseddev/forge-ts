@@ -3,7 +3,7 @@
  * @public
  */
 
-import type { OpenAPISchemaObject } from "@codluv/forge-core";
+import type { OpenAPISchemaObject } from "@forge-ts/core";
 
 export type { OpenAPISchemaObject };
 

@@ -1,5 +1,5 @@
 /**
- * @codluv/forge-gen — Markdown/MDX documentation and llms.txt generator.
+ * @forge-ts/gen — Markdown/MDX documentation and llms.txt generator.
  *
  * Generates human- and machine-readable documentation from the forge-ts
  * symbol graph, with optional README injection.
@@ -17,7 +17,7 @@ export { type ReadmeSyncOptions, syncReadme } from "./readme-sync.js";
 
 import { mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
-import { createWalker, type ForgeConfig, type ForgeResult } from "@codluv/forge-core";
+import { createWalker, type ForgeConfig, type ForgeResult } from "@forge-ts/core";
 import { generateLlmsFullTxt, generateLlmsTxt } from "./llms.js";
 import { generateMarkdown } from "./markdown.js";
 import { syncReadme } from "./readme-sync.js";

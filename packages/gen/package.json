@@ -1,6 +1,6 @@
 {
 	"name": "@forge-ts/gen",
-	"version": "0.3.0",
+	"version": "0.3.1",
 	"type": "module",
 	"description": "Markdown/MDX and llms.txt generator for forge-ts",
 	"license": "MIT",

@@ -1,5 +1,14 @@
 # @forge-ts/doctest
 
+## 0.3.1
+
+### Patch Changes
+
+- Complete TSDoc coverage across all packages. Every exported symbol, interface member, and function now has documentation with @example blocks. forge-ts check passes with 0 errors on all 6 packages (229 symbols). Fixed @packageDocumentation tag extraction in walker.
+
+- Updated dependencies []:
+  - @forge-ts/core@0.3.1
+
 ## 0.3.0
 
 ### Patch Changes

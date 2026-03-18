@@ -1,5 +1,9 @@
 {
 	"name": "forge-ts",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/kryptobaseddev/forge-ts"
+	},
 	"private": true,
 	"type": "module",
 	"engines": {

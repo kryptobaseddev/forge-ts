@@ -1,9 +1,8 @@
 ---
-title: doctest — Types
+title: "doctest — Types"
 outline: deep
-description: Type contracts for the doctest package
+description: "Type contracts for the doctest package"
 ---
-
 # doctest — Types
 
 Type contracts exported by this package: interfaces, type aliases, and enums.

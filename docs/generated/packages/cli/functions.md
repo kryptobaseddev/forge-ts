@@ -1,9 +1,8 @@
 ---
-title: cli — Functions
+title: "cli — Functions"
 outline: deep
-description: Functions and classes for the cli package
+description: "Functions and classes for the cli package"
 ---
-
 # cli — Functions & Classes
 
 Functions and classes exported by this package.
@@ -120,6 +119,32 @@ Runs the TSDoc enforcement pass and returns a typed command output.
 import { runCheck } from "@forge-ts/cli/commands/check";
 const output = await runCheck({ cwd: process.cwd() });
 console.log(output.data.summary.errors); // number of TSDoc errors found
+```
+
+## runInitDocs(args)
+
+Scaffolds a documentation site for the target SSG platform.  Resolves the target from args, validates it, checks for an existing scaffold, calls the adapter's `scaffold()` method, and writes all files produced by the manifest to `outDir`.
+
+**Signature**
+
+```typescript
+(args: InitDocsArgs) => Promise<CommandOutput<InitDocsResult>>
+```
+
+**Parameters**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `args` | — | CLI arguments for the init docs command. |
+
+**Returns** — A typed `CommandOutput<InitDocsResult>`.
+
+**Example**
+
+```typescript
+import { runInitDocs } from "@forge-ts/cli/commands/init-docs";
+const output = await runInitDocs({ target: "mintlify", cwd: process.cwd() });
+console.log(output.data.files); // list of created file paths
 ```
 
 ## runTest(args)

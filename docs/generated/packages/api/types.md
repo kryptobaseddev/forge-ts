@@ -1,9 +1,8 @@
 ---
-title: api — Types
+title: "api — Types"
 outline: deep
-description: Type contracts for the api package
+description: "Type contracts for the api package"
 ---
-
 # api — Types
 
 Type contracts exported by this package: interfaces, type aliases, and enums.

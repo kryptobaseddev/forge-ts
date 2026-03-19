@@ -1,9 +1,8 @@
 ---
-title: Getting Started
+title: "Getting Started"
 outline: deep
-description: Quick start guide for .
+description: "Quick start guide for ."
 ---
-
 # Getting Started
 
 Welcome to **.**.

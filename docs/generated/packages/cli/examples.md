@@ -1,9 +1,8 @@
 ---
-title: cli — Examples
+title: "cli — Examples"
 outline: deep
-description: Usage examples for the cli package
+description: "Usage examples for the cli package"
 ---
-
 # cli — Examples
 
 All usage examples from the package, aggregated for quick reference.
@@ -41,6 +40,52 @@ _Runs the TSDoc enforcement pass and returns a typed command output._
 import { runCheck } from "@forge-ts/cli/commands/check";
 const output = await runCheck({ cwd: process.cwd() });
 console.log(output.data.summary.errors); // number of TSDoc errors found
+```
+
+## `InitDocsResult`
+
+_Result of the `init docs` command._
+
+[View in API reference](./api-reference.md#initdocsresult)
+
+```typescript
+import { runInitDocs } from "@forge-ts/cli/commands/init-docs";
+const output = await runInitDocs({ target: "mintlify" });
+console.log(output.data.summary.filesCreated); // number of files written
+```
+
+## `runInitDocs()`
+
+_Scaffolds a documentation site for the target SSG platform.  Resolves the target from args, validates it, checks for an existing scaffold, calls the adapter's `scaffold()` method, and writes all files produced by the manifest to `outDir`._
+
+[View in API reference](./api-reference.md#runinitdocs)
+
+```typescript
+import { runInitDocs } from "@forge-ts/cli/commands/init-docs";
+const output = await runInitDocs({ target: "mintlify", cwd: process.cwd() });
+console.log(output.data.files); // list of created file paths
+```
+
+## `initDocsCommand`
+
+_Citty command definition for `forge-ts init docs`.  Scaffolds a complete documentation site for the target SSG platform. Use `--json` for LAFS JSON envelope output (agent/CI-friendly)._
+
+[View in API reference](./api-reference.md#initdocscommand)
+
+```typescript
+import { initDocsCommand } from "@forge-ts/cli/commands/init-docs";
+// Registered automatically as a subcommand of `forge-ts init`
+```
+
+## `initCommand`
+
+_Citty command definition for `forge-ts init`.  Exposes subcommands for scaffolding project artefacts._
+
+[View in API reference](./api-reference.md#initcommand)
+
+```typescript
+import { initCommand } from "@forge-ts/cli/commands/init-docs";
+// Registered automatically as a subcommand of `forge-ts`
 ```
 
 ## `runTest()`

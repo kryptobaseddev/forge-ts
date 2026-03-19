@@ -1,9 +1,8 @@
 ---
-title: enforcer — Types
+title: "enforcer — Types"
 outline: deep
-description: Type contracts for the enforcer package
+description: "Type contracts for the enforcer package"
 ---
-
 # enforcer — Types
 
 Type contracts exported by this package: interfaces, type aliases, and enums.

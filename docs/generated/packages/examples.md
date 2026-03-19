@@ -1,9 +1,8 @@
 ---
-title: . — Examples
+title: ". — Examples"
 outline: deep
-description: Usage examples for the . package
+description: "Usage examples for the . package"
 ---
-
 # . — Examples
 
 All usage examples from the package, aggregated for quick reference.

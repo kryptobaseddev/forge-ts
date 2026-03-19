@@ -51,16 +51,30 @@ any - An SDK type descriptor extracted from the symbol graph.
 any - A single entry in the generated API reference.
 (symbols: ForgeSymbol[]) => ReferenceEntry[] - Builds a structured API reference from a list of exported symbols.  Unlike the minimal stub, this version includes nested children (class methods, interface properties) and all available TSDoc metadata.  Symbols with  or  are excluded from the top-level results. Children with private/internal visibility are also filtered out.
 (config: ForgeConfig) => Promise<ForgeResult> - Runs the API generation pipeline: walk → extract → generate → write.
+any - A single generated documentation page.
+any - Options controlling the doc site generator.
+(symbols: ForgeSymbol[], rootDir: string) => Map<string, ForgeSymbol[]> - Groups symbols by their package based on file path.  For monorepos (symbols under `packages/<name>/`) the package name is derived from the directory segment immediately after `packages/`. For non-monorepo projects all symbols fall under the project name.
+(symbolsByPackage: Map<string, ForgeSymbol[]>, config: ForgeConfig, options: SiteGeneratorOptions) => DocPage[] - Generates a full multi-page documentation site from symbols grouped by package.  Produces an index page, a getting-started page, and per-package pages for the API reference, types, functions, and examples.
+any - Supported SSG target identifiers.
+any - A file to write to disk during scaffolding or generation.
+any - Style guide configuration for the SSG target.
+any - Scaffold manifest describing what `init docs` creates.
+any - Context passed to adapter methods.
+any - The central SSG adapter interface. Every doc platform provider implements this contract. One file per provider. No shared mutable state.
+(adapter: SSGAdapter) => void - Register an SSG adapter. Called once per provider at module load time.
+(target: SSGTarget) => SSGAdapter - Get a registered adapter by target name. Throws if the target is not registered.
+() => SSGTarget[] - Get all registered adapter targets.
+SSGTarget - The default SSG target when none is specified.
+SSGAdapter - Mintlify SSG adapter. Implements the  contract for the Mintlify platform.
+SSGAdapter - Docusaurus SSG adapter. Implements the  contract for the Docusaurus platform.
+SSGAdapter - Nextra SSG adapter (v4, App Router). Implements the  contract for the Nextra platform.
+SSGAdapter - VitePress SSG adapter. Implements the  contract for the VitePress platform.
 (symbols: ForgeSymbol[], config: ForgeConfig) => string - Generates an `llms.txt` routing manifest from the extracted symbols.  The file follows the llms.txt specification: a compact, structured overview designed to help large language models navigate a project's documentation.
 (symbols: ForgeSymbol[], config: ForgeConfig) => string - Generates an `llms-full.txt` dense context file from the extracted symbols.  Unlike `llms.txt`, this file contains complete documentation for every exported symbol, intended for LLM ingestion that requires full context.
 any - Options controlling Markdown output.
 (symbols: ForgeSymbol[], config: ForgeConfig, options?: MarkdownOptions) => string - Generates a Markdown (or MDX) string from a list of symbols.
 any - Options controlling README sync behaviour.
 (readmePath: string, symbols: ForgeSymbol[], options?: ReadmeSyncOptions) => Promise<boolean> - Injects a summary of exported symbols into a `README.md` file.  The content is placed between `<!-- forge-ts:start -->` and `<!-- forge-ts:end -->` comment markers.  If neither marker exists, the summary is appended to the end of the file.
-any - A single generated documentation page.
-any - Options controlling the doc site generator.
-(symbols: ForgeSymbol[], rootDir: string) => Map<string, ForgeSymbol[]> - Groups symbols by their package based on file path.  For monorepos (symbols under `packages/<name>/`) the package name is derived from the directory segment immediately after `packages/`. For non-monorepo projects all symbols fall under the project name.
-(symbolsByPackage: Map<string, ForgeSymbol[]>, config: ForgeConfig, options: SiteGeneratorOptions) => DocPage[] - Generates a full multi-page documentation site from symbols grouped by package.  Produces an index page, a getting-started page, and per-package pages for the API reference, types, functions, and examples.
 any - A single generated SSG configuration file.
 (pages: DocPage[], target: "docusaurus" | "mintlify" | "nextra" | "vitepress", projectName: string) => SSGConfigFile[] - Generate navigation configuration file(s) for the given SSG target.  Returns one file for most targets, but multiple files for Nextra (which uses per-directory `_meta.json` files).
 (config: ForgeConfig) => Promise<ForgeResult> - Runs the full generation pipeline: walk → render → write.
@@ -89,6 +103,11 @@ any - Errors and warnings grouped by file, included at standard and full MVI lev
 any - Typed result for the `check` command.
 (args: CheckArgs) => Promise<CommandOutput<CheckResult>> - Runs the TSDoc enforcement pass and returns a typed command output.
 CommandDef<{ readonly cwd: { readonly type: "string"; readonly description: "Project root directory"; }; readonly strict: { readonly type: "boolean"; readonly description: "Treat warnings as errors"; readonly default: false; }; ... 4 more ...; readonly mvi: { ...; }; }> - Citty command definition for `forge-ts check`.
+any - Result of the `init docs` command.
+any - Arguments for the `init docs` command.
+(args: InitDocsArgs) => Promise<CommandOutput<InitDocsResult>> - Scaffolds a documentation site for the target SSG platform.  Resolves the target from args, validates it, checks for an existing scaffold, calls the adapter's `scaffold()` method, and writes all files produced by the manifest to `outDir`.
+CommandDef<{ readonly target: { readonly type: "string"; readonly description: `SSG target: ${string} (default: docusaurus)` | `SSG target: ${string} (default: mintlify)` | `SSG target: ${string} (default: nextra)` | `SSG target: ${string} (default: vitepress)`; }; readonly cwd: { readonly type: "string"; readonly d... - Citty command definition for `forge-ts init docs`.  Scaffolds a complete documentation site for the target SSG platform. Use `--json` for LAFS JSON envelope output (agent/CI-friendly).
+CommandDef<ArgsDef> - Citty command definition for `forge-ts init`.  Exposes subcommands for scaffolding project artefacts.
 any - A single extracted `@example` block ready for test generation.
 (symbols: ForgeSymbol[]) => ExtractedExample[] - Extracts all `@example` blocks from a list of  objects.
 any - Options for virtual test file generation.

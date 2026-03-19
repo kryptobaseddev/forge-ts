@@ -1,9 +1,8 @@
 ---
-title: api — API Reference
+title: "api — API Reference"
 outline: deep
-description: Full API reference for the api package
+description: "Full API reference for the api package"
 ---
-
 # api — API Reference
 
 ## Functions

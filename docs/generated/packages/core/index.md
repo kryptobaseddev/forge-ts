@@ -1,9 +1,8 @@
 ---
-title: core
+title: "core"
 outline: deep
-description: core package overview
+description: "core package overview"
 ---
-
 # core
 
 ## Exported Symbols

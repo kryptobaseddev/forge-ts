@@ -1,9 +1,8 @@
 ---
-title: core — Examples
+title: "core — Examples"
 outline: deep
-description: Usage examples for the core package
+description: "Usage examples for the core package"
 ---
-
 # core — Examples
 
 All usage examples from the package, aggregated for quick reference.

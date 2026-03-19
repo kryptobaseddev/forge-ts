@@ -1,12 +1,125 @@
 ---
-title: gen — API Reference
+title: "gen — API Reference"
 outline: deep
-description: Full API reference for the gen package
+description: "Full API reference for the gen package"
 ---
-
 # gen — API Reference
 
 ## Functions
+
+### `groupSymbolsByPackage()`
+
+```typescript
+(symbols: ForgeSymbol[], rootDir: string) => Map<string, ForgeSymbol[]>
+```
+
+Groups symbols by their package based on file path.  For monorepos (symbols under `packages/<name>/`) the package name is derived from the directory segment immediately after `packages/`. For non-monorepo projects all symbols fall under the project name.
+
+**Parameters**
+
+- `symbols` — All extracted symbols.
+- `rootDir` — Absolute path to the project root.
+
+**Returns**: A map from package name to symbol list.
+
+**Examples**
+
+```typescript
+import { groupSymbolsByPackage } from "@forge-ts/gen";
+const grouped = groupSymbolsByPackage(symbols, "/path/to/project");
+console.log(grouped.has("core")); // true for monorepo
+```
+
+
+### `generateDocSite()`
+
+```typescript
+(symbolsByPackage: Map<string, ForgeSymbol[]>, config: ForgeConfig, options: SiteGeneratorOptions) => DocPage[]
+```
+
+Generates a full multi-page documentation site from symbols grouped by package.  Produces an index page, a getting-started page, and per-package pages for the API reference, types, functions, and examples.
+
+**Parameters**
+
+- `symbolsByPackage` — Symbols grouped by package name.
+- `config` — The resolved .
+- `options` — Site generation options.
+
+**Returns**: An array of  objects ready to be written to disk.
+
+**Examples**
+
+```typescript
+import { generateDocSite, groupSymbolsByPackage } from "@forge-ts/gen";
+const grouped = groupSymbolsByPackage(symbols, config.rootDir);
+const pages = generateDocSite(grouped, config, { format: "markdown", projectName: "my-project" });
+console.log(pages.length > 0); // true
+```
+
+
+### `registerAdapter()`
+
+```typescript
+(adapter: SSGAdapter) => void
+```
+
+Register an SSG adapter. Called once per provider at module load time.
+
+**Parameters**
+
+- `adapter` — The adapter to register.
+
+**Examples**
+
+```typescript
+import { registerAdapter } from "@forge-ts/gen";
+registerAdapter(mintlifyAdapter);
+```
+
+
+### `getAdapter()`
+
+```typescript
+(target: SSGTarget) => SSGAdapter
+```
+
+Get a registered adapter by target name. Throws if the target is not registered.
+
+**Parameters**
+
+- `target` — The SSG target identifier.
+
+**Returns**: The registered  for the given target.
+
+**Throws**
+
+- `Error` if the target is not registered.
+
+**Examples**
+
+```typescript
+import { getAdapter } from "@forge-ts/gen";
+const adapter = getAdapter("mintlify");
+```
+
+
+### `getAvailableTargets()`
+
+```typescript
+() => SSGTarget[]
+```
+
+Get all registered adapter targets.
+
+**Returns**: An array of all registered  identifiers.
+
+**Examples**
+
+```typescript
+import { getAvailableTargets } from "@forge-ts/gen";
+const targets = getAvailableTargets(); // ["mintlify", "docusaurus", ...]
+```
+
 
 ### `generateLlmsTxt()`
 
@@ -106,56 +219,6 @@ console.log(modified); // true if README was updated
 ```
 
 
-### `groupSymbolsByPackage()`
-
-```typescript
-(symbols: ForgeSymbol[], rootDir: string) => Map<string, ForgeSymbol[]>
-```
-
-Groups symbols by their package based on file path.  For monorepos (symbols under `packages/<name>/`) the package name is derived from the directory segment immediately after `packages/`. For non-monorepo projects all symbols fall under the project name.
-
-**Parameters**
-
-- `symbols` — All extracted symbols.
-- `rootDir` — Absolute path to the project root.
-
-**Returns**: A map from package name to symbol list.
-
-**Examples**
-
-```typescript
-import { groupSymbolsByPackage } from "@forge-ts/gen";
-const grouped = groupSymbolsByPackage(symbols, "/path/to/project");
-console.log(grouped.has("core")); // true for monorepo
-```
-
-
-### `generateDocSite()`
-
-```typescript
-(symbolsByPackage: Map<string, ForgeSymbol[]>, config: ForgeConfig, options: SiteGeneratorOptions) => DocPage[]
-```
-
-Generates a full multi-page documentation site from symbols grouped by package.  Produces an index page, a getting-started page, and per-package pages for the API reference, types, functions, and examples.
-
-**Parameters**
-
-- `symbolsByPackage` — Symbols grouped by package name.
-- `config` — The resolved .
-- `options` — Site generation options.
-
-**Returns**: An array of  objects ready to be written to disk.
-
-**Examples**
-
-```typescript
-import { generateDocSite, groupSymbolsByPackage } from "@forge-ts/gen";
-const grouped = groupSymbolsByPackage(symbols, config.rootDir);
-const pages = generateDocSite(grouped, config, { format: "markdown", projectName: "my-project" });
-console.log(pages.length > 0); // true
-```
-
-
 ### `generateSSGConfigs()`
 
 ```typescript
@@ -205,48 +268,6 @@ console.log(result.success); // true if all files were written
 
 
 ## Interfaces
-
-### `MarkdownOptions`
-
-```typescript
-any
-```
-
-Options controlling Markdown output.
-
-#### `mdx`
-
-```typescript
-boolean | undefined
-```
-
-Whether to use MDX syntax (default: Markdown).
-
-
-### `ReadmeSyncOptions`
-
-```typescript
-any
-```
-
-Options controlling README sync behaviour.
-
-#### `badge`
-
-```typescript
-boolean | undefined
-```
-
-Include a "Documented with forge-ts" badge above the API table.
-
-#### `includeExamples`
-
-```typescript
-boolean | undefined
-```
-
-Include first
-
 
 ### `DocPage`
 
@@ -322,6 +343,378 @@ string | undefined
 Project description
 
 
+### `GeneratedFile`
+
+```typescript
+any
+```
+
+A file to write to disk during scaffolding or generation.
+
+#### `path`
+
+```typescript
+string
+```
+
+Relative path from the docs output directory.
+
+#### `content`
+
+```typescript
+string
+```
+
+File content (string for text).
+
+
+### `SSGStyleGuide`
+
+```typescript
+any
+```
+
+Style guide configuration for the SSG target.
+
+#### `pageExtension`
+
+```typescript
+"mdx" | "md"
+```
+
+File extension for doc pages.
+
+#### `supportsMdx`
+
+```typescript
+boolean
+```
+
+Whether the target supports MDX components.
+
+#### `requiresFrontmatter`
+
+```typescript
+boolean
+```
+
+Whether frontmatter is required on every page.
+
+#### `maxHeadingDepth`
+
+```typescript
+number
+```
+
+Maximum recommended heading depth.
+
+#### `defaultImports`
+
+```typescript
+string[]
+```
+
+Component imports to add at top of MDX files (if supportsMdx).
+
+#### `codeBlockLanguage`
+
+```typescript
+"typescript" | "ts" | "tsx"
+```
+
+Code block language for TypeScript examples.
+
+
+### `ScaffoldManifest`
+
+```typescript
+any
+```
+
+Scaffold manifest describing what `init docs` creates.
+
+#### `target`
+
+```typescript
+SSGTarget
+```
+
+The SSG target this manifest is for.
+
+#### `files`
+
+```typescript
+GeneratedFile[]
+```
+
+Files that will be created.
+
+#### `dependencies`
+
+```typescript
+Record<string, string>
+```
+
+npm dependencies to install.
+
+#### `devDependencies`
+
+```typescript
+Record<string, string>
+```
+
+npm devDependencies to install.
+
+#### `scripts`
+
+```typescript
+Record<string, string>
+```
+
+Scripts to add to package.json.
+
+#### `instructions`
+
+```typescript
+string[]
+```
+
+Post-scaffold instructions for the user.
+
+
+### `AdapterContext`
+
+```typescript
+any
+```
+
+Context passed to adapter methods.
+
+#### `config`
+
+```typescript
+ForgeConfig
+```
+
+Resolved forge-ts configuration.
+
+#### `projectName`
+
+```typescript
+string
+```
+
+Project name (from package.json or directory).
+
+#### `projectDescription`
+
+```typescript
+string | undefined
+```
+
+Project description.
+
+#### `pages`
+
+```typescript
+DocPage[]
+```
+
+The generated doc pages (from site-generator).
+
+#### `symbols`
+
+```typescript
+ForgeSymbol[]
+```
+
+All symbols extracted from the project.
+
+#### `outDir`
+
+```typescript
+string
+```
+
+Output directory for generated docs.
+
+
+### `SSGAdapter`
+
+```typescript
+any
+```
+
+The central SSG adapter interface. Every doc platform provider implements this contract. One file per provider. No shared mutable state.
+
+**Examples**
+
+```typescript
+import { getAdapter } from "@forge-ts/gen";
+const adapter = getAdapter("mintlify");
+const files = adapter.transformPages(pages, context);
+```
+
+#### `target`
+
+```typescript
+SSGTarget
+```
+
+Unique target identifier.
+
+#### `displayName`
+
+```typescript
+string
+```
+
+Human-readable display name.
+
+#### `styleGuide`
+
+```typescript
+SSGStyleGuide
+```
+
+Style guide for this platform.
+
+#### `scaffold()`
+
+```typescript
+(context: AdapterContext) => ScaffoldManifest
+```
+
+Generate the complete scaffold for a new doc site. Called by `forge-ts init docs --target <name>`. Returns all files, dependencies, and scripts needed.
+
+**Parameters**
+
+- `context` — The adapter context for the current project.
+
+**Returns**: A  with files, deps, and instructions.
+
+**Examples**
+
+```typescript
+import { getAdapter } from "@forge-ts/gen";
+const adapter = getAdapter("mintlify");
+const manifest = adapter.scaffold(context);
+console.log(manifest.files.length);
+```
+
+#### `transformPages()`
+
+```typescript
+(pages: DocPage[], context: AdapterContext) => GeneratedFile[]
+```
+
+Transform generic DocPages into platform-specific pages. Adds correct frontmatter, component imports, file extensions. Called during `forge-ts build`.
+
+**Parameters**
+
+- `pages` — The generic doc pages to transform.
+- `context` — The adapter context for the current project.
+
+**Returns**: An array of  objects ready to write.
+
+**Examples**
+
+```typescript
+import { getAdapter } from "@forge-ts/gen";
+const adapter = getAdapter("docusaurus");
+const files = adapter.transformPages(pages, context);
+console.log(files[0].path.endsWith(".mdx")); // true
+```
+
+#### `generateConfig()`
+
+```typescript
+(context: AdapterContext) => GeneratedFile[]
+```
+
+Generate platform-specific configuration files. e.g., mint.json, sidebars.js, _meta.json, .vitepress/config.ts Called during `forge-ts build`.
+
+**Parameters**
+
+- `context` — The adapter context for the current project.
+
+**Returns**: An array of  objects ready to write.
+
+**Examples**
+
+```typescript
+import { getAdapter } from "@forge-ts/gen";
+const adapter = getAdapter("vitepress");
+const configs = adapter.generateConfig(context);
+console.log(configs[0].path); // ".vitepress/sidebar.json"
+```
+
+#### `detectExisting()`
+
+```typescript
+(outDir: string) => Promise<boolean>
+```
+
+Check if a scaffold already exists in the output directory. Used for safety checks before init or target change.
+
+**Parameters**
+
+- `outDir` — The output directory to inspect.
+
+**Returns**: `true` if a scaffold marker file already exists.
+
+**Examples**
+
+```typescript
+import { getAdapter } from "@forge-ts/gen";
+const adapter = getAdapter("mintlify");
+const exists = await adapter.detectExisting("./docs");
+if (exists) console.log("Scaffold already present");
+```
+
+
+### `MarkdownOptions`
+
+```typescript
+any
+```
+
+Options controlling Markdown output.
+
+#### `mdx`
+
+```typescript
+boolean | undefined
+```
+
+Whether to use MDX syntax (default: Markdown).
+
+
+### `ReadmeSyncOptions`
+
+```typescript
+any
+```
+
+Options controlling README sync behaviour.
+
+#### `badge`
+
+```typescript
+boolean | undefined
+```
+
+Include a "Documented with forge-ts" badge above the API table.
+
+#### `includeExamples`
+
+```typescript
+boolean | undefined
+```
+
+Include first
+
+
 ### `SSGConfigFile`
 
 ```typescript
@@ -345,3 +738,97 @@ string
 ```
 
 File content
+
+
+## Types
+
+### `SSGTarget`
+
+```typescript
+any
+```
+
+Supported SSG target identifiers.
+
+
+## Variables
+
+### `DEFAULT_TARGET`
+
+```typescript
+SSGTarget
+```
+
+The default SSG target when none is specified.
+
+
+### `mintlifyAdapter`
+
+```typescript
+SSGAdapter
+```
+
+Mintlify SSG adapter. Implements the  contract for the Mintlify platform.
+
+**Examples**
+
+```typescript
+import { getAdapter } from "@forge-ts/gen";
+const adapter = getAdapter("mintlify");
+const configs = adapter.generateConfig(context);
+console.log(configs[0].path); // "docs.json"
+```
+
+
+### `docusaurusAdapter`
+
+```typescript
+SSGAdapter
+```
+
+Docusaurus SSG adapter. Implements the  contract for the Docusaurus platform.
+
+**Examples**
+
+```typescript
+import { getAdapter } from "@forge-ts/gen";
+const adapter = getAdapter("docusaurus");
+const configs = adapter.generateConfig(context);
+console.log(configs[0].path); // "sidebars.ts"
+```
+
+
+### `nextraAdapter`
+
+```typescript
+SSGAdapter
+```
+
+Nextra SSG adapter (v4, App Router). Implements the  contract for the Nextra platform.
+
+**Examples**
+
+```typescript
+import { getAdapter } from "@forge-ts/gen";
+const adapter = getAdapter("nextra");
+const configs = adapter.generateConfig(context);
+console.log(configs[0].path); // "content/_meta.js"
+```
+
+
+### `vitepressAdapter`
+
+```typescript
+SSGAdapter
+```
+
+VitePress SSG adapter. Implements the  contract for the VitePress platform.
+
+**Examples**
+
+```typescript
+import { getAdapter } from "@forge-ts/gen";
+const adapter = getAdapter("vitepress");
+const configs = adapter.generateConfig(context);
+console.log(configs[0].path); // ".vitepress/config.mts"
+```

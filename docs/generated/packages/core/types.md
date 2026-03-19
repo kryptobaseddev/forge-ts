@@ -1,9 +1,8 @@
 ---
-title: core — Types
+title: "core — Types"
 outline: deep
-description: Type contracts for the core package
+description: "Type contracts for the core package"
 ---
-
 # core — Types
 
 Type contracts exported by this package: interfaces, type aliases, and enums.

@@ -1,9 +1,8 @@
 ---
-title: enforcer — Functions
+title: "enforcer — Functions"
 outline: deep
-description: Functions and classes for the enforcer package
+description: "Functions and classes for the enforcer package"
 ---
-
 # enforcer — Functions & Classes
 
 Functions and classes exported by this package.

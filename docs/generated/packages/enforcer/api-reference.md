@@ -1,9 +1,8 @@
 ---
-title: enforcer — API Reference
+title: "enforcer — API Reference"
 outline: deep
-description: Full API reference for the enforcer package
+description: "Full API reference for the enforcer package"
 ---
-
 # enforcer — API Reference
 
 ## Functions

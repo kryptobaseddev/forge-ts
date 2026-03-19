@@ -1,9 +1,8 @@
 ---
-title: api — Functions
+title: "api — Functions"
 outline: deep
-description: Functions and classes for the api package
+description: "Functions and classes for the api package"
 ---
-
 # api — Functions & Classes
 
 Functions and classes exported by this package.

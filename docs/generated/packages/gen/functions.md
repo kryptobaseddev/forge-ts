@@ -1,12 +1,138 @@
 ---
-title: gen — Functions
+title: "gen — Functions"
 outline: deep
-description: Functions and classes for the gen package
+description: "Functions and classes for the gen package"
 ---
-
 # gen — Functions & Classes
 
 Functions and classes exported by this package.
+
+## groupSymbolsByPackage(symbols, rootDir)
+
+Groups symbols by their package based on file path.  For monorepos (symbols under `packages/<name>/`) the package name is derived from the directory segment immediately after `packages/`. For non-monorepo projects all symbols fall under the project name.
+
+**Signature**
+
+```typescript
+(symbols: ForgeSymbol[], rootDir: string) => Map<string, ForgeSymbol[]>
+```
+
+**Parameters**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `symbols` | — | All extracted symbols. |
+| `rootDir` | — | Absolute path to the project root. |
+
+**Returns** — A map from package name to symbol list.
+
+**Example**
+
+```typescript
+import { groupSymbolsByPackage } from "@forge-ts/gen";
+const grouped = groupSymbolsByPackage(symbols, "/path/to/project");
+console.log(grouped.has("core")); // true for monorepo
+```
+
+## generateDocSite(symbolsByPackage, config, options)
+
+Generates a full multi-page documentation site from symbols grouped by package.  Produces an index page, a getting-started page, and per-package pages for the API reference, types, functions, and examples.
+
+**Signature**
+
+```typescript
+(symbolsByPackage: Map<string, ForgeSymbol[]>, config: ForgeConfig, options: SiteGeneratorOptions) => DocPage[]
+```
+
+**Parameters**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `symbolsByPackage` | — | Symbols grouped by package name. |
+| `config` | — | The resolved . |
+| `options` | — | Site generation options. |
+
+**Returns** — An array of  objects ready to be written to disk.
+
+**Example**
+
+```typescript
+import { generateDocSite, groupSymbolsByPackage } from "@forge-ts/gen";
+const grouped = groupSymbolsByPackage(symbols, config.rootDir);
+const pages = generateDocSite(grouped, config, { format: "markdown", projectName: "my-project" });
+console.log(pages.length > 0); // true
+```
+
+## registerAdapter(adapter)
+
+Register an SSG adapter. Called once per provider at module load time.
+
+**Signature**
+
+```typescript
+(adapter: SSGAdapter) => void
+```
+
+**Parameters**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `adapter` | — | The adapter to register. |
+
+**Example**
+
+```typescript
+import { registerAdapter } from "@forge-ts/gen";
+registerAdapter(mintlifyAdapter);
+```
+
+## getAdapter(target)
+
+Get a registered adapter by target name. Throws if the target is not registered.
+
+**Signature**
+
+```typescript
+(target: SSGTarget) => SSGAdapter
+```
+
+**Parameters**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `target` | — | The SSG target identifier. |
+
+**Returns** — The registered  for the given target.
+
+**Throws**
+
+- `Error` if the target is not registered.
+
+**Example**
+
+```typescript
+import { getAdapter } from "@forge-ts/gen";
+const adapter = getAdapter("mintlify");
+```
+
+## getAvailableTargets()
+
+Get all registered adapter targets.
+
+**Signature**
+
+```typescript
+() => SSGTarget[]
+```
+
+**Returns** — An array of all registered  identifiers.
+
+**Example**
+
+```typescript
+import { getAvailableTargets } from "@forge-ts/gen";
+const targets = getAvailableTargets(); // ["mintlify", "docusaurus", ...]
+```
 
 ## generateLlmsTxt(symbols, config)
 
@@ -116,62 +242,6 @@ Injects a summary of exported symbols into a `README.md` file.  The content is p
 import { syncReadme } from "@forge-ts/gen";
 const modified = await syncReadme("/path/to/README.md", symbols);
 console.log(modified); // true if README was updated
-```
-
-## groupSymbolsByPackage(symbols, rootDir)
-
-Groups symbols by their package based on file path.  For monorepos (symbols under `packages/<name>/`) the package name is derived from the directory segment immediately after `packages/`. For non-monorepo projects all symbols fall under the project name.
-
-**Signature**
-
-```typescript
-(symbols: ForgeSymbol[], rootDir: string) => Map<string, ForgeSymbol[]>
-```
-
-**Parameters**
-
-| Name | Type | Description |
-|------|------|-------------|
-| `symbols` | — | All extracted symbols. |
-| `rootDir` | — | Absolute path to the project root. |
-
-**Returns** — A map from package name to symbol list.
-
-**Example**
-
-```typescript
-import { groupSymbolsByPackage } from "@forge-ts/gen";
-const grouped = groupSymbolsByPackage(symbols, "/path/to/project");
-console.log(grouped.has("core")); // true for monorepo
-```
-
-## generateDocSite(symbolsByPackage, config, options)
-
-Generates a full multi-page documentation site from symbols grouped by package.  Produces an index page, a getting-started page, and per-package pages for the API reference, types, functions, and examples.
-
-**Signature**
-
-```typescript
-(symbolsByPackage: Map<string, ForgeSymbol[]>, config: ForgeConfig, options: SiteGeneratorOptions) => DocPage[]
-```
-
-**Parameters**
-
-| Name | Type | Description |
-|------|------|-------------|
-| `symbolsByPackage` | — | Symbols grouped by package name. |
-| `config` | — | The resolved . |
-| `options` | — | Site generation options. |
-
-**Returns** — An array of  objects ready to be written to disk.
-
-**Example**
-
-```typescript
-import { generateDocSite, groupSymbolsByPackage } from "@forge-ts/gen";
-const grouped = groupSymbolsByPackage(symbols, config.rootDir);
-const pages = generateDocSite(grouped, config, { format: "markdown", projectName: "my-project" });
-console.log(pages.length > 0); // true
 ```
 
 ## generateSSGConfigs(pages, target, projectName)

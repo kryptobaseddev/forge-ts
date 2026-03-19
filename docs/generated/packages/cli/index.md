@@ -1,9 +1,8 @@
 ---
-title: cli
+title: "cli"
 outline: deep
-description: cli package overview
+description: "cli package overview"
 ---
-
 # cli
 
 ## Exported Symbols
@@ -30,6 +29,11 @@ description: cli package overview
 | [`CheckResult`](./api-reference.md#checkresult) | interface | Typed result for the `check` command. |
 | [`runCheck()`](./api-reference.md#runcheck) | function | Runs the TSDoc enforcement pass and returns a typed command output. |
 | [`checkCommand`](./api-reference.md#checkcommand) | variable | Citty command definition for `forge-ts check`. |
+| [`InitDocsResult`](./api-reference.md#initdocsresult) | interface | Result of the `init docs` command. |
+| [`InitDocsArgs`](./api-reference.md#initdocsargs) | interface | Arguments for the `init docs` command. |
+| [`runInitDocs()`](./api-reference.md#runinitdocs) | function | Scaffolds a documentation site for the target SSG platform.  Resolves the target from args, validates it, checks for an existing scaffold, calls the adapter's `scaffold()` method, and writes all files produced by the manifest to `outDir`. |
+| [`initDocsCommand`](./api-reference.md#initdocscommand) | variable | Citty command definition for `forge-ts init docs`.  Scaffolds a complete documentation site for the target SSG platform. Use `--json` for LAFS JSON envelope output (agent/CI-friendly). |
+| [`initCommand`](./api-reference.md#initcommand) | variable | Citty command definition for `forge-ts init`.  Exposes subcommands for scaffolding project artefacts. |
 | [`TestArgs`](./api-reference.md#testargs) | interface | Arguments for the `test` command. |
 | [`TestFailure`](./api-reference.md#testfailure) | interface | A single test failure entry, included at standard and full MVI levels. |
 | [`TestResult`](./api-reference.md#testresult) | interface | Typed result for the `test` command. |

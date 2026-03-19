@@ -8,6 +8,7 @@
  * @public
  */
 
+export * from "./adapters/index.js";
 export { generateLlmsFullTxt, generateLlmsTxt } from "./llms.js";
 export {
 	generateMarkdown,
@@ -21,16 +22,16 @@ export {
 	type SiteGeneratorOptions,
 } from "./site-generator.js";
 export { generateSSGConfigs, type SSGConfigFile } from "./ssg-config.js";
-export * from "./adapters/index.js";
 
 import { mkdir, writeFile } from "node:fs/promises";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
 import { createWalker, type ForgeConfig, type ForgeResult } from "@forge-ts/core";
+import { DEFAULT_TARGET, getAdapter } from "./adapters/index.js";
+import type { AdapterContext } from "./adapters/types.js";
 import { generateLlmsFullTxt, generateLlmsTxt } from "./llms.js";
 import { generateMarkdown } from "./markdown.js";
 import { syncReadme } from "./readme-sync.js";
 import { generateDocSite, groupSymbolsByPackage } from "./site-generator.js";
-import { generateSSGConfigs } from "./ssg-config.js";
 
 /**
  * Runs the full generation pipeline: walk → render → write.
@@ -63,9 +64,12 @@ export async function generate(config: ForgeConfig): Promise<ForgeResult> {
 		await writeFile(join(config.outDir, `api-reference.${ext}`), content, "utf8");
 	}
 
-	// Multi-page site output — writes directly to outDir
+	// Multi-page site output — writes directly to outDir via adapters
 	const projectName = config.rootDir.split("/").pop() ?? "Project";
 	const symbolsByPackage = groupSymbolsByPackage(symbols, config.rootDir);
+
+	const target = config.gen.ssgTarget ?? DEFAULT_TARGET;
+	const adapter = getAdapter(target);
 
 	for (const format of config.gen.formats) {
 		const pages = generateDocSite(symbolsByPackage, config, {
@@ -74,20 +78,29 @@ export async function generate(config: ForgeConfig): Promise<ForgeResult> {
 			projectName,
 		});
 
-		for (const page of pages) {
-			const pagePath = join(config.outDir, page.path);
-			const pageDir = pagePath.substring(0, pagePath.lastIndexOf("/"));
-			await mkdir(pageDir, { recursive: true });
-			await writeFile(pagePath, page.content, "utf8");
+		const adapterContext: AdapterContext = {
+			config,
+			projectName,
+			pages,
+			symbols,
+			outDir: config.outDir,
+		};
+
+		// Transform pages through the adapter (adds correct frontmatter and extensions)
+		const transformedPages = adapter.transformPages(pages, adapterContext);
+		for (const file of transformedPages) {
+			const filePath = join(config.outDir, file.path);
+			await mkdir(dirname(filePath), { recursive: true });
+			await writeFile(filePath, file.content, "utf8");
 		}
 
+		// Generate platform config files only when ssgTarget is explicitly set
 		if (config.gen.ssgTarget) {
-			const configFiles = generateSSGConfigs(pages, config.gen.ssgTarget, projectName);
-			for (const configFile of configFiles) {
-				const configPath = join(config.outDir, configFile.path);
-				const configDir = configPath.substring(0, configPath.lastIndexOf("/"));
-				await mkdir(configDir, { recursive: true });
-				await writeFile(configPath, configFile.content, "utf8");
+			const configFiles = adapter.generateConfig(adapterContext);
+			for (const file of configFiles) {
+				const filePath = join(config.outDir, file.path);
+				await mkdir(dirname(filePath), { recursive: true });
+				await writeFile(filePath, file.content, "utf8");
 			}
 		}
 	}

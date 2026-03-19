@@ -1,9 +1,8 @@
 ---
-title: enforcer
+title: "enforcer"
 outline: deep
-description: enforcer package overview
+description: "enforcer package overview"
 ---
-
 # enforcer
 
 ## Exported Symbols

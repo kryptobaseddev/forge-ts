@@ -1,9 +1,8 @@
 ---
-title: .
+title: "."
 outline: deep
-description: . package overview
+description: ". package overview"
 ---
-
 # .
 
 ## Exported Symbols

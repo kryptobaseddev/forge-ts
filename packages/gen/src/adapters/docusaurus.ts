@@ -38,8 +38,8 @@ interface DocusaurusCategory {
 
 type DocusaurusSidebarItem = string | DocusaurusCategory;
 
-/** Build the sidebars.js content from doc pages. */
-function buildSidebarsJs(pages: DocPage[]): string {
+/** Build the sidebars.ts content from doc pages. */
+function buildSidebarsTs(pages: DocPage[]): string {
 	const topLevel: string[] = [];
 	const byPackage = new Map<string, string[]>();
 
@@ -70,10 +70,80 @@ function buildSidebarsJs(pages: DocPage[]): string {
 	const json = JSON.stringify(sidebarObj, null, 2);
 
 	return (
-		`/** @type {import('@docusaurus/plugin-content-docs').SidebarsConfig} */\n` +
-		`const sidebars = ${json};\n` +
-		`module.exports = sidebars;\n`
+		`import type { SidebarsConfig } from "@docusaurus/plugin-content-docs";\n\n` +
+		`const sidebars: SidebarsConfig = ${json};\n\n` +
+		`export default sidebars;\n`
 	);
+}
+
+/** Build the docusaurus.config.ts content. */
+function buildDocusaurusConfig(context: AdapterContext): string {
+	const { projectName, projectDescription } = context;
+	const description = projectDescription ?? `${projectName} documentation`;
+
+	return (
+		`import { themes as prismThemes } from "prism-react-renderer";\n` +
+		`import type { Config } from "@docusaurus/types";\n` +
+		`import type * as Preset from "@docusaurus/preset-classic";\n\n` +
+		`const config: Config = {\n` +
+		`  title: "${projectName}",\n` +
+		`  tagline: "${description}",\n` +
+		`  url: "https://your-domain.com",\n` +
+		`  baseUrl: "/",\n` +
+		`  onBrokenLinks: "throw",\n` +
+		`  onBrokenMarkdownLinks: "warn",\n` +
+		`  i18n: {\n` +
+		`    defaultLocale: "en",\n` +
+		`    locales: ["en"],\n` +
+		`  },\n` +
+		`  presets: [\n` +
+		`    [\n` +
+		`      "classic",\n` +
+		`      {\n` +
+		`        docs: {\n` +
+		`          routeBasePath: "/",\n` +
+		`          sidebarPath: "./sidebars.ts",\n` +
+		`        },\n` +
+		`        blog: false,\n` +
+		`      } satisfies Preset.Options,\n` +
+		`    ],\n` +
+		`  ],\n` +
+		`  themeConfig: {\n` +
+		`    prism: {\n` +
+		`      theme: prismThemes.github,\n` +
+		`      darkTheme: prismThemes.dracula,\n` +
+		`    },\n` +
+		`  } satisfies Preset.ThemeConfig,\n` +
+		`} satisfies Config;\n\n` +
+		`export default config;\n`
+	);
+}
+
+/** Build the package.json content for a Docusaurus site. */
+function buildPackageJson(context: AdapterContext): string {
+	const pkg = {
+		name: `${context.projectName}-docs`,
+		version: "0.0.0",
+		private: true,
+		scripts: {
+			"docs:dev": "docusaurus start",
+			"docs:build": "docusaurus build",
+			"docs:serve": "docusaurus serve",
+		},
+		dependencies: {
+			"@docusaurus/core": "^3.9.2",
+			"@docusaurus/preset-classic": "^3.9.2",
+			"@mdx-js/react": "^3.0.0",
+			react: "^19.0.0",
+			"react-dom": "^19.0.0",
+			"prism-react-renderer": "^2.3.0",
+		},
+		devDependencies: {
+			"@docusaurus/tsconfig": "^3.9.2",
+			"@docusaurus/types": "^3.9.2",
+		},
+	};
+	return `${JSON.stringify(pkg, null, 2)}\n`;
 }
 
 /** Add Docusaurus-compatible frontmatter to a doc page. */
@@ -113,7 +183,7 @@ function addDocusaurusFrontmatter(page: DocPage): string {
  * import { getAdapter } from "@forge-ts/gen";
  * const adapter = getAdapter("docusaurus");
  * const configs = adapter.generateConfig(context);
- * console.log(configs[0].path); // "sidebars.js"
+ * console.log(configs[0].path); // "sidebars.ts"
  * ```
  * @public
  */
@@ -123,18 +193,30 @@ export const docusaurusAdapter: SSGAdapter = {
 	styleGuide,
 
 	scaffold(context: AdapterContext): ScaffoldManifest {
-		// T026 will implement full scaffolding
 		return {
 			target: "docusaurus",
-			files: [],
-			dependencies: {},
+			files: [
+				{ path: "docusaurus.config.ts", content: buildDocusaurusConfig(context) },
+				{ path: "sidebars.ts", content: buildSidebarsTs(context.pages) },
+				{ path: "package.json", content: buildPackageJson(context) },
+				{ path: "tsconfig.json", content: '{ "extends": "@docusaurus/tsconfig" }\n' },
+			],
+			dependencies: {
+				"@docusaurus/core": "^3.9.2",
+				"@docusaurus/preset-classic": "^3.9.2",
+				"@mdx-js/react": "^3.0.0",
+				react: "^19.0.0",
+				"react-dom": "^19.0.0",
+				"prism-react-renderer": "^2.3.0",
+			},
 			devDependencies: {
-				"@docusaurus/core": "^3.0.0",
-				"@docusaurus/preset-classic": "^3.0.0",
+				"@docusaurus/tsconfig": "^3.9.2",
+				"@docusaurus/types": "^3.9.2",
 			},
 			scripts: {
 				"docs:dev": "docusaurus start",
 				"docs:build": "docusaurus build",
+				"docs:serve": "docusaurus serve",
 			},
 			instructions: [`Run \`npm run docs:dev\` inside ${context.outDir} to preview your docs`],
 		};
@@ -150,8 +232,8 @@ export const docusaurusAdapter: SSGAdapter = {
 	generateConfig(context: AdapterContext): GeneratedFile[] {
 		return [
 			{
-				path: "sidebars.js",
-				content: buildSidebarsJs(context.pages),
+				path: "sidebars.ts",
+				content: buildSidebarsTs(context.pages),
 			},
 		];
 	},
@@ -160,7 +242,9 @@ export const docusaurusAdapter: SSGAdapter = {
 		const { existsSync } = await import("node:fs");
 		const { join } = await import("node:path");
 		return (
-			existsSync(join(outDir, "sidebars.js")) || existsSync(join(outDir, "docusaurus.config.js"))
+			existsSync(join(outDir, "sidebars.ts")) ||
+			existsSync(join(outDir, "docusaurus.config.ts")) ||
+			existsSync(join(outDir, "docusaurus.config.js"))
 		);
 	},
 };

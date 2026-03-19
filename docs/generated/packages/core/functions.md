@@ -1,9 +1,8 @@
 ---
-title: core — Functions
+title: "core — Functions"
 outline: deep
-description: Functions and classes for the core package
+description: "Functions and classes for the core package"
 ---
-
 # core — Functions & Classes
 
 Functions and classes exported by this package.

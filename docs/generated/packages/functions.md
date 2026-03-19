@@ -1,9 +1,8 @@
 ---
-title: . — Functions
+title: ". — Functions"
 outline: deep
-description: Functions and classes for the . package
+description: "Functions and classes for the . package"
 ---
-
 # . — Functions & Classes
 
 Functions and classes exported by this package.

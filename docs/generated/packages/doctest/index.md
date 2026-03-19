@@ -1,9 +1,8 @@
 ---
-title: doctest
+title: "doctest"
 outline: deep
-description: doctest package overview
+description: "doctest package overview"
 ---
-
 # doctest
 
 ## Exported Symbols

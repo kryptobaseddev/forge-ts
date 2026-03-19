@@ -1,9 +1,8 @@
 ---
-title: cli — Types
+title: "cli — Types"
 outline: deep
-description: Type contracts for the cli package
+description: "Type contracts for the cli package"
 ---
-
 # cli — Types
 
 Type contracts exported by this package: interfaces, type aliases, and enums.
@@ -158,6 +157,30 @@ Typed result for the `check` command.
 | `success` | `boolean` | Yes | Whether the check passed without errors. |
 | `summary` | `{ errors: number; warnings: number; files: number; symbols: number; duration: number; }` | Yes | Aggregate counts — always present regardless of MVI level. |
 | `byFile` | `CheckFileGroup[] \| undefined` | No | Per-file breakdown — present at standard and full MVI levels. |
+
+## InitDocsResult
+
+Result of the `init docs` command.
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| `success` | `boolean` | Yes | Whether the scaffold succeeded. |
+| `target` | `SSGTarget` | Yes | The SSG target that was scaffolded. |
+| `summary` | `{ filesCreated: number; dependencies: number; scripts: number; }` | Yes | Summary of what was created. |
+| `files` | `string[]` | Yes | Relative paths of all files created. |
+| `instructions` | `string[]` | Yes | Post-scaffold instructions for the user. |
+
+## InitDocsArgs
+
+Arguments for the `init docs` command.
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| `target` | `string \| undefined` | No | SSG target to scaffold. Defaults to . |
+| `cwd` | `string \| undefined` | No | Project root directory (default: cwd). |
+| `outDir` | `string \| undefined` | No | Output directory for the doc site (default: outDir from config or ./docs). |
+| `force` | `boolean \| undefined` | No | Overwrite an existing scaffold without prompting. |
+| `mvi` | `string \| undefined` | No | MVI verbosity level for structured output. |
 
 ## TestArgs
 

@@ -1,9 +1,8 @@
 ---
-title: core — API Reference
+title: "core — API Reference"
 outline: deep
-description: Full API reference for the core package
+description: "Full API reference for the core package"
 ---
-
 # core — API Reference
 
 ## Functions

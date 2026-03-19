@@ -1,9 +1,8 @@
 ---
-title: doctest — API Reference
+title: "doctest — API Reference"
 outline: deep
-description: Full API reference for the doctest package
+description: "Full API reference for the doctest package"
 ---
-
 # doctest — API Reference
 
 ## Functions

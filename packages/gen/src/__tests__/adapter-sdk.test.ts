@@ -249,46 +249,127 @@ describe("transformPages — file extensions", () => {
 // ---------------------------------------------------------------------------
 
 describe("generateConfig — primary config file paths", () => {
-	it("mintlify produces mint.json", () => {
+	it("mintlify produces docs.json", () => {
 		const configs = getAdapter("mintlify").generateConfig(makeContext());
-		expect(configs.some((f) => f.path === "mint.json")).toBe(true);
+		expect(configs.some((f) => f.path === "docs.json")).toBe(true);
 	});
 
-	it("docusaurus produces sidebars.js", () => {
+	it("docusaurus produces sidebars.ts", () => {
 		const configs = getAdapter("docusaurus").generateConfig(makeContext());
-		expect(configs.some((f) => f.path === "sidebars.js")).toBe(true);
+		expect(configs.some((f) => f.path === "sidebars.ts")).toBe(true);
 	});
 
-	it("nextra produces _meta.json", () => {
+	it("nextra produces content/_meta.js", () => {
 		const configs = getAdapter("nextra").generateConfig(makeContext());
-		expect(configs.some((f) => f.path === "_meta.json")).toBe(true);
+		expect(configs.some((f) => f.path === "content/_meta.js")).toBe(true);
 	});
 
-	it("vitepress produces .vitepress/sidebar.json", () => {
+	it("vitepress produces .vitepress/config.mts", () => {
 		const configs = getAdapter("vitepress").generateConfig(makeContext());
-		expect(configs.some((f) => f.path === ".vitepress/sidebar.json")).toBe(true);
+		expect(configs.some((f) => f.path === ".vitepress/config.mts")).toBe(true);
 	});
 });
 
 // ---------------------------------------------------------------------------
-// generateConfig — JSON validity
+// generateConfig — content validity
 // ---------------------------------------------------------------------------
 
-describe("generateConfig — JSON validity", () => {
-	it("mintlify mint.json is valid JSON", () => {
+describe("generateConfig — content validity", () => {
+	it("mintlify docs.json is valid JSON", () => {
 		const [file] = getAdapter("mintlify").generateConfig(makeContext());
 		expect(() => JSON.parse(file.content)).not.toThrow();
 	});
 
-	it("nextra _meta.json files are all valid JSON", () => {
+	it("mintlify docs.json has correct name field", () => {
+		const [file] = getAdapter("mintlify").generateConfig(makeContext());
+		const parsed = JSON.parse(file.content) as { name: string };
+		expect(parsed.name).toBe("test-project");
+	});
+
+	it("nextra _meta.js files use ES module export syntax", () => {
 		const files = getAdapter("nextra").generateConfig(makeContext());
 		for (const file of files) {
-			expect(() => JSON.parse(file.content), `${file.path} invalid JSON`).not.toThrow();
+			expect(file.content, `${file.path} missing export default`).toContain("export default");
 		}
 	});
 
-	it("vitepress sidebar.json is valid JSON", () => {
+	it("vitepress config.mts uses defineConfig", () => {
 		const [file] = getAdapter("vitepress").generateConfig(makeContext());
-		expect(() => JSON.parse(file.content)).not.toThrow();
+		expect(file.content).toContain("defineConfig");
+	});
+
+	it("docusaurus sidebars.ts uses SidebarsConfig type", () => {
+		const [file] = getAdapter("docusaurus").generateConfig(makeContext());
+		expect(file.content).toContain("SidebarsConfig");
+	});
+});
+
+// ---------------------------------------------------------------------------
+// scaffold — key file presence
+// ---------------------------------------------------------------------------
+
+describe("scaffold — key files present", () => {
+	it("mintlify scaffold includes docs.json", () => {
+		const manifest = getAdapter("mintlify").scaffold(makeContext());
+		expect(manifest.files.some((f) => f.path === "docs.json")).toBe(true);
+	});
+
+	it("mintlify scaffold has empty dependencies (not a Node project)", () => {
+		const manifest = getAdapter("mintlify").scaffold(makeContext());
+		expect(Object.keys(manifest.dependencies)).toHaveLength(0);
+		expect(Object.keys(manifest.devDependencies)).toHaveLength(0);
+		expect(Object.keys(manifest.scripts)).toHaveLength(0);
+	});
+
+	it("mintlify scaffold instructions mention mint CLI", () => {
+		const manifest = getAdapter("mintlify").scaffold(makeContext());
+		const combined = manifest.instructions.join(" ");
+		expect(combined).toContain("mint");
+	});
+
+	it("docusaurus scaffold includes docusaurus.config.ts and sidebars.ts", () => {
+		const manifest = getAdapter("docusaurus").scaffold(makeContext());
+		expect(manifest.files.some((f) => f.path === "docusaurus.config.ts")).toBe(true);
+		expect(manifest.files.some((f) => f.path === "sidebars.ts")).toBe(true);
+	});
+
+	it("docusaurus scaffold has correct v3 dependencies", () => {
+		const manifest = getAdapter("docusaurus").scaffold(makeContext());
+		expect(manifest.dependencies["@docusaurus/core"]).toBe("^3.9.2");
+		expect(manifest.dependencies["@docusaurus/preset-classic"]).toBe("^3.9.2");
+		expect(manifest.dependencies.react).toBe("^19.0.0");
+	});
+
+	it("docusaurus scaffold includes docs:serve script", () => {
+		const manifest = getAdapter("docusaurus").scaffold(makeContext());
+		expect(manifest.scripts["docs:serve"]).toBe("docusaurus serve");
+	});
+
+	it("nextra scaffold includes next.config.ts and app/layout.tsx", () => {
+		const manifest = getAdapter("nextra").scaffold(makeContext());
+		expect(manifest.files.some((f) => f.path === "next.config.ts")).toBe(true);
+		expect(manifest.files.some((f) => f.path === "app/layout.tsx")).toBe(true);
+	});
+
+	it("nextra scaffold has v4 dependencies", () => {
+		const manifest = getAdapter("nextra").scaffold(makeContext());
+		expect(manifest.dependencies.nextra).toBe("^4");
+		expect(manifest.dependencies["nextra-theme-docs"]).toBe("^4");
+		expect(manifest.dependencies.next).toBe("^15");
+	});
+
+	it("vitepress scaffold includes .vitepress/config.mts", () => {
+		const manifest = getAdapter("vitepress").scaffold(makeContext());
+		expect(manifest.files.some((f) => f.path === ".vitepress/config.mts")).toBe(true);
+	});
+
+	it("vitepress scaffold uses vitepress ^2", () => {
+		const manifest = getAdapter("vitepress").scaffold(makeContext());
+		expect(manifest.devDependencies.vitepress).toBe("^2.0.0");
+	});
+
+	it("vitepress scaffold includes docs:preview script", () => {
+		const manifest = getAdapter("vitepress").scaffold(makeContext());
+		expect(manifest.scripts["docs:preview"]).toBe("vitepress preview");
 	});
 });

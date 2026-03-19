@@ -21,8 +21,13 @@ importers:
         specifier: ^1.7.0
         version: 1.7.0
       '@forge-ts/cli':
+<<<<<<< Updated upstream
         specifier: ^0.3.0
         version: 0.3.1
+=======
+        specifier: workspace:*
+        version: link:packages/cli
+>>>>>>> Stashed changes
       '@microsoft/tsdoc':
         specifier: ^0.16.0
         version: 0.16.0

@@ -1,9 +1,8 @@
 ---
-title: . — Types
+title: ". — Types"
 outline: deep
-description: Type contracts for the . package
+description: "Type contracts for the . package"
 ---
-
 # . — Types
 
 Type contracts exported by this package: interfaces, type aliases, and enums.

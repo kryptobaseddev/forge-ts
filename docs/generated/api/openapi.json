@@ -25,6 +25,9 @@
       "name": "generator"
     },
     {
+      "name": "init-docs"
+    },
+    {
       "name": "markdown"
     },
     {
@@ -1134,37 +1137,6 @@
           "location"
         ]
       },
-      "MarkdownOptions": {
-        "description": "Options controlling Markdown output.",
-        "type": "object",
-        "properties": {
-          "mdx": {
-            "type": "boolean",
-            "description": "Whether to use MDX syntax (default: Markdown)."
-          }
-        },
-        "required": [
-          "mdx"
-        ]
-      },
-      "ReadmeSyncOptions": {
-        "description": "Options controlling README sync behaviour.",
-        "type": "object",
-        "properties": {
-          "badge": {
-            "type": "boolean",
-            "description": "Include a \"Documented with forge-ts\" badge above the API table."
-          },
-          "includeExamples": {
-            "type": "boolean",
-            "description": "Include first"
-          }
-        },
-        "required": [
-          "badge",
-          "includeExamples"
-        ]
-      },
       "DocPage": {
         "description": "A single generated documentation page.",
         "type": "object",
@@ -1247,6 +1219,236 @@
           "ssgTarget",
           "projectName",
           "projectDescription"
+        ]
+      },
+      "SSGTarget": {
+        "description": "Supported SSG target identifiers."
+      },
+      "GeneratedFile": {
+        "description": "A file to write to disk during scaffolding or generation.",
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "Relative path from the docs output directory."
+          },
+          "content": {
+            "type": "string",
+            "description": "File content (string for text)."
+          }
+        },
+        "required": [
+          "path",
+          "content"
+        ]
+      },
+      "SSGStyleGuide": {
+        "description": "Style guide configuration for the SSG target.",
+        "type": "object",
+        "properties": {
+          "pageExtension": {
+            "oneOf": [
+              {
+                "type": "object"
+              },
+              {
+                "type": "object"
+              }
+            ],
+            "description": "File extension for doc pages."
+          },
+          "supportsMdx": {
+            "type": "boolean",
+            "description": "Whether the target supports MDX components."
+          },
+          "requiresFrontmatter": {
+            "type": "boolean",
+            "description": "Whether frontmatter is required on every page."
+          },
+          "maxHeadingDepth": {
+            "type": "number",
+            "description": "Maximum recommended heading depth."
+          },
+          "defaultImports": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Component imports to add at top of MDX files (if supportsMdx)."
+          },
+          "codeBlockLanguage": {
+            "oneOf": [
+              {
+                "type": "object"
+              },
+              {
+                "type": "object"
+              },
+              {
+                "type": "object"
+              }
+            ],
+            "description": "Code block language for TypeScript examples."
+          }
+        },
+        "required": [
+          "pageExtension",
+          "supportsMdx",
+          "requiresFrontmatter",
+          "maxHeadingDepth",
+          "defaultImports",
+          "codeBlockLanguage"
+        ]
+      },
+      "ScaffoldManifest": {
+        "description": "Scaffold manifest describing what `init docs` creates.",
+        "type": "object",
+        "properties": {
+          "target": {
+            "type": "object",
+            "description": "The SSG target this manifest is for."
+          },
+          "files": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            },
+            "description": "Files that will be created."
+          },
+          "dependencies": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "npm dependencies to install."
+          },
+          "devDependencies": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "npm devDependencies to install."
+          },
+          "scripts": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "Scripts to add to package.json."
+          },
+          "instructions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Post-scaffold instructions for the user."
+          }
+        },
+        "required": [
+          "target",
+          "files",
+          "dependencies",
+          "devDependencies",
+          "scripts",
+          "instructions"
+        ]
+      },
+      "AdapterContext": {
+        "description": "Context passed to adapter methods.",
+        "type": "object",
+        "properties": {
+          "config": {
+            "type": "object",
+            "description": "Resolved forge-ts configuration."
+          },
+          "projectName": {
+            "type": "string",
+            "description": "Project name (from package.json or directory)."
+          },
+          "projectDescription": {
+            "type": "string",
+            "description": "Project description."
+          },
+          "pages": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            },
+            "description": "The generated doc pages (from site-generator)."
+          },
+          "symbols": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            },
+            "description": "All symbols extracted from the project."
+          },
+          "outDir": {
+            "type": "string",
+            "description": "Output directory for generated docs."
+          }
+        },
+        "required": [
+          "config",
+          "projectName",
+          "projectDescription",
+          "pages",
+          "symbols",
+          "outDir"
+        ]
+      },
+      "SSGAdapter": {
+        "description": "The central SSG adapter interface. Every doc platform provider implements this contract. One file per provider. No shared mutable state.",
+        "type": "object",
+        "properties": {
+          "target": {
+            "type": "object",
+            "description": "Unique target identifier."
+          },
+          "displayName": {
+            "type": "string",
+            "description": "Human-readable display name."
+          },
+          "styleGuide": {
+            "type": "object",
+            "description": "Style guide for this platform."
+          }
+        },
+        "required": [
+          "target",
+          "displayName",
+          "styleGuide"
+        ]
+      },
+      "MarkdownOptions": {
+        "description": "Options controlling Markdown output.",
+        "type": "object",
+        "properties": {
+          "mdx": {
+            "type": "boolean",
+            "description": "Whether to use MDX syntax (default: Markdown)."
+          }
+        },
+        "required": [
+          "mdx"
+        ]
+      },
+      "ReadmeSyncOptions": {
+        "description": "Options controlling README sync behaviour.",
+        "type": "object",
+        "properties": {
+          "badge": {
+            "type": "boolean",
+            "description": "Include a \"Documented with forge-ts\" badge above the API table."
+          },
+          "includeExamples": {
+            "type": "boolean",
+            "description": "Include first"
+          }
+        },
+        "required": [
+          "badge",
+          "includeExamples"
         ]
       },
       "SSGConfigFile": {
@@ -1665,6 +1867,45 @@
           "success",
           "summary",
           "byFile"
+        ]
+      },
+      "InitDocsResult": {
+        "description": "Result of the `init docs` command.",
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "Whether the scaffold succeeded."
+          },
+          "target": {
+            "type": "object",
+            "description": "The SSG target that was scaffolded."
+          },
+          "summary": {
+            "type": "object",
+            "description": "Summary of what was created."
+          },
+          "files": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Relative paths of all files created."
+          },
+          "instructions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Post-scaffold instructions for the user."
+          }
+        },
+        "required": [
+          "success",
+          "target",
+          "summary",
+          "files",
+          "instructions"
         ]
       },
       "ExtractedExample": {

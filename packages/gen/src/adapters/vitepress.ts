@@ -48,7 +48,7 @@ interface VitePressGroup {
 	items: VitePressItem[];
 }
 
-/** Build the sidebar JSON from doc pages. */
+/** Build the sidebar structure from doc pages. */
 function buildSidebar(pages: DocPage[]): VitePressGroup[] {
 	const topLevel: string[] = [];
 	const byPackage = new Map<string, string[]>();
@@ -90,6 +90,49 @@ function buildSidebar(pages: DocPage[]): VitePressGroup[] {
 	return sidebar;
 }
 
+/** Build the .vitepress/config.mts content. */
+function buildVitePressConfig(context: AdapterContext): string {
+	const { projectName, projectDescription } = context;
+	const description = projectDescription ?? `${projectName} documentation`;
+	const sidebar = buildSidebar(context.pages);
+	const sidebarJson = JSON.stringify(sidebar, null, 4).split("\n").join("\n  ");
+
+	return (
+		`import { defineConfig } from "vitepress";\n\n` +
+		`// https://vitepress.dev/reference/site-config\n` +
+		`export default defineConfig({\n` +
+		`  title: "${projectName}",\n` +
+		`  description: "${description}",\n` +
+		`  themeConfig: {\n` +
+		`    nav: [\n` +
+		`      { text: "Home", link: "/" },\n` +
+		`    ],\n` +
+		`    sidebar: ${sidebarJson},\n` +
+		`    socialLinks: [],\n` +
+		`  },\n` +
+		`});\n`
+	);
+}
+
+/** Build package.json for a VitePress site. */
+function buildPackageJson(context: AdapterContext): string {
+	const pkg = {
+		name: `${context.projectName}-docs`,
+		version: "0.0.0",
+		private: true,
+		type: "module",
+		scripts: {
+			"docs:dev": "vitepress dev",
+			"docs:build": "vitepress build",
+			"docs:preview": "vitepress preview",
+		},
+		devDependencies: {
+			vitepress: "^2.0.0",
+		},
+	};
+	return `${JSON.stringify(pkg, null, 2)}\n`;
+}
+
 /** Add VitePress-compatible frontmatter to a doc page. */
 function addVitepressFrontmatter(page: DocPage): string {
 	const title = String(page.frontmatter.title ?? "");
@@ -120,7 +163,7 @@ function addVitepressFrontmatter(page: DocPage): string {
  * import { getAdapter } from "@forge-ts/gen";
  * const adapter = getAdapter("vitepress");
  * const configs = adapter.generateConfig(context);
- * console.log(configs[0].path); // ".vitepress/sidebar.json"
+ * console.log(configs[0].path); // ".vitepress/config.mts"
  * ```
  * @public
  */
@@ -130,13 +173,15 @@ export const vitepressAdapter: SSGAdapter = {
 	styleGuide,
 
 	scaffold(context: AdapterContext): ScaffoldManifest {
-		// T026 will implement full scaffolding
 		return {
 			target: "vitepress",
-			files: [],
+			files: [
+				{ path: ".vitepress/config.mts", content: buildVitePressConfig(context) },
+				{ path: "package.json", content: buildPackageJson(context) },
+			],
 			dependencies: {},
 			devDependencies: {
-				vitepress: "^1.0.0",
+				vitepress: "^2.0.0",
 			},
 			scripts: {
 				"docs:dev": "vitepress dev",
@@ -156,11 +201,10 @@ export const vitepressAdapter: SSGAdapter = {
 	},
 
 	generateConfig(context: AdapterContext): GeneratedFile[] {
-		const sidebar = buildSidebar(context.pages);
 		return [
 			{
-				path: ".vitepress/sidebar.json",
-				content: `${JSON.stringify(sidebar, null, 2)}\n`,
+				path: ".vitepress/config.mts",
+				content: buildVitePressConfig(context),
 			},
 		];
 	},

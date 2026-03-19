@@ -1,7 +1,7 @@
 # . - Full Context
 
 Root: .
-Generated: 2026-03-18T23:56:23.631Z
+Generated: 2026-03-19T00:42:23.429Z
 
 ## Functions
 
@@ -243,6 +243,82 @@ Example:
   const result = await generateApi(config);
   console.log(result.success); // true if spec was written successfully
 
+### groupSymbolsByPackage()
+
+(symbols: ForgeSymbol[], rootDir: string) => Map<string, ForgeSymbol[]>
+
+Groups symbols by their package based on file path.  For monorepos (symbols under `packages/<name>/`) the package name is derived from the directory segment immediately after `packages/`. For non-monorepo projects all symbols fall under the project name.
+
+Parameters:
+- symbols: All extracted symbols.
+- rootDir: Absolute path to the project root.
+
+Returns: A map from package name to symbol list.
+
+Example:
+  import { groupSymbolsByPackage } from "@forge-ts/gen";
+  const grouped = groupSymbolsByPackage(symbols, "/path/to/project");
+  console.log(grouped.has("core")); // true for monorepo
+
+### generateDocSite()
+
+(symbolsByPackage: Map<string, ForgeSymbol[]>, config: ForgeConfig, options: SiteGeneratorOptions) => DocPage[]
+
+Generates a full multi-page documentation site from symbols grouped by package.  Produces an index page, a getting-started page, and per-package pages for the API reference, types, functions, and examples.
+
+Parameters:
+- symbolsByPackage: Symbols grouped by package name.
+- config: The resolved .
+- options: Site generation options.
+
+Returns: An array of  objects ready to be written to disk.
+
+Example:
+  import { generateDocSite, groupSymbolsByPackage } from "@forge-ts/gen";
+  const grouped = groupSymbolsByPackage(symbols, config.rootDir);
+  const pages = generateDocSite(grouped, config, { format: "markdown", projectName: "my-project" });
+  console.log(pages.length > 0); // true
+
+### registerAdapter()
+
+(adapter: SSGAdapter) => void
+
+Register an SSG adapter. Called once per provider at module load time.
+
+Parameters:
+- adapter: The adapter to register.
+
+Example:
+  import { registerAdapter } from "@forge-ts/gen";
+  registerAdapter(mintlifyAdapter);
+
+### getAdapter()
+
+(target: SSGTarget) => SSGAdapter
+
+Get a registered adapter by target name. Throws if the target is not registered.
+
+Parameters:
+- target: The SSG target identifier.
+
+Returns: The registered  for the given target.
+
+Example:
+  import { getAdapter } from "@forge-ts/gen";
+  const adapter = getAdapter("mintlify");
+
+### getAvailableTargets()
+
+() => SSGTarget[]
+
+Get all registered adapter targets.
+
+Returns: An array of all registered  identifiers.
+
+Example:
+  import { getAvailableTargets } from "@forge-ts/gen";
+  const targets = getAvailableTargets(); // ["mintlify", "docusaurus", ...]
+
 ### generateLlmsTxt()
 
 (symbols: ForgeSymbol[], config: ForgeConfig) => string
@@ -312,42 +388,6 @@ Example:
   import { syncReadme } from "@forge-ts/gen";
   const modified = await syncReadme("/path/to/README.md", symbols);
   console.log(modified); // true if README was updated
-
-### groupSymbolsByPackage()
-
-(symbols: ForgeSymbol[], rootDir: string) => Map<string, ForgeSymbol[]>
-
-Groups symbols by their package based on file path.  For monorepos (symbols under `packages/<name>/`) the package name is derived from the directory segment immediately after `packages/`. For non-monorepo projects all symbols fall under the project name.
-
-Parameters:
-- symbols: All extracted symbols.
-- rootDir: Absolute path to the project root.
-
-Returns: A map from package name to symbol list.
-
-Example:
-  import { groupSymbolsByPackage } from "@forge-ts/gen";
-  const grouped = groupSymbolsByPackage(symbols, "/path/to/project");
-  console.log(grouped.has("core")); // true for monorepo
-
-### generateDocSite()
-
-(symbolsByPackage: Map<string, ForgeSymbol[]>, config: ForgeConfig, options: SiteGeneratorOptions) => DocPage[]
-
-Generates a full multi-page documentation site from symbols grouped by package.  Produces an index page, a getting-started page, and per-package pages for the API reference, types, functions, and examples.
-
-Parameters:
-- symbolsByPackage: Symbols grouped by package name.
-- config: The resolved .
-- options: Site generation options.
-
-Returns: An array of  objects ready to be written to disk.
-
-Example:
-  import { generateDocSite, groupSymbolsByPackage } from "@forge-ts/gen";
-  const grouped = groupSymbolsByPackage(symbols, config.rootDir);
-  const pages = generateDocSite(grouped, config, { format: "markdown", projectName: "my-project" });
-  console.log(pages.length > 0); // true
 
 ### generateSSGConfigs()
 
@@ -503,6 +543,22 @@ Example:
   import { runCheck } from "@forge-ts/cli/commands/check";
   const output = await runCheck({ cwd: process.cwd() });
   console.log(output.data.summary.errors); // number of TSDoc errors found
+
+### runInitDocs()
+
+(args: InitDocsArgs) => Promise<CommandOutput<InitDocsResult>>
+
+Scaffolds a documentation site for the target SSG platform.  Resolves the target from args, validates it, checks for an existing scaffold, calls the adapter's `scaffold()` method, and writes all files produced by the manifest to `outDir`.
+
+Parameters:
+- args: CLI arguments for the init docs command.
+
+Returns: A typed `CommandOutput<InitDocsResult>`.
+
+Example:
+  import { runInitDocs } from "@forge-ts/cli/commands/init-docs";
+  const output = await runInitDocs({ target: "mintlify", cwd: process.cwd() });
+  console.log(output.data.files); // list of created file paths
 
 ### extractExamples()
 
@@ -1583,40 +1639,6 @@ Nested child symbols (class methods, interface properties, enum members).
 
 Source file location.
 
-### MarkdownOptions
-
-any
-
-Options controlling Markdown output.
-
-Members:
-
-#### mdx
-
-boolean | undefined
-
-Whether to use MDX syntax (default: Markdown).
-
-### ReadmeSyncOptions
-
-any
-
-Options controlling README sync behaviour.
-
-Members:
-
-#### badge
-
-boolean | undefined
-
-Include a "Documented with forge-ts" badge above the API table.
-
-#### includeExamples
-
-boolean | undefined
-
-Include first
-
 ### DocPage
 
 any
@@ -1674,6 +1696,292 @@ Project name
 string | undefined
 
 Project description
+
+### GeneratedFile
+
+any
+
+A file to write to disk during scaffolding or generation.
+
+Members:
+
+#### path
+
+string
+
+Relative path from the docs output directory.
+
+#### content
+
+string
+
+File content (string for text).
+
+### SSGStyleGuide
+
+any
+
+Style guide configuration for the SSG target.
+
+Members:
+
+#### pageExtension
+
+"mdx" | "md"
+
+File extension for doc pages.
+
+#### supportsMdx
+
+boolean
+
+Whether the target supports MDX components.
+
+#### requiresFrontmatter
+
+boolean
+
+Whether frontmatter is required on every page.
+
+#### maxHeadingDepth
+
+number
+
+Maximum recommended heading depth.
+
+#### defaultImports
+
+string[]
+
+Component imports to add at top of MDX files (if supportsMdx).
+
+#### codeBlockLanguage
+
+"typescript" | "ts" | "tsx"
+
+Code block language for TypeScript examples.
+
+### ScaffoldManifest
+
+any
+
+Scaffold manifest describing what `init docs` creates.
+
+Members:
+
+#### target
+
+SSGTarget
+
+The SSG target this manifest is for.
+
+#### files
+
+GeneratedFile[]
+
+Files that will be created.
+
+#### dependencies
+
+Record<string, string>
+
+npm dependencies to install.
+
+#### devDependencies
+
+Record<string, string>
+
+npm devDependencies to install.
+
+#### scripts
+
+Record<string, string>
+
+Scripts to add to package.json.
+
+#### instructions
+
+string[]
+
+Post-scaffold instructions for the user.
+
+### AdapterContext
+
+any
+
+Context passed to adapter methods.
+
+Members:
+
+#### config
+
+ForgeConfig
+
+Resolved forge-ts configuration.
+
+#### projectName
+
+string
+
+Project name (from package.json or directory).
+
+#### projectDescription
+
+string | undefined
+
+Project description.
+
+#### pages
+
+DocPage[]
+
+The generated doc pages (from site-generator).
+
+#### symbols
+
+ForgeSymbol[]
+
+All symbols extracted from the project.
+
+#### outDir
+
+string
+
+Output directory for generated docs.
+
+### SSGAdapter
+
+any
+
+The central SSG adapter interface. Every doc platform provider implements this contract. One file per provider. No shared mutable state.
+
+Example:
+  import { getAdapter } from "@forge-ts/gen";
+  const adapter = getAdapter("mintlify");
+  const files = adapter.transformPages(pages, context);
+
+Members:
+
+#### target
+
+SSGTarget
+
+Unique target identifier.
+
+#### displayName
+
+string
+
+Human-readable display name.
+
+#### styleGuide
+
+SSGStyleGuide
+
+Style guide for this platform.
+
+#### scaffold()
+
+(context: AdapterContext) => ScaffoldManifest
+
+Generate the complete scaffold for a new doc site. Called by `forge-ts init docs --target <name>`. Returns all files, dependencies, and scripts needed.
+
+Parameters:
+- context: The adapter context for the current project.
+
+Returns: A  with files, deps, and instructions.
+
+Example:
+  import { getAdapter } from "@forge-ts/gen";
+  const adapter = getAdapter("mintlify");
+  const manifest = adapter.scaffold(context);
+  console.log(manifest.files.length);
+
+#### transformPages()
+
+(pages: DocPage[], context: AdapterContext) => GeneratedFile[]
+
+Transform generic DocPages into platform-specific pages. Adds correct frontmatter, component imports, file extensions. Called during `forge-ts build`.
+
+Parameters:
+- pages: The generic doc pages to transform.
+- context: The adapter context for the current project.
+
+Returns: An array of  objects ready to write.
+
+Example:
+  import { getAdapter } from "@forge-ts/gen";
+  const adapter = getAdapter("docusaurus");
+  const files = adapter.transformPages(pages, context);
+  console.log(files[0].path.endsWith(".mdx")); // true
+
+#### generateConfig()
+
+(context: AdapterContext) => GeneratedFile[]
+
+Generate platform-specific configuration files. e.g., mint.json, sidebars.js, _meta.json, .vitepress/config.ts Called during `forge-ts build`.
+
+Parameters:
+- context: The adapter context for the current project.
+
+Returns: An array of  objects ready to write.
+
+Example:
+  import { getAdapter } from "@forge-ts/gen";
+  const adapter = getAdapter("vitepress");
+  const configs = adapter.generateConfig(context);
+  console.log(configs[0].path); // ".vitepress/sidebar.json"
+
+#### detectExisting()
+
+(outDir: string) => Promise<boolean>
+
+Check if a scaffold already exists in the output directory. Used for safety checks before init or target change.
+
+Parameters:
+- outDir: The output directory to inspect.
+
+Returns: `true` if a scaffold marker file already exists.
+
+Example:
+  import { getAdapter } from "@forge-ts/gen";
+  const adapter = getAdapter("mintlify");
+  const exists = await adapter.detectExisting("./docs");
+  if (exists) console.log("Scaffold already present");
+
+### MarkdownOptions
+
+any
+
+Options controlling Markdown output.
+
+Members:
+
+#### mdx
+
+boolean | undefined
+
+Whether to use MDX syntax (default: Markdown).
+
+### ReadmeSyncOptions
+
+any
+
+Options controlling README sync behaviour.
+
+Members:
+
+#### badge
+
+boolean | undefined
+
+Include a "Documented with forge-ts" badge above the API table.
+
+#### includeExamples
+
+boolean | undefined
+
+Include first
 
 ### SSGConfigFile
 
@@ -2222,6 +2530,87 @@ CheckFileGroup[] | undefined
 
 Per-file breakdown — present at standard and full MVI levels.
 
+### InitDocsResult
+
+any
+
+Result of the `init docs` command.
+
+Example:
+  import { runInitDocs } from "@forge-ts/cli/commands/init-docs";
+  const output = await runInitDocs({ target: "mintlify" });
+  console.log(output.data.summary.filesCreated); // number of files written
+
+Members:
+
+#### success
+
+boolean
+
+Whether the scaffold succeeded.
+
+#### target
+
+SSGTarget
+
+The SSG target that was scaffolded.
+
+#### summary
+
+{ filesCreated: number; dependencies: number; scripts: number; }
+
+Summary of what was created.
+
+#### files
+
+string[]
+
+Relative paths of all files created.
+
+#### instructions
+
+string[]
+
+Post-scaffold instructions for the user.
+
+### InitDocsArgs
+
+any
+
+Arguments for the `init docs` command.
+
+Members:
+
+#### target
+
+string | undefined
+
+SSG target to scaffold. Defaults to .
+
+#### cwd
+
+string | undefined
+
+Project root directory (default: cwd).
+
+#### outDir
+
+string | undefined
+
+Output directory for the doc site (default: outDir from config or ./docs).
+
+#### force
+
+boolean | undefined
+
+Overwrite an existing scaffold without prompting.
+
+#### mvi
+
+string | undefined
+
+MVI verbosity level for structured output.
+
 ### ExtractedExample
 
 any
@@ -2456,6 +2845,12 @@ any
 
 DEPRECATED: Use `CalculatorConfig` instead.
 
+### SSGTarget
+
+any
+
+Supported SSG target identifiers.
+
 ## Enums
 
 ### Visibility
@@ -2508,6 +2903,60 @@ Operation.Divide
 
 ## Variables
 
+### DEFAULT_TARGET
+
+SSGTarget
+
+The default SSG target when none is specified.
+
+### mintlifyAdapter
+
+SSGAdapter
+
+Mintlify SSG adapter. Implements the  contract for the Mintlify platform.
+
+Example:
+  import { getAdapter } from "@forge-ts/gen";
+  const adapter = getAdapter("mintlify");
+  const configs = adapter.generateConfig(context);
+  console.log(configs[0].path); // "docs.json"
+
+### docusaurusAdapter
+
+SSGAdapter
+
+Docusaurus SSG adapter. Implements the  contract for the Docusaurus platform.
+
+Example:
+  import { getAdapter } from "@forge-ts/gen";
+  const adapter = getAdapter("docusaurus");
+  const configs = adapter.generateConfig(context);
+  console.log(configs[0].path); // "sidebars.ts"
+
+### nextraAdapter
+
+SSGAdapter
+
+Nextra SSG adapter (v4, App Router). Implements the  contract for the Nextra platform.
+
+Example:
+  import { getAdapter } from "@forge-ts/gen";
+  const adapter = getAdapter("nextra");
+  const configs = adapter.generateConfig(context);
+  console.log(configs[0].path); // "content/_meta.js"
+
+### vitepressAdapter
+
+SSGAdapter
+
+VitePress SSG adapter. Implements the  contract for the VitePress platform.
+
+Example:
+  import { getAdapter } from "@forge-ts/gen";
+  const adapter = getAdapter("vitepress");
+  const configs = adapter.generateConfig(context);
+  console.log(configs[0].path); // ".vitepress/config.mts"
+
 ### buildCommand
 
 CommandDef<{ readonly cwd: { readonly type: "string"; readonly description: "Project root directory"; }; readonly "skip-api": { readonly type: "boolean"; readonly description: "Skip OpenAPI generation"; readonly default: false; }; ... 4 more ...; readonly mvi: { ...; }; }>
@@ -2519,6 +2968,26 @@ Citty command definition for `forge-ts build`.
 CommandDef<{ readonly cwd: { readonly type: "string"; readonly description: "Project root directory"; }; readonly strict: { readonly type: "boolean"; readonly description: "Treat warnings as errors"; readonly default: false; }; ... 4 more ...; readonly mvi: { ...; }; }>
 
 Citty command definition for `forge-ts check`.
+
+### initDocsCommand
+
+CommandDef<{ readonly target: { readonly type: "string"; readonly description: `SSG target: ${string} (default: docusaurus)` | `SSG target: ${string} (default: mintlify)` | `SSG target: ${string} (default: nextra)` | `SSG target: ${string} (default: vitepress)`; }; readonly cwd: { readonly type: "string"; readonly d...
+
+Citty command definition for `forge-ts init docs`.  Scaffolds a complete documentation site for the target SSG platform. Use `--json` for LAFS JSON envelope output (agent/CI-friendly).
+
+Example:
+  import { initDocsCommand } from "@forge-ts/cli/commands/init-docs";
+  // Registered automatically as a subcommand of `forge-ts init`
+
+### initCommand
+
+CommandDef<ArgsDef>
+
+Citty command definition for `forge-ts init`.  Exposes subcommands for scaffolding project artefacts.
+
+Example:
+  import { initCommand } from "@forge-ts/cli/commands/init-docs";
+  // Registered automatically as a subcommand of `forge-ts`
 
 ### testCommand
 

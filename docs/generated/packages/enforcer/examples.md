@@ -1,9 +1,8 @@
 ---
-title: enforcer — Examples
+title: "enforcer — Examples"
 outline: deep
-description: Usage examples for the enforcer package
+description: "Usage examples for the enforcer package"
 ---
-
 # enforcer — Examples
 
 All usage examples from the package, aggregated for quick reference.

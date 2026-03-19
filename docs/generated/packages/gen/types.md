@@ -1,29 +1,11 @@
 ---
-title: gen — Types
+title: "gen — Types"
 outline: deep
-description: Type contracts for the gen package
+description: "Type contracts for the gen package"
 ---
-
 # gen — Types
 
 Type contracts exported by this package: interfaces, type aliases, and enums.
-
-## MarkdownOptions
-
-Options controlling Markdown output.
-
-| Property | Type | Required | Description |
-|----------|------|----------|-------------|
-| `mdx` | `boolean \| undefined` | No | Whether to use MDX syntax (default: Markdown). |
-
-## ReadmeSyncOptions
-
-Options controlling README sync behaviour.
-
-| Property | Type | Required | Description |
-|----------|------|----------|-------------|
-| `badge` | `boolean \| undefined` | No | Include a "Documented with forge-ts" badge above the API table. |
-| `includeExamples` | `boolean \| undefined` | No | Include first |
 
 ## DocPage
 
@@ -45,6 +27,93 @@ Options controlling the doc site generator.
 | `ssgTarget` | `"docusaurus" \| "mintlify" \| "nextra" \| "vitepress" \| undefined` | No | SSG target for frontmatter |
 | `projectName` | `string` | Yes | Project name |
 | `projectDescription` | `string \| undefined` | No | Project description |
+
+## SSGTarget
+
+Supported SSG target identifiers.
+
+```typescript
+any
+```
+
+## GeneratedFile
+
+A file to write to disk during scaffolding or generation.
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| `path` | `string` | Yes | Relative path from the docs output directory. |
+| `content` | `string` | Yes | File content (string for text). |
+
+## SSGStyleGuide
+
+Style guide configuration for the SSG target.
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| `pageExtension` | `"mdx" \| "md"` | Yes | File extension for doc pages. |
+| `supportsMdx` | `boolean` | Yes | Whether the target supports MDX components. |
+| `requiresFrontmatter` | `boolean` | Yes | Whether frontmatter is required on every page. |
+| `maxHeadingDepth` | `number` | Yes | Maximum recommended heading depth. |
+| `defaultImports` | `string[]` | Yes | Component imports to add at top of MDX files (if supportsMdx). |
+| `codeBlockLanguage` | `"typescript" \| "ts" \| "tsx"` | Yes | Code block language for TypeScript examples. |
+
+## ScaffoldManifest
+
+Scaffold manifest describing what `init docs` creates.
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| `target` | `SSGTarget` | Yes | The SSG target this manifest is for. |
+| `files` | `GeneratedFile[]` | Yes | Files that will be created. |
+| `dependencies` | `Record<string, string>` | Yes | npm dependencies to install. |
+| `devDependencies` | `Record<string, string>` | Yes | npm devDependencies to install. |
+| `scripts` | `Record<string, string>` | Yes | Scripts to add to package.json. |
+| `instructions` | `string[]` | Yes | Post-scaffold instructions for the user. |
+
+## AdapterContext
+
+Context passed to adapter methods.
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| `config` | `ForgeConfig` | Yes | Resolved forge-ts configuration. |
+| `projectName` | `string` | Yes | Project name (from package.json or directory). |
+| `projectDescription` | `string \| undefined` | No | Project description. |
+| `pages` | `DocPage[]` | Yes | The generated doc pages (from site-generator). |
+| `symbols` | `ForgeSymbol[]` | Yes | All symbols extracted from the project. |
+| `outDir` | `string` | Yes | Output directory for generated docs. |
+
+## SSGAdapter
+
+The central SSG adapter interface. Every doc platform provider implements this contract. One file per provider. No shared mutable state.
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| `target` | `SSGTarget` | Yes | Unique target identifier. |
+| `displayName` | `string` | Yes | Human-readable display name. |
+| `styleGuide` | `SSGStyleGuide` | Yes | Style guide for this platform. |
+| `scaffold` | `(context: AdapterContext) => ScaffoldManifest` | Yes | Generate the complete scaffold for a new doc site. Called by `forge-ts init docs --target <name>`. Returns all files, dependencies, and scripts needed. |
+| `transformPages` | `(pages: DocPage[], context: AdapterContext) => GeneratedFile[]` | Yes | Transform generic DocPages into platform-specific pages. Adds correct frontmatter, component imports, file extensions. Called during `forge-ts build`. |
+| `generateConfig` | `(context: AdapterContext) => GeneratedFile[]` | Yes | Generate platform-specific configuration files. e.g., mint.json, sidebars.js, _meta.json, .vitepress/config.ts Called during `forge-ts build`. |
+| `detectExisting` | `(outDir: string) => Promise<boolean>` | Yes | Check if a scaffold already exists in the output directory. Used for safety checks before init or target change. |
+
+## MarkdownOptions
+
+Options controlling Markdown output.
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| `mdx` | `boolean \| undefined` | No | Whether to use MDX syntax (default: Markdown). |
+
+## ReadmeSyncOptions
+
+Options controlling README sync behaviour.
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| `badge` | `boolean \| undefined` | No | Include a "Documented with forge-ts" badge above the API table. |
+| `includeExamples` | `boolean \| undefined` | No | Include first |
 
 ## SSGConfigFile
 

@@ -1,9 +1,8 @@
 ---
-title: cli — API Reference
+title: "cli — API Reference"
 outline: deep
-description: Full API reference for the cli package
+description: "Full API reference for the cli package"
 ---
-
 # cli — API Reference
 
 ## Functions
@@ -104,6 +103,29 @@ Runs the TSDoc enforcement pass and returns a typed command output.
 import { runCheck } from "@forge-ts/cli/commands/check";
 const output = await runCheck({ cwd: process.cwd() });
 console.log(output.data.summary.errors); // number of TSDoc errors found
+```
+
+
+### `runInitDocs()`
+
+```typescript
+(args: InitDocsArgs) => Promise<CommandOutput<InitDocsResult>>
+```
+
+Scaffolds a documentation site for the target SSG platform.  Resolves the target from args, validates it, checks for an existing scaffold, calls the adapter's `scaffold()` method, and writes all files produced by the manifest to `outDir`.
+
+**Parameters**
+
+- `args` — CLI arguments for the init docs command.
+
+**Returns**: A typed `CommandOutput<InitDocsResult>`.
+
+**Examples**
+
+```typescript
+import { runInitDocs } from "@forge-ts/cli/commands/init-docs";
+const output = await runInitDocs({ target: "mintlify", cwd: process.cwd() });
+console.log(output.data.files); // list of created file paths
 ```
 
 
@@ -735,6 +757,112 @@ CheckFileGroup[] | undefined
 Per-file breakdown — present at standard and full MVI levels.
 
 
+### `InitDocsResult`
+
+```typescript
+any
+```
+
+Result of the `init docs` command.
+
+**Examples**
+
+```typescript
+import { runInitDocs } from "@forge-ts/cli/commands/init-docs";
+const output = await runInitDocs({ target: "mintlify" });
+console.log(output.data.summary.filesCreated); // number of files written
+```
+
+#### `success`
+
+```typescript
+boolean
+```
+
+Whether the scaffold succeeded.
+
+#### `target`
+
+```typescript
+SSGTarget
+```
+
+The SSG target that was scaffolded.
+
+#### `summary`
+
+```typescript
+{ filesCreated: number; dependencies: number; scripts: number; }
+```
+
+Summary of what was created.
+
+#### `files`
+
+```typescript
+string[]
+```
+
+Relative paths of all files created.
+
+#### `instructions`
+
+```typescript
+string[]
+```
+
+Post-scaffold instructions for the user.
+
+
+### `InitDocsArgs`
+
+```typescript
+any
+```
+
+Arguments for the `init docs` command.
+
+#### `target`
+
+```typescript
+string | undefined
+```
+
+SSG target to scaffold. Defaults to .
+
+#### `cwd`
+
+```typescript
+string | undefined
+```
+
+Project root directory (default: cwd).
+
+#### `outDir`
+
+```typescript
+string | undefined
+```
+
+Output directory for the doc site (default: outDir from config or ./docs).
+
+#### `force`
+
+```typescript
+boolean | undefined
+```
+
+Overwrite an existing scaffold without prompting.
+
+#### `mvi`
+
+```typescript
+string | undefined
+```
+
+MVI verbosity level for structured output.
+
+
 ### `TestArgs`
 
 ```typescript
@@ -852,6 +980,38 @@ CommandDef<{ readonly cwd: { readonly type: "string"; readonly description: "Pro
 ```
 
 Citty command definition for `forge-ts check`.
+
+
+### `initDocsCommand`
+
+```typescript
+CommandDef<{ readonly target: { readonly type: "string"; readonly description: `SSG target: ${string} (default: docusaurus)` | `SSG target: ${string} (default: mintlify)` | `SSG target: ${string} (default: nextra)` | `SSG target: ${string} (default: vitepress)`; }; readonly cwd: { readonly type: "string"; readonly d...
+```
+
+Citty command definition for `forge-ts init docs`.  Scaffolds a complete documentation site for the target SSG platform. Use `--json` for LAFS JSON envelope output (agent/CI-friendly).
+
+**Examples**
+
+```typescript
+import { initDocsCommand } from "@forge-ts/cli/commands/init-docs";
+// Registered automatically as a subcommand of `forge-ts init`
+```
+
+
+### `initCommand`
+
+```typescript
+CommandDef<ArgsDef>
+```
+
+Citty command definition for `forge-ts init`.  Exposes subcommands for scaffolding project artefacts.
+
+**Examples**
+
+```typescript
+import { initCommand } from "@forge-ts/cli/commands/init-docs";
+// Registered automatically as a subcommand of `forge-ts`
+```
 
 
 ### `testCommand`

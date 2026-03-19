@@ -1,9 +1,8 @@
 ---
-title: doctest — Functions
+title: "doctest — Functions"
 outline: deep
-description: Functions and classes for the doctest package
+description: "Functions and classes for the doctest package"
 ---
-
 # doctest — Functions & Classes
 
 Functions and classes exported by this package.

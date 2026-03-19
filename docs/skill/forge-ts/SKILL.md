@@ -20,34 +20,75 @@ description: >
 The documentation compiler for TypeScript. Enforces TSDoc as a build gate,
 then generates everything from your documented source code in one pass.
 
-## The Flow
-
-```
-Your TypeScript code
-  |  Write TSDoc comments (@param, @returns, @example, etc.)
-  v
-forge-ts check   -->  FAILS if docs incomplete (exact fix suggestions)
-  v
-forge-ts build   -->  Generates ALL artifacts from TSDoc
-  v
-forge-ts docs init --target mintlify  -->  Writes adapter scaffold/config
-  v
-forge-ts docs dev  -->  Preview locally
-```
-
 ## Quick Start
 
 ```bash
 npm install -D @forge-ts/cli
-npx forge-ts check          # Enforce TSDoc coverage
+npx forge-ts check          # Triage: every error cause + priorities
 npx forge-ts test           # Run @example blocks as tests
 npx forge-ts build          # Generate all artifacts
 npx forge-ts docs init      # Write Mintlify adapter scaffold/config
 npx forge-ts docs dev       # Launch dev server
 ```
 
-JSON envelopes are actionable by default — agents in non-TTY contexts get
-structured JSON automatically without needing `--human` or `--json` flags.
+## Fixing TSDoc Errors (Agent Workflow)
+
+The check command uses progressive disclosure to fit agent context windows.
+Follow `result.nextCommand` — it tells you exactly what to run next.
+
+**Step 1: Get the battle plan** (~500-2000 tokens)
+```bash
+npx forge-ts check
+```
+Returns `summary` (total counts), `triage` (every rule with counts, top files,
+quick wins), and the first 20 files without suggestedFix. Read `triage.fixOrder`
+to see which rules affect the fewest files — fix those first.
+
+**Step 2: Drill into a rule** (follows `result.nextCommand`)
+```bash
+npx forge-ts check --rule E005 --mvi full
+```
+Returns ONLY errors for that rule WITH `suggestedFix` — the exact TSDoc to paste.
+Apply the fixes, then check the next `result.nextCommand`.
+
+**Step 3: Batch large rules by page**
+```bash
+npx forge-ts check --rule E001 --limit 10 --mvi full
+npx forge-ts check --rule E001 --limit 10 --offset 10 --mvi full
+```
+Paginate through files 10 at a time. Each page includes suggestedFix.
+
+**Step 4: Verify progress**
+```bash
+npx forge-ts check --mvi minimal
+```
+Returns only counts (~50 tokens). Repeat from step 1 when ready.
+
+### Key fields in the JSON result
+
+| Field | What it tells you |
+|-------|-------------------|
+| `summary` | Total error/warning/file/symbol counts |
+| `triage.byRule` | Every rule code with violation count and file count |
+| `triage.topFiles` | Top 20 worst files by error count |
+| `triage.fixOrder` | Rules sorted by fewest files affected (quick wins first) |
+| `byFile` | Paginated file groups with per-error details |
+| `page` | `{ offset, limit, hasMore, total }` — pagination state |
+| `nextCommand` | Exact CLI command to run next |
+| `filters` | Active `--rule` / `--file` filters |
+
+### Check CLI flags
+
+| Flag | Purpose |
+|------|---------|
+| `--rule E001` | Filter to a specific rule code |
+| `--file src/types.ts` | Filter to files matching substring |
+| `--limit 20` | Max file groups per page (default: 20) |
+| `--offset 0` | Skip N file groups for pagination |
+| `--mvi minimal` | Counts only (~50 tokens) |
+| `--mvi standard` | Triage + byFile without suggestedFix (default) |
+| `--mvi full` | Triage + byFile with suggestedFix |
+| `--strict` | Treat warnings as errors |
 
 ## SSoT Principle
 
@@ -84,33 +125,14 @@ becomes a doctest AND a doc page entry AND part of the SKILL.md.
 | `contributing.mdx` | Contribution guidelines |
 | `changelog.mdx` | Release history |
 
-Stubs contain `<!-- FORGE:AUTO-START id -->` / `<!-- FORGE:AUTO-END id -->`
-markers. On rebuild, content inside markers is updated from source while
-manual content outside markers is preserved.
-
-**Idempotency**: Auto pages always overwritten. Stubs never overwritten
-(only their FORGE:AUTO marker sections are refreshed).
-
-**Progressive generation**: As your project grows (new packages, new exports),
-auto pages grow automatically. New packages get their own
-`packages/<name>/` directory. New functions appear in the API reference.
+Stubs use `<!-- FORGE:AUTO-START -->` / `<!-- FORGE:AUTO-END -->` markers.
+Content inside markers refreshes on build; content outside is preserved.
 
 ## build vs docs init
 
 `forge-ts build` writes all doc pages, llms.txt, SKILL.md, and SSG config
-into `outDir`. The JSON envelope's `generatedFiles` array lists every file
-written. `forge-ts docs init` adds SSG-specific adapter config and scaffold
-files (e.g. `docs.json` for Mintlify). Run `build` first for content, then
-`docs init` if you need platform-specific setup.
-
-## Skill Package
-
-`forge-ts build` generates a `SKILL-{project}/` directory containing the
-skill package. Configure with `config.skill.customSections` and
-`config.skill.extraGotchas` to inject workflow knowledge that can't be
-derived from types alone.
-
-Details: [references/skill-config.md](references/skill-config.md)
+into `outDir`. `forge-ts docs init` adds SSG-specific adapter scaffold
+(e.g. `docs.json` for Mintlify). Run `build` first, then `docs init`.
 
 ## Enforcer Rules
 
@@ -127,11 +149,8 @@ Details: [references/skill-config.md](references/skill-config.md)
 | W004 | Importing `@deprecated` symbol cross-package |
 
 Rules accept `"error"` | `"warn"` | `"off"` in config `enforce.rules`.
-When `strict: true`, all warnings become errors.
-Actionable JSON envelopes include `suggestedFix` so agents can apply the exact
-TSDoc block to paste.
 
-Fix examples and per-rule config: [references/enforcer-rules.md](references/enforcer-rules.md)
+Fix examples: [references/enforcer-rules.md](references/enforcer-rules.md)
 
 ## Configuration
 
@@ -143,36 +162,31 @@ export default {
   rootDir: ".",
   outDir: "./docs/generated",
   enforce: {
-    enabled: true,
-    minVisibility: "public",
-    strict: false,
     rules: {
-      "require-example": "warn",    // downgrade E004
-      "require-package-doc": "off", // disable E005
+      "require-example": "warn",
+      "require-package-doc": "off",
     },
   },
   gen: {
     formats: ["markdown"],
     llmsTxt: true,
-    ssgTarget: "mintlify",  // or "docusaurus" | "nextra" | "vitepress"
+    ssgTarget: "mintlify",
   },
 } satisfies Partial<ForgeConfig>;
 ```
 
-Zero-config works out of the box. Full options: [references/configuration.md](references/configuration.md)
+Zero-config works out of the box. Unknown keys warn in `result._warnings`.
 
 ## Key Gotchas
 
 - Enforcer checks ALL files in tsconfig. Exclude test fixtures via `exclude`.
-- Unknown config keys and unknown `enforce.rules` entries warn to stderr and appear in the JSON envelope under `result._warnings`. If the config file fails to load (e.g. `.ts` config without `"type": "module"`), that is also warned.
+- Unknown config keys warn to stderr and in `result._warnings`.
+- If the config file fails to load (`.ts` without `"type": "module"`), that is warned too.
 - `@example` blocks require fenced code blocks. Bare code is silently ignored.
 - `// => value` in examples auto-converts to `assert.strictEqual()` during doctest.
 - `@internal` symbols excluded from ALL output. `@beta` filtered at `minVisibility: "public"`.
-- OpenAPI paths require `@route GET /path` tags. No `@route` = empty `paths`.
-- Mintlify adapter generates `docs.json` (v4 format), not `mint.json`.
-- `forge-ts build` writes the documentation pages into `outDir`; `docs init`
-  adds target-specific scaffold/config for the chosen SSG.
-- Stub pages are NEVER overwritten — safe to edit immediately after first build.
+- `forge-ts build` writes pages; `docs init` adds SSG scaffold/config.
+- Stub pages are NEVER overwritten — safe to edit after first build.
 
 ## Packages
 

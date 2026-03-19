@@ -227,7 +227,7 @@ describe("generateSkillMd", () => {
 		// Extract frontmatter block
 		const fmMatch = result.match(/^---\n([\s\S]*?)\n---/);
 		expect(fmMatch).toBeDefined();
-		const fm = fmMatch![1];
+		const fm = fmMatch?.[1] ?? "";
 		expect(fm).not.toContain("license:");
 		expect(fm).not.toContain("compatibility:");
 		expect(fm).not.toContain("metadata:");
@@ -294,10 +294,7 @@ describe("generateSkillMd", () => {
 	});
 
 	it("includes keywords in description triggers", () => {
-		const result = generateSkillMd(
-			[fnAdd],
-			makeConfig({ keywords: ["math", "utils"] }),
-		);
+		const result = generateSkillMd([fnAdd], makeConfig({ keywords: ["math", "utils"] }));
 		expect(result).toContain("math");
 		expect(result).toContain("utils");
 	});
@@ -309,9 +306,7 @@ describe("generateSkillMd", () => {
 	it("injects custom sections from config.skill.customSections", () => {
 		const cfg = makeConfig();
 		cfg.skill = {
-			customSections: [
-				{ heading: "The Flow", content: "check -> build -> docs" },
-			],
+			customSections: [{ heading: "The Flow", content: "check -> build -> docs" }],
 		};
 		const result = generateSkillMd([fnAdd], cfg);
 		expect(result).toContain("## The Flow");

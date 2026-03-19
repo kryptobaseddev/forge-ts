@@ -5,24 +5,6 @@ import type { ForgeConfig, ForgeSymbol } from "@forge-ts/core";
 // ---------------------------------------------------------------------------
 
 /**
- * Returns a compact one-line type description for a symbol.
- * @internal
- */
-function kindLabel(kind: ForgeSymbol["kind"]): string {
-	const labels: Record<ForgeSymbol["kind"], string> = {
-		function: "function",
-		class: "class",
-		interface: "interface",
-		type: "type alias",
-		enum: "enum",
-		variable: "constant",
-		method: "method",
-		property: "property",
-	};
-	return labels[kind];
-}
-
-/**
  * Converts a package name or project name to a lowercase-hyphenated slug
  * valid for agentskills.io directory names (max 64 chars, hyphens only).
  * @internal
@@ -149,10 +131,7 @@ function buildDescription(symbols: ForgeSymbol[], config: ForgeConfig): string {
  * Renders a Quick Start section with install command and key CLI/API usage.
  * @internal
  */
-function renderQuickStart(
-	symbols: ForgeSymbol[],
-	config: ForgeConfig,
-): string[] {
+function renderQuickStart(symbols: ForgeSymbol[], config: ForgeConfig): string[] {
 	const lines: string[] = [];
 	const projectName = config.project.packageName ?? "project";
 	const cliName = primaryBinName(config);
@@ -171,7 +150,7 @@ function renderQuickStart(
 		const cliCommands: string[] = [];
 		for (const key of relevantKeys) {
 			const script = scripts[key];
-			if (script && script.includes(cliName)) {
+			if (script?.includes(cliName)) {
 				cliCommands.push(`npx ${cliName} ${key}`);
 			}
 		}
@@ -273,7 +252,9 @@ function renderConfigSection(symbols: ForgeSymbol[], config: ForgeConfig): strin
 	const children = configSymbol.children ?? [];
 	if (children.length > 0) {
 		const projectName = config.project.packageName ?? "project";
-		const importSource = projectName.includes("/") ? projectName.split("/")[0] + "/" + projectName.split("/")[1] : projectName;
+		const importSource = projectName.includes("/")
+			? `${projectName.split("/")[0]}/${projectName.split("/")[1]}`
+			: projectName;
 
 		lines.push("```typescript");
 		lines.push(`import type { ${configSymbol.name} } from "${importSource}";`);
@@ -374,9 +355,7 @@ function renderGotchas(symbols: ForgeSymbol[]): string[] {
 	);
 	for (const sym of throwers) {
 		for (const t of sym.documentation?.throws ?? []) {
-			lines.push(
-				`- \`${sym.name}()\` throws${t.type ? ` \`${t.type}\`` : ""}: ${t.description}`,
-			);
+			lines.push(`- \`${sym.name}()\` throws${t.type ? ` \`${t.type}\`` : ""}: ${t.description}`);
 		}
 	}
 
@@ -428,8 +407,7 @@ function buildSkillMd(symbols: ForgeSymbol[], config: ForgeConfig, directoryName
 	const overview =
 		config.project.description ??
 		pkgDoc?.documentation?.summary ??
-		symbols.filter((s) => s.exported).find((s) => s.documentation?.summary)?.documentation
-			?.summary;
+		symbols.filter((s) => s.exported).find((s) => s.documentation?.summary)?.documentation?.summary;
 	if (overview) {
 		lines.push(overview);
 		lines.push("");
@@ -674,9 +652,7 @@ function buildConfigurationMd(symbols: ForgeSymbol[], config: ForgeConfig): stri
 
 		// Code example with inline comments
 		if (children.length > 0) {
-			const importSource = projectName.includes("/")
-				? projectName
-				: projectName;
+			const importSource = projectName.includes("/") ? projectName : projectName;
 
 			lines.push("```typescript");
 			lines.push(`import type { ${configSym.name} } from "${importSource}";`);
@@ -784,7 +760,7 @@ function buildScripts(config: ForgeConfig): Array<{ path: string; content: strin
 			content: [
 				"#!/usr/bin/env bash",
 				"# Run the project's test suite",
-				'# Usage: ./scripts/test.sh [additional args]',
+				"# Usage: ./scripts/test.sh [additional args]",
 				"",
 				"if [ -f package.json ]; then",
 				'  npm test "$@"',

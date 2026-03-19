@@ -87,7 +87,9 @@ function mergeWithDefaults(rootDir: string, partial: Partial<ForgeConfig>): Forg
  * Handles both string and object forms.
  * @internal
  */
-function extractRepoUrl(repo: string | { type?: string; url?: string } | undefined): string | undefined {
+function extractRepoUrl(
+	repo: string | { type?: string; url?: string } | undefined,
+): string | undefined {
 	if (!repo) return undefined;
 	const raw = typeof repo === "string" ? repo : repo.url;
 	if (!raw) return undefined;

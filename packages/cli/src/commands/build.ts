@@ -1,7 +1,7 @@
 import { join } from "node:path";
 import { generateApi } from "@forge-ts/api";
 import { loadConfig } from "@forge-ts/core";
-import { generate, type GenerateOptions } from "@forge-ts/gen";
+import { generate } from "@forge-ts/gen";
 import { defineCommand } from "citty";
 import { createLogger } from "../logger.js";
 import {

@@ -116,7 +116,10 @@ export interface GenerateOptions {
  * @public
  * @packageDocumentation
  */
-export async function generate(config: ForgeConfig, options?: GenerateOptions): Promise<ForgeResult> {
+export async function generate(
+	config: ForgeConfig,
+	options?: GenerateOptions,
+): Promise<ForgeResult> {
 	const start = Date.now();
 	const forceStubs = options?.forceStubs ?? false;
 

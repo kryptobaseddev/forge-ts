@@ -122,6 +122,7 @@ export async function generate(
 ): Promise<ForgeResult> {
 	const start = Date.now();
 	const forceStubs = options?.forceStubs ?? false;
+	const writtenFiles: string[] = [];
 
 	const walker = createWalker(config);
 	const symbols = walker.walk();
@@ -134,7 +135,9 @@ export async function generate(
 			mdx: format === "mdx",
 		});
 		const ext = format === "mdx" ? "mdx" : "md";
-		await writeFile(join(config.outDir, `api-reference.${ext}`), content, "utf8");
+		const filePath = join(config.outDir, `api-reference.${ext}`);
+		await writeFile(filePath, content, "utf8");
+		writtenFiles.push(filePath);
 	}
 
 	// Multi-page site output — writes directly to outDir via adapters
@@ -177,12 +180,14 @@ export async function generate(
 				const merged = updateAutoSections(existingContent, file.content);
 				if (merged) {
 					await writeFile(filePath, merged, "utf8");
+					writtenFiles.push(filePath);
 				}
 				continue;
 			}
 
 			await mkdir(dirname(filePath), { recursive: true });
 			await writeFile(filePath, file.content, "utf8");
+			writtenFiles.push(filePath);
 		}
 
 		// Generate platform config files only when ssgTarget is explicitly set
@@ -192,16 +197,21 @@ export async function generate(
 				const filePath = join(config.outDir, file.path);
 				await mkdir(dirname(filePath), { recursive: true });
 				await writeFile(filePath, file.content, "utf8");
+				writtenFiles.push(filePath);
 			}
 		}
 	}
 
 	if (config.gen.llmsTxt) {
+		const llmsPath = join(config.outDir, "llms.txt");
 		const llms = generateLlmsTxt(symbols, config);
-		await writeFile(join(config.outDir, "llms.txt"), llms, "utf8");
+		await writeFile(llmsPath, llms, "utf8");
+		writtenFiles.push(llmsPath);
 
+		const llmsFullPath = join(config.outDir, "llms-full.txt");
 		const llmsFull = generateLlmsFullTxt(symbols, config);
-		await writeFile(join(config.outDir, "llms-full.txt"), llmsFull, "utf8");
+		await writeFile(llmsFullPath, llmsFull, "utf8");
+		writtenFiles.push(llmsFullPath);
 
 		// Skill package generation — follows gen.llmsTxt unless skill.enabled is explicitly false
 		const skillEnabled = config.skill.enabled !== false;
@@ -213,12 +223,15 @@ export async function generate(
 				const filePath = join(skillDir, file.path);
 				await mkdir(dirname(filePath), { recursive: true });
 				await writeFile(filePath, file.content, "utf8");
+				writtenFiles.push(filePath);
 			}
 		}
 	}
 
 	if (config.gen.readmeSync) {
-		await syncReadme(join(config.rootDir, "README.md"), symbols);
+		const readmePath = join(config.rootDir, "README.md");
+		await syncReadme(readmePath, symbols);
+		writtenFiles.push(readmePath);
 	}
 
 	return {
@@ -227,5 +240,6 @@ export async function generate(
 		errors: [],
 		warnings: [],
 		duration: Date.now() - start,
+		writtenFiles,
 	};
 }

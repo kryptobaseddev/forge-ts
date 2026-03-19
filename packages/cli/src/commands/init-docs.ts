@@ -280,7 +280,7 @@ function formatInitDocsHuman(result: InitDocsResult): string {
  */
 export const initDocsCommand = defineCommand({
 	meta: {
-		name: "docs",
+		name: "init",
 		description: "Scaffold a documentation site",
 	},
 	args: {

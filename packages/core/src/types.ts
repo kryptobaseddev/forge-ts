@@ -191,6 +191,8 @@ export interface ForgeResult {
 	warnings: ForgeWarning[];
 	/** Wall-clock duration of the run in milliseconds. */
 	duration: number;
+	/** Absolute paths of files written during this run (populated by gen). */
+	writtenFiles?: string[];
 }
 
 /**

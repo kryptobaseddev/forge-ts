@@ -31,7 +31,7 @@ forge-ts check   -->  FAILS if docs incomplete (exact fix suggestions)
   v
 forge-ts build   -->  Generates ALL artifacts from TSDoc
   v
-forge-ts docs init --target mintlify  -->  Scaffolds SSG project
+forge-ts docs init --target mintlify  -->  Adds SSG adapter config (e.g. docs.json)
   v
 forge-ts docs dev  -->  Preview locally
 ```
@@ -44,7 +44,7 @@ npx forge-ts check              # Enforce TSDoc coverage
 npx forge-ts test               # Run @example blocks as tests
 npx forge-ts build              # Generate all artifacts
 npx forge-ts build --force-stubs  # Reset stubs to scaffolding
-npx forge-ts docs init          # Scaffold Mintlify doc site
+npx forge-ts docs init          # Add SSG adapter config (docs.json, etc.)
 npx forge-ts docs dev           # Launch dev server
 ```
 
@@ -81,7 +81,7 @@ becomes a doctest AND a doc page entry AND part of the SKILL.md.
 | `api/openapi.json` | Types + @route tags |
 | `llms.txt` / `llms-full.txt` | Compact/dense AI context |
 | `<project>/SKILL.md` | agentskills.io package |
-| `docs.json` | SSG navigation config |
+| `docs.json` | SSG navigation config (when ssgTarget set) |
 
 ### Stubs (created once, progressively enriched)
 
@@ -106,6 +106,14 @@ and abstractions without touching your manual content.
 
 **Force reset**: `forge-ts build --force-stubs` overwrites stubs entirely,
 resetting them to their scaffolding state.
+
+## build vs docs init
+
+`forge-ts build` writes all doc pages, llms.txt, SKILL.md, and SSG config
+into `outDir`. The JSON envelope's `generatedFiles` array lists every file
+written. `forge-ts docs init` adds SSG-specific adapter config and scaffold
+files (e.g. `docs.json` for Mintlify). Run `build` first for content, then
+`docs init` if you need platform-specific setup.
 
 ## Skill Package Configuration
 
@@ -143,7 +151,7 @@ are appended to the auto-detected ones (@deprecated, @throws, enums).
 | W004 | Importing `@deprecated` symbol cross-package |
 
 Rules accept `"error"` | `"warn"` | `"off"` in config `enforce.rules`.
-When `--json --mvi full`, each error includes `suggestedFix`.
+Each error includes `suggestedFix` by default (MVI defaults to full for check).
 
 Fix examples: [references/enforcer-rules.md](references/enforcer-rules.md)
 

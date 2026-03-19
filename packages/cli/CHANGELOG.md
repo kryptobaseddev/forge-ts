@@ -1,5 +1,23 @@
 # @forge-ts/cli
 
+## 0.6.2
+
+### Patch Changes
+
+- fix: docs init help text, build file reporting, skill accuracy
+
+  - Fix `docs init --help` showing "docs docs" instead of "docs init" (citty meta.name was "docs" instead of "init")
+  - Build command now reports ALL written files in `generatedFiles` (pages, stubs, SSG config, skill package) instead of only api-reference and llms.txt
+  - Add `writtenFiles` to ForgeResult so generate() can return actual file paths
+  - Update skill doc to clarify build vs docs init, accurate docs init description
+
+- Updated dependencies []:
+  - @forge-ts/core@0.6.2
+  - @forge-ts/gen@0.6.2
+  - @forge-ts/api@0.6.2
+  - @forge-ts/doctest@0.6.2
+  - @forge-ts/enforcer@0.6.2
+
 ## 0.6.1
 
 ### Patch Changes

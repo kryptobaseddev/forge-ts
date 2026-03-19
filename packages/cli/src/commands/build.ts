@@ -1,4 +1,3 @@
-import { join } from "node:path";
 import { generateApi } from "@forge-ts/api";
 import { loadConfig } from "@forge-ts/core";
 import { generate } from "@forge-ts/gen";
@@ -158,14 +157,8 @@ export async function runBuild(args: BuildArgs): Promise<CommandOutput<BuildResu
 				status: "success",
 				duration: result.duration,
 			});
-			// Track the generated output directory and standard files
-			for (const format of config.gen.formats) {
-				const ext = format === "mdx" ? "mdx" : "md";
-				generatedFiles.push(join(config.outDir, `api-reference.${ext}`));
-			}
-			if (config.gen.llmsTxt) {
-				generatedFiles.push(join(config.outDir, "llms.txt"));
-				generatedFiles.push(join(config.outDir, "llms-full.txt"));
+			if (result.writtenFiles) {
+				generatedFiles.push(...result.writtenFiles);
 			}
 		}
 	} else if (!config.gen.enabled || args.skipGen) {

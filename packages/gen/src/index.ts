@@ -24,6 +24,7 @@ export {
 export { generateSkillMd, generateSkillPackage, type SkillPackage } from "./skill.js";
 export { generateSSGConfigs, type SSGConfigFile } from "./ssg-config.js";
 
+import { existsSync } from "node:fs";
 import { mkdir, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { createWalker, type ForgeConfig, type ForgeResult } from "@forge-ts/core";
@@ -83,6 +84,12 @@ export async function generate(config: ForgeConfig): Promise<ForgeResult> {
 			packageName: config.project.packageName,
 		});
 
+		// Collect stub page paths so we can skip overwriting them if they already exist.
+		// Stub pages are scaffolding for human/agent editing — only created on first build.
+		const stubPaths = new Set(
+			pages.filter((p) => p.stub).map((p) => p.path),
+		);
+
 		const adapterContext: AdapterContext = {
 			config,
 			projectName,
@@ -95,6 +102,16 @@ export async function generate(config: ForgeConfig): Promise<ForgeResult> {
 		const transformedPages = adapter.transformPages(pages, adapterContext);
 		for (const file of transformedPages) {
 			const filePath = join(config.outDir, file.path);
+
+			// Stub pages: only write if the file doesn't already exist.
+			// This preserves manual edits across subsequent builds.
+			const originalPath = pages.find(
+				(p) => file.path.replace(/\.\w+$/, "") === p.path.replace(/\.\w+$/, ""),
+			)?.path;
+			if (originalPath && stubPaths.has(originalPath) && existsSync(filePath)) {
+				continue;
+			}
+
 			await mkdir(dirname(filePath), { recursive: true });
 			await writeFile(filePath, file.content, "utf8");
 		}

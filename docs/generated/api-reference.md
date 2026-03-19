@@ -152,7 +152,7 @@ console.log(config.enforce.enabled); // true
 
 ### `loadConfig()`
 
-_Defined in `packages/core/src/config.ts:168`_
+_Defined in `packages/core/src/config.ts:171`_
 
 ```typescript
 (rootDir?: string | undefined) => Promise<ForgeConfig>
@@ -398,7 +398,7 @@ console.log(result.success); // true if spec was written successfully
 
 ### `groupSymbolsByPackage()`
 
-_Defined in `packages/gen/src/site-generator.ts:153`_
+_Defined in `packages/gen/src/site-generator.ts:160`_
 
 ```typescript
 (symbols: ForgeSymbol[], rootDir: string) => Map<string, ForgeSymbol[]>
@@ -423,7 +423,7 @@ console.log(grouped.has("core")); // true for monorepo
 
 ### `generateDocSite()`
 
-_Defined in `packages/gen/src/site-generator.ts:998`_
+_Defined in `packages/gen/src/site-generator.ts:1005`_
 
 ```typescript
 (symbolsByPackage: Map<string, ForgeSymbol[]>, config: ForgeConfig, options: SiteGeneratorOptions) => DocPage[]
@@ -619,7 +619,7 @@ console.log(modified); // true if README was updated
 
 ### `generateSkillPackage()`
 
-_Defined in `packages/gen/src/skill.ts:520`_
+_Defined in `packages/gen/src/skill.ts:791`_
 
 ```typescript
 (symbols: ForgeSymbol[], config: ForgeConfig) => SkillPackage
@@ -646,7 +646,7 @@ console.log(pkg.files.map(f => f.path));
 
 ### `generateSkillMd()`
 
-_Defined in `packages/gen/src/skill.ts:568`_
+_Defined in `packages/gen/src/skill.ts:825`_
 
 ```typescript
 (symbols: ForgeSymbol[], config: ForgeConfig) => string
@@ -696,7 +696,7 @@ console.log(configs[0].path); // ".vitepress/sidebar.json"
 
 ### `generate()`
 
-_Defined in `packages/gen/src/index.ts:52`_
+_Defined in `packages/gen/src/index.ts:53`_
 
 ```typescript
 (config: ForgeConfig) => Promise<ForgeResult>
@@ -1354,14 +1354,14 @@ Output generation configuration.
 _Defined in `packages/core/src/types.ts:130`_
 
 ```typescript
-{ repository?: string | undefined; homepage?: string | undefined; packageName?: string | undefined; }
+{ repository?: string | undefined; homepage?: string | undefined; packageName?: string | undefined; description?: string | undefined; version?: string | undefined; bin?: Record<string, string> | undefined; scripts?: Record<...> | undefined; keywords?: string[] | undefined; }
 ```
 
 Project metadata — auto-detected from package.json if not provided.
 
 ### `ForgeResult`
 
-_Defined in `packages/core/src/types.ts:144`_
+_Defined in `packages/core/src/types.ts:154`_
 
 ```typescript
 any
@@ -1371,7 +1371,7 @@ The result of a forge-ts compilation pass.
 
 #### `success`
 
-_Defined in `packages/core/src/types.ts:146`_
+_Defined in `packages/core/src/types.ts:156`_
 
 ```typescript
 boolean
@@ -1381,7 +1381,7 @@ Whether the run succeeded without errors.
 
 #### `symbols`
 
-_Defined in `packages/core/src/types.ts:148`_
+_Defined in `packages/core/src/types.ts:158`_
 
 ```typescript
 ForgeSymbol[]
@@ -1391,7 +1391,7 @@ All symbols extracted during this run.
 
 #### `errors`
 
-_Defined in `packages/core/src/types.ts:150`_
+_Defined in `packages/core/src/types.ts:160`_
 
 ```typescript
 ForgeError[]
@@ -1401,7 +1401,7 @@ Errors that caused or would cause failure.
 
 #### `warnings`
 
-_Defined in `packages/core/src/types.ts:152`_
+_Defined in `packages/core/src/types.ts:162`_
 
 ```typescript
 ForgeWarning[]
@@ -1411,7 +1411,7 @@ Non-fatal warnings.
 
 #### `duration`
 
-_Defined in `packages/core/src/types.ts:154`_
+_Defined in `packages/core/src/types.ts:164`_
 
 ```typescript
 number
@@ -1421,7 +1421,7 @@ Wall-clock duration of the run in milliseconds.
 
 ### `ForgeError`
 
-_Defined in `packages/core/src/types.ts:161`_
+_Defined in `packages/core/src/types.ts:171`_
 
 ```typescript
 any
@@ -1431,7 +1431,7 @@ A diagnostic error produced during a forge-ts run.
 
 #### `code`
 
-_Defined in `packages/core/src/types.ts:163`_
+_Defined in `packages/core/src/types.ts:173`_
 
 ```typescript
 string
@@ -1441,7 +1441,7 @@ Machine-readable error code (e.g. "E001").
 
 #### `message`
 
-_Defined in `packages/core/src/types.ts:165`_
+_Defined in `packages/core/src/types.ts:175`_
 
 ```typescript
 string
@@ -1451,7 +1451,7 @@ Human-readable description of the error.
 
 #### `filePath`
 
-_Defined in `packages/core/src/types.ts:167`_
+_Defined in `packages/core/src/types.ts:177`_
 
 ```typescript
 string
@@ -1461,7 +1461,7 @@ Absolute path of the file where the error occurred.
 
 #### `line`
 
-_Defined in `packages/core/src/types.ts:169`_
+_Defined in `packages/core/src/types.ts:179`_
 
 ```typescript
 number
@@ -1471,7 +1471,7 @@ number
 
 #### `column`
 
-_Defined in `packages/core/src/types.ts:171`_
+_Defined in `packages/core/src/types.ts:181`_
 
 ```typescript
 number
@@ -1481,7 +1481,7 @@ number
 
 #### `suggestedFix`
 
-_Defined in `packages/core/src/types.ts:173`_
+_Defined in `packages/core/src/types.ts:183`_
 
 ```typescript
 string | undefined
@@ -1491,7 +1491,7 @@ Suggested fix for the agent — exact TSDoc block to add.
 
 #### `symbolName`
 
-_Defined in `packages/core/src/types.ts:175`_
+_Defined in `packages/core/src/types.ts:185`_
 
 ```typescript
 string | undefined
@@ -1501,7 +1501,7 @@ The symbol name that needs fixing.
 
 #### `symbolKind`
 
-_Defined in `packages/core/src/types.ts:177`_
+_Defined in `packages/core/src/types.ts:187`_
 
 ```typescript
 string | undefined
@@ -1511,7 +1511,7 @@ The symbol kind (function, class, interface, etc.).
 
 ### `ForgeWarning`
 
-_Defined in `packages/core/src/types.ts:184`_
+_Defined in `packages/core/src/types.ts:194`_
 
 ```typescript
 any
@@ -1521,7 +1521,7 @@ A diagnostic warning produced during a forge-ts run.
 
 #### `code`
 
-_Defined in `packages/core/src/types.ts:186`_
+_Defined in `packages/core/src/types.ts:196`_
 
 ```typescript
 string
@@ -1531,7 +1531,7 @@ Machine-readable warning code (e.g. "W001").
 
 #### `message`
 
-_Defined in `packages/core/src/types.ts:188`_
+_Defined in `packages/core/src/types.ts:198`_
 
 ```typescript
 string
@@ -1541,7 +1541,7 @@ Human-readable description of the warning.
 
 #### `filePath`
 
-_Defined in `packages/core/src/types.ts:190`_
+_Defined in `packages/core/src/types.ts:200`_
 
 ```typescript
 string
@@ -1551,7 +1551,7 @@ Absolute path of the file where the warning occurred.
 
 #### `line`
 
-_Defined in `packages/core/src/types.ts:192`_
+_Defined in `packages/core/src/types.ts:202`_
 
 ```typescript
 number
@@ -1561,7 +1561,7 @@ number
 
 #### `column`
 
-_Defined in `packages/core/src/types.ts:194`_
+_Defined in `packages/core/src/types.ts:204`_
 
 ```typescript
 number
@@ -2629,9 +2629,19 @@ Record<string, string | number | boolean>
 
 Frontmatter fields
 
-### `SiteGeneratorOptions`
+#### `stub`
 
 _Defined in `packages/gen/src/site-generator.ts:21`_
+
+```typescript
+boolean | undefined
+```
+
+When true, this page is scaffolding intended for human/agent editing. Stub pages are created only on the first build and never overwritten, preserving manual edits across subsequent `forge-ts build` runs. Auto-generated pages (stub=false) are always regenerated from source.
+
+### `SiteGeneratorOptions`
+
+_Defined in `packages/gen/src/site-generator.ts:28`_
 
 ```typescript
 any
@@ -2641,7 +2651,7 @@ Options controlling the doc site generator.
 
 #### `format`
 
-_Defined in `packages/gen/src/site-generator.ts:23`_
+_Defined in `packages/gen/src/site-generator.ts:30`_
 
 ```typescript
 "markdown" | "mdx"
@@ -2651,7 +2661,7 @@ Output format
 
 #### `ssgTarget`
 
-_Defined in `packages/gen/src/site-generator.ts:25`_
+_Defined in `packages/gen/src/site-generator.ts:32`_
 
 ```typescript
 "docusaurus" | "mintlify" | "nextra" | "vitepress" | undefined
@@ -2661,7 +2671,7 @@ SSG target for frontmatter
 
 #### `projectName`
 
-_Defined in `packages/gen/src/site-generator.ts:27`_
+_Defined in `packages/gen/src/site-generator.ts:34`_
 
 ```typescript
 string
@@ -2671,7 +2681,7 @@ Project name
 
 #### `projectDescription`
 
-_Defined in `packages/gen/src/site-generator.ts:29`_
+_Defined in `packages/gen/src/site-generator.ts:36`_
 
 ```typescript
 string | undefined
@@ -2681,7 +2691,7 @@ Project description
 
 #### `repositoryUrl`
 
-_Defined in `packages/gen/src/site-generator.ts:31`_
+_Defined in `packages/gen/src/site-generator.ts:38`_
 
 ```typescript
 string | undefined
@@ -2691,7 +2701,7 @@ Repository URL (auto-detected from package.json).
 
 #### `packageName`
 
-_Defined in `packages/gen/src/site-generator.ts:33`_
+_Defined in `packages/gen/src/site-generator.ts:40`_
 
 ```typescript
 string | undefined
@@ -3225,7 +3235,7 @@ Include first
 
 ### `SkillPackage`
 
-_Defined in `packages/gen/src/skill.ts:494`_
+_Defined in `packages/gen/src/skill.ts:765`_
 
 ```typescript
 any
@@ -3235,7 +3245,7 @@ A generated skill package following the agentskills.io directory structure. Cont
 
 #### `directoryName`
 
-_Defined in `packages/gen/src/skill.ts:496`_
+_Defined in `packages/gen/src/skill.ts:767`_
 
 ```typescript
 string
@@ -3245,7 +3255,7 @@ The skill directory name (lowercase, hyphens only, max 64 chars).
 
 #### `files`
 
-_Defined in `packages/gen/src/skill.ts:498`_
+_Defined in `packages/gen/src/skill.ts:769`_
 
 ```typescript
 { path: string; content: string; }[]

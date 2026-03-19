@@ -12,6 +12,13 @@ export interface DocPage {
 	content: string;
 	/** Frontmatter fields */
 	frontmatter: Record<string, string | number | boolean>;
+	/**
+	 * When true, this page is scaffolding intended for human/agent editing.
+	 * Stub pages are created only on the first build and never overwritten,
+	 * preserving manual edits across subsequent `forge-ts build` runs.
+	 * Auto-generated pages (stub=false) are always regenerated from source.
+	 */
+	stub?: boolean;
 }
 
 /**
@@ -847,8 +854,6 @@ function renderConfigurationPage(
 
 	lines.push(`Configuration reference for **${options.projectName}**.`);
 	lines.push("");
-	lines.push("> This is a stub page. Edit this file to document your configuration options.");
-	lines.push("");
 	lines.push("## forge-ts.config.ts");
 	lines.push("");
 	lines.push("Create a `forge-ts.config.ts` file in your project root:");
@@ -1050,6 +1055,7 @@ export function generateDocSite(
 		path: `concepts.${ext}`,
 		content: `${serializeFrontmatter(conceptsFrontmatter)}${conceptsContent.trimEnd()}\n`,
 		frontmatter: conceptsFrontmatter,
+		stub: true,
 	});
 
 	// -------------------------------------------------------------------------
@@ -1067,6 +1073,7 @@ export function generateDocSite(
 		path: `guides/index.${ext}`,
 		content: `${serializeFrontmatter(guidesFrontmatter)}${guidesContent.trimEnd()}\n`,
 		frontmatter: guidesFrontmatter,
+		stub: true,
 	});
 
 	// -------------------------------------------------------------------------
@@ -1172,6 +1179,7 @@ export function generateDocSite(
 		path: `changelog.${ext}`,
 		content: `${serializeFrontmatter(changelogFrontmatter)}${changelogContent.trimEnd()}\n`,
 		frontmatter: changelogFrontmatter,
+		stub: true,
 	});
 
 	// -------------------------------------------------------------------------
@@ -1188,6 +1196,7 @@ export function generateDocSite(
 		path: `faq.${ext}`,
 		content: `${serializeFrontmatter(faqFrontmatter)}${faqContent.trimEnd()}\n`,
 		frontmatter: faqFrontmatter,
+		stub: true,
 	});
 
 	const contributingContent = renderContributingPage(options);
@@ -1200,6 +1209,7 @@ export function generateDocSite(
 		path: `contributing.${ext}`,
 		content: `${serializeFrontmatter(contributingFrontmatter)}${contributingContent.trimEnd()}\n`,
 		frontmatter: contributingFrontmatter,
+		stub: true,
 	});
 
 	// Suppress unused variable warning — config is available for future use

@@ -134,6 +134,16 @@ export interface ForgeConfig {
 		homepage?: string;
 		/** npm package name for the main/CLI package. */
 		packageName?: string;
+		/** Short description from package.json. */
+		description?: string;
+		/** Package version string. */
+		version?: string;
+		/** CLI entry points from the `bin` field (e.g., `{ "my-cli": "./dist/cli.js" }`). */
+		bin?: Record<string, string>;
+		/** npm scripts from package.json (e.g., `{ "test": "vitest", "build": "tsup" }`). */
+		scripts?: Record<string, string>;
+		/** npm keywords for the package. */
+		keywords?: string[];
 	};
 }
 

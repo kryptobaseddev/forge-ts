@@ -122,6 +122,9 @@ interface PackageJson {
 	description?: string;
 	homepage?: string;
 	repository?: string | { type?: string; url?: string };
+	bin?: string | Record<string, string>;
+	scripts?: Record<string, string>;
+	keywords?: string[];
 	"forge-ts"?: Partial<ForgeConfig>;
 }
 
@@ -215,6 +218,26 @@ export async function loadConfig(rootDir?: string): Promise<ForgeConfig> {
 			}
 			if (!config.project.packageName) {
 				config.project.packageName = pkg.name;
+			}
+			if (!config.project.description) {
+				config.project.description = pkg.description;
+			}
+			if (!config.project.version) {
+				config.project.version = pkg.version;
+			}
+			if (!config.project.bin) {
+				if (typeof pkg.bin === "string") {
+					const binName = pkg.name?.replace(/^@[^/]+\//, "") ?? "cli";
+					config.project.bin = { [binName]: pkg.bin };
+				} else if (pkg.bin) {
+					config.project.bin = pkg.bin;
+				}
+			}
+			if (!config.project.scripts) {
+				config.project.scripts = pkg.scripts;
+			}
+			if (!config.project.keywords) {
+				config.project.keywords = pkg.keywords;
 			}
 		} catch {
 			// Ignore parse errors

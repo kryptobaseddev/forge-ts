@@ -652,11 +652,11 @@ describe("api/examples page", () => {
 // ---------------------------------------------------------------------------
 
 describe("configuration page", () => {
-	it("includes a stub notice", () => {
+	it("is not marked as a stub (auto-generated from config types)", () => {
 		const map = makeSymbolsByPackage([fnAdd]);
 		const pages = generateDocSite(map, makeConfig(), baseOptions);
 		const configPage = pages.find((p) => p.path === "configuration.md");
-		expect(configPage?.content).toContain("stub");
+		expect(configPage?.stub).not.toBe(true);
 	});
 
 	it("includes forge-ts.config.ts example", () => {

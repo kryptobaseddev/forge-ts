@@ -1115,12 +1115,17 @@
               ]
             },
             "description": "Frontmatter fields"
+          },
+          "stub": {
+            "type": "boolean",
+            "description": "When true, this page is scaffolding intended for human/agent editing. Stub pages are created only on the first build and never overwritten, preserving manual edits across subsequent `forge-ts build` runs. Auto-generated pages (stub=false) are always regenerated from source."
           }
         },
         "required": [
           "path",
           "content",
-          "frontmatter"
+          "frontmatter",
+          "stub"
         ]
       },
       "SiteGeneratorOptions": {

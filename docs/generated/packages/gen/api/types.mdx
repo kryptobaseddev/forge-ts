@@ -13,6 +13,7 @@ A single generated documentation page.
 | `path` | `string` | Yes | Relative path from outDir (e.g., "packages/core/index.md") |
 | `content` | `string` | Yes | Page content (Markdown or MDX) |
 | `frontmatter` | `Record<string, string \| number \| boolean>` | Yes | Frontmatter fields |
+| `stub` | `boolean \| undefined` | No | When true, this page is scaffolding intended for human/agent editing. Stub pages are created only on the first build and never overwritten, preserving manual edits across subsequent `forge-ts build` runs. Auto-generated pages (stub=false) are always regenerated from source. |
 
 ## SiteGeneratorOptions
 

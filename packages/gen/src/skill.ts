@@ -37,105 +37,6 @@ function toDirectoryName(name: string): string {
 }
 
 /**
- * Builds a description string optimized for agentskills.io discovery.
- * Derived entirely from the project's exported symbols and metadata.
- * @internal
- */
-function buildDescription(symbols: ForgeSymbol[], config: ForgeConfig): string {
-	const exported = symbols.filter((s) => s.exported);
-	const projectName =
-		config.project.packageName ?? config.rootDir.split("/").pop() ?? "this project";
-
-	// Detect capabilities from the actual exported symbols
-	const functionCount = exported.filter((s) => s.kind === "function").length;
-	const typeCount = exported.filter(
-		(s) => s.kind === "interface" || s.kind === "type" || s.kind === "enum",
-	).length;
-	const classCount = exported.filter((s) => s.kind === "class").length;
-	const hasRoutes = exported.some((s) => s.documentation?.tags?.route !== undefined);
-
-	const capabilities: string[] = [];
-	if (functionCount > 0) capabilities.push(`${functionCount} functions`);
-	if (typeCount > 0) capabilities.push(`${typeCount} type definitions`);
-	if (classCount > 0) capabilities.push(`${classCount} classes`);
-	if (hasRoutes) capabilities.push("HTTP API routes");
-
-	// Use @packageDocumentation summary as the lead
-	const pkgDoc = symbols.find((s) => s.documentation?.tags?.packageDocumentation);
-	const leadSentence =
-		pkgDoc?.documentation?.summary ??
-		exported.find((s) => s.documentation?.summary)?.documentation?.summary;
-
-	const capList = capabilities.length > 0 ? capabilities.join(", ") : "TypeScript utilities";
-
-	let description = "";
-	if (leadSentence) {
-		description += `${leadSentence} `;
-	}
-	description +=
-		`Use this skill when working with ${projectName} or when a user mentions it. ` +
-		`It provides ${capList}. ` +
-		`Use when you need to understand how to import, configure, or call its API, ` +
-		`even if the user doesn't mention the package by name.`;
-
-	if (description.length > 1024) {
-		description = `${description.slice(0, 1021)}...`;
-	}
-	return description;
-}
-
-/**
- * Renders the API quick-reference table rows for a set of symbols.
- * @internal
- */
-function renderApiRows(symbols: ForgeSymbol[]): string[] {
-	const rows: string[] = [];
-	for (const sym of symbols) {
-		if (!sym.exported) continue;
-		if (sym.kind === "method" || sym.kind === "property") continue;
-
-		const name = sym.kind === "function" ? `\`${sym.name}()\`` : `\`${sym.name}\``;
-		const sig = sym.signature ? `\`${sym.signature}\`` : `${kindLabel(sym.kind)} ${sym.name}`;
-		const desc = sym.documentation?.summary ?? "";
-		rows.push(`| ${name} | ${sig} | ${desc} |`);
-	}
-	return rows;
-}
-
-/**
- * Renders the top N pattern sections from exported functions/classes with @example blocks.
- * @internal
- */
-function renderPatterns(symbols: ForgeSymbol[], maxPatterns: number = 5): string[] {
-	const lines: string[] = [];
-	let count = 0;
-
-	for (const sym of symbols) {
-		if (count >= maxPatterns) break;
-		if (!sym.exported) continue;
-		if (sym.kind !== "function" && sym.kind !== "class") continue;
-
-		const examples = sym.documentation?.examples ?? [];
-		if (examples.length === 0) continue;
-
-		lines.push(`### ${sym.name}`);
-		lines.push("");
-		if (sym.documentation?.summary) {
-			lines.push(sym.documentation.summary);
-			lines.push("");
-		}
-		const ex = examples[0];
-		const lang = ex.language || "typescript";
-		lines.push(`\`\`\`${lang}`);
-		lines.push(ex.code.trim());
-		lines.push("```");
-		lines.push("");
-		count++;
-	}
-	return lines;
-}
-
-/**
  * Returns true when `kind` is a concept-level declaration.
  * @internal
  */
@@ -144,7 +45,195 @@ function isConceptKind(kind: ForgeSymbol["kind"]): boolean {
 }
 
 /**
- * Renders the key types list (top 10) from exported types and interfaces.
+ * Returns the primary CLI command name from bin config, or undefined.
+ * @internal
+ */
+function primaryBinName(config: ForgeConfig): string | undefined {
+	const bin = config.project.bin;
+	if (!bin) return undefined;
+	const keys = Object.keys(bin);
+	if (keys.length === 0) return undefined;
+	// Prefer a key matching the package name (sans scope)
+	const pkgShort = config.project.packageName?.replace(/^@[^/]+\//, "");
+	return keys.find((k) => k === pkgShort) ?? keys[0];
+}
+
+// ---------------------------------------------------------------------------
+// Description builder
+// ---------------------------------------------------------------------------
+
+/**
+ * Builds a structured description with numbered trigger scenarios.
+ * Derived from the project's exported symbols, config, and package metadata.
+ * @internal
+ */
+function buildDescription(symbols: ForgeSymbol[], config: ForgeConfig): string {
+	const exported = symbols.filter((s) => s.exported);
+	const projectName =
+		config.project.packageName ?? config.rootDir.split("/").pop() ?? "this project";
+
+	// Lead sentence — prefer package.json description, then @packageDocumentation
+	const pkgDoc = symbols.find((s) => s.documentation?.tags?.packageDocumentation);
+	const leadSentence =
+		config.project.description ??
+		pkgDoc?.documentation?.summary ??
+		exported.find((s) => s.documentation?.summary)?.documentation?.summary;
+
+	// Build numbered trigger scenarios from detected capabilities
+	const triggers: string[] = [];
+	let n = 1;
+
+	const cliName = primaryBinName(config);
+	if (cliName) {
+		triggers.push(`(${n++}) running ${cliName} CLI commands`);
+	}
+
+	const functionCount = exported.filter((s) => s.kind === "function").length;
+	if (functionCount > 0) {
+		triggers.push(`(${n++}) calling its ${functionCount} API functions`);
+	}
+
+	const hasRoutes = exported.some((s) => s.documentation?.tags?.route !== undefined);
+	if (hasRoutes) {
+		triggers.push(`(${n++}) building HTTP API routes`);
+	}
+
+	const configSym = exported.find(
+		(s) =>
+			(s.kind === "interface" || s.kind === "type") &&
+			/config/i.test(s.name) &&
+			(s.children?.length ?? 0) > 0,
+	);
+	if (configSym) {
+		triggers.push(`(${n++}) configuring ${projectName}`);
+	}
+
+	const typeCount = exported.filter(
+		(s) => s.kind === "interface" || s.kind === "type" || s.kind === "enum",
+	).length;
+	if (typeCount > 0) {
+		triggers.push(`(${n++}) understanding its ${typeCount} type definitions`);
+	}
+
+	const classCount = exported.filter((s) => s.kind === "class").length;
+	if (classCount > 0) {
+		triggers.push(`(${n++}) working with its ${classCount} classes`);
+	}
+
+	// Keywords from package.json as additional trigger words
+	const keywords = config.project.keywords ?? [];
+	if (keywords.length > 0) {
+		const kwStr = keywords.slice(0, 5).join('", "');
+		triggers.push(`(${n++}) user mentions "${kwStr}"`);
+	}
+
+	triggers.push(`(${n}) user mentions "${projectName}" or asks about its API`);
+
+	let description = "";
+	if (leadSentence) {
+		description += `${leadSentence} `;
+	}
+	description += `Use when: ${triggers.join(", ")}.`;
+
+	if (description.length > 1024) {
+		description = `${description.slice(0, 1021)}...`;
+	}
+	return description;
+}
+
+// ---------------------------------------------------------------------------
+// Body section renderers
+// ---------------------------------------------------------------------------
+
+/**
+ * Renders a Quick Start section with install command and key CLI/API usage.
+ * @internal
+ */
+function renderQuickStart(
+	symbols: ForgeSymbol[],
+	config: ForgeConfig,
+): string[] {
+	const lines: string[] = [];
+	const projectName = config.project.packageName ?? "project";
+	const cliName = primaryBinName(config);
+
+	lines.push("## Quick Start");
+	lines.push("");
+	lines.push("```bash");
+	lines.push(`npm install ${cliName ? "-D " : ""}${projectName}`);
+	lines.push("```");
+	lines.push("");
+
+	// If CLI exists, show key commands instead of API example
+	if (cliName && config.project.scripts) {
+		const scripts = config.project.scripts;
+		const relevantKeys = ["check", "test", "build", "lint", "dev", "start", "generate"];
+		const cliCommands: string[] = [];
+		for (const key of relevantKeys) {
+			const script = scripts[key];
+			if (script && script.includes(cliName)) {
+				cliCommands.push(`npx ${cliName} ${key}`);
+			}
+		}
+		// Fallback: show common subcommands from bin keys
+		if (cliCommands.length === 0) {
+			cliCommands.push(`npx ${cliName} --help`);
+		}
+		if (cliCommands.length > 0) {
+			lines.push("```bash");
+			for (const cmd of cliCommands.slice(0, 5)) {
+				lines.push(cmd);
+			}
+			lines.push("```");
+			lines.push("");
+		}
+	} else {
+		// No CLI — show first @example as quick start
+		const exported = symbols.filter((s) => s.exported);
+		for (const sym of exported) {
+			if (sym.kind !== "function" && sym.kind !== "class") continue;
+			const ex = sym.documentation?.examples?.[0];
+			if (ex) {
+				lines.push(`\`\`\`${ex.language || "typescript"}`);
+				lines.push(ex.code.trim());
+				lines.push("```");
+				lines.push("");
+				break;
+			}
+		}
+	}
+
+	return lines;
+}
+
+/**
+ * Renders a compact API summary table for the body. Full details go to the reference.
+ * @internal
+ */
+function renderApiSummaryTable(symbols: ForgeSymbol[]): string[] {
+	const exported = symbols.filter((s) => s.exported);
+	const functions = exported.filter((s) => s.kind === "function");
+	if (functions.length === 0) return [];
+
+	const lines: string[] = [];
+	lines.push("## API");
+	lines.push("");
+	lines.push("| Function | Description |");
+	lines.push("|----------|-------------|");
+
+	for (const fn of functions.slice(0, 15)) {
+		const desc = fn.documentation?.summary ?? "";
+		lines.push(`| \`${fn.name}()\` | ${desc} |`);
+	}
+	if (functions.length > 15) {
+		lines.push(`| ... | ${functions.length - 15} more — see API reference |`);
+	}
+	lines.push("");
+	return lines;
+}
+
+/**
+ * Renders key types list (top 10) from exported types and interfaces.
  * @internal
  */
 function renderKeyTypes(symbols: ForgeSymbol[], max: number = 10): string[] {
@@ -160,6 +249,72 @@ function renderKeyTypes(symbols: ForgeSymbol[], max: number = 10): string[] {
 		count++;
 	}
 	return lines;
+}
+
+/**
+ * Renders a Configuration section with a code example using inline comments.
+ * @internal
+ */
+function renderConfigSection(symbols: ForgeSymbol[], config: ForgeConfig): string[] {
+	const exported = symbols.filter((s) => s.exported);
+	const configSymbol = exported.find(
+		(s) =>
+			(s.kind === "interface" || s.kind === "type") &&
+			/config/i.test(s.name) &&
+			(s.children?.length ?? 0) > 0,
+	);
+	if (!configSymbol) return [];
+
+	const lines: string[] = [];
+	lines.push("## Configuration");
+	lines.push("");
+
+	// Generate a code example with inline comments from child summaries
+	const children = configSymbol.children ?? [];
+	if (children.length > 0) {
+		const projectName = config.project.packageName ?? "project";
+		const importSource = projectName.includes("/") ? projectName.split("/")[0] + "/" + projectName.split("/")[1] : projectName;
+
+		lines.push("```typescript");
+		lines.push(`import type { ${configSymbol.name} } from "${importSource}";`);
+		lines.push("");
+		lines.push(`const config: Partial<${configSymbol.name}> = {`);
+		for (const child of children.slice(0, 10)) {
+			const comment = child.documentation?.summary;
+			if (comment) {
+				lines.push(`  // ${comment}`);
+			}
+			// Infer a sensible default value from the type
+			const type = child.signature?.split(":").slice(1).join(":").trim() ?? "";
+			const defaultVal = inferDefaultValue(type, child.name);
+			lines.push(`  ${child.name}: ${defaultVal},`);
+		}
+		if (children.length > 10) {
+			lines.push(`  // ... ${children.length - 10} more options`);
+		}
+		lines.push("};");
+		lines.push("```");
+		lines.push("");
+	}
+
+	lines.push("See [references/CONFIGURATION.md](references/CONFIGURATION.md) for full details.");
+	lines.push("");
+	return lines;
+}
+
+/**
+ * Infers a sensible placeholder value from a TypeScript type string.
+ * @internal
+ */
+function inferDefaultValue(type: string, name: string): string {
+	const t = type.trim();
+	if (t === "boolean" || t.startsWith("boolean")) return "true";
+	if (t === "string" || t.startsWith("string")) return `"..."`;
+	if (t === "number" || t.startsWith("number")) return "0";
+	if (t.includes("[]") || t.startsWith("Array")) return "[]";
+	if (t.startsWith("{") || /^[A-Z]/.test(t)) return "{ /* ... */ }";
+	if (/dir|path/i.test(name)) return `"."`;
+	return `undefined`;
 }
 
 /**
@@ -202,6 +357,10 @@ function renderGotchas(symbols: ForgeSymbol[]): string[] {
 	return lines;
 }
 
+// ---------------------------------------------------------------------------
+// SKILL.md builder
+// ---------------------------------------------------------------------------
+
 /**
  * Generates the full SKILL.md content. Generic for ANY TypeScript project.
  * Content is derived entirely from the project's symbols and metadata.
@@ -209,14 +368,13 @@ function renderGotchas(symbols: ForgeSymbol[]): string[] {
  */
 function buildSkillMd(symbols: ForgeSymbol[], config: ForgeConfig, directoryName: string): string {
 	const projectName = config.project.packageName ?? config.rootDir.split("/").pop() ?? "Project";
-	const exported = symbols.filter((s) => s.exported);
 
 	const description = buildDescription(symbols, config);
 
 	const lines: string[] = [];
 
 	// ---------------------------------------------------------------------------
-	// YAML Frontmatter — required by agentskills.io spec
+	// YAML Frontmatter — only name + description per skill spec
 	// ---------------------------------------------------------------------------
 	lines.push("---");
 	lines.push(`name: ${directoryName}`);
@@ -224,69 +382,40 @@ function buildSkillMd(symbols: ForgeSymbol[], config: ForgeConfig, directoryName
 	for (const segment of description.split("\n")) {
 		lines.push(`  ${segment}`);
 	}
-	lines.push("license: MIT");
-	lines.push("compatibility: Requires Node.js and TypeScript");
-	lines.push("metadata:");
-	lines.push(`  generated-by: forge-ts`);
 	lines.push("---");
 	lines.push("");
 
 	// ---------------------------------------------------------------------------
-	// Overview — from @packageDocumentation or first symbol summary
+	// Title + Overview
 	// ---------------------------------------------------------------------------
 	lines.push(`# ${projectName}`);
 	lines.push("");
 
 	const pkgDoc = symbols.find((s) => s.documentation?.tags?.packageDocumentation);
 	const overview =
+		config.project.description ??
 		pkgDoc?.documentation?.summary ??
-		exported.find((s) => s.documentation?.summary)?.documentation?.summary;
+		symbols.filter((s) => s.exported).find((s) => s.documentation?.summary)?.documentation
+			?.summary;
 	if (overview) {
 		lines.push(overview);
 		lines.push("");
 	}
 
 	// ---------------------------------------------------------------------------
-	// Installation — from package name
+	// Quick Start — install + CLI commands or first example
 	// ---------------------------------------------------------------------------
-	lines.push("## Installation");
-	lines.push("");
-	lines.push("```bash");
-	lines.push(`npm install ${projectName}`);
-	lines.push("```");
-	lines.push("");
+	lines.push(...renderQuickStart(symbols, config));
 
 	// ---------------------------------------------------------------------------
-	// Usage — first @example block as the quick start
+	// API summary table — compact, functions only
 	// ---------------------------------------------------------------------------
-	let firstExample: { code: string; language: string; symbolName: string } | undefined;
-	for (const sym of exported) {
-		if (sym.kind !== "function" && sym.kind !== "class") continue;
-		const ex = sym.documentation?.examples?.[0];
-		if (ex) {
-			firstExample = { code: ex.code, language: ex.language, symbolName: sym.name };
-			break;
-		}
-	}
-
-	if (firstExample) {
-		lines.push("## Usage");
-		lines.push("");
-		lines.push(`\`\`\`${firstExample.language || "typescript"}`);
-		lines.push(firstExample.code.trim());
-		lines.push("```");
-		lines.push("");
-	}
+	lines.push(...renderApiSummaryTable(symbols));
 
 	// ---------------------------------------------------------------------------
-	// Common Patterns — top 5 @example blocks with context
+	// Configuration — code example with inline comments
 	// ---------------------------------------------------------------------------
-	const patternLines = renderPatterns(exported, 5);
-	if (patternLines.length > 0) {
-		lines.push("## Common Patterns");
-		lines.push("");
-		lines.push(...patternLines);
-	}
+	lines.push(...renderConfigSection(symbols, config));
 
 	// ---------------------------------------------------------------------------
 	// Gotchas — from @deprecated, @throws, enums
@@ -302,7 +431,7 @@ function buildSkillMd(symbols: ForgeSymbol[], config: ForgeConfig, directoryName
 	// ---------------------------------------------------------------------------
 	// Key Types — top 10 exported types/interfaces
 	// ---------------------------------------------------------------------------
-	const keyTypeLines = renderKeyTypes(exported);
+	const keyTypeLines = renderKeyTypes(symbols);
 	if (keyTypeLines.length > 0) {
 		lines.push("## Key Types");
 		lines.push("");
@@ -311,34 +440,13 @@ function buildSkillMd(symbols: ForgeSymbol[], config: ForgeConfig, directoryName
 	}
 
 	// ---------------------------------------------------------------------------
-	// Configuration — only if a config-like type is detected
+	// References section — clear pointers to bundled files
 	// ---------------------------------------------------------------------------
-	const configSymbol = exported.find(
-		(s) =>
-			(s.kind === "interface" || s.kind === "type") &&
-			/config/i.test(s.name) &&
-			(s.children?.length ?? 0) > 0,
-	);
-
-	if (configSymbol) {
-		lines.push("## Configuration");
-		lines.push("");
-		lines.push(`The \`${configSymbol.name}\` type defines the available options:`);
-		lines.push("");
-		for (const child of configSymbol.children ?? []) {
-			const summary = child.documentation?.summary ?? "";
-			lines.push(`- **\`${child.name}\`**${summary ? ` — ${summary}` : ""}`);
-		}
-		lines.push("");
-		lines.push("See [references/CONFIGURATION.md](references/CONFIGURATION.md) for full details.");
-		lines.push("");
-	}
-
-	// ---------------------------------------------------------------------------
-	// API Reference pointer — keep SKILL.md lean
-	// ---------------------------------------------------------------------------
+	lines.push("## References");
+	lines.push("");
+	lines.push("- [references/CONFIGURATION.md](references/CONFIGURATION.md) — Full config options");
 	lines.push(
-		"See [references/API-REFERENCE.md](references/API-REFERENCE.md) for full API signatures, parameter tables, and all code examples.",
+		"- [references/API-REFERENCE.md](references/API-REFERENCE.md) — Signatures, parameters, examples",
 	);
 	lines.push("");
 
@@ -348,9 +456,13 @@ function buildSkillMd(symbols: ForgeSymbol[], config: ForgeConfig, directoryName
 		.trimEnd()}\n`;
 }
 
+// ---------------------------------------------------------------------------
+// API Reference builder
+// ---------------------------------------------------------------------------
+
 /**
  * Generates the `references/API-REFERENCE.md` content.
- * Full API dump — signatures, params, returns, examples.
+ * Grouped by kind with a Table of Contents for efficient navigation.
  * @internal
  */
 function buildApiReferenceMd(symbols: ForgeSymbol[], config: ForgeConfig): string {
@@ -360,70 +472,62 @@ function buildApiReferenceMd(symbols: ForgeSymbol[], config: ForgeConfig): strin
 	const lines: string[] = [];
 	lines.push(`# ${projectName} — API Reference`);
 	lines.push("");
-	lines.push("Full function signatures, type property tables, and all @example blocks.");
-	lines.push("");
 
-	const apiRows = renderApiRows(exported);
-	if (apiRows.length > 0) {
-		lines.push("## Exports");
+	// Group by kind
+	const functions = exported.filter((s) => s.kind === "function");
+	const classes = exported.filter((s) => s.kind === "class");
+	const types = exported.filter(
+		(s) => s.kind === "interface" || s.kind === "type" || s.kind === "enum",
+	);
+	const variables = exported.filter((s) => s.kind === "variable");
+
+	// Table of Contents
+	const tocEntries: string[] = [];
+	if (functions.length > 0) tocEntries.push("- [Functions](#functions)");
+	if (types.length > 0) tocEntries.push("- [Types](#types)");
+	if (classes.length > 0) tocEntries.push("- [Classes](#classes)");
+	if (variables.length > 0) tocEntries.push("- [Constants](#constants)");
+
+	if (tocEntries.length > 0) {
+		lines.push("## Table of Contents");
 		lines.push("");
-		lines.push("| Symbol | Signature | Description |");
-		lines.push("|--------|-----------|-------------|");
-		lines.push(...apiRows);
+		lines.push(...tocEntries);
 		lines.push("");
 	}
 
-	for (const sym of exported) {
-		if (sym.kind === "method" || sym.kind === "property") continue;
-
-		const hasDetail =
-			sym.documentation?.summary ||
-			sym.signature ||
-			(sym.documentation?.examples?.length ?? 0) > 0 ||
-			(sym.documentation?.params?.length ?? 0) > 0;
-
-		if (!hasDetail) continue;
-
-		lines.push(`## \`${sym.name}\``);
+	// Functions section
+	if (functions.length > 0) {
+		lines.push("## Functions");
 		lines.push("");
-		if (sym.documentation?.summary) {
-			lines.push(sym.documentation.summary);
-			lines.push("");
+		for (const sym of functions) {
+			lines.push(...renderSymbolDetail(sym));
 		}
-		if (sym.signature) {
-			lines.push("```typescript");
-			lines.push(sym.signature);
-			lines.push("```");
-			lines.push("");
+	}
+
+	// Types section
+	if (types.length > 0) {
+		lines.push("## Types");
+		lines.push("");
+		for (const sym of types) {
+			lines.push(...renderSymbolDetail(sym));
 		}
-		if (sym.documentation?.params && sym.documentation.params.length > 0) {
-			lines.push("**Parameters:**");
-			lines.push("");
-			for (const p of sym.documentation.params) {
-				lines.push(`- \`${p.name}\`${p.type ? ` (\`${p.type}\`)` : ""} — ${p.description}`);
-			}
-			lines.push("");
+	}
+
+	// Classes section
+	if (classes.length > 0) {
+		lines.push("## Classes");
+		lines.push("");
+		for (const sym of classes) {
+			lines.push(...renderSymbolDetail(sym));
 		}
-		if (sym.documentation?.returns) {
-			lines.push(`**Returns:** ${sym.documentation.returns.description}`);
-			lines.push("");
-		}
-		// Children (class members, interface properties)
-		if (sym.children && sym.children.length > 0) {
-			lines.push("**Members:**");
-			lines.push("");
-			for (const child of sym.children) {
-				const desc = child.documentation?.summary ?? "";
-				lines.push(`- \`${child.name}\`${desc ? ` — ${desc}` : ""}`);
-			}
-			lines.push("");
-		}
-		for (const ex of sym.documentation?.examples ?? []) {
-			const lang = ex.language || "typescript";
-			lines.push(`\`\`\`${lang}`);
-			lines.push(ex.code.trim());
-			lines.push("```");
-			lines.push("");
+	}
+
+	// Constants section
+	if (variables.length > 0) {
+		lines.push("## Constants");
+		lines.push("");
+		for (const sym of variables) {
+			lines.push(...renderSymbolDetail(sym));
 		}
 	}
 
@@ -434,8 +538,63 @@ function buildApiReferenceMd(symbols: ForgeSymbol[], config: ForgeConfig): strin
 }
 
 /**
+ * Renders a single symbol's full detail block for the API reference.
+ * @internal
+ */
+function renderSymbolDetail(sym: ForgeSymbol): string[] {
+	const lines: string[] = [];
+	lines.push(`### \`${sym.name}\``);
+	lines.push("");
+
+	if (sym.documentation?.summary) {
+		lines.push(sym.documentation.summary);
+		lines.push("");
+	}
+	if (sym.signature) {
+		lines.push("```typescript");
+		lines.push(sym.signature);
+		lines.push("```");
+		lines.push("");
+	}
+	if (sym.documentation?.params && sym.documentation.params.length > 0) {
+		lines.push("**Parameters:**");
+		lines.push("");
+		for (const p of sym.documentation.params) {
+			lines.push(`- \`${p.name}\`${p.type ? ` (\`${p.type}\`)` : ""} — ${p.description}`);
+		}
+		lines.push("");
+	}
+	if (sym.documentation?.returns) {
+		lines.push(`**Returns:** ${sym.documentation.returns.description}`);
+		lines.push("");
+	}
+	// Children (class members, interface properties)
+	if (sym.children && sym.children.length > 0) {
+		lines.push("**Members:**");
+		lines.push("");
+		for (const child of sym.children) {
+			const desc = child.documentation?.summary ?? "";
+			lines.push(`- \`${child.name}\`${desc ? ` — ${desc}` : ""}`);
+		}
+		lines.push("");
+	}
+	for (const ex of sym.documentation?.examples ?? []) {
+		const lang = ex.language || "typescript";
+		lines.push(`\`\`\`${lang}`);
+		lines.push(ex.code.trim());
+		lines.push("```");
+		lines.push("");
+	}
+	return lines;
+}
+
+// ---------------------------------------------------------------------------
+// Configuration Reference builder
+// ---------------------------------------------------------------------------
+
+/**
  * Generates the `references/CONFIGURATION.md` content.
- * Documents all config-like types with property tables.
+ * Documents all config-like types with property tables and code examples.
  * @internal
  */
 function buildConfigurationMd(symbols: ForgeSymbol[], config: ForgeConfig): string {
@@ -460,9 +619,38 @@ function buildConfigurationMd(symbols: ForgeSymbol[], config: ForgeConfig): stri
 			lines.push(configSym.documentation.summary);
 			lines.push("");
 		}
+
+		const children = configSym.children ?? [];
+
+		// Code example with inline comments
+		if (children.length > 0) {
+			const importSource = projectName.includes("/")
+				? projectName
+				: projectName;
+
+			lines.push("```typescript");
+			lines.push(`import type { ${configSym.name} } from "${importSource}";`);
+			lines.push("");
+			lines.push(`const config: Partial<${configSym.name}> = {`);
+			for (const child of children) {
+				if (child.documentation?.summary) {
+					lines.push(`  // ${child.documentation.summary}`);
+				}
+				const type = child.signature
+					? child.signature.split(":").slice(1).join(":").trim()
+					: "";
+				const defaultVal = inferDefaultValue(type, child.name);
+				lines.push(`  ${child.name}: ${defaultVal},`);
+			}
+			lines.push("};");
+			lines.push("```");
+			lines.push("");
+		}
+
+		// Property table for quick lookup
 		lines.push("| Property | Type | Description |");
 		lines.push("|----------|------|-------------|");
-		for (const child of configSym.children ?? []) {
+		for (const child of children) {
 			const type = child.signature ? child.signature.split(":").slice(1).join(":").trim() : "";
 			const desc = child.documentation?.summary ?? "";
 			lines.push(`| \`${child.name}\` | \`${type}\` | ${desc} |`);
@@ -479,6 +667,89 @@ function buildConfigurationMd(symbols: ForgeSymbol[], config: ForgeConfig): stri
 		.join("\n")
 		.replace(/\n{3,}/g, "\n\n")
 		.trimEnd()}\n`;
+}
+
+// ---------------------------------------------------------------------------
+// Script builders
+// ---------------------------------------------------------------------------
+
+/**
+ * Generates contextual shell scripts based on project metadata.
+ * @internal
+ */
+function buildScripts(config: ForgeConfig): Array<{ path: string; content: string }> {
+	const scripts: Array<{ path: string; content: string }> = [];
+	const cliName = primaryBinName(config);
+	const pkgScripts = config.project.scripts ?? {};
+
+	if (cliName) {
+		// Projects with a CLI get purpose-built wrappers
+		// Build script
+		if (pkgScripts.build) {
+			scripts.push({
+				path: "scripts/build.sh",
+				content: [
+					"#!/usr/bin/env bash",
+					`# Run ${cliName} build pipeline`,
+					"set -euo pipefail",
+					`npx ${cliName} build "$@"`,
+					"",
+				].join("\n"),
+			});
+		}
+
+		// Check/lint script
+		const checkCmd = pkgScripts.check ?? pkgScripts.lint;
+		if (checkCmd) {
+			const subcommand = checkCmd.includes("check") ? "check" : "lint";
+			scripts.push({
+				path: "scripts/check.sh",
+				content: [
+					"#!/usr/bin/env bash",
+					`# Run ${cliName} ${subcommand}`,
+					"set -euo pipefail",
+					`npx ${cliName} ${subcommand} "$@"`,
+					"",
+				].join("\n"),
+			});
+		}
+
+		// Test script
+		if (pkgScripts.test) {
+			scripts.push({
+				path: "scripts/test.sh",
+				content: [
+					"#!/usr/bin/env bash",
+					`# Run ${cliName} test suite`,
+					"set -euo pipefail",
+					`npx ${cliName} test "$@"`,
+					"",
+				].join("\n"),
+			});
+		}
+	}
+
+	// Fallback: always include at least a test script
+	if (scripts.length === 0) {
+		scripts.push({
+			path: "scripts/test.sh",
+			content: [
+				"#!/usr/bin/env bash",
+				"# Run the project's test suite",
+				'# Usage: ./scripts/test.sh [additional args]',
+				"",
+				"if [ -f package.json ]; then",
+				'  npm test "$@"',
+				"else",
+				'  echo "No package.json found"',
+				"  exit 1",
+				"fi",
+				"",
+			].join("\n"),
+		});
+	}
+
+	return scripts;
 }
 
 // ---------------------------------------------------------------------------
@@ -524,21 +795,7 @@ export function generateSkillPackage(symbols: ForgeSymbol[], config: ForgeConfig
 	const skillMd = buildSkillMd(symbols, config, directoryName);
 	const apiRefMd = buildApiReferenceMd(symbols, config);
 	const configMd = buildConfigurationMd(symbols, config);
-
-	// Generic helper script that runs the project's test suite
-	const testSh = [
-		"#!/usr/bin/env bash",
-		"# Run the project's test suite",
-		'# Usage: ./scripts/test.sh [additional args]',
-		"",
-		"if [ -f package.json ]; then",
-		'  npm test "$@"',
-		"else",
-		'  echo "No package.json found"',
-		"  exit 1",
-		"fi",
-		"",
-	].join("\n");
+	const scripts = buildScripts(config);
 
 	return {
 		directoryName,
@@ -546,7 +803,7 @@ export function generateSkillPackage(symbols: ForgeSymbol[], config: ForgeConfig
 			{ path: "SKILL.md", content: skillMd },
 			{ path: "references/API-REFERENCE.md", content: apiRefMd },
 			{ path: "references/CONFIGURATION.md", content: configMd },
-			{ path: "scripts/test.sh", content: testSh },
+			...scripts,
 		],
 	};
 }

@@ -28,6 +28,14 @@ function makeConfig(overrides: Partial<ForgeConfig["project"]> = {}): ForgeConfi
 	};
 }
 
+function makeConfigWithCli(overrides: Partial<ForgeConfig["project"]> = {}): ForgeConfig {
+	return makeConfig({
+		bin: { "my-cli": "./dist/cli.js" },
+		scripts: { check: "my-cli check", build: "my-cli build", test: "my-cli test" },
+		...overrides,
+	});
+}
+
 function sym(overrides: Partial<ForgeSymbol> & Pick<ForgeSymbol, "name" | "kind">): ForgeSymbol {
 	return {
 		visibility: Visibility.Public,
@@ -91,7 +99,7 @@ const typeAlias = sym({
 });
 
 // ---------------------------------------------------------------------------
-// generateSkillMd — legacy backward-compat tests
+// generateSkillMd — core output tests
 // ---------------------------------------------------------------------------
 
 describe("generateSkillMd", () => {
@@ -113,21 +121,20 @@ describe("generateSkillMd", () => {
 
 	it("contains a Quick Start section with a bash code block", () => {
 		const result = generateSkillMd([fnAdd], makeConfig({ packageName: "my-lib" }));
-		expect(result).toContain("## Installation");
+		expect(result).toContain("## Quick Start");
 		expect(result).toContain("```bash");
 		expect(result).toContain("npm install my-lib");
 	});
 
-	it("contains function patterns derived from @example blocks", () => {
+	it("contains API section with function table", () => {
 		const result = generateSkillMd([fnAdd], makeConfig());
-		expect(result).toContain("## Common Patterns");
-		expect(result).toContain("### add");
-		expect(result).toContain("add(1, 2) // => 3");
+		expect(result).toContain("## API");
+		expect(result).toContain("`add()`");
 	});
 
-	it("omits Common Patterns section when no symbols have @example blocks", () => {
-		const result = generateSkillMd([fnNoExample], makeConfig());
-		expect(result).not.toContain("## Common Patterns");
+	it("omits API section when no functions exist", () => {
+		const result = generateSkillMd([ifaceConfig], makeConfig());
+		expect(result).not.toContain("## API");
 	});
 
 	it("includes function summary in the output", () => {
@@ -149,7 +156,7 @@ describe("generateSkillMd", () => {
 	it("produces a non-empty string for an empty symbol list", () => {
 		const result = generateSkillMd([], makeConfig());
 		expect(result.length).toBeGreaterThan(0);
-		expect(result).toContain("## Installation");
+		expect(result).toContain("## Quick Start");
 		expect(result).toContain("name:"); // YAML frontmatter
 	});
 
@@ -172,7 +179,7 @@ describe("generateSkillMd", () => {
 	});
 
 	// -------------------------------------------------------------------------
-	// YAML frontmatter compliance (agentskills.io spec)
+	// YAML frontmatter compliance
 	// -------------------------------------------------------------------------
 
 	it("YAML frontmatter contains name field", () => {
@@ -196,10 +203,14 @@ describe("generateSkillMd", () => {
 		expect(result).toContain("Use");
 	});
 
+	it("description contains numbered trigger scenarios", () => {
+		const result = generateSkillMd([fnAdd], makeConfig());
+		expect(result).toMatch(/\(1\)/);
+	});
+
 	it("description is under 1024 characters", () => {
 		const result = generateSkillMd([fnAdd], makeConfig());
-		// Extract the description value from the YAML block scalar
-		const descMatch = result.match(/description: >\n([\s\S]*?)(?=\nlicense:)/);
+		const descMatch = result.match(/description: >\n([\s\S]*?)(?=\n---)/);
 		if (descMatch) {
 			const descContent = descMatch[1]
 				.split("\n")
@@ -210,9 +221,15 @@ describe("generateSkillMd", () => {
 		}
 	});
 
-	it("YAML frontmatter contains license field", () => {
+	it("YAML frontmatter only has name and description (no license, metadata)", () => {
 		const result = generateSkillMd([fnAdd], makeConfig());
-		expect(result).toContain("license: MIT");
+		// Extract frontmatter block
+		const fmMatch = result.match(/^---\n([\s\S]*?)\n---/);
+		expect(fmMatch).toBeDefined();
+		const fm = fmMatch![1];
+		expect(fm).not.toContain("license:");
+		expect(fm).not.toContain("compatibility:");
+		expect(fm).not.toContain("metadata:");
 	});
 
 	it("SKILL.md is under 500 lines", () => {
@@ -220,10 +237,73 @@ describe("generateSkillMd", () => {
 		const lineCount = result.split("\n").length;
 		expect(lineCount).toBeLessThan(500);
 	});
+
+	it("includes References section with pointers to bundled files", () => {
+		const result = generateSkillMd([fnAdd], makeConfig());
+		expect(result).toContain("## References");
+		expect(result).toContain("references/API-REFERENCE.md");
+		expect(result).toContain("references/CONFIGURATION.md");
+	});
+
+	// -------------------------------------------------------------------------
+	// Configuration section
+	// -------------------------------------------------------------------------
+
+	it("renders Configuration section with code example when config type exists", () => {
+		const result = generateSkillMd([ifaceConfig], makeConfig());
+		expect(result).toContain("## Configuration");
+		expect(result).toContain("```typescript");
+		expect(result).toContain("MyConfig");
+	});
+
+	it("omits Configuration section when no config-like types exist", () => {
+		const result = generateSkillMd([fnAdd], makeConfig());
+		expect(result).not.toContain("## Configuration");
+	});
+
+	// -------------------------------------------------------------------------
+	// CLI detection
+	// -------------------------------------------------------------------------
+
+	it("shows CLI commands in Quick Start when bin is present", () => {
+		const result = generateSkillMd([fnAdd], makeConfigWithCli());
+		expect(result).toContain("npx my-cli");
+	});
+
+	it("uses -D flag for install when CLI project", () => {
+		const result = generateSkillMd([fnAdd], makeConfigWithCli());
+		expect(result).toContain("npm install -D");
+	});
+
+	it("shows API example in Quick Start when no bin", () => {
+		const result = generateSkillMd([fnAdd], makeConfig());
+		expect(result).toContain("add(1, 2) // => 3");
+	});
+
+	// -------------------------------------------------------------------------
+	// Description enrichment from package.json
+	// -------------------------------------------------------------------------
+
+	it("uses project.description as lead sentence when available", () => {
+		const result = generateSkillMd(
+			[fnAdd],
+			makeConfig({ description: "A math utilities library." }),
+		);
+		expect(result).toContain("A math utilities library.");
+	});
+
+	it("includes keywords in description triggers", () => {
+		const result = generateSkillMd(
+			[fnAdd],
+			makeConfig({ keywords: ["math", "utils"] }),
+		);
+		expect(result).toContain("math");
+		expect(result).toContain("utils");
+	});
 });
 
 // ---------------------------------------------------------------------------
-// generateSkillPackage — new directory structure tests
+// generateSkillPackage — directory structure tests
 // ---------------------------------------------------------------------------
 
 describe("generateSkillPackage", () => {
@@ -264,10 +344,30 @@ describe("generateSkillPackage", () => {
 		expect(paths).toContain("references/CONFIGURATION.md");
 	});
 
-	it("includes scripts/check.sh file", () => {
+	it("includes at least one script file", () => {
 		const pkg = generateSkillPackage([fnAdd], makeConfig());
+		const scriptFiles = pkg.files.filter((f) => f.path.startsWith("scripts/"));
+		expect(scriptFiles.length).toBeGreaterThanOrEqual(1);
+	});
+
+	it("generates purpose-built scripts when CLI is detected", () => {
+		const pkg = generateSkillPackage([fnAdd], makeConfigWithCli());
 		const paths = pkg.files.map((f) => f.path);
+		expect(paths).toContain("scripts/build.sh");
+		expect(paths).toContain("scripts/check.sh");
 		expect(paths).toContain("scripts/test.sh");
+	});
+
+	it("CLI scripts reference the correct bin name", () => {
+		const pkg = generateSkillPackage([fnAdd], makeConfigWithCli());
+		const buildSh = pkg.files.find((f) => f.path === "scripts/build.sh");
+		expect(buildSh?.content).toContain("npx my-cli build");
+	});
+
+	it("falls back to generic test.sh when no CLI detected", () => {
+		const pkg = generateSkillPackage([fnAdd], makeConfig());
+		const testSh = pkg.files.find((f) => f.path === "scripts/test.sh");
+		expect(testSh?.content).toContain("npm test");
 	});
 
 	it("SKILL.md content has valid YAML frontmatter with name", () => {
@@ -285,7 +385,7 @@ describe("generateSkillPackage", () => {
 	it("SKILL.md description is under 1024 chars", () => {
 		const pkg = generateSkillPackage([fnAdd], makeConfig());
 		const skillMd = pkg.files.find((f) => f.path === "SKILL.md");
-		const descMatch = skillMd?.content.match(/description: >\n([\s\S]*?)(?=\nlicense:)/);
+		const descMatch = skillMd?.content.match(/description: >\n([\s\S]*?)(?=\n---)/);
 		if (descMatch) {
 			const descContent = descMatch[1]
 				.split("\n")
@@ -303,6 +403,14 @@ describe("generateSkillPackage", () => {
 		expect(lineCount).toBeLessThan(500);
 	});
 
+	it("API-REFERENCE.md has grouped sections with ToC", () => {
+		const pkg = generateSkillPackage([fnAdd, ifaceConfig], makeConfig());
+		const apiRef = pkg.files.find((f) => f.path === "references/API-REFERENCE.md");
+		expect(apiRef?.content).toContain("## Table of Contents");
+		expect(apiRef?.content).toContain("## Functions");
+		expect(apiRef?.content).toContain("## Types");
+	});
+
 	it("API-REFERENCE.md contains full function signatures", () => {
 		const pkg = generateSkillPackage([fnAdd], makeConfig());
 		const apiRef = pkg.files.find((f) => f.path === "references/API-REFERENCE.md");
@@ -310,19 +418,28 @@ describe("generateSkillPackage", () => {
 		expect(apiRef?.content).toContain("Adds two numbers together.");
 	});
 
-	it("CONFIGURATION.md contains config interface properties", () => {
+	it("CONFIGURATION.md contains code example with inline comments", () => {
 		const pkg = generateSkillPackage([ifaceConfig], makeConfig());
 		const configMd = pkg.files.find((f) => f.path === "references/CONFIGURATION.md");
 		expect(configMd?.content).toContain("MyConfig");
+		expect(configMd?.content).toContain("```typescript");
+		expect(configMd?.content).toContain("// Root directory.");
+	});
+
+	it("CONFIGURATION.md contains property table", () => {
+		const pkg = generateSkillPackage([ifaceConfig], makeConfig());
+		const configMd = pkg.files.find((f) => f.path === "references/CONFIGURATION.md");
+		expect(configMd?.content).toContain("| Property | Type | Description |");
 		expect(configMd?.content).toContain("rootDir");
 		expect(configMd?.content).toContain("strict");
 	});
 
-	it("scripts/test.sh is a valid bash script", () => {
-		const pkg = generateSkillPackage([fnAdd], makeConfig({ packageName: "my-lib" }));
-		const checkSh = pkg.files.find((f) => f.path === "scripts/test.sh");
-		expect(checkSh?.content).toContain("#!/usr/bin/env bash");
-		expect(checkSh?.content).toContain("npm test");
+	it("scripts are valid bash scripts", () => {
+		const pkg = generateSkillPackage([fnAdd], makeConfig());
+		const scriptFiles = pkg.files.filter((f) => f.path.startsWith("scripts/"));
+		for (const script of scriptFiles) {
+			expect(script.content).toContain("#!/usr/bin/env bash");
+		}
 	});
 
 	it("handles empty symbol list without throwing", () => {

@@ -1,7 +1,7 @@
 # . - Full Context
 
 Root: .
-Generated: 2026-03-19T04:32:24.927Z
+Generated: 2026-03-19T05:02:44.416Z
 
 ## Functions
 
@@ -821,7 +821,7 @@ Output generation configuration.
 
 #### project
 
-{ repository?: string | undefined; homepage?: string | undefined; packageName?: string | undefined; }
+{ repository?: string | undefined; homepage?: string | undefined; packageName?: string | undefined; description?: string | undefined; version?: string | undefined; bin?: Record<string, string> | undefined; scripts?: Record<...> | undefined; keywords?: string[] | undefined; }
 
 Project metadata — auto-detected from package.json if not provided.
 
@@ -1622,6 +1622,12 @@ Page content (Markdown or MDX)
 Record<string, string | number | boolean>
 
 Frontmatter fields
+
+#### stub
+
+boolean | undefined
+
+When true, this page is scaffolding intended for human/agent editing. Stub pages are created only on the first build and never overwritten, preserving manual edits across subsequent `forge-ts build` runs. Auto-generated pages (stub=false) are always regenerated from source.
 
 ### SiteGeneratorOptions
 

@@ -21,6 +21,7 @@ export {
 	groupSymbolsByPackage,
 	type SiteGeneratorOptions,
 } from "./site-generator.js";
+export { generateSkillMd } from "./skill.js";
 export { generateSSGConfigs, type SSGConfigFile } from "./ssg-config.js";
 
 import { mkdir, writeFile } from "node:fs/promises";
@@ -32,6 +33,7 @@ import { generateLlmsFullTxt, generateLlmsTxt } from "./llms.js";
 import { generateMarkdown } from "./markdown.js";
 import { syncReadme } from "./readme-sync.js";
 import { generateDocSite, groupSymbolsByPackage } from "./site-generator.js";
+import { generateSkillMd } from "./skill.js";
 
 /**
  * Runs the full generation pipeline: walk → render → write.
@@ -114,6 +116,9 @@ export async function generate(config: ForgeConfig): Promise<ForgeResult> {
 
 		const llmsFull = generateLlmsFullTxt(symbols, config);
 		await writeFile(join(config.outDir, "llms-full.txt"), llmsFull, "utf8");
+
+		const skill = generateSkillMd(symbols, config);
+		await writeFile(join(config.outDir, "skill.md"), skill, "utf8");
 	}
 
 	if (config.gen.readmeSync) {

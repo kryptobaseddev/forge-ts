@@ -112,5 +112,14 @@
     "socials": {
       "github": "https://github.com/kryptobaseddev/forge-ts"
     }
+  },
+  "contextual": {
+    "options": [
+      "copy",
+      "view",
+      "chatgpt",
+      "claude",
+      "perplexity"
+    ]
   }
 }

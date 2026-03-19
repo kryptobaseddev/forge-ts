@@ -66,6 +66,7 @@ any - Options controlling Markdown output.
 (symbols: ForgeSymbol[], config: ForgeConfig, options?: MarkdownOptions) => string - Generates a Markdown (or MDX) string from a list of symbols.
 any - Options controlling README sync behaviour.
 (readmePath: string, symbols: ForgeSymbol[], options?: ReadmeSyncOptions) => Promise<boolean> - Injects a summary of exported symbols into a `README.md` file.  The content is placed between `<!-- forge-ts:start -->` and `<!-- forge-ts:end -->` comment markers.  If neither marker exists, the summary is appended to the end of the file.
+(symbols: ForgeSymbol[], config: ForgeConfig) => string - Generates a `skill.md` file that teaches AI assistants about the project.  The file contains: - Project overview and purpose - Installation instructions - Key concepts and types - Common usage patterns (from
 any - A single generated SSG configuration file.
 (pages: DocPage[], target: "docusaurus" | "mintlify" | "nextra" | "vitepress", projectName: string) => SSGConfigFile[] - Generate navigation configuration file(s) for the given SSG target.  Returns one file for most targets, but multiple files for Nextra (which uses per-directory `_meta.json` files).
 (config: ForgeConfig) => Promise<ForgeResult> - Runs the full generation pipeline: walk → render → write.

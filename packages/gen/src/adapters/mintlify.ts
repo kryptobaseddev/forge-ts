@@ -42,6 +42,11 @@ interface MintlifyNavTab {
 	groups: MintlifyNavGroup[];
 }
 
+/** Contextual AI assistant options for Mintlify v4. */
+interface MintlifyContextual {
+	options: Array<"copy" | "view" | "chatgpt" | "claude" | "perplexity">;
+}
+
 /** Mintlify v4 docs.json structure. */
 interface MintlifyDocsJson {
 	name: string;
@@ -49,6 +54,7 @@ interface MintlifyDocsJson {
 	colors: { primary: string; light: string; dark: string };
 	navigation: { tabs: MintlifyNavTab[] };
 	footer: { socials: Record<string, string> };
+	contextual: MintlifyContextual;
 }
 
 /** Build the docs.json navigation config following the 5-stage architecture. */
@@ -124,6 +130,9 @@ function buildDocsJson(context: AdapterContext): MintlifyDocsJson {
 			socials: context.config.project.repository
 				? { github: context.config.project.repository }
 				: {},
+		},
+		contextual: {
+			options: ["copy", "view", "chatgpt", "claude", "perplexity"],
 		},
 	};
 }

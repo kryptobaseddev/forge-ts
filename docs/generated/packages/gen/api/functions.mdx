@@ -241,6 +241,32 @@ const modified = await syncReadme("/path/to/README.md", symbols);
 console.log(modified); // true if README was updated
 ```
 
+## generateSkillMd(symbols, config)
+
+Generates a `skill.md` file that teaches AI assistants about the project.  The file contains: - Project overview and purpose - Installation instructions - Key concepts and types - Common usage patterns (from
+
+**Signature**
+
+```typescript
+(symbols: ForgeSymbol[], config: ForgeConfig) => string
+```
+
+**Parameters**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `symbols` | `ForgeSymbol[]` | All symbols from the project. |
+| `config` | `ForgeConfig` | The resolved forge-ts config. |
+
+**Returns** — The skill.md content as a string.
+
+**Example**
+
+```typescript
+import { generateSkillMd } from "@forge-ts/gen";
+const skill = generateSkillMd(symbols, config);
+```
+
 ## generateSSGConfigs(pages, target, projectName)
 
 Generate navigation configuration file(s) for the given SSG target.  Returns one file for most targets, but multiple files for Nextra (which uses per-directory `_meta.json` files).

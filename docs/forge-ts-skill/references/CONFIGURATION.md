@@ -1,27 +1,101 @@
-# forge-ts — Configuration Reference
+# forge-ts Configuration Reference
 
-Full documentation for all configuration options. Create a `forge-ts.config.ts` at your project root.
+## Config File Resolution
 
-## `ForgeConfig`
+forge-ts looks for configuration in this order:
+1. `forge-ts.config.ts` in the project root
+2. `forge-ts.config.js` in the project root
+3. `"forge-ts"` key in `package.json`
+4. Built-in defaults
 
-Full configuration for a forge-ts run. Loaded from forge-ts.config.ts or the "forge-ts" key in package.json.
+## Full Configuration
 
-| Property | Type | Description |
-|----------|------|-------------|
-| `rootDir` | `` | Root directory of the project. |
-| `tsconfig` | `` | Path to the tsconfig.json to compile against. |
-| `outDir` | `` | Output directory for generated files. |
-| `enforce` | `boolean; minVisibility: Visibility; strict: boolean; rules: EnforceRules; }` | Enforce TSDoc on all public exports. |
-| `doctest` | `boolean; cacheDir: string; }` | DocTest configuration. |
-| `api` | `boolean; openapi: boolean; openapiPath: string; }` | API generation configuration. |
-| `gen` | `boolean; formats: ("markdown" | "mdx")[]; llmsTxt: boolean; readmeSync: boolean; ssgTarget?: "docusaurus" | "mintlify" | "nextra" | "vitepress" | undefined; }` | Output generation configuration. |
-| `project` | `string | undefined; homepage?: string | undefined; packageName?: string | undefined; }` | Project metadata — auto-detected from package.json if not provided. |
+```typescript
+import type { ForgeConfig } from "@forge-ts/core";
 
-## `SSGConfigFile`
+export default {
+  // Project root directory
+  rootDir: ".",
 
-A single generated SSG configuration file.
+  // Path to tsconfig.json
+  tsconfig: "./tsconfig.json",
 
-| Property | Type | Description |
-|----------|------|-------------|
-| `path` | `` | Relative path from outDir (e.g., "mint.json", "_meta.json") |
-| `content` | `` | File content |
+  // Output directory for generated files
+  outDir: "./docs/generated",
+
+  // TSDoc enforcement settings
+  enforce: {
+    enabled: true,
+    // Minimum visibility to enforce: "public" | "beta" | "internal"
+    minVisibility: "public",
+    // When true, all warnings become errors
+    strict: false,
+    // Per-rule severity: "error" | "warn" | "off"
+    rules: {
+      "require-summary": "error",
+      "require-param": "error",
+      "require-returns": "error",
+      "require-example": "error",
+      "require-package-doc": "warn",
+      "require-class-member-doc": "error",
+      "require-interface-member-doc": "error",
+    },
+  },
+
+  // DocTest settings
+  doctest: {
+    enabled: true,
+    // Cache directory for virtual test files
+    cacheDir: ".cache/doctest",
+  },
+
+  // OpenAPI generation settings
+  api: {
+    enabled: true,
+    openapi: true,
+    openapiPath: "./docs/generated/api/openapi.json",
+  },
+
+  // Documentation generation settings
+  gen: {
+    enabled: true,
+    // Output formats: "markdown" | "mdx"
+    formats: ["markdown"],
+    // Generate llms.txt and llms-full.txt
+    llmsTxt: true,
+    // Sync API summary into README.md
+    readmeSync: false,
+    // SSG target: "mintlify" | "docusaurus" | "nextra" | "vitepress"
+    ssgTarget: "mintlify",
+  },
+
+  // Project metadata (auto-detected from package.json if not set)
+  project: {
+    repository: "https://github.com/user/repo",
+    homepage: "https://example.com",
+    packageName: "@scope/package-name",
+  },
+} satisfies Partial<ForgeConfig>;
+```
+
+## Defaults
+
+When no config file is found, forge-ts uses these defaults:
+- `enforce.enabled`: `true`
+- `enforce.minVisibility`: `"public"`
+- `enforce.strict`: `false`
+- `doctest.enabled`: `true`
+- `api.enabled`: `false`
+- `gen.enabled`: `true`
+- `gen.llmsTxt`: `true`
+- `gen.ssgTarget`: not set (uses Mintlify as default adapter)
+
+## Project Metadata
+
+The `project` field is auto-populated from `package.json`:
+- `repository` — from `package.json` `repository.url` field
+- `homepage` — from `package.json` `homepage` field
+- `packageName` — from `package.json` `name` field
+
+These values are used in generated documentation links,
+install commands, and SSG footer configs.

@@ -4543,7 +4543,7 @@ The default SSG target when none is specified.
 
 ### `mintlifyAdapter`
 
-_Defined in `packages/gen/src/adapters/mintlify.ts:136`_
+_Defined in `packages/gen/src/adapters/mintlify.ts:162`_
 
 ```typescript
 SSGAdapter

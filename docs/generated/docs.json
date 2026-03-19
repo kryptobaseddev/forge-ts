@@ -15,11 +15,26 @@
             "group": "Getting Started",
             "pages": [
               "index",
-              "getting-started",
+              "getting-started"
+            ]
+          },
+          {
+            "group": "Learn",
+            "pages": [
               "concepts",
-              "guides/index",
+              "guides/index"
+            ]
+          },
+          {
+            "group": "Reference",
+            "pages": [
               "configuration",
-              "changelog",
+              "changelog"
+            ]
+          },
+          {
+            "group": "Community",
+            "pages": [
               "faq",
               "contributing"
             ]

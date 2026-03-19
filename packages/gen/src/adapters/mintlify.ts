@@ -51,10 +51,9 @@ interface MintlifyDocsJson {
 	footer: { socials: Record<string, string> };
 }
 
-/** Build the docs.json navigation config from doc pages (Mintlify v4 format). */
+/** Build the docs.json navigation config following the 5-stage architecture. */
 function buildDocsJson(context: AdapterContext): MintlifyDocsJson {
 	const { pages, projectName } = context;
-	const topLevel: string[] = [];
 	const byPackage = new Map<string, string[]>();
 
 	for (const page of pages) {
@@ -65,28 +64,55 @@ function buildDocsJson(context: AdapterContext): MintlifyDocsJson {
 			const list = byPackage.get(pkgName) ?? [];
 			list.push(slug);
 			byPackage.set(pkgName, list);
-		} else {
-			topLevel.push(slug);
 		}
 	}
 
 	const tabs: MintlifyNavTab[] = [];
 
-	// Documentation tab with getting started pages
-	if (topLevel.length > 0) {
-		tabs.push({
-			tab: "Documentation",
-			groups: [{ group: "Getting Started", pages: topLevel }],
-		});
-	}
+	// Documentation tab — ORIENT + LEARN + BUILD + COMMUNITY
+	const docGroups: MintlifyNavGroup[] = [];
 
-	// API Reference tab with per-package groups
+	docGroups.push({
+		group: "Getting Started",
+		pages: ["index", "getting-started"],
+	});
+
+	docGroups.push({
+		group: "Learn",
+		pages: ["concepts", "guides/index"],
+	});
+
+	docGroups.push({
+		group: "Reference",
+		pages: ["configuration", "changelog"],
+	});
+
+	docGroups.push({
+		group: "Community",
+		pages: ["faq", "contributing"],
+	});
+
+	tabs.push({ tab: "Documentation", groups: docGroups });
+
+	// API Reference tab — per-package groups with api/ subpages
 	if (byPackage.size > 0) {
-		const groups: MintlifyNavGroup[] = [];
+		const apiGroups: MintlifyNavGroup[] = [];
 		for (const [pkgName, slugs] of byPackage) {
-			groups.push({ group: `@forge-ts/${pkgName}`, pages: slugs });
+			// Sort: index first, then api/index, then api/functions, api/types, api/examples
+			const sorted = slugs.sort((a, b) => {
+				const order = (s: string) => {
+					if (s.endsWith("/index")) return 0;
+					if (s.includes("/api/index")) return 1;
+					if (s.includes("/api/functions")) return 2;
+					if (s.includes("/api/types")) return 3;
+					if (s.includes("/api/examples")) return 4;
+					return 5;
+				};
+				return order(a) - order(b);
+			});
+			apiGroups.push({ group: `@forge-ts/${pkgName}`, pages: sorted });
 		}
-		tabs.push({ tab: "API Reference", groups });
+		tabs.push({ tab: "API Reference", groups: apiGroups });
 	}
 
 	return {

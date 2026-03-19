@@ -1,5 +1,22 @@
 # @forge-ts/doctest
 
+## 0.5.0
+
+### Patch Changes
+
+- [`7c300b2`](https://github.com/kryptobaseddev/forge-ts/commit/7c300b21199f6f2c2a7e6ae3b7f2ba0b30e757c5) Thanks [@kryptobaseddev](https://github.com/kryptobaseddev)! - SSG adapter system with `forge-ts init docs` command.
+
+  - Central SSGAdapter interface with registry pattern (DRY/SOLID)
+  - 4 first-class providers: Mintlify (docs.json), Docusaurus v3, Nextra v4, VitePress v2
+  - `forge-ts init docs --target mintlify` scaffolds complete doc site
+  - Safety checks for existing scaffold, cross-target collision detection
+  - Default target: Mintlify
+  - LAFS JSON output on init command
+  - generate() refactored to use adapter system
+
+- Updated dependencies [[`7c300b2`](https://github.com/kryptobaseddev/forge-ts/commit/7c300b21199f6f2c2a7e6ae3b7f2ba0b30e757c5)]:
+  - @forge-ts/core@0.5.0
+
 ## 0.4.0
 
 ### Patch Changes

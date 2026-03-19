@@ -260,9 +260,7 @@ function extractPaths(symbols: ForgeSymbol[]): Record<string, OpenAPIPathItemObj
 	for (const symbol of symbols) {
 		const routeTags: string[] = symbol.documentation?.tags?.route ?? [];
 		for (const routeTag of routeTags) {
-			const match = routeTag.match(
-				/^(GET|POST|PUT|DELETE|PATCH|OPTIONS|HEAD)\s+(\S+)/i,
-			);
+			const match = routeTag.match(/^(GET|POST|PUT|DELETE|PATCH|OPTIONS|HEAD)\s+(\S+)/i);
 			if (!match) continue;
 
 			const method = match[1].toLowerCase() as
@@ -279,8 +277,7 @@ function extractPaths(symbols: ForgeSymbol[]): Record<string, OpenAPIPathItemObj
 				paths[path] = {};
 			}
 
-			const fileBasename =
-				symbol.filePath.split("/").pop()?.replace(/\.ts$/, "") ?? "default";
+			const fileBasename = symbol.filePath.split("/").pop()?.replace(/\.ts$/, "") ?? "default";
 
 			const operation: OpenAPIOperationObject = {
 				operationId: symbol.name,
@@ -294,9 +291,7 @@ function extractPaths(symbols: ForgeSymbol[]): Record<string, OpenAPIPathItemObj
 			const parameters: OpenAPIParameterObject[] = [];
 
 			for (const paramName of pathParams) {
-				const paramDoc = symbol.documentation?.params?.find(
-					(p) => p.name === paramName,
-				);
+				const paramDoc = symbol.documentation?.params?.find((p) => p.name === paramName);
 				parameters.push({
 					name: paramName,
 					in: "path",

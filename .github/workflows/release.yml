@@ -40,7 +40,71 @@ jobs:
           version: pnpm cs:version
           title: "chore: version packages"
           commit: "chore: version packages"
+          createGithubReleases: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      # Create a single unified GitHub release for the fixed-version monorepo.
+      # Only runs when changesets actually published packages (not on PR creation).
+      - name: Create unified GitHub release
+        if: steps.changesets.outputs.published == 'true'
+        uses: actions/github-script@v7
+        env:
+          PUBLISHED_PACKAGES: ${{ steps.changesets.outputs.publishedPackages }}
+        with:
+          script: |
+            const packages = JSON.parse(process.env.PUBLISHED_PACKAGES);
+            if (!packages || packages.length === 0) return;
+
+            // All packages share the same version (fixed versioning)
+            const version = packages[0].version;
+            const tag = `v${version}`;
+
+            // Extract changelog from @forge-ts/core (representative for the fixed group)
+            const fs = require('fs');
+            const changelog = fs.readFileSync('packages/core/CHANGELOG.md', 'utf8');
+
+            // Extract the section for this version
+            const versionHeader = `## ${version}`;
+            const start = changelog.indexOf(versionHeader);
+            let body = '';
+            if (start !== -1) {
+              const contentStart = start + versionHeader.length;
+              const nextHeader = changelog.indexOf('\n## ', contentStart);
+              body = nextHeader !== -1
+                ? changelog.slice(contentStart, nextHeader).trim()
+                : changelog.slice(contentStart).trim();
+            }
+
+            // Add package list
+            const pkgList = packages.map(p => `- \`${p.name}@${p.version}\``).join('\n');
+            body = `## Packages\n\n${pkgList}\n\n${body}`;
+
+            // Create the tag
+            try {
+              await github.rest.git.createRef({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                ref: `refs/tags/${tag}`,
+                sha: context.sha,
+              });
+            } catch (e) {
+              // Tag may already exist from a previous run
+              if (e.status !== 422) throw e;
+            }
+
+            // Create the release
+            await github.rest.repos.createRelease({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              tag_name: tag,
+              name: `forge-ts ${tag}`,
+              body,
+              draft: false,
+              prerelease: false,
+              make_latest: 'true',
+            });
+
+            core.info(`Created release: forge-ts ${tag}`);

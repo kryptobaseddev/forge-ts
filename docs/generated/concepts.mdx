@@ -1,0 +1,73 @@
+---
+title: "Concepts"
+description: "Core concepts behind forge-ts"
+---
+This page explains the core concepts behind **forge-ts**.
+
+> This is a stub page. Edit this file to add your project's conceptual documentation.
+
+## How It Works
+
+forge-ts processes your TypeScript source with a single AST traversal, extracting TSDoc comments and type information to generate documentation.
+
+## Key Abstractions
+
+- **`Visibility`** — Visibility levels for exported symbols. Derived from TSDoc release tags (public, beta, internal).
+- **`ForgeSymbol`** — A single extracted and annotated symbol from the TypeScript AST.
+- **`RuleSeverity`** — Severity level for an individual enforcement rule. - `"error"` — violation fails the build. - `"warn"`  — violation is reported but does not fail the build. - `"off"`   — rule is disabled entirely.
+- **`EnforceRules`** — Per-rule severity configuration for the TSDoc enforcer. Each key corresponds to one of the E001–E007 rule codes.
+- **`ForgeConfig`** — Full configuration for a forge-ts run. Loaded from forge-ts.config.ts or the "forge-ts" key in package.json.
+- **`ForgeResult`** — The result of a forge-ts compilation pass.
+- **`ForgeError`** — A diagnostic error produced during a forge-ts run.
+- **`ForgeWarning`** — A diagnostic warning produced during a forge-ts run.
+- **`OpenAPISchemaObject`** — OpenAPI 3.2 schema object.
+- **`OpenAPIInfoObject`** — OpenAPI 3.2 info object.
+- **`OpenAPITagObject`** — OpenAPI 3.2 tag object.
+- **`OpenAPIPathItemObject`** — OpenAPI 3.2 path item object.
+- **`OpenAPIOperationObject`** — OpenAPI 3.2 operation object.
+- **`OpenAPIParameterObject`** — OpenAPI 3.2 parameter object.
+- **`OpenAPIEncodingObject`** — OpenAPI 3.2 encoding object.
+- **`OpenAPIMediaTypeObject`** — OpenAPI 3.2 media type object.
+- **`OpenAPIResponseObject`** — OpenAPI 3.2 response object.
+- **`OpenAPIDocument`** — Complete OpenAPI 3.2 document.
+- **`ASTWalker`** — The return type of .
+- **`SDKProperty`** — A single property extracted from an interface or class symbol.
+- **`SDKType`** — An SDK type descriptor extracted from the symbol graph.
+- **`ReferenceEntry`** — A single entry in the generated API reference.
+- **`DocPage`** — A single generated documentation page.
+- **`SiteGeneratorOptions`** — Options controlling the doc site generator.
+- **`SSGTarget`** — Supported SSG target identifiers.
+- **`GeneratedFile`** — A file to write to disk during scaffolding or generation.
+- **`SSGStyleGuide`** — Style guide configuration for the SSG target.
+- **`ScaffoldManifest`** — Scaffold manifest describing what `init docs` creates.
+- **`AdapterContext`** — Context passed to adapter methods.
+- **`DevServerCommand`** — Command to start a local dev server for doc preview.
+- **`SSGAdapter`** — The central SSG adapter interface. Every doc platform provider implements this contract. One file per provider. No shared mutable state.
+- **`MarkdownOptions`** — Options controlling Markdown output.
+- **`ReadmeSyncOptions`** — Options controlling README sync behaviour.
+- **`SSGConfigFile`** — A single generated SSG configuration file.
+- **`Logger`** — A minimal structured logger used throughout the CLI commands.
+- **`CommandOutput`** — Typed result from a forge-ts command.
+- **`ForgeCliError`** — Structured error for CLI commands.
+- **`ForgeCliWarning`** — Structured warning for CLI commands.
+- **`OutputFlags`** — Output format flags passed through from citty args.
+- **`BuildArgs`** — Arguments for the `build` command.
+- **`BuildStep`** — A single step in the build pipeline.
+- **`BuildResult`** — Typed result for the `build` command.
+- **`CheckArgs`** — Arguments for the `check` command.
+- **`CheckFileError`** — A single error entry within a file group, included at standard and full MVI levels.
+- **`CheckFileWarning`** — A single warning entry within a file group, included at standard and full MVI levels.
+- **`CheckFileGroup`** — Errors and warnings grouped by file, included at standard and full MVI levels.
+- **`CheckResult`** — Typed result for the `check` command.
+- **`InitDocsResult`** — Result of the `init docs` command.
+- **`InitDocsArgs`** — Arguments for the `init docs` command.
+- **`TestArgs`** — Arguments for the `test` command.
+- **`TestFailure`** — A single test failure entry, included at standard and full MVI levels.
+- **`TestResult`** — Typed result for the `test` command.
+- **`DeprecatedUsage`** — A detected usage of a deprecated symbol.
+- **`FormatOptions`** — Options that control how  renders its output.
+- **`ExtractedExample`** — A single extracted `@example` block ready for test generation.
+- **`GeneratorOptions`** — Options for virtual test file generation.
+- **`VirtualTestFile`** — A generated virtual test file.
+- **`RunResult`** — Result of running the generated test files.
+- **`TestCaseResult`** — The result of a single test case.

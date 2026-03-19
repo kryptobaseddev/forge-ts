@@ -6,33 +6,33 @@ description: "core package overview"
 
 | Symbol | Kind | Description |
 |--------|------|-------------|
-| [`defaultConfig()`](/packages/core/api-reference#defaultconfig) | function | Constructs a sensible default  rooted at `rootDir`. |
-| [`loadConfig()`](/packages/core/api-reference#loadconfig) | function | Loads the forge-ts configuration for a project.  Resolution order: 1. `<rootD... |
-| [`resolveVisibility()`](/packages/core/api-reference#resolvevisibility) | function | Determines the visibility level of a symbol from its TSDoc release tags.  The... |
-| [`meetsVisibility()`](/packages/core/api-reference#meetsvisibility) | function | Returns whether `candidate` meets or exceeds the required minimum visibility.... |
-| [`filterByVisibility()`](/packages/core/api-reference#filterbyvisibility) | function | Filters an array of  objects to only include symbols whose visibility meets o... |
-| [`createWalker()`](/packages/core/api-reference#createwalker) | function | Creates an  configured for the given forge config.  The walker uses the TypeS... |
+| [`defaultConfig()`](/packages/core/api/index#defaultconfig) | function | Constructs a sensible default  rooted at `rootDir`. |
+| [`loadConfig()`](/packages/core/api/index#loadconfig) | function | Loads the forge-ts configuration for a project.  Resolution order: 1. `<rootD... |
+| [`resolveVisibility()`](/packages/core/api/index#resolvevisibility) | function | Determines the visibility level of a symbol from its TSDoc release tags.  The... |
+| [`meetsVisibility()`](/packages/core/api/index#meetsvisibility) | function | Returns whether `candidate` meets or exceeds the required minimum visibility.... |
+| [`filterByVisibility()`](/packages/core/api/index#filterbyvisibility) | function | Filters an array of  objects to only include symbols whose visibility meets o... |
+| [`createWalker()`](/packages/core/api/index#createwalker) | function | Creates an  configured for the given forge config.  The walker uses the TypeS... |
 
 ## Types & Interfaces
 
 | Symbol | Kind | Description |
 |--------|------|-------------|
-| [`Visibility`](/packages/core/api-reference#visibility) | enum | Visibility levels for exported symbols. Derived from TSDoc release tags (publ... |
-| [`ForgeSymbol`](/packages/core/api-reference#forgesymbol) | interface | A single extracted and annotated symbol from the TypeScript AST. |
-| [`RuleSeverity`](/packages/core/api-reference#ruleseverity) | type | Severity level for an individual enforcement rule. - `"error"` — violation fa... |
-| [`EnforceRules`](/packages/core/api-reference#enforcerules) | interface | Per-rule severity configuration for the TSDoc enforcer. Each key corresponds ... |
-| [`ForgeConfig`](/packages/core/api-reference#forgeconfig) | interface | Full configuration for a forge-ts run. Loaded from forge-ts.config.ts or the ... |
-| [`ForgeResult`](/packages/core/api-reference#forgeresult) | interface | The result of a forge-ts compilation pass. |
-| [`ForgeError`](/packages/core/api-reference#forgeerror) | interface | A diagnostic error produced during a forge-ts run. |
-| [`ForgeWarning`](/packages/core/api-reference#forgewarning) | interface | A diagnostic warning produced during a forge-ts run. |
-| [`OpenAPISchemaObject`](/packages/core/api-reference#openapischemaobject) | interface | OpenAPI 3.2 schema object. |
-| [`OpenAPIInfoObject`](/packages/core/api-reference#openapiinfoobject) | interface | OpenAPI 3.2 info object. |
-| [`OpenAPITagObject`](/packages/core/api-reference#openapitagobject) | interface | OpenAPI 3.2 tag object. |
-| [`OpenAPIPathItemObject`](/packages/core/api-reference#openapipathitemobject) | interface | OpenAPI 3.2 path item object. |
-| [`OpenAPIOperationObject`](/packages/core/api-reference#openapioperationobject) | interface | OpenAPI 3.2 operation object. |
-| [`OpenAPIParameterObject`](/packages/core/api-reference#openapiparameterobject) | interface | OpenAPI 3.2 parameter object. |
-| [`OpenAPIEncodingObject`](/packages/core/api-reference#openapiencodingobject) | interface | OpenAPI 3.2 encoding object. |
-| [`OpenAPIMediaTypeObject`](/packages/core/api-reference#openapimediatypeobject) | interface | OpenAPI 3.2 media type object. |
-| [`OpenAPIResponseObject`](/packages/core/api-reference#openapiresponseobject) | interface | OpenAPI 3.2 response object. |
-| [`OpenAPIDocument`](/packages/core/api-reference#openapidocument) | interface | Complete OpenAPI 3.2 document. |
-| [`ASTWalker`](/packages/core/api-reference#astwalker) | interface | The return type of . |
+| [`Visibility`](/packages/core/api/index#visibility) | enum | Visibility levels for exported symbols. Derived from TSDoc release tags (publ... |
+| [`ForgeSymbol`](/packages/core/api/index#forgesymbol) | interface | A single extracted and annotated symbol from the TypeScript AST. |
+| [`RuleSeverity`](/packages/core/api/index#ruleseverity) | type | Severity level for an individual enforcement rule. - `"error"` — violation fa... |
+| [`EnforceRules`](/packages/core/api/index#enforcerules) | interface | Per-rule severity configuration for the TSDoc enforcer. Each key corresponds ... |
+| [`ForgeConfig`](/packages/core/api/index#forgeconfig) | interface | Full configuration for a forge-ts run. Loaded from forge-ts.config.ts or the ... |
+| [`ForgeResult`](/packages/core/api/index#forgeresult) | interface | The result of a forge-ts compilation pass. |
+| [`ForgeError`](/packages/core/api/index#forgeerror) | interface | A diagnostic error produced during a forge-ts run. |
+| [`ForgeWarning`](/packages/core/api/index#forgewarning) | interface | A diagnostic warning produced during a forge-ts run. |
+| [`OpenAPISchemaObject`](/packages/core/api/index#openapischemaobject) | interface | OpenAPI 3.2 schema object. |
+| [`OpenAPIInfoObject`](/packages/core/api/index#openapiinfoobject) | interface | OpenAPI 3.2 info object. |
+| [`OpenAPITagObject`](/packages/core/api/index#openapitagobject) | interface | OpenAPI 3.2 tag object. |
+| [`OpenAPIPathItemObject`](/packages/core/api/index#openapipathitemobject) | interface | OpenAPI 3.2 path item object. |
+| [`OpenAPIOperationObject`](/packages/core/api/index#openapioperationobject) | interface | OpenAPI 3.2 operation object. |
+| [`OpenAPIParameterObject`](/packages/core/api/index#openapiparameterobject) | interface | OpenAPI 3.2 parameter object. |
+| [`OpenAPIEncodingObject`](/packages/core/api/index#openapiencodingobject) | interface | OpenAPI 3.2 encoding object. |
+| [`OpenAPIMediaTypeObject`](/packages/core/api/index#openapimediatypeobject) | interface | OpenAPI 3.2 media type object. |
+| [`OpenAPIResponseObject`](/packages/core/api/index#openapiresponseobject) | interface | OpenAPI 3.2 response object. |
+| [`OpenAPIDocument`](/packages/core/api/index#openapidocument) | interface | Complete OpenAPI 3.2 document. |
+| [`ASTWalker`](/packages/core/api/index#astwalker) | interface | The return type of . |

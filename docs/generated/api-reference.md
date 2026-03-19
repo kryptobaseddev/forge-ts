@@ -395,7 +395,7 @@ console.log(result.success); // true if spec was written successfully
 
 ### `groupSymbolsByPackage()`
 
-_Defined in `packages/gen/src/site-generator.ts:143`_
+_Defined in `packages/gen/src/site-generator.ts:149`_
 
 ```typescript
 (symbols: ForgeSymbol[], rootDir: string) => Map<string, ForgeSymbol[]>
@@ -420,13 +420,13 @@ console.log(grouped.has("core")); // true for monorepo
 
 ### `generateDocSite()`
 
-_Defined in `packages/gen/src/site-generator.ts:750`_
+_Defined in `packages/gen/src/site-generator.ts:986`_
 
 ```typescript
 (symbolsByPackage: Map<string, ForgeSymbol[]>, config: ForgeConfig, options: SiteGeneratorOptions) => DocPage[]
 ```
 
-Generates a full multi-page documentation site from symbols grouped by package.  Produces an index page, a getting-started page, and per-package pages for the API reference, types, functions, and examples.
+Generates a full multi-page documentation site from symbols grouped by package.  Follows a 5-stage information architecture: 1. ORIENT — Landing page, Getting Started 2. LEARN — Concepts (stub) 3. BUILD — Guides (stub) 4. REFERENCE — API Reference, Types, Configuration, Changelog 5. COMMUNITY — FAQ, Contributing (stubs)
 
 **Parameters**
 

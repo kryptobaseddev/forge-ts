@@ -2,17 +2,58 @@
 title: "Getting Started"
 description: "Quick start guide for forge-ts"
 ---
-Welcome to **forge-ts**.
+Get up and running with **forge-ts** in minutes.
 
-## Installation
+## Step 1: Install
 
 ```bash
 npm install -D @forge-ts/cli
 ```
 
-## Quick Start
+## Step 2: Add TSDoc to your code
 
-The following example demonstrates `defaultConfig` from the `core` package.
+Add TSDoc comments to your exported functions and types:
+
+```typescript
+/**
+ * Adds two numbers together.
+ * @param a - First number
+ * @param b - Second number
+ * @returns The sum of a and b
+ * @example
+ * ```typescript
+ * const result = add(1, 2); // => 3
+ * ```
+ */
+export function add(a: number, b: number): number {
+  return a + b;
+}
+```
+
+## Step 3: Run forge-ts check
+
+Lint your TSDoc coverage before generating docs:
+
+```bash
+npx forge-ts check
+```
+
+Expected output:
+
+```typescript
+forge-ts: checking TSDoc coverage...
+  ✓ All public symbols documented
+```
+
+## Step 4: Generate docs
+
+Build your documentation site:
+
+```bash
+npx forge-ts build
+```
+
+Your code examples become live documentation:
 
 ```typescript
 import { defaultConfig } from "@forge-ts/core";
@@ -20,12 +61,8 @@ const config = defaultConfig("/path/to/project");
 console.log(config.enforce.enabled); // true
 ```
 
-## Next Steps
+## What's Next?
 
-- Browse the [API Reference](/packages/)
-  - [core](/packages/core/api-reference)
-  - [api](/packages/api/api-reference)
-  - [gen](/packages/gen/api-reference)
-  - [cli](/packages/cli/api-reference)
-  - [enforcer](/packages/enforcer/api-reference)
-  - [doctest](/packages/doctest/api-reference)
+- [Concepts](/concepts) — Understand how forge-ts works
+- [API Reference](/packages) — Full API documentation
+- [Guides](/guides) — Practical how-to guides

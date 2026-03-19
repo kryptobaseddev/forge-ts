@@ -3,37 +3,40 @@ title: "forge-ts"
 ---
 **forge-ts** is a TypeScript documentation toolkit that performs a single AST traversal of your project and produces API docs, OpenAPI specs, executable doctests, and AI context files in one pass.
 
-## Quick Start
+## Features
+
+- 6 packages with full TypeScript support
+- Auto-generated API reference from source code
+- Executable `@example` blocks as doctests
+- AI-ready context files from a single build pass
+
+## Installation
 
 ```bash
 npm install -D @forge-ts/cli
-npx forge-ts check    # Lint TSDoc coverage
-npx forge-ts test     # Run @example blocks as tests
-npx forge-ts build    # Generate everything
+```
+
+## Quick Example
+
+```typescript
+import { defaultConfig } from "@forge-ts/core";
+const config = defaultConfig("/path/to/project");
+console.log(config.enforce.enabled); // true
 ```
 
 ## Packages
 
-### [core](/packages/core/index)
+| Package | Description |
+|---------|-------------|
+| [`core`](/packages/core/index) | 25 exported symbol(s). |
+| [`api`](/packages/api/index) | 8 exported symbol(s). |
+| [`gen`](/packages/gen/index) | 28 exported symbol(s). |
+| [`cli`](/packages/cli/index) | 32 exported symbol(s). |
+| [`enforcer`](/packages/enforcer/index) | 5 exported symbol(s). |
+| [`doctest`](/packages/doctest/index) | 9 exported symbol(s). |
 
-25 exported symbol(s).
+## Next Steps
 
-### [api](/packages/api/index)
-
-8 exported symbol(s).
-
-### [gen](/packages/gen/index)
-
-28 exported symbol(s).
-
-### [cli](/packages/cli/index)
-
-32 exported symbol(s).
-
-### [enforcer](/packages/enforcer/index)
-
-5 exported symbol(s).
-
-### [doctest](/packages/doctest/index)
-
-9 exported symbol(s).
+- [Getting Started](/getting-started) — Step-by-step guide
+- [API Reference](/packages) — Full API documentation
+- [Concepts](/concepts) — How it works

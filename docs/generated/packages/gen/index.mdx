@@ -6,41 +6,41 @@ description: "gen package overview"
 
 | Symbol | Kind | Description |
 |--------|------|-------------|
-| [`groupSymbolsByPackage()`](/packages/gen/api-reference#groupsymbolsbypackage) | function | Groups symbols by their package based on file path.  For monorepos (symbols u... |
-| [`generateDocSite()`](/packages/gen/api-reference#generatedocsite) | function | Generates a full multi-page documentation site from symbols grouped by packag... |
-| [`registerAdapter()`](/packages/gen/api-reference#registeradapter) | function | Register an SSG adapter. Called once per provider at module load time. |
-| [`getAdapter()`](/packages/gen/api-reference#getadapter) | function | Get a registered adapter by target name. Throws if the target is not registered. |
-| [`getAvailableTargets()`](/packages/gen/api-reference#getavailabletargets) | function | Get all registered adapter targets. |
-| [`generateLlmsTxt()`](/packages/gen/api-reference#generatellmstxt) | function | Generates an `llms.txt` routing manifest from the extracted symbols.  The fil... |
-| [`generateLlmsFullTxt()`](/packages/gen/api-reference#generatellmsfulltxt) | function | Generates an `llms-full.txt` dense context file from the extracted symbols.  ... |
-| [`generateMarkdown()`](/packages/gen/api-reference#generatemarkdown) | function | Generates a Markdown (or MDX) string from a list of symbols. |
-| [`syncReadme()`](/packages/gen/api-reference#syncreadme) | function | Injects a summary of exported symbols into a `README.md` file.  The content i... |
-| [`generateSSGConfigs()`](/packages/gen/api-reference#generatessgconfigs) | function | Generate navigation configuration file(s) for the given SSG target.  Returns ... |
-| [`generate()`](/packages/gen/api-reference#generate) | function | Runs the full generation pipeline: walk → render → write. |
+| [`groupSymbolsByPackage()`](/packages/gen/api/index#groupsymbolsbypackage) | function | Groups symbols by their package based on file path.  For monorepos (symbols u... |
+| [`generateDocSite()`](/packages/gen/api/index#generatedocsite) | function | Generates a full multi-page documentation site from symbols grouped by packag... |
+| [`registerAdapter()`](/packages/gen/api/index#registeradapter) | function | Register an SSG adapter. Called once per provider at module load time. |
+| [`getAdapter()`](/packages/gen/api/index#getadapter) | function | Get a registered adapter by target name. Throws if the target is not registered. |
+| [`getAvailableTargets()`](/packages/gen/api/index#getavailabletargets) | function | Get all registered adapter targets. |
+| [`generateLlmsTxt()`](/packages/gen/api/index#generatellmstxt) | function | Generates an `llms.txt` routing manifest from the extracted symbols.  The fil... |
+| [`generateLlmsFullTxt()`](/packages/gen/api/index#generatellmsfulltxt) | function | Generates an `llms-full.txt` dense context file from the extracted symbols.  ... |
+| [`generateMarkdown()`](/packages/gen/api/index#generatemarkdown) | function | Generates a Markdown (or MDX) string from a list of symbols. |
+| [`syncReadme()`](/packages/gen/api/index#syncreadme) | function | Injects a summary of exported symbols into a `README.md` file.  The content i... |
+| [`generateSSGConfigs()`](/packages/gen/api/index#generatessgconfigs) | function | Generate navigation configuration file(s) for the given SSG target.  Returns ... |
+| [`generate()`](/packages/gen/api/index#generate) | function | Runs the full generation pipeline: walk → render → write. |
 
 ## Types & Interfaces
 
 | Symbol | Kind | Description |
 |--------|------|-------------|
-| [`DocPage`](/packages/gen/api-reference#docpage) | interface | A single generated documentation page. |
-| [`SiteGeneratorOptions`](/packages/gen/api-reference#sitegeneratoroptions) | interface | Options controlling the doc site generator. |
-| [`SSGTarget`](/packages/gen/api-reference#ssgtarget) | type | Supported SSG target identifiers. |
-| [`GeneratedFile`](/packages/gen/api-reference#generatedfile) | interface | A file to write to disk during scaffolding or generation. |
-| [`SSGStyleGuide`](/packages/gen/api-reference#ssgstyleguide) | interface | Style guide configuration for the SSG target. |
-| [`ScaffoldManifest`](/packages/gen/api-reference#scaffoldmanifest) | interface | Scaffold manifest describing what `init docs` creates. |
-| [`AdapterContext`](/packages/gen/api-reference#adaptercontext) | interface | Context passed to adapter methods. |
-| [`DevServerCommand`](/packages/gen/api-reference#devservercommand) | interface | Command to start a local dev server for doc preview. |
-| [`SSGAdapter`](/packages/gen/api-reference#ssgadapter) | interface | The central SSG adapter interface. Every doc platform provider implements thi... |
-| [`MarkdownOptions`](/packages/gen/api-reference#markdownoptions) | interface | Options controlling Markdown output. |
-| [`ReadmeSyncOptions`](/packages/gen/api-reference#readmesyncoptions) | interface | Options controlling README sync behaviour. |
-| [`SSGConfigFile`](/packages/gen/api-reference#ssgconfigfile) | interface | A single generated SSG configuration file. |
+| [`DocPage`](/packages/gen/api/index#docpage) | interface | A single generated documentation page. |
+| [`SiteGeneratorOptions`](/packages/gen/api/index#sitegeneratoroptions) | interface | Options controlling the doc site generator. |
+| [`SSGTarget`](/packages/gen/api/index#ssgtarget) | type | Supported SSG target identifiers. |
+| [`GeneratedFile`](/packages/gen/api/index#generatedfile) | interface | A file to write to disk during scaffolding or generation. |
+| [`SSGStyleGuide`](/packages/gen/api/index#ssgstyleguide) | interface | Style guide configuration for the SSG target. |
+| [`ScaffoldManifest`](/packages/gen/api/index#scaffoldmanifest) | interface | Scaffold manifest describing what `init docs` creates. |
+| [`AdapterContext`](/packages/gen/api/index#adaptercontext) | interface | Context passed to adapter methods. |
+| [`DevServerCommand`](/packages/gen/api/index#devservercommand) | interface | Command to start a local dev server for doc preview. |
+| [`SSGAdapter`](/packages/gen/api/index#ssgadapter) | interface | The central SSG adapter interface. Every doc platform provider implements thi... |
+| [`MarkdownOptions`](/packages/gen/api/index#markdownoptions) | interface | Options controlling Markdown output. |
+| [`ReadmeSyncOptions`](/packages/gen/api/index#readmesyncoptions) | interface | Options controlling README sync behaviour. |
+| [`SSGConfigFile`](/packages/gen/api/index#ssgconfigfile) | interface | A single generated SSG configuration file. |
 
 ## Other Exports
 
 | Symbol | Kind | Description |
 |--------|------|-------------|
-| [`DEFAULT_TARGET`](/packages/gen/api-reference#defaulttarget) | variable | The default SSG target when none is specified. |
-| [`mintlifyAdapter`](/packages/gen/api-reference#mintlifyadapter) | variable | Mintlify SSG adapter. Implements the  contract for the Mintlify platform. |
-| [`docusaurusAdapter`](/packages/gen/api-reference#docusaurusadapter) | variable | Docusaurus SSG adapter. Implements the  contract for the Docusaurus platform. |
-| [`nextraAdapter`](/packages/gen/api-reference#nextraadapter) | variable | Nextra SSG adapter (v4, App Router). Implements the  contract for the Nextra ... |
-| [`vitepressAdapter`](/packages/gen/api-reference#vitepressadapter) | variable | VitePress SSG adapter. Implements the  contract for the VitePress platform. |
+| [`DEFAULT_TARGET`](/packages/gen/api/index#defaulttarget) | variable | The default SSG target when none is specified. |
+| [`mintlifyAdapter`](/packages/gen/api/index#mintlifyadapter) | variable | Mintlify SSG adapter. Implements the  contract for the Mintlify platform. |
+| [`docusaurusAdapter`](/packages/gen/api/index#docusaurusadapter) | variable | Docusaurus SSG adapter. Implements the  contract for the Docusaurus platform. |
+| [`nextraAdapter`](/packages/gen/api/index#nextraadapter) | variable | Nextra SSG adapter (v4, App Router). Implements the  contract for the Nextra ... |
+| [`vitepressAdapter`](/packages/gen/api/index#vitepressadapter) | variable | VitePress SSG adapter. Implements the  contract for the VitePress platform. |

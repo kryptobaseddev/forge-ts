@@ -15,7 +15,13 @@
             "group": "Getting Started",
             "pages": [
               "index",
-              "getting-started"
+              "getting-started",
+              "concepts",
+              "guides/index",
+              "configuration",
+              "changelog",
+              "faq",
+              "contributing"
             ]
           }
         ]
@@ -27,60 +33,60 @@
             "group": "@forge-ts/core",
             "pages": [
               "packages/core/index",
-              "packages/core/api-reference",
-              "packages/core/types",
-              "packages/core/functions",
-              "packages/core/examples"
+              "packages/core/api/index",
+              "packages/core/api/functions",
+              "packages/core/api/types",
+              "packages/core/api/examples"
             ]
           },
           {
             "group": "@forge-ts/api",
             "pages": [
               "packages/api/index",
-              "packages/api/api-reference",
-              "packages/api/types",
-              "packages/api/functions",
-              "packages/api/examples"
+              "packages/api/api/index",
+              "packages/api/api/functions",
+              "packages/api/api/types",
+              "packages/api/api/examples"
             ]
           },
           {
             "group": "@forge-ts/gen",
             "pages": [
               "packages/gen/index",
-              "packages/gen/api-reference",
-              "packages/gen/types",
-              "packages/gen/functions",
-              "packages/gen/examples"
+              "packages/gen/api/index",
+              "packages/gen/api/functions",
+              "packages/gen/api/types",
+              "packages/gen/api/examples"
             ]
           },
           {
             "group": "@forge-ts/cli",
             "pages": [
               "packages/cli/index",
-              "packages/cli/api-reference",
-              "packages/cli/types",
-              "packages/cli/functions",
-              "packages/cli/examples"
+              "packages/cli/api/index",
+              "packages/cli/api/functions",
+              "packages/cli/api/types",
+              "packages/cli/api/examples"
             ]
           },
           {
             "group": "@forge-ts/enforcer",
             "pages": [
               "packages/enforcer/index",
-              "packages/enforcer/api-reference",
-              "packages/enforcer/types",
-              "packages/enforcer/functions",
-              "packages/enforcer/examples"
+              "packages/enforcer/api/index",
+              "packages/enforcer/api/functions",
+              "packages/enforcer/api/types",
+              "packages/enforcer/api/examples"
             ]
           },
           {
             "group": "@forge-ts/doctest",
             "pages": [
               "packages/doctest/index",
-              "packages/doctest/api-reference",
-              "packages/doctest/types",
-              "packages/doctest/functions",
-              "packages/doctest/examples"
+              "packages/doctest/api/index",
+              "packages/doctest/api/functions",
+              "packages/doctest/api/types",
+              "packages/doctest/api/examples"
             ]
           }
         ]

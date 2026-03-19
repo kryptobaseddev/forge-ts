@@ -8,7 +8,7 @@ All usage examples from the package, aggregated for quick reference.
 
 _Extracts all `@example` blocks from a list of  objects._
 
-[View in API reference](/packages/doctest/api-reference#extractexamples)
+[View in API reference](/packages/doctest/api/functions#extractexamples)
 
 ```typescript
 import { createWalker, loadConfig } from "@forge-ts/core";
@@ -23,7 +23,7 @@ console.log(`Found ${examples.length} examples`);
 
 _Generates a virtual test file for a set of extracted examples.  Each example is wrapped in an `it()` block using the Node built-in `node:test` runner so that no additional test framework is required. Auto-imports the tested symbol from the source file, processes `// =>` assertion patterns, and appends an inline source map._
 
-[View in API reference](/packages/doctest/api-reference#generatetestfiles)
+[View in API reference](/packages/doctest/api/functions#generatetestfiles)
 
 ```typescript
 import { generateTestFiles } from "@forge-ts/doctest";
@@ -35,7 +35,7 @@ console.log(`Generated ${files.length} test file(s)`);
 
 _Writes virtual test files to disk and executes them with Node 24 native TypeScript support (`--experimental-strip-types --test`)._
 
-[View in API reference](/packages/doctest/api-reference#runtests)
+[View in API reference](/packages/doctest/api/functions#runtests)
 
 ```typescript
 import { runTests } from "@forge-ts/doctest";
@@ -49,7 +49,7 @@ if (!result.success) {
 
 _Runs the full doctest pipeline: extract → generate → run._
 
-[View in API reference](/packages/doctest/api-reference#doctest)
+[View in API reference](/packages/doctest/api/functions#doctest)
 
 ```typescript
 import { loadConfig } from "@forge-ts/core";

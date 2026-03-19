@@ -8,7 +8,7 @@ All usage examples from the package, aggregated for quick reference.
 
 _Constructs a sensible default  rooted at `rootDir`._
 
-[View in API reference](/packages/core/api-reference#defaultconfig)
+[View in API reference](/packages/core/api/functions#defaultconfig)
 
 ```typescript
 import { defaultConfig } from "@forge-ts/core";
@@ -20,7 +20,7 @@ console.log(config.enforce.enabled); // true
 
 _Loads the forge-ts configuration for a project.  Resolution order: 1. `<rootDir>/forge-ts.config.ts` 2. `<rootDir>/forge-ts.config.js` 3. `"forge-ts"` key inside `<rootDir>/package.json` 4. Built-in defaults (returned when none of the above is found)_
 
-[View in API reference](/packages/core/api-reference#loadconfig)
+[View in API reference](/packages/core/api/functions#loadconfig)
 
 ```typescript
 import { loadConfig } from "@forge-ts/core";
@@ -32,7 +32,7 @@ const config = await loadConfig("/path/to/project");
 
 _Determines the visibility level of a symbol from its TSDoc release tags.  The precedence order is: 1. `@internal`  →  2. `@beta`      →  3. `@public`    →  4. (no tag)     →  (default for exports)_
 
-[View in API reference](/packages/core/api-reference#resolvevisibility)
+[View in API reference](/packages/core/api/functions#resolvevisibility)
 
 ```typescript
 import { resolveVisibility } from "@forge-ts/core";
@@ -44,7 +44,7 @@ const vis = resolveVisibility({ internal: [] });
 
 _Returns whether `candidate` meets or exceeds the required minimum visibility.  "Meets" means the symbol is at least as visible as `minVisibility`. For example, `Public` meets a minimum of `Public`, but `Internal` does not._
 
-[View in API reference](/packages/core/api-reference#meetsvisibility)
+[View in API reference](/packages/core/api/functions#meetsvisibility)
 
 ```typescript
 import { meetsVisibility, Visibility } from "@forge-ts/core";
@@ -56,7 +56,7 @@ meetsVisibility(Visibility.Internal, Visibility.Public); // false
 
 _Filters an array of  objects to only include symbols whose visibility meets or exceeds `minVisibility`._
 
-[View in API reference](/packages/core/api-reference#filterbyvisibility)
+[View in API reference](/packages/core/api/functions#filterbyvisibility)
 
 ```typescript
 import { filterByVisibility, Visibility } from "@forge-ts/core";
@@ -67,7 +67,7 @@ const publicOnly = filterByVisibility(symbols, Visibility.Public);
 
 _Creates an  configured for the given forge config.  The walker uses the TypeScript Compiler API to create a `ts.Program` from the project's tsconfig, then visits every source file to extract exported declarations.  TSDoc comments are parsed with `@microsoft/tsdoc` to populate the `documentation` field on each ._
 
-[View in API reference](/packages/core/api-reference#createwalker)
+[View in API reference](/packages/core/api/functions#createwalker)
 
 ```typescript
 import { loadConfig, createWalker } from "@forge-ts/core";

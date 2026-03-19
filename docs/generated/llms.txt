@@ -44,7 +44,7 @@ any - A single entry in the generated API reference.
 any - A single generated documentation page.
 any - Options controlling the doc site generator.
 (symbols: ForgeSymbol[], rootDir: string) => Map<string, ForgeSymbol[]> - Groups symbols by their package based on file path.  For monorepos (symbols under `packages/<name>/`) the package name is derived from the directory segment immediately after `packages/`. For non-monorepo projects all symbols fall under the project name.
-(symbolsByPackage: Map<string, ForgeSymbol[]>, config: ForgeConfig, options: SiteGeneratorOptions) => DocPage[] - Generates a full multi-page documentation site from symbols grouped by package.  Produces an index page, a getting-started page, and per-package pages for the API reference, types, functions, and examples.
+(symbolsByPackage: Map<string, ForgeSymbol[]>, config: ForgeConfig, options: SiteGeneratorOptions) => DocPage[] - Generates a full multi-page documentation site from symbols grouped by package.  Follows a 5-stage information architecture: 1. ORIENT — Landing page, Getting Started 2. LEARN — Concepts (stub) 3. BUILD — Guides (stub) 4. REFERENCE — API Reference, Types, Configuration, Changelog 5. COMMUNITY — FAQ, Contributing (stubs)
 any - Supported SSG target identifiers.
 any - A file to write to disk during scaffolding or generation.
 any - Style guide configuration for the SSG target.

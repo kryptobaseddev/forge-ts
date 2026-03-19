@@ -1,7 +1,7 @@
 # . - Full Context
 
 Root: .
-Generated: 2026-03-19T01:26:34.599Z
+Generated: 2026-03-19T03:33:10.507Z
 
 ## Functions
 
@@ -208,7 +208,7 @@ Example:
 
 (symbolsByPackage: Map<string, ForgeSymbol[]>, config: ForgeConfig, options: SiteGeneratorOptions) => DocPage[]
 
-Generates a full multi-page documentation site from symbols grouped by package.  Produces an index page, a getting-started page, and per-package pages for the API reference, types, functions, and examples.
+Generates a full multi-page documentation site from symbols grouped by package.  Follows a 5-stage information architecture: 1. ORIENT — Landing page, Getting Started 2. LEARN — Concepts (stub) 3. BUILD — Guides (stub) 4. REFERENCE — API Reference, Types, Configuration, Changelog 5. COMMUNITY — FAQ, Contributing (stubs)
 
 Parameters:
 - symbolsByPackage: Symbols grouped by package name.

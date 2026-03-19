@@ -118,6 +118,12 @@ function slugLink(path: string): string {
 	return `/${slug}`;
 }
 
+/** Truncate a description to at most maxLen chars. */
+function truncate(text: string, maxLen = 80): string {
+	if (text.length <= maxLen) return text;
+	return `${text.slice(0, maxLen - 3)}...`;
+}
+
 // ---------------------------------------------------------------------------
 // Package grouping
 // ---------------------------------------------------------------------------
@@ -161,30 +167,361 @@ export function groupSymbolsByPackage(
 }
 
 // ---------------------------------------------------------------------------
-// Page renderers
+// Symbol kind sets
 // ---------------------------------------------------------------------------
 
 const TYPE_KINDS: ReadonlySet<ForgeSymbol["kind"]> = new Set(["interface", "type", "enum"]);
 
 const FUNCTION_KINDS: ReadonlySet<ForgeSymbol["kind"]> = new Set(["function", "class"]);
 
-/** Render a property table row. */
-function renderPropertyRow(child: ForgeSymbol): string {
-	const name = `\`${child.name}\``;
-	const type = child.signature ? `\`${escapePipe(child.signature)}\`` : "—";
-	// Heuristic: optional if signature contains `?` or `| undefined`
-	const optional =
-		child.signature?.includes("?") || child.signature?.includes("undefined") ? "No" : "Yes";
-	// Fall back to the property name when no description is available
-	const description = escapePipe(child.documentation?.summary || child.name);
-	return `| ${name} | ${type} | ${optional} | ${description} |`;
+// ---------------------------------------------------------------------------
+// ORIENT: Landing page (index)
+// ---------------------------------------------------------------------------
+
+/**
+ * Render the root landing page following the 5-stage information architecture.
+ *
+ * Structure: intro sentence, Features, Installation, Quick Example, Packages table, Next Steps.
+ * @internal
+ */
+function renderProjectIndexPage(
+	symbolsByPackage: Map<string, ForgeSymbol[]>,
+	options: SiteGeneratorOptions,
+): string {
+	const lines: string[] = [];
+
+	// Intro — no h1, frontmatter title handles the heading
+	if (options.projectDescription) {
+		lines.push(`**${options.projectName}** — ${options.projectDescription}`);
+	} else {
+		lines.push(
+			`**${options.projectName}** is a TypeScript documentation toolkit that performs a single AST traversal of your project and produces API docs, OpenAPI specs, executable doctests, and AI context files in one pass.`,
+		);
+	}
+	lines.push("");
+
+	// Features section
+	lines.push("## Features");
+	lines.push("");
+
+	const pkgCount = symbolsByPackage.size;
+	if (pkgCount > 1) {
+		lines.push(`- ${pkgCount} packages with full TypeScript support`);
+	} else {
+		lines.push("- Full TypeScript support with TSDoc extraction");
+	}
+	lines.push("- Auto-generated API reference from source code");
+	lines.push("- Executable `@example` blocks as doctests");
+	lines.push("- AI-ready context files from a single build pass");
+	lines.push("");
+
+	// Installation section
+	lines.push("## Installation");
+	lines.push("");
+	lines.push("```bash");
+	lines.push("npm install -D @forge-ts/cli");
+	lines.push("```");
+	lines.push("");
+
+	// Quick Example — first @example from any exported function
+	let firstExample: { code: string; language: string } | undefined;
+	outer: for (const [, symbols] of symbolsByPackage) {
+		for (const s of symbols) {
+			if (!s.exported || s.kind !== "function") continue;
+			const ex = s.documentation?.examples?.[0];
+			if (ex) {
+				firstExample = ex;
+				break outer;
+			}
+		}
+	}
+
+	if (firstExample) {
+		lines.push("## Quick Example");
+		lines.push("");
+		lines.push(`\`\`\`${firstExample.language || "typescript"}`);
+		lines.push(firstExample.code.trim());
+		lines.push("```");
+		lines.push("");
+	}
+
+	// Packages table
+	if (symbolsByPackage.size > 0) {
+		lines.push("## Packages");
+		lines.push("");
+		lines.push("| Package | Description |");
+		lines.push("|---------|-------------|");
+		for (const [pkgName, symbols] of symbolsByPackage) {
+			const pkgDoc = symbols
+				.map((s) => s.documentation?.tags?.packageDocumentation?.[0])
+				.find(Boolean);
+			const exported = symbols.filter(
+				(s) => s.exported && s.kind !== "method" && s.kind !== "property",
+			);
+			const rawDesc = pkgDoc ?? `${exported.length} exported symbol(s).`;
+			const desc = escapePipe(truncate(rawDesc));
+			const link = `[\`${pkgName}\`](${slugLink(`packages/${pkgName}/index`)})`;
+			lines.push(`| ${link} | ${desc} |`);
+		}
+		lines.push("");
+	}
+
+	// Next Steps
+	lines.push("## Next Steps");
+	lines.push("");
+	lines.push(`- [Getting Started](/getting-started) — Step-by-step guide`);
+	lines.push(`- [API Reference](/packages) — Full API documentation`);
+	lines.push(`- [Concepts](/concepts) — How it works`);
+
+	return lines.join("\n");
 }
+
+// ---------------------------------------------------------------------------
+// ORIENT: Getting Started (tutorial)
+// ---------------------------------------------------------------------------
+
+/**
+ * Render a step-by-step getting started tutorial page.
+ * @internal
+ */
+function renderGettingStartedPage(
+	symbolsByPackage: Map<string, ForgeSymbol[]>,
+	options: SiteGeneratorOptions,
+): string {
+	// Find the first exported function with an example
+	let firstExample: { code: string; language: string } | undefined;
+
+	outer: for (const [, symbols] of symbolsByPackage) {
+		for (const s of symbols) {
+			if (!s.exported || s.kind !== "function") continue;
+			const ex = s.documentation?.examples?.[0];
+			if (ex) {
+				firstExample = ex;
+				break outer;
+			}
+		}
+	}
+
+	const lines: string[] = [];
+
+	// No h1 — frontmatter title handles the heading
+	lines.push(`Get up and running with **${options.projectName}** in minutes.`);
+
+	if (options.projectDescription) {
+		lines.push("");
+		lines.push(options.projectDescription);
+	}
+
+	lines.push("");
+	lines.push("## Step 1: Install");
+	lines.push("");
+	lines.push("```bash");
+	lines.push("npm install -D @forge-ts/cli");
+	lines.push("```");
+	lines.push("");
+
+	lines.push("## Step 2: Add TSDoc to your code");
+	lines.push("");
+	lines.push("Add TSDoc comments to your exported functions and types:");
+	lines.push("");
+	lines.push("```typescript");
+	lines.push("/**");
+	lines.push(" * Adds two numbers together.");
+	lines.push(" * @param a - First number");
+	lines.push(" * @param b - Second number");
+	lines.push(" * @returns The sum of a and b");
+	lines.push(" * @example");
+	lines.push(" * ```typescript");
+	lines.push(" * const result = add(1, 2); // => 3");
+	lines.push(" * ```");
+	lines.push(" */");
+	lines.push("export function add(a: number, b: number): number {");
+	lines.push("  return a + b;");
+	lines.push("}");
+	lines.push("```");
+	lines.push("");
+
+	lines.push("## Step 3: Run forge-ts check");
+	lines.push("");
+	lines.push("Lint your TSDoc coverage before generating docs:");
+	lines.push("");
+	lines.push("```bash");
+	lines.push("npx forge-ts check");
+	lines.push("```");
+	lines.push("");
+	lines.push("Expected output:");
+	lines.push("");
+	lines.push("```");
+	lines.push("forge-ts: checking TSDoc coverage...");
+	lines.push("  ✓ All public symbols documented");
+	lines.push("```");
+	lines.push("");
+
+	lines.push("## Step 4: Generate docs");
+	lines.push("");
+	lines.push("Build your documentation site:");
+	lines.push("");
+	lines.push("```bash");
+	lines.push("npx forge-ts build");
+	lines.push("```");
+	lines.push("");
+
+	if (firstExample) {
+		lines.push("Your code examples become live documentation:");
+		lines.push("");
+		lines.push(`\`\`\`${firstExample.language || "typescript"}`);
+		lines.push(firstExample.code.trim());
+		lines.push("```");
+		lines.push("");
+	}
+
+	lines.push("## What's Next?");
+	lines.push("");
+	lines.push("- [Concepts](/concepts) — Understand how forge-ts works");
+	lines.push("- [API Reference](/packages) — Full API documentation");
+	lines.push("- [Guides](/guides) — Practical how-to guides");
+
+	return lines.join("\n");
+}
+
+// ---------------------------------------------------------------------------
+// LEARN: Concepts (stub)
+// ---------------------------------------------------------------------------
+
+/**
+ * Render the concepts stub page with key abstractions from package docs.
+ * @internal
+ */
+function renderConceptsPage(
+	symbolsByPackage: Map<string, ForgeSymbol[]>,
+	options: SiteGeneratorOptions,
+): string {
+	const lines: string[] = [];
+
+	lines.push(`This page explains the core concepts behind **${options.projectName}**.`);
+	lines.push("");
+	lines.push(
+		"> This is a stub page. Edit this file to add your project's conceptual documentation.",
+	);
+	lines.push("");
+
+	// Auto-generated description from @packageDocumentation
+	const pkgDoc = [...symbolsByPackage.values()]
+		.flatMap((syms) => syms.map((s) => s.documentation?.tags?.packageDocumentation?.[0]))
+		.find(Boolean);
+
+	lines.push("## How It Works");
+	lines.push("");
+	if (pkgDoc) {
+		lines.push(pkgDoc);
+	} else {
+		lines.push(
+			`${options.projectName} processes your TypeScript source with a single AST traversal, extracting TSDoc comments and type information to generate documentation.`,
+		);
+	}
+	lines.push("");
+
+	// Key abstractions — list exported types as bullet points
+	const allTypeSymbols = [...symbolsByPackage.values()]
+		.flat()
+		.filter((s) => s.exported && TYPE_KINDS.has(s.kind));
+
+	if (allTypeSymbols.length > 0) {
+		lines.push("## Key Abstractions");
+		lines.push("");
+		for (const s of allTypeSymbols) {
+			const desc = s.documentation?.summary ?? `The \`${s.name}\` ${s.kind}.`;
+			lines.push(`- **\`${s.name}\`** — ${desc}`);
+		}
+		lines.push("");
+	}
+
+	return lines.join("\n");
+}
+
+// ---------------------------------------------------------------------------
+// BUILD: Guides index (stub)
+// ---------------------------------------------------------------------------
+
+/**
+ * Render the guides index stub page.
+ * @internal
+ */
+function renderGuidesIndexPage(): string {
+	return [
+		"Practical how-to guides for common tasks.",
+		"",
+		"> Add your guides to the `guides/` directory. Each `.md` or `.mdx` file will appear here automatically.",
+		"",
+		"## Getting Things Done",
+		"",
+		"Guides will appear here as you add them. Start by creating a file like `guides/my-guide.md`.",
+		"",
+	].join("\n");
+}
+
+// ---------------------------------------------------------------------------
+// REFERENCE: Package API overview (api/index)
+// ---------------------------------------------------------------------------
+
+/**
+ * Render the API overview page for a package — a full symbol table.
+ * @internal
+ */
+function renderApiIndexPage(pkgName: string, symbols: ForgeSymbol[]): string {
+	const exported = symbols.filter(
+		(s) => s.exported && s.kind !== "method" && s.kind !== "property",
+	);
+
+	const functions = exported.filter((s) => FUNCTION_KINDS.has(s.kind));
+	const types = exported.filter((s) => TYPE_KINDS.has(s.kind));
+	const others = exported.filter((s) => !FUNCTION_KINDS.has(s.kind) && !TYPE_KINDS.has(s.kind));
+
+	const lines: string[] = [];
+
+	// Find @packageDocumentation summary
+	const pkgDoc = symbols.map((s) => s.documentation?.tags?.packageDocumentation?.[0]).find(Boolean);
+	if (pkgDoc) {
+		lines.push(pkgDoc);
+		lines.push("");
+	} else {
+		lines.push(`API reference for the \`${pkgName}\` package.`);
+		lines.push("");
+	}
+
+	const renderGroup = (group: ForgeSymbol[], heading: string, pathSuffix: string) => {
+		if (group.length === 0) return;
+		lines.push(`## ${heading}`);
+		lines.push("");
+		lines.push("| Symbol | Kind | Description |");
+		lines.push("|--------|------|-------------|");
+		for (const s of group) {
+			const ext = s.kind === "function" ? "()" : "";
+			const anchor = toAnchor(`${s.name}${ext}`);
+			const link = `[\`${s.name}${ext}\`](${slugLink(`packages/${pkgName}/${pathSuffix}`)}#${anchor})`;
+			const rawSummary = s.documentation?.summary ?? "";
+			const summary = escapePipe(truncate(rawSummary));
+			lines.push(`| ${link} | ${s.kind} | ${summary} |`);
+		}
+		lines.push("");
+	};
+
+	renderGroup(functions, "Functions & Classes", "api/functions");
+	renderGroup(types, "Types & Interfaces", "api/types");
+	renderGroup(others, "Other Exports", "api/functions");
+
+	return lines.join("\n");
+}
+
+// ---------------------------------------------------------------------------
+// REFERENCE: Package overview (packages/<name>/index)
+// ---------------------------------------------------------------------------
 
 /**
  * Renders the overview (index) page for a package.
  * @internal
  */
-function renderOverviewPage(
+function renderPackageOverviewPage(
 	packageName: string,
 	symbols: ForgeSymbol[],
 	_options: SiteGeneratorOptions,
@@ -219,12 +556,9 @@ function renderOverviewPage(
 			lines.push("|--------|------|-------------|");
 			for (const s of group) {
 				const ext = s.kind === "function" ? "()" : "";
-				const name = `[\`${s.name}${ext}\`](${slugLink(`packages/${packageName}/api-reference`)}#${toAnchor(`${s.name}${ext}`)})`;
+				const name = `[\`${s.name}${ext}\`](${slugLink(`packages/${packageName}/api/index`)}#${toAnchor(`${s.name}${ext}`)})`;
 				const rawSummary = s.documentation?.summary ?? "";
-				// Truncate long descriptions in the table
-				const summary = escapePipe(
-					rawSummary.length > 80 ? `${rawSummary.slice(0, 77)}...` : rawSummary,
-				);
+				const summary = escapePipe(truncate(rawSummary));
 				lines.push(`| ${name} | ${s.kind} | ${summary} |`);
 			}
 			lines.push("");
@@ -237,6 +571,10 @@ function renderOverviewPage(
 
 	return lines.join("\n");
 }
+
+// ---------------------------------------------------------------------------
+// REFERENCE: Types page
+// ---------------------------------------------------------------------------
 
 /**
  * Renders the types page for a package (interfaces, type aliases, enums).
@@ -281,7 +619,12 @@ function renderTypesPage(
 			lines.push("| Property | Type | Required | Description |");
 			lines.push("|----------|------|----------|-------------|");
 			for (const child of children) {
-				lines.push(renderPropertyRow(child));
+				const name = `\`${child.name}\``;
+				const type = child.signature ? `\`${escapePipe(child.signature)}\`` : "—";
+				const optional =
+					child.signature?.includes("?") || child.signature?.includes("undefined") ? "No" : "Yes";
+				const description = escapePipe(child.documentation?.summary || child.name);
+				lines.push(`| ${name} | ${type} | ${optional} | ${description} |`);
 			}
 			lines.push("");
 		}
@@ -292,6 +635,10 @@ function renderTypesPage(
 
 	return lines.join("\n");
 }
+
+// ---------------------------------------------------------------------------
+// REFERENCE: Functions page
+// ---------------------------------------------------------------------------
 
 /**
  * Renders the functions page for a package (functions and classes).
@@ -310,7 +657,6 @@ function renderFunctionsPage(
 	lines.push("");
 
 	for (const s of fnSymbols) {
-		const _ext = s.kind === "function" ? "()" : "";
 		const paramSig =
 			s.kind === "function" && s.documentation?.params
 				? s.documentation.params.map((p) => p.name).join(", ")
@@ -417,6 +763,10 @@ function renderFunctionsPage(
 	return lines.join("\n");
 }
 
+// ---------------------------------------------------------------------------
+// REFERENCE: Examples page
+// ---------------------------------------------------------------------------
+
 /**
  * Renders the examples page for a package — aggregates all @example blocks.
  * @internal
@@ -452,7 +802,7 @@ function renderExamplesPage(
 		}
 
 		lines.push(
-			`[View in API reference](${slugLink(`packages/${packageName}/api-reference`)}#${toAnchor(s.name)})`,
+			`[View in API reference](${slugLink(`packages/${packageName}/api/functions`)}#${toAnchor(s.name)})`,
 		);
 		lines.push("");
 
@@ -473,255 +823,137 @@ function renderExamplesPage(
 }
 
 // ---------------------------------------------------------------------------
-// API reference renderer (full, scoped to one package)
+// REFERENCE: Configuration page
 // ---------------------------------------------------------------------------
 
-const KIND_ORDER: ReadonlyArray<ForgeSymbol["kind"]> = [
-	"function",
-	"class",
-	"interface",
-	"type",
-	"enum",
-	"variable",
-];
-
-const KIND_LABELS: Record<string, string> = {
-	function: "Functions",
-	class: "Classes",
-	interface: "Interfaces",
-	type: "Types",
-	enum: "Enums",
-	variable: "Variables",
-};
-
-/** Render a single symbol section at the given heading depth. */
-function renderApiSymbol(symbol: ForgeSymbol, depth: number): string {
-	const hashes = "#".repeat(depth);
-	const ext = symbol.kind === "function" || symbol.kind === "method" ? "()" : "";
-	const lines: string[] = [];
-
-	lines.push(`${hashes} \`${symbol.name}${ext}\``);
-	lines.push("");
-
-	if (symbol.documentation?.deprecated) {
-		lines.push(`> **Deprecated**: ${symbol.documentation.deprecated}`);
-		lines.push("");
-	}
-
-	if (symbol.signature) {
-		lines.push("```typescript");
-		lines.push(symbol.signature);
-		lines.push("```");
-		lines.push("");
-	}
-
-	if (symbol.documentation?.summary) {
-		lines.push(symbol.documentation.summary);
-		lines.push("");
-	}
-
-	const params = symbol.documentation?.params ?? [];
-	if (params.length > 0) {
-		lines.push("**Parameters**");
-		lines.push("");
-		for (const p of params) {
-			const typeStr = p.type ? ` (\`${p.type}\`)` : "";
-			lines.push(`- \`${p.name}\`${typeStr} — ${p.description}`);
-		}
-		lines.push("");
-	}
-
-	if (symbol.documentation?.returns) {
-		const retType = symbol.documentation.returns.type
-			? ` (\`${symbol.documentation.returns.type}\`)`
-			: "";
-		lines.push(`**Returns**${retType}: ${symbol.documentation.returns.description}`);
-		lines.push("");
-	}
-
-	const throws = symbol.documentation?.throws ?? [];
-	if (throws.length > 0) {
-		lines.push("**Throws**");
-		lines.push("");
-		for (const t of throws) {
-			const typeStr = t.type ? `\`${t.type}\` — ` : "";
-			lines.push(`- ${typeStr}${t.description}`);
-		}
-		lines.push("");
-	}
-
-	const examples = symbol.documentation?.examples ?? [];
-	if (examples.length > 0) {
-		lines.push("**Examples**");
-		lines.push("");
-		for (const ex of examples) {
-			lines.push(`\`\`\`${ex.language || "typescript"}`);
-			lines.push(ex.code.trim());
-			lines.push("```");
-			lines.push("");
-		}
-	}
-
-	const children = symbol.children ?? [];
-	if (children.length > 0 && depth < 5) {
-		for (const child of children) {
-			lines.push(renderApiSymbol(child, depth + 1));
-		}
-	}
-
-	return lines.join("\n");
-}
-
-/** Render a full API reference page for one package. */
-function renderApiReferencePage(packageName: string, symbols: ForgeSymbol[]): string {
-	const exported = symbols.filter(
-		(s) => s.exported && s.kind !== "method" && s.kind !== "property",
-	);
-
-	const groups = new Map<ForgeSymbol["kind"], ForgeSymbol[]>();
-	for (const s of exported) {
-		const list = groups.get(s.kind) ?? [];
-		list.push(s);
-		groups.set(s.kind, list);
-	}
-
-	const lines: string[] = [];
-	// No h1 — frontmatter title handles the heading
-
-	for (const kind of KIND_ORDER) {
-		const group = groups.get(kind);
-		if (!group || group.length === 0) continue;
-
-		lines.push(`## ${KIND_LABELS[kind]}`);
-		lines.push("");
-
-		for (const s of group) {
-			lines.push(renderApiSymbol(s, 3));
-			lines.push("");
-		}
-	}
-
-	// Suppress unused variable warning
-	void packageName;
-
-	return lines.join("\n");
-}
-
-// ---------------------------------------------------------------------------
-// Project-level pages
-// ---------------------------------------------------------------------------
-
-/** Render the root index page listing all packages. */
-function renderProjectIndexPage(
+/**
+ * Render the configuration reference page.
+ * @internal
+ */
+function renderConfigurationPage(
 	symbolsByPackage: Map<string, ForgeSymbol[]>,
 	options: SiteGeneratorOptions,
 ): string {
+	// Look for a ForgeConfig-like type across all packages
+	const configSymbol = [...symbolsByPackage.values()]
+		.flat()
+		.find((s) => s.exported && TYPE_KINDS.has(s.kind) && /config/i.test(s.name));
+
 	const lines: string[] = [];
 
-	// No h1 — frontmatter title handles the heading in Mintlify and other SSGs
-
-	// Intro paragraph describing what the project does
-	if (options.projectDescription) {
-		lines.push(`**${options.projectName}** — ${options.projectDescription}`);
-		lines.push("");
-	} else {
-		lines.push(
-			`**${options.projectName}** is a TypeScript documentation toolkit that performs a single AST traversal of your project and produces API docs, OpenAPI specs, executable doctests, and AI context files in one pass.`,
-		);
-		lines.push("");
-	}
-
-	lines.push("## Quick Start");
+	lines.push(`Configuration reference for **${options.projectName}**.`);
 	lines.push("");
-	lines.push("```bash");
-	lines.push(`npm install -D @forge-ts/cli`);
-	lines.push(`npx forge-ts check    # Lint TSDoc coverage`);
-	lines.push(`npx forge-ts test     # Run @example blocks as tests`);
-	lines.push(`npx forge-ts build    # Generate everything`);
+	lines.push("> This is a stub page. Edit this file to document your configuration options.");
+	lines.push("");
+	lines.push("## forge-ts.config.ts");
+	lines.push("");
+	lines.push("Create a `forge-ts.config.ts` file in your project root:");
+	lines.push("");
+	lines.push("```typescript");
+	lines.push('import { defineConfig } from "@forge-ts/core";');
+	lines.push("");
+	lines.push("export default defineConfig({");
+	lines.push('  rootDir: ".",');
+	lines.push('  outDir: "docs/generated",');
+	lines.push("});");
 	lines.push("```");
 	lines.push("");
 
-	lines.push("## Packages");
-	lines.push("");
-
-	for (const [pkgName, symbols] of symbolsByPackage) {
-		const exported = symbols.filter(
-			(s) => s.exported && s.kind !== "method" && s.kind !== "property",
+	if (configSymbol) {
+		lines.push(`## \`${configSymbol.name}\``);
+		lines.push("");
+		if (configSymbol.documentation?.summary) {
+			lines.push(configSymbol.documentation.summary);
+			lines.push("");
+		}
+		const children = (configSymbol.children ?? []).filter(
+			(c) => c.kind === "property" || c.kind === "method",
 		);
-		const pkgDoc = symbols
-			.map((s) => s.documentation?.tags?.packageDocumentation?.[0])
-			.find(Boolean);
-		const summary = pkgDoc ?? `${exported.length} exported symbol(s).`;
-		lines.push(`### [${pkgName}](${slugLink(`packages/${pkgName}/index`)})`);
-		lines.push("");
-		lines.push(summary);
-		lines.push("");
-	}
-
-	return lines.join("\n");
-}
-
-/** Render a getting-started page using the first @example from any exported function. */
-function renderGettingStartedPage(
-	symbolsByPackage: Map<string, ForgeSymbol[]>,
-	options: SiteGeneratorOptions,
-): string {
-	// Find the first exported function with an example
-	let firstExample: { code: string; language: string } | undefined;
-	let firstSymbolName = "";
-	let firstPackageName = "";
-
-	outer: for (const [pkgName, symbols] of symbolsByPackage) {
-		for (const s of symbols) {
-			if (!s.exported || s.kind !== "function") continue;
-			const ex = s.documentation?.examples?.[0];
-			if (ex) {
-				firstExample = ex;
-				firstSymbolName = s.name;
-				firstPackageName = pkgName;
-				break outer;
+		if (children.length > 0) {
+			lines.push("| Property | Type | Required | Description |");
+			lines.push("|----------|------|----------|-------------|");
+			for (const child of children) {
+				const name = `\`${child.name}\``;
+				const type = child.signature ? `\`${escapePipe(child.signature)}\`` : "—";
+				const optional =
+					child.signature?.includes("?") || child.signature?.includes("undefined") ? "No" : "Yes";
+				const description = escapePipe(child.documentation?.summary || child.name);
+				lines.push(`| ${name} | ${type} | ${optional} | ${description} |`);
 			}
+			lines.push("");
 		}
 	}
 
-	const lines: string[] = [];
-	// No h1 — frontmatter title handles the heading
-	lines.push(`Welcome to **${options.projectName}**.`);
-
-	if (options.projectDescription) {
-		lines.push("");
-		lines.push(options.projectDescription);
-	}
-
-	lines.push("");
-	lines.push("## Installation");
-	lines.push("");
-	lines.push("```bash");
-	lines.push("npm install -D @forge-ts/cli");
-	lines.push("```");
-	lines.push("");
-
-	if (firstExample) {
-		lines.push("## Quick Start");
-		lines.push("");
-		lines.push(
-			`The following example demonstrates \`${firstSymbolName}\` from the \`${firstPackageName}\` package.`,
-		);
-		lines.push("");
-		lines.push(`\`\`\`${firstExample.language || "typescript"}`);
-		lines.push(firstExample.code.trim());
-		lines.push("```");
-		lines.push("");
-	}
-
-	lines.push("## Next Steps");
-	lines.push("");
-	lines.push(`- Browse the [API Reference](${slugLink("packages/")})`);
-	for (const pkgName of symbolsByPackage.keys()) {
-		lines.push(`  - [${pkgName}](${slugLink(`packages/${pkgName}/api-reference`)})`);
-	}
-
 	return lines.join("\n");
+}
+
+// ---------------------------------------------------------------------------
+// REFERENCE: Changelog (stub)
+// ---------------------------------------------------------------------------
+
+/**
+ * Render the changelog stub page.
+ * @internal
+ */
+function renderChangelogPage(options: SiteGeneratorOptions): string {
+	return [
+		`Release history for **${options.projectName}**.`,
+		"",
+		"> This is a stub page. Link to or embed your `CHANGELOG.md` here.",
+		"",
+		"See [CHANGELOG.md](https://github.com/your-org/your-repo/blob/main/CHANGELOG.md) for the full release history.",
+		"",
+	].join("\n");
+}
+
+// ---------------------------------------------------------------------------
+// COMMUNITY: FAQ (stub)
+// ---------------------------------------------------------------------------
+
+/**
+ * Render the FAQ stub page.
+ * @internal
+ */
+function renderFaqPage(options: SiteGeneratorOptions): string {
+	return [
+		`Frequently asked questions about **${options.projectName}**.`,
+		"",
+		"> This is a stub page. Common questions will be added here as they arise.",
+		"",
+		"## How do I configure forge-ts?",
+		"",
+		"Create a `forge-ts.config.ts` file in your project root. See [Configuration](/configuration).",
+		"",
+		"## What TypeScript version is required?",
+		"",
+		"forge-ts requires TypeScript 5.0 or later.",
+		"",
+		"## How do I run @example blocks as tests?",
+		"",
+		"```bash",
+		"npx forge-ts test",
+		"```",
+		"",
+	].join("\n");
+}
+
+// ---------------------------------------------------------------------------
+// COMMUNITY: Contributing (stub)
+// ---------------------------------------------------------------------------
+
+/**
+ * Render the contributing stub page.
+ * @internal
+ */
+function renderContributingPage(options: SiteGeneratorOptions): string {
+	return [
+		`Contributing to **${options.projectName}**.`,
+		"",
+		"> This is a stub page. Link to or embed your `CONTRIBUTING.md` here.",
+		"",
+		"See [CONTRIBUTING.md](https://github.com/your-org/your-repo/blob/main/CONTRIBUTING.md) for contribution guidelines.",
+		"",
+	].join("\n");
 }
 
 // ---------------------------------------------------------------------------
@@ -731,8 +963,12 @@ function renderGettingStartedPage(
 /**
  * Generates a full multi-page documentation site from symbols grouped by package.
  *
- * Produces an index page, a getting-started page, and per-package pages for
- * the API reference, types, functions, and examples.
+ * Follows a 5-stage information architecture:
+ * 1. ORIENT — Landing page, Getting Started
+ * 2. LEARN — Concepts (stub)
+ * 3. BUILD — Guides (stub)
+ * 4. REFERENCE — API Reference, Types, Configuration, Changelog
+ * 5. COMMUNITY — FAQ, Contributing (stubs)
  *
  * @param symbolsByPackage - Symbols grouped by package name.
  * @param config - The resolved {@link ForgeConfig}.
@@ -755,7 +991,11 @@ export function generateDocSite(
 	const ext = options.format === "mdx" ? "mdx" : "md";
 	const pages: DocPage[] = [];
 
-	// Project index
+	// -------------------------------------------------------------------------
+	// ORIENT
+	// -------------------------------------------------------------------------
+
+	// Project landing page
 	const indexContent = renderProjectIndexPage(symbolsByPackage, options);
 	const indexFrontmatter = buildFrontmatterFields(
 		options.projectName,
@@ -783,13 +1023,50 @@ export function generateDocSite(
 		frontmatter: gettingStartedFrontmatter,
 	});
 
-	// Per-package pages
+	// -------------------------------------------------------------------------
+	// LEARN
+	// -------------------------------------------------------------------------
+
+	const conceptsContent = renderConceptsPage(symbolsByPackage, options);
+	const conceptsFrontmatter = buildFrontmatterFields(
+		"Concepts",
+		`Core concepts behind ${options.projectName}`,
+		options.ssgTarget,
+		3,
+	);
+	pages.push({
+		path: `concepts.${ext}`,
+		content: `${serializeFrontmatter(conceptsFrontmatter)}${conceptsContent.trimEnd()}\n`,
+		frontmatter: conceptsFrontmatter,
+	});
+
+	// -------------------------------------------------------------------------
+	// BUILD
+	// -------------------------------------------------------------------------
+
+	const guidesContent = renderGuidesIndexPage();
+	const guidesFrontmatter = buildFrontmatterFields(
+		"Guides",
+		`How-to guides for ${options.projectName}`,
+		options.ssgTarget,
+		4,
+	);
+	pages.push({
+		path: `guides/index.${ext}`,
+		content: `${serializeFrontmatter(guidesFrontmatter)}${guidesContent.trimEnd()}\n`,
+		frontmatter: guidesFrontmatter,
+	});
+
+	// -------------------------------------------------------------------------
+	// REFERENCE — per-package pages
+	// -------------------------------------------------------------------------
+
 	let pkgPosition = 1;
 	for (const [pkgName, symbols] of symbolsByPackage) {
 		const pkgBase = `packages/${pkgName}`;
 
-		// Package index
-		const overviewContent = renderOverviewPage(pkgName, symbols, options);
+		// Package overview index
+		const overviewContent = renderPackageOverviewPage(pkgName, symbols, options);
 		const overviewFrontmatter = buildFrontmatterFields(
 			pkgName,
 			`${pkgName} package overview`,
@@ -802,33 +1079,20 @@ export function generateDocSite(
 			frontmatter: overviewFrontmatter,
 		});
 
-		// API reference
-		const apiContent = renderApiReferencePage(pkgName, symbols);
-		const apiFrontmatter = buildFrontmatterFields(
+		// api/index — symbol table overview
+		const apiIndexContent = renderApiIndexPage(pkgName, symbols);
+		const apiIndexFrontmatter = buildFrontmatterFields(
 			`${pkgName} — API Reference`,
 			`Full API reference for the ${pkgName} package`,
 			options.ssgTarget,
 		);
 		pages.push({
-			path: `${pkgBase}/api-reference.${ext}`,
-			content: `${serializeFrontmatter(apiFrontmatter)}${apiContent.trimEnd()}\n`,
-			frontmatter: apiFrontmatter,
+			path: `${pkgBase}/api/index.${ext}`,
+			content: `${serializeFrontmatter(apiIndexFrontmatter)}${apiIndexContent.trimEnd()}\n`,
+			frontmatter: apiIndexFrontmatter,
 		});
 
-		// Types page
-		const typesContent = renderTypesPage(pkgName, symbols, options);
-		const typesFrontmatter = buildFrontmatterFields(
-			`${pkgName} — Types`,
-			`Type contracts for the ${pkgName} package`,
-			options.ssgTarget,
-		);
-		pages.push({
-			path: `${pkgBase}/types.${ext}`,
-			content: `${serializeFrontmatter(typesFrontmatter)}${typesContent.trimEnd()}\n`,
-			frontmatter: typesFrontmatter,
-		});
-
-		// Functions page
+		// api/functions
 		const functionsContent = renderFunctionsPage(pkgName, symbols, options);
 		const functionsFrontmatter = buildFrontmatterFields(
 			`${pkgName} — Functions`,
@@ -836,12 +1100,25 @@ export function generateDocSite(
 			options.ssgTarget,
 		);
 		pages.push({
-			path: `${pkgBase}/functions.${ext}`,
+			path: `${pkgBase}/api/functions.${ext}`,
 			content: `${serializeFrontmatter(functionsFrontmatter)}${functionsContent.trimEnd()}\n`,
 			frontmatter: functionsFrontmatter,
 		});
 
-		// Examples page
+		// api/types
+		const typesContent = renderTypesPage(pkgName, symbols, options);
+		const typesFrontmatter = buildFrontmatterFields(
+			`${pkgName} — Types`,
+			`Type contracts for the ${pkgName} package`,
+			options.ssgTarget,
+		);
+		pages.push({
+			path: `${pkgBase}/api/types.${ext}`,
+			content: `${serializeFrontmatter(typesFrontmatter)}${typesContent.trimEnd()}\n`,
+			frontmatter: typesFrontmatter,
+		});
+
+		// api/examples
 		const examplesContent = renderExamplesPage(pkgName, symbols, options);
 		const examplesFrontmatter = buildFrontmatterFields(
 			`${pkgName} — Examples`,
@@ -849,13 +1126,69 @@ export function generateDocSite(
 			options.ssgTarget,
 		);
 		pages.push({
-			path: `${pkgBase}/examples.${ext}`,
+			path: `${pkgBase}/api/examples.${ext}`,
 			content: `${serializeFrontmatter(examplesFrontmatter)}${examplesContent.trimEnd()}\n`,
 			frontmatter: examplesFrontmatter,
 		});
 
 		pkgPosition++;
 	}
+
+	// -------------------------------------------------------------------------
+	// REFERENCE — project-level
+	// -------------------------------------------------------------------------
+
+	const configContent = renderConfigurationPage(symbolsByPackage, options);
+	const configFrontmatter = buildFrontmatterFields(
+		"Configuration",
+		`Configuration reference for ${options.projectName}`,
+		options.ssgTarget,
+	);
+	pages.push({
+		path: `configuration.${ext}`,
+		content: `${serializeFrontmatter(configFrontmatter)}${configContent.trimEnd()}\n`,
+		frontmatter: configFrontmatter,
+	});
+
+	const changelogContent = renderChangelogPage(options);
+	const changelogFrontmatter = buildFrontmatterFields(
+		"Changelog",
+		`Release history for ${options.projectName}`,
+		options.ssgTarget,
+	);
+	pages.push({
+		path: `changelog.${ext}`,
+		content: `${serializeFrontmatter(changelogFrontmatter)}${changelogContent.trimEnd()}\n`,
+		frontmatter: changelogFrontmatter,
+	});
+
+	// -------------------------------------------------------------------------
+	// COMMUNITY
+	// -------------------------------------------------------------------------
+
+	const faqContent = renderFaqPage(options);
+	const faqFrontmatter = buildFrontmatterFields(
+		"FAQ",
+		`Frequently asked questions about ${options.projectName}`,
+		options.ssgTarget,
+	);
+	pages.push({
+		path: `faq.${ext}`,
+		content: `${serializeFrontmatter(faqFrontmatter)}${faqContent.trimEnd()}\n`,
+		frontmatter: faqFrontmatter,
+	});
+
+	const contributingContent = renderContributingPage(options);
+	const contributingFrontmatter = buildFrontmatterFields(
+		"Contributing",
+		`How to contribute to ${options.projectName}`,
+		options.ssgTarget,
+	);
+	pages.push({
+		path: `contributing.${ext}`,
+		content: `${serializeFrontmatter(contributingFrontmatter)}${contributingContent.trimEnd()}\n`,
+		frontmatter: contributingFrontmatter,
+	});
 
 	// Suppress unused variable warning — config is available for future use
 	void config;

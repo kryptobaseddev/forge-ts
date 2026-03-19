@@ -1,0 +1,34 @@
+---
+title: "Configuration"
+description: "Configuration reference for forge-ts"
+---
+Configuration reference for **forge-ts**.
+
+> This is a stub page. Edit this file to document your configuration options.
+
+## forge-ts.config.ts
+
+Create a `forge-ts.config.ts` file in your project root:
+
+```typescript
+import { defineConfig } from "@forge-ts/core";
+
+export default defineConfig({
+  rootDir: ".",
+  outDir: "docs/generated",
+});
+```
+
+## `ForgeConfig`
+
+Full configuration for a forge-ts run. Loaded from forge-ts.config.ts or the "forge-ts" key in package.json.
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| `rootDir` | `string` | Yes | Root directory of the project. |
+| `tsconfig` | `string` | Yes | Path to the tsconfig.json to compile against. |
+| `outDir` | `string` | Yes | Output directory for generated files. |
+| `enforce` | `{ enabled: boolean; minVisibility: Visibility; strict: boolean; rules: EnforceRules; }` | Yes | Enforce TSDoc on all public exports. |
+| `doctest` | `{ enabled: boolean; cacheDir: string; }` | Yes | DocTest configuration. |
+| `api` | `{ enabled: boolean; openapi: boolean; openapiPath: string; }` | Yes | API generation configuration. |
+| `gen` | `{ enabled: boolean; formats: ("markdown" \| "mdx")[]; llmsTxt: boolean; readmeSync: boolean; ssgTarget?: "docusaurus" \| "mintlify" \| "nextra" \| "vitepress" \| undefined; }` | No | Output generation configuration. |

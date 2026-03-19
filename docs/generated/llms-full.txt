@@ -1,7 +1,7 @@
 # . - Full Context
 
 Root: .
-Generated: 2026-03-19T03:34:44.406Z
+Generated: 2026-03-19T03:43:24.222Z
 
 ## Functions
 
@@ -783,6 +783,12 @@ API generation configuration.
 { enabled: boolean; formats: ("markdown" | "mdx")[]; llmsTxt: boolean; readmeSync: boolean; ssgTarget?: "docusaurus" | "mintlify" | "nextra" | "vitepress" | undefined; }
 
 Output generation configuration.
+
+#### project
+
+{ repository?: string | undefined; homepage?: string | undefined; packageName?: string | undefined; }
+
+Project metadata — auto-detected from package.json if not provided.
 
 ### ForgeResult
 
@@ -1613,6 +1619,18 @@ Project name
 string | undefined
 
 Project description
+
+#### repositoryUrl
+
+string | undefined
+
+Repository URL (auto-detected from package.json).
+
+#### packageName
+
+string | undefined
+
+npm package name for install commands.
 
 ### GeneratedFile
 

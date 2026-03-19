@@ -120,7 +120,11 @@ function buildDocsJson(context: AdapterContext): MintlifyDocsJson {
 		theme: "mint",
 		colors: { primary: "#0ea5e9", light: "#38bdf8", dark: "#0284c7" },
 		navigation: { tabs },
-		footer: { socials: { github: "https://github.com/kryptobaseddev/forge-ts" } },
+		footer: {
+			socials: context.config.project.repository
+				? { github: context.config.project.repository }
+				: {},
+		},
 	};
 }
 

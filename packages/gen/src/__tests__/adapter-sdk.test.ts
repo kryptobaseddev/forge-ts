@@ -33,7 +33,7 @@ const samplePages: DocPage[] = [
 /** Minimal AdapterContext for testing. */
 function makeContext(overrides: Partial<AdapterContext> = {}): AdapterContext {
 	return {
-		config: {} as AdapterContext["config"],
+		config: { project: {} } as AdapterContext["config"],
 		projectName: "test-project",
 		projectDescription: "A test project",
 		pages: samplePages,

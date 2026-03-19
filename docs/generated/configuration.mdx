@@ -32,3 +32,4 @@ Full configuration for a forge-ts run. Loaded from forge-ts.config.ts or the "fo
 | `doctest` | `{ enabled: boolean; cacheDir: string; }` | Yes | DocTest configuration. |
 | `api` | `{ enabled: boolean; openapi: boolean; openapiPath: string; }` | Yes | API generation configuration. |
 | `gen` | `{ enabled: boolean; formats: ("markdown" \| "mdx")[]; llmsTxt: boolean; readmeSync: boolean; ssgTarget?: "docusaurus" \| "mintlify" \| "nextra" \| "vitepress" \| undefined; }` | No | Output generation configuration. |
+| `project` | `{ repository?: string \| undefined; homepage?: string \| undefined; packageName?: string \| undefined; }` | No | Project metadata — auto-detected from package.json if not provided. |

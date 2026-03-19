@@ -126,6 +126,15 @@ export interface ForgeConfig {
 		/** Static site generator to target for output format. */
 		ssgTarget?: "docusaurus" | "mintlify" | "nextra" | "vitepress";
 	};
+	/** Project metadata — auto-detected from package.json if not provided. */
+	project: {
+		/** Repository URL (e.g., "https://github.com/user/repo"). */
+		repository?: string;
+		/** Project homepage URL. */
+		homepage?: string;
+		/** npm package name for the main/CLI package. */
+		packageName?: string;
+	};
 }
 
 /**

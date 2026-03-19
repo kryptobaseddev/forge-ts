@@ -252,6 +252,10 @@
               }
             ],
             "description": "Output generation configuration."
+          },
+          "project": {
+            "type": "object",
+            "description": "Project metadata — auto-detected from package.json if not provided."
           }
         },
         "required": [
@@ -1155,13 +1159,23 @@
           "projectDescription": {
             "type": "string",
             "description": "Project description"
+          },
+          "repositoryUrl": {
+            "type": "string",
+            "description": "Repository URL (auto-detected from package.json)."
+          },
+          "packageName": {
+            "type": "string",
+            "description": "npm package name for install commands."
           }
         },
         "required": [
           "format",
           "ssgTarget",
           "projectName",
-          "projectDescription"
+          "projectDescription",
+          "repositoryUrl",
+          "packageName"
         ]
       },
       "SSGTarget": {

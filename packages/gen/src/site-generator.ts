@@ -27,6 +27,10 @@ export interface SiteGeneratorOptions {
 	projectName: string;
 	/** Project description */
 	projectDescription?: string;
+	/** Repository URL (auto-detected from package.json). */
+	repositoryUrl?: string;
+	/** npm package name for install commands. */
+	packageName?: string;
 }
 
 // ---------------------------------------------------------------------------
@@ -219,7 +223,7 @@ function renderProjectIndexPage(
 	lines.push("## Installation");
 	lines.push("");
 	lines.push("```bash");
-	lines.push("npm install -D @forge-ts/cli");
+	lines.push(`npm install -D ${options.packageName ?? "@forge-ts/cli"}`);
 	lines.push("```");
 	lines.push("");
 
@@ -316,7 +320,7 @@ function renderGettingStartedPage(
 	lines.push("## Step 1: Install");
 	lines.push("");
 	lines.push("```bash");
-	lines.push("npm install -D @forge-ts/cli");
+	lines.push(`npm install -D ${options.packageName ?? "@forge-ts/cli"}`);
 	lines.push("```");
 	lines.push("");
 
@@ -896,12 +900,16 @@ function renderConfigurationPage(
  * @internal
  */
 function renderChangelogPage(options: SiteGeneratorOptions): string {
+	const repoUrl = options.repositoryUrl ?? "";
+	const changelogLink = repoUrl
+		? `See [CHANGELOG.md](${repoUrl}/blob/main/CHANGELOG.md) for the full release history.`
+		: "See your project's `CHANGELOG.md` for the full release history.";
 	return [
 		`Release history for **${options.projectName}**.`,
 		"",
 		"> This is a stub page. Link to or embed your `CHANGELOG.md` here.",
 		"",
-		"See [CHANGELOG.md](https://github.com/your-org/your-repo/blob/main/CHANGELOG.md) for the full release history.",
+		changelogLink,
 		"",
 	].join("\n");
 }
@@ -946,12 +954,16 @@ function renderFaqPage(options: SiteGeneratorOptions): string {
  * @internal
  */
 function renderContributingPage(options: SiteGeneratorOptions): string {
+	const repoUrl = options.repositoryUrl ?? "";
+	const contribLink = repoUrl
+		? `See [CONTRIBUTING.md](${repoUrl}/blob/main/CONTRIBUTING.md) for contribution guidelines.`
+		: "See your project's `CONTRIBUTING.md` for contribution guidelines.";
 	return [
 		`Contributing to **${options.projectName}**.`,
 		"",
 		"> This is a stub page. Link to or embed your `CONTRIBUTING.md` here.",
 		"",
-		"See [CONTRIBUTING.md](https://github.com/your-org/your-repo/blob/main/CONTRIBUTING.md) for contribution guidelines.",
+		contribLink,
 		"",
 	].join("\n");
 }

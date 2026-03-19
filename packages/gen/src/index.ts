@@ -77,6 +77,8 @@ export async function generate(config: ForgeConfig): Promise<ForgeResult> {
 			format,
 			ssgTarget: config.gen.ssgTarget,
 			projectName,
+			repositoryUrl: config.project.repository,
+			packageName: config.project.packageName,
 		});
 
 		const adapterContext: AdapterContext = {

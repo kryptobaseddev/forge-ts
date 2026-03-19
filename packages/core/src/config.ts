@@ -51,6 +51,7 @@ export function defaultConfig(rootDir: string): ForgeConfig {
 			llmsTxt: true,
 			readmeSync: false,
 		},
+		project: {},
 	};
 }
 
@@ -75,7 +76,21 @@ function mergeWithDefaults(rootDir: string, partial: Partial<ForgeConfig>): Forg
 		doctest: { ...defaults.doctest, ...partial.doctest },
 		api: { ...defaults.api, ...partial.api },
 		gen: { ...defaults.gen, ...partial.gen },
+		project: { ...defaults.project, ...partial.project },
 	};
+}
+
+/**
+ * Extracts repository URL from a package.json repository field.
+ * Handles both string and object forms.
+ * @internal
+ */
+function extractRepoUrl(repo: string | { type?: string; url?: string } | undefined): string | undefined {
+	if (!repo) return undefined;
+	const raw = typeof repo === "string" ? repo : repo.url;
+	if (!raw) return undefined;
+	// Normalize git+https://... and .git suffix
+	return raw.replace(/^git\+/, "").replace(/\.git$/, "");
 }
 
 /**
@@ -104,6 +119,9 @@ async function loadModuleConfig(filePath: string): Promise<Partial<ForgeConfig> 
 interface PackageJson {
 	name?: string;
 	version?: string;
+	description?: string;
+	homepage?: string;
+	repository?: string | { type?: string; url?: string };
 	"forge-ts"?: Partial<ForgeConfig>;
 }
 
@@ -150,24 +168,58 @@ async function loadPackageJsonConfig(pkgPath: string): Promise<Partial<ForgeConf
 export async function loadConfig(rootDir?: string): Promise<ForgeConfig> {
 	const root = resolve(rootDir ?? process.cwd());
 
+	let config: ForgeConfig;
+
 	const candidates = [join(root, "forge-ts.config.ts"), join(root, "forge-ts.config.js")];
+	let found = false;
 
 	for (const candidate of candidates) {
 		if (existsSync(candidate)) {
 			const partial = await loadModuleConfig(candidate);
 			if (partial) {
-				return mergeWithDefaults(root, partial);
+				config = mergeWithDefaults(root, partial);
+				found = true;
+				break;
 			}
 		}
 	}
 
+	if (!found) {
+		const pkgPath = join(root, "package.json");
+		if (existsSync(pkgPath)) {
+			const partial = await loadPackageJsonConfig(pkgPath);
+			if (partial) {
+				config = mergeWithDefaults(root, partial);
+			} else {
+				config = defaultConfig(root);
+			}
+		} else {
+			config = defaultConfig(root);
+		}
+	} else {
+		// biome-ignore lint: config is always set when found=true
+		config = config!;
+	}
+
+	// Auto-detect project metadata from package.json if not explicitly set
 	const pkgPath = join(root, "package.json");
 	if (existsSync(pkgPath)) {
-		const partial = await loadPackageJsonConfig(pkgPath);
-		if (partial) {
-			return mergeWithDefaults(root, partial);
+		try {
+			const raw = await readFile(pkgPath, "utf8");
+			const pkg = JSON.parse(raw) as PackageJson;
+			if (!config.project.repository) {
+				config.project.repository = extractRepoUrl(pkg.repository);
+			}
+			if (!config.project.homepage) {
+				config.project.homepage = pkg.homepage;
+			}
+			if (!config.project.packageName) {
+				config.project.packageName = pkg.name;
+			}
+		} catch {
+			// Ignore parse errors
 		}
 	}
 
-	return defaultConfig(root);
+	return config;
 }

@@ -105,6 +105,19 @@ function buildFrontmatterFields(
 	}
 }
 
+/**
+ * Strip `.md` or `.mdx` extension from a link path and normalise leading `./`.
+ * Produces bare slug links compatible with Mintlify and most other SSGs.
+ * @internal
+ */
+function slugLink(path: string): string {
+	// Remove leading ./ if present
+	let slug = path.startsWith("./") ? path.slice(2) : path;
+	// Remove .md / .mdx extension
+	slug = slug.replace(/\.(mdx?)$/, "");
+	return `/${slug}`;
+}
+
 // ---------------------------------------------------------------------------
 // Package grouping
 // ---------------------------------------------------------------------------
@@ -162,7 +175,8 @@ function renderPropertyRow(child: ForgeSymbol): string {
 	// Heuristic: optional if signature contains `?` or `| undefined`
 	const optional =
 		child.signature?.includes("?") || child.signature?.includes("undefined") ? "No" : "Yes";
-	const description = escapePipe(child.documentation?.summary ?? "");
+	// Fall back to the property name when no description is available
+	const description = escapePipe(child.documentation?.summary || child.name);
 	return `| ${name} | ${type} | ${optional} | ${description} |`;
 }
 
@@ -183,8 +197,8 @@ function renderOverviewPage(
 	const pkgDoc = symbols.map((s) => s.documentation?.tags?.packageDocumentation?.[0]).find(Boolean);
 
 	const lines: string[] = [];
-	lines.push(`# ${packageName}`);
-	lines.push("");
+
+	// No h1 — frontmatter title handles the heading in Mintlify and other SSGs
 
 	if (pkgDoc) {
 		lines.push(pkgDoc);
@@ -192,17 +206,33 @@ function renderOverviewPage(
 	}
 
 	if (exported.length > 0) {
-		lines.push("## Exported Symbols");
-		lines.push("");
-		lines.push("| Symbol | Kind | Description |");
-		lines.push("|--------|------|-------------|");
-		for (const s of exported) {
-			const ext = s.kind === "function" ? "()" : "";
-			const name = `[\`${s.name}${ext}\`](./api-reference.md#${toAnchor(`${s.name}${ext}`)})`;
-			const summary = escapePipe(s.documentation?.summary ?? "");
-			lines.push(`| ${name} | ${s.kind} | ${summary} |`);
-		}
-		lines.push("");
+		// Group by kind: functions first, then types, then others
+		const functions = exported.filter((s) => FUNCTION_KINDS.has(s.kind));
+		const types = exported.filter((s) => TYPE_KINDS.has(s.kind));
+		const others = exported.filter((s) => !FUNCTION_KINDS.has(s.kind) && !TYPE_KINDS.has(s.kind));
+
+		const renderGroup = (group: ForgeSymbol[], heading: string) => {
+			if (group.length === 0) return;
+			lines.push(`## ${heading}`);
+			lines.push("");
+			lines.push("| Symbol | Kind | Description |");
+			lines.push("|--------|------|-------------|");
+			for (const s of group) {
+				const ext = s.kind === "function" ? "()" : "";
+				const name = `[\`${s.name}${ext}\`](${slugLink(`packages/${packageName}/api-reference`)}#${toAnchor(`${s.name}${ext}`)})`;
+				const rawSummary = s.documentation?.summary ?? "";
+				// Truncate long descriptions in the table
+				const summary = escapePipe(
+					rawSummary.length > 80 ? `${rawSummary.slice(0, 77)}...` : rawSummary,
+				);
+				lines.push(`| ${name} | ${s.kind} | ${summary} |`);
+			}
+			lines.push("");
+		};
+
+		renderGroup(functions, "Functions & Classes");
+		renderGroup(types, "Types & Interfaces");
+		renderGroup(others, "Other Exports");
 	}
 
 	return lines.join("\n");
@@ -220,8 +250,7 @@ function renderTypesPage(
 	const typeSymbols = symbols.filter((s) => s.exported && TYPE_KINDS.has(s.kind));
 
 	const lines: string[] = [];
-	lines.push(`# ${packageName} — Types`);
-	lines.push("");
+	// No h1 — frontmatter title handles the heading
 	lines.push("Type contracts exported by this package: interfaces, type aliases, and enums.");
 	lines.push("");
 
@@ -258,6 +287,9 @@ function renderTypesPage(
 		}
 	}
 
+	// Suppress unused variable warning
+	void packageName;
+
 	return lines.join("\n");
 }
 
@@ -273,8 +305,7 @@ function renderFunctionsPage(
 	const fnSymbols = symbols.filter((s) => s.exported && FUNCTION_KINDS.has(s.kind));
 
 	const lines: string[] = [];
-	lines.push(`# ${packageName} — Functions & Classes`);
-	lines.push("");
+	// No h1 — frontmatter title handles the heading
 	lines.push("Functions and classes exported by this package.");
 	lines.push("");
 
@@ -315,7 +346,16 @@ function renderFunctionsPage(
 			lines.push("| Name | Type | Description |");
 			lines.push("|------|------|-------------|");
 			for (const p of params) {
-				const type = p.type ? `\`${escapePipe(p.type)}\`` : "—";
+				// Fall back to extracting type from signature when param.type is absent
+				let resolvedType = p.type;
+				if (!resolvedType && s.signature) {
+					// Try to match `paramName: SomeType` in the signature
+					const typeMatch = new RegExp(`\\b${p.name}\\s*[?:]\\s*([^,)]+)`).exec(s.signature);
+					if (typeMatch) {
+						resolvedType = typeMatch[1].trim();
+					}
+				}
+				const type = resolvedType ? `\`${escapePipe(resolvedType)}\`` : "—";
 				lines.push(`| \`${p.name}\` | ${type} | ${escapePipe(p.description)} |`);
 			}
 			lines.push("");
@@ -343,7 +383,7 @@ function renderFunctionsPage(
 			const ex = examples[0];
 			lines.push("**Example**");
 			lines.push("");
-			lines.push(`\`\`\`${ex.language}`);
+			lines.push(`\`\`\`${ex.language || "typescript"}`);
 			lines.push(ex.code.trim());
 			lines.push("```");
 			lines.push("");
@@ -371,6 +411,9 @@ function renderFunctionsPage(
 		}
 	}
 
+	// Suppress unused variable warning
+	void packageName;
+
 	return lines.join("\n");
 }
 
@@ -388,8 +431,7 @@ function renderExamplesPage(
 	);
 
 	const lines: string[] = [];
-	lines.push(`# ${packageName} — Examples`);
-	lines.push("");
+	// No h1 — frontmatter title handles the heading
 	lines.push("All usage examples from the package, aggregated for quick reference.");
 	lines.push("");
 
@@ -409,11 +451,13 @@ function renderExamplesPage(
 			lines.push("");
 		}
 
-		lines.push(`[View in API reference](./api-reference.md#${toAnchor(s.name)})`);
+		lines.push(
+			`[View in API reference](${slugLink(`packages/${packageName}/api-reference`)}#${toAnchor(s.name)})`,
+		);
 		lines.push("");
 
 		for (const ex of examples) {
-			lines.push(`\`\`\`${ex.language}`);
+			lines.push(`\`\`\`${ex.language || "typescript"}`);
 			lines.push(ex.code.trim());
 			lines.push("```");
 			lines.push("");
@@ -511,7 +555,7 @@ function renderApiSymbol(symbol: ForgeSymbol, depth: number): string {
 		lines.push("**Examples**");
 		lines.push("");
 		for (const ex of examples) {
-			lines.push(`\`\`\`${ex.language}`);
+			lines.push(`\`\`\`${ex.language || "typescript"}`);
 			lines.push(ex.code.trim());
 			lines.push("```");
 			lines.push("");
@@ -542,8 +586,7 @@ function renderApiReferencePage(packageName: string, symbols: ForgeSymbol[]): st
 	}
 
 	const lines: string[] = [];
-	lines.push(`# ${packageName} — API Reference`);
-	lines.push("");
+	// No h1 — frontmatter title handles the heading
 
 	for (const kind of KIND_ORDER) {
 		const group = groups.get(kind);
@@ -558,6 +601,9 @@ function renderApiReferencePage(packageName: string, symbols: ForgeSymbol[]): st
 		}
 	}
 
+	// Suppress unused variable warning
+	void packageName;
+
 	return lines.join("\n");
 }
 
@@ -571,13 +617,29 @@ function renderProjectIndexPage(
 	options: SiteGeneratorOptions,
 ): string {
 	const lines: string[] = [];
-	lines.push(`# ${options.projectName}`);
-	lines.push("");
 
+	// No h1 — frontmatter title handles the heading in Mintlify and other SSGs
+
+	// Intro paragraph describing what the project does
 	if (options.projectDescription) {
-		lines.push(options.projectDescription);
+		lines.push(`**${options.projectName}** — ${options.projectDescription}`);
+		lines.push("");
+	} else {
+		lines.push(
+			`**${options.projectName}** is a TypeScript documentation toolkit that performs a single AST traversal of your project and produces API docs, OpenAPI specs, executable doctests, and AI context files in one pass.`,
+		);
 		lines.push("");
 	}
+
+	lines.push("## Quick Start");
+	lines.push("");
+	lines.push("```bash");
+	lines.push(`npm install -D @forge-ts/cli`);
+	lines.push(`npx forge-ts check    # Lint TSDoc coverage`);
+	lines.push(`npx forge-ts test     # Run @example blocks as tests`);
+	lines.push(`npx forge-ts build    # Generate everything`);
+	lines.push("```");
+	lines.push("");
 
 	lines.push("## Packages");
 	lines.push("");
@@ -590,7 +652,7 @@ function renderProjectIndexPage(
 			.map((s) => s.documentation?.tags?.packageDocumentation?.[0])
 			.find(Boolean);
 		const summary = pkgDoc ?? `${exported.length} exported symbol(s).`;
-		lines.push(`### [${pkgName}](./packages/${pkgName}/index.md)`);
+		lines.push(`### [${pkgName}](${slugLink(`packages/${pkgName}/index`)})`);
 		lines.push("");
 		lines.push(summary);
 		lines.push("");
@@ -623,8 +685,7 @@ function renderGettingStartedPage(
 	}
 
 	const lines: string[] = [];
-	lines.push("# Getting Started");
-	lines.push("");
+	// No h1 — frontmatter title handles the heading
 	lines.push(`Welcome to **${options.projectName}**.`);
 
 	if (options.projectDescription) {
@@ -636,7 +697,7 @@ function renderGettingStartedPage(
 	lines.push("## Installation");
 	lines.push("");
 	lines.push("```bash");
-	lines.push(`npm install ${options.projectName}`);
+	lines.push("npm install -D @forge-ts/cli");
 	lines.push("```");
 	lines.push("");
 
@@ -647,7 +708,7 @@ function renderGettingStartedPage(
 			`The following example demonstrates \`${firstSymbolName}\` from the \`${firstPackageName}\` package.`,
 		);
 		lines.push("");
-		lines.push(`\`\`\`${firstExample.language}`);
+		lines.push(`\`\`\`${firstExample.language || "typescript"}`);
 		lines.push(firstExample.code.trim());
 		lines.push("```");
 		lines.push("");
@@ -655,9 +716,9 @@ function renderGettingStartedPage(
 
 	lines.push("## Next Steps");
 	lines.push("");
-	lines.push("- Browse the [API Reference](./packages/)");
+	lines.push(`- Browse the [API Reference](${slugLink("packages/")})`);
 	for (const pkgName of symbolsByPackage.keys()) {
-		lines.push(`  - [${pkgName}](./packages/${pkgName}/api-reference.md)`);
+		lines.push(`  - [${pkgName}](${slugLink(`packages/${pkgName}/api-reference`)})`);
 	}
 
 	return lines.join("\n");

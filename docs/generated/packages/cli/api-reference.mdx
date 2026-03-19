@@ -2,8 +2,6 @@
 title: "cli — API Reference"
 description: "Full API reference for the cli package"
 ---
-# cli — API Reference
-
 ## Functions
 
 ### `createLogger()`
@@ -20,7 +18,6 @@ Creates a  instance.
 - `` — options.colors - Emit ANSI colour codes.  Defaults to `process.stdout.isTTY`.
 
 **Returns**: A configured logger.
-
 
 ### `emitResult()`
 
@@ -43,7 +40,6 @@ import { emitResult } from "@forge-ts/cli/output";
 emitResult(output, { human: true }, (data) => `Done: ${data.summary.duration}ms`);
 ```
 
-
 ### `resolveExitCode()`
 
 ```typescript
@@ -57,7 +53,6 @@ Returns the LAFS-compliant exit code for a command output.
 - `output` — Typed result from the command.
 
 **Returns**: `0` on success, `1` on validation/check failure.
-
 
 ### `runBuild()`
 
@@ -81,7 +76,6 @@ const output = await runBuild({ cwd: process.cwd() });
 console.log(output.success); // true if all steps succeeded
 ```
 
-
 ### `runCheck()`
 
 ```typescript
@@ -104,7 +98,6 @@ const output = await runCheck({ cwd: process.cwd() });
 console.log(output.data.summary.errors); // number of TSDoc errors found
 ```
 
-
 ### `runDocsDev()`
 
 ```typescript
@@ -125,7 +118,6 @@ Starts the local dev server for the configured SSG target.  Reads `gen.ssgTarget
 import { runDocsDev } from "@forge-ts/cli";
 await runDocsDev({ cwd: "./my-project" });
 ```
-
 
 ### `runInitDocs()`
 
@@ -149,7 +141,6 @@ const output = await runInitDocs({ target: "mintlify", cwd: process.cwd() });
 console.log(output.data.files); // list of created file paths
 ```
 
-
 ### `runTest()`
 
 ```typescript
@@ -171,7 +162,6 @@ import { runTest } from "@forge-ts/cli/commands/test";
 const output = await runTest({ cwd: process.cwd() });
 console.log(output.data.summary.passed); // number of passing doctests
 ```
-
 
 ## Interfaces
 
@@ -229,7 +219,6 @@ Print a build-step line.
 - `detail` — Description of what was produced.
 - `duration` — Optional wall-clock time in milliseconds.
 
-
 ### `CommandOutput`
 
 ```typescript
@@ -286,7 +275,6 @@ number | undefined
 
 Wall-clock duration of the command in milliseconds.
 
-
 ### `ForgeCliError`
 
 ```typescript
@@ -334,7 +322,6 @@ number | undefined
 ```
 
 0-based column number of the error, if applicable.
-
 
 ### `ForgeCliWarning`
 
@@ -384,7 +371,6 @@ number | undefined
 
 0-based column number of the warning, if applicable.
 
-
 ### `OutputFlags`
 
 ```typescript
@@ -425,7 +411,6 @@ string | undefined
 
 MVI verbosity level: "minimal", "standard", or "full".
 
-
 ### `BuildArgs`
 
 ```typescript
@@ -465,7 +450,6 @@ string | undefined
 ```
 
 MVI verbosity level for structured output.
-
 
 ### `BuildStep`
 
@@ -515,7 +499,6 @@ ForgeCliError[] | undefined
 
 Errors produced by this step when status is "failed".
 
-
 ### `BuildResult`
 
 ```typescript
@@ -556,7 +539,6 @@ string[] | undefined
 
 Files written during the build — present at standard and full MVI levels.
 
-
 ### `CheckArgs`
 
 ```typescript
@@ -596,7 +578,6 @@ string | undefined
 ```
 
 MVI verbosity level for structured output.
-
 
 ### `CheckFileError`
 
@@ -662,7 +643,6 @@ string | undefined
 
 Recommended agent action (full MVI level only).
 
-
 ### `CheckFileWarning`
 
 ```typescript
@@ -711,7 +691,6 @@ string
 
 Human-readable description.
 
-
 ### `CheckFileGroup`
 
 ```typescript
@@ -744,7 +723,6 @@ CheckFileWarning[]
 
 Warnings in this file.
 
-
 ### `CheckResult`
 
 ```typescript
@@ -776,7 +754,6 @@ CheckFileGroup[] | undefined
 ```
 
 Per-file breakdown — present at standard and full MVI levels.
-
 
 ### `InitDocsResult`
 
@@ -834,7 +811,6 @@ string[]
 
 Post-scaffold instructions for the user.
 
-
 ### `InitDocsArgs`
 
 ```typescript
@@ -883,7 +859,6 @@ string | undefined
 
 MVI verbosity level for structured output.
 
-
 ### `TestArgs`
 
 ```typescript
@@ -907,7 +882,6 @@ string | undefined
 ```
 
 MVI verbosity level for structured output.
-
 
 ### `TestFailure`
 
@@ -949,7 +923,6 @@ string
 
 Human-readable failure message.
 
-
 ### `TestResult`
 
 ```typescript
@@ -982,7 +955,6 @@ TestFailure[] | undefined
 
 Per-failure details — present at standard and full MVI levels.
 
-
 ## Variables
 
 ### `buildCommand`
@@ -993,7 +965,6 @@ CommandDef<{ readonly cwd: { readonly type: "string"; readonly description: "Pro
 
 Citty command definition for `forge-ts build`.
 
-
 ### `checkCommand`
 
 ```typescript
@@ -1001,7 +972,6 @@ CommandDef<{ readonly cwd: { readonly type: "string"; readonly description: "Pro
 ```
 
 Citty command definition for `forge-ts check`.
-
 
 ### `docsDevCommand`
 
@@ -1016,7 +986,6 @@ Citty command definition for `forge-ts docs dev`.
 ```typescript
 import { docsDevCommand } from "@forge-ts/cli";
 ```
-
 
 ### `initDocsCommand`
 
@@ -1033,7 +1002,6 @@ import { initDocsCommand } from "@forge-ts/cli/commands/init-docs";
 // Registered automatically as a subcommand of `forge-ts init`
 ```
 
-
 ### `initCommand`
 
 ```typescript
@@ -1048,7 +1016,6 @@ Citty command definition for `forge-ts init`.  Exposes subcommands for scaffoldi
 import { initCommand } from "@forge-ts/cli/commands/init-docs";
 // Registered automatically as a subcommand of `forge-ts`
 ```
-
 
 ### `testCommand`
 

@@ -219,7 +219,7 @@ describe("generateDocSite", () => {
 // ---------------------------------------------------------------------------
 
 describe("index page", () => {
-	it("includes the project name", () => {
+	it("includes the project name in content", () => {
 		const map = makeSymbolsByPackage([fnAdd]);
 		const pages = generateDocSite(map, makeConfig(), baseOptions);
 		const index = pages.find((p) => p.path === "index.md");
@@ -277,11 +277,11 @@ describe("getting-started page", () => {
 // ---------------------------------------------------------------------------
 
 describe("package overview page", () => {
-	it("contains the package name as heading", () => {
+	it("contains the package name in content", () => {
 		const map = makeSymbolsByPackage([fnAdd]);
 		const pages = generateDocSite(map, makeConfig(), baseOptions);
 		const overview = pages.find((p) => p.path === "packages/core/index.md");
-		expect(overview?.content).toContain("# core");
+		expect(overview?.content).toContain("core");
 	});
 
 	it("lists exported symbols as a table", () => {
@@ -442,7 +442,7 @@ describe("examples page", () => {
 		const map = makeSymbolsByPackage([fnAdd]);
 		const pages = generateDocSite(map, makeConfig(), baseOptions);
 		const exPage = pages.find((p) => p.path === "packages/core/examples.md");
-		expect(exPage?.content).toContain("api-reference.md");
+		expect(exPage?.content).toContain("api-reference");
 	});
 
 	it("shows a placeholder when no examples exist", () => {

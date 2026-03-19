@@ -2,8 +2,6 @@
 title: "core — API Reference"
 description: "Full API reference for the core package"
 ---
-# core — API Reference
-
 ## Functions
 
 ### `defaultConfig()`
@@ -28,7 +26,6 @@ const config = defaultConfig("/path/to/project");
 console.log(config.enforce.enabled); // true
 ```
 
-
 ### `loadConfig()`
 
 ```typescript
@@ -51,7 +48,6 @@ const config = await loadConfig("/path/to/project");
 // config is fully resolved with defaults
 ```
 
-
 ### `resolveVisibility()`
 
 ```typescript
@@ -73,7 +69,6 @@ import { resolveVisibility } from "@forge-ts/core";
 const vis = resolveVisibility({ internal: [] });
 // vis === Visibility.Internal
 ```
-
 
 ### `meetsVisibility()`
 
@@ -98,7 +93,6 @@ meetsVisibility(Visibility.Public, Visibility.Public); // true
 meetsVisibility(Visibility.Internal, Visibility.Public); // false
 ```
 
-
 ### `filterByVisibility()`
 
 ```typescript
@@ -120,7 +114,6 @@ Filters an array of  objects to only include symbols whose visibility meets or e
 import { filterByVisibility, Visibility } from "@forge-ts/core";
 const publicOnly = filterByVisibility(symbols, Visibility.Public);
 ```
-
 
 ### `createWalker()`
 
@@ -145,7 +138,6 @@ const walker = createWalker(config);
 const symbols = walker.walk();
 console.log(`Found ${symbols.length} symbols`);
 ```
-
 
 ## Interfaces
 
@@ -237,7 +229,6 @@ boolean
 
 Whether this symbol is part of the public module exports.
 
-
 ### `EnforceRules`
 
 ```typescript
@@ -308,7 +299,6 @@ RuleSeverity
 
 E007: Interface/type member missing documentation.
 
-
 ### `ForgeConfig`
 
 ```typescript
@@ -373,7 +363,6 @@ API generation configuration.
 
 Output generation configuration.
 
-
 ### `ForgeResult`
 
 ```typescript
@@ -421,7 +410,6 @@ number
 ```
 
 Wall-clock duration of the run in milliseconds.
-
 
 ### `ForgeError`
 
@@ -495,7 +483,6 @@ string | undefined
 
 The symbol kind (function, class, interface, etc.).
 
-
 ### `ForgeWarning`
 
 ```typescript
@@ -543,7 +530,6 @@ number
 ```
 
 0-based column.
-
 
 ### `OpenAPISchemaObject`
 
@@ -673,7 +659,6 @@ string | undefined
 
 A JSON Reference (`$ref`) pointing to another schema definition in the document.
 
-
 ### `OpenAPIInfoObject`
 
 ```typescript
@@ -722,7 +707,6 @@ A short summary of the API, intended for display in tooling.
 
 Licensing information for the exposed API, including name, URL, and SPDX identifier.
 
-
 ### `OpenAPITagObject`
 
 ```typescript
@@ -746,7 +730,6 @@ string | undefined
 ```
 
 An optional description of the tag, supporting CommonMark markdown.
-
 
 ### `OpenAPIPathItemObject`
 
@@ -852,7 +835,6 @@ Record<string, OpenAPIOperationObject> | undefined
 
 Additional non-standard HTTP method operations keyed by method name.
 
-
 ### `OpenAPIOperationObject`
 
 ```typescript
@@ -908,7 +890,6 @@ Record<string, OpenAPIResponseObject> | undefined
 ```
 
 The possible responses returned by this operation, keyed by HTTP status code or "default".
-
 
 ### `OpenAPIParameterObject`
 
@@ -966,7 +947,6 @@ boolean | undefined
 
 Marks the parameter as deprecated; clients should avoid using it.
 
-
 ### `OpenAPIEncodingObject`
 
 ```typescript
@@ -1015,7 +995,6 @@ boolean | undefined
 
 Whether reserved characters in the encoded value should be allowed without percent-encoding.
 
-
 ### `OpenAPIMediaTypeObject`
 
 ```typescript
@@ -1039,7 +1018,6 @@ Record<string, OpenAPIEncodingObject> | undefined
 ```
 
 Encoding information for specific properties of a `multipart` or `application/x-www-form-urlencoded` request body.
-
 
 ### `OpenAPIResponseObject`
 
@@ -1072,7 +1050,6 @@ Record<string, OpenAPIMediaTypeObject> | undefined
 ```
 
 The response body content, keyed by media type (e.g., "application/json").
-
 
 ### `OpenAPIDocument`
 
@@ -1130,7 +1107,6 @@ OpenAPITagObject[] | undefined
 
 A list of tags used to group operations, with optional descriptions.
 
-
 ### `ASTWalker`
 
 ```typescript
@@ -1147,7 +1123,6 @@ The return type of .
 
 Walk all source files referenced by the configured tsconfig and return one  per exported declaration.
 
-
 ## Types
 
 ### `RuleSeverity`
@@ -1157,7 +1132,6 @@ any
 ```
 
 Severity level for an individual enforcement rule. - `"error"` — violation fails the build. - `"warn"`  — violation is reported but does not fail the build. - `"off"`   — rule is disabled entirely.
-
 
 ## Enums
 

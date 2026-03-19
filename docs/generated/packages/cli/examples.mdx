@@ -2,15 +2,13 @@
 title: "cli — Examples"
 description: "Usage examples for the cli package"
 ---
-# cli — Examples
-
 All usage examples from the package, aggregated for quick reference.
 
 ## `emitResult()`
 
 _Wraps a command result in a LAFS envelope and emits it.  - JSON mode: writes the projected envelope to stdout as JSON. - Human mode: calls the provided formatter function. - Quiet mode: suppresses all output regardless of format._
 
-[View in API reference](./api-reference.md#emitresult)
+[View in API reference](/packages/cli/api-reference#emitresult)
 
 ```typescript
 import { emitResult } from "@forge-ts/cli/output";
@@ -21,7 +19,7 @@ emitResult(output, { human: true }, (data) => `Done: ${data.summary.duration}ms`
 
 _Runs the full build pipeline and returns a typed command output._
 
-[View in API reference](./api-reference.md#runbuild)
+[View in API reference](/packages/cli/api-reference#runbuild)
 
 ```typescript
 import { runBuild } from "@forge-ts/cli/commands/build";
@@ -33,7 +31,7 @@ console.log(output.success); // true if all steps succeeded
 
 _Runs the TSDoc enforcement pass and returns a typed command output._
 
-[View in API reference](./api-reference.md#runcheck)
+[View in API reference](/packages/cli/api-reference#runcheck)
 
 ```typescript
 import { runCheck } from "@forge-ts/cli/commands/check";
@@ -45,7 +43,7 @@ console.log(output.data.summary.errors); // number of TSDoc errors found
 
 _Starts the local dev server for the configured SSG target.  Reads `gen.ssgTarget` from the forge-ts config, resolves the adapter, and spawns the platform's dev server in the output directory._
 
-[View in API reference](./api-reference.md#rundocsdev)
+[View in API reference](/packages/cli/api-reference#rundocsdev)
 
 ```typescript
 import { runDocsDev } from "@forge-ts/cli";
@@ -56,7 +54,7 @@ await runDocsDev({ cwd: "./my-project" });
 
 _Citty command definition for `forge-ts docs dev`._
 
-[View in API reference](./api-reference.md#docsdevcommand)
+[View in API reference](/packages/cli/api-reference#docsdevcommand)
 
 ```typescript
 import { docsDevCommand } from "@forge-ts/cli";
@@ -66,7 +64,7 @@ import { docsDevCommand } from "@forge-ts/cli";
 
 _Result of the `init docs` command._
 
-[View in API reference](./api-reference.md#initdocsresult)
+[View in API reference](/packages/cli/api-reference#initdocsresult)
 
 ```typescript
 import { runInitDocs } from "@forge-ts/cli/commands/init-docs";
@@ -78,7 +76,7 @@ console.log(output.data.summary.filesCreated); // number of files written
 
 _Scaffolds a documentation site for the target SSG platform.  Resolves the target from args, validates it, checks for an existing scaffold, calls the adapter's `scaffold()` method, and writes all files produced by the manifest to `outDir`._
 
-[View in API reference](./api-reference.md#runinitdocs)
+[View in API reference](/packages/cli/api-reference#runinitdocs)
 
 ```typescript
 import { runInitDocs } from "@forge-ts/cli/commands/init-docs";
@@ -90,7 +88,7 @@ console.log(output.data.files); // list of created file paths
 
 _Citty command definition for `forge-ts init docs`.  Scaffolds a complete documentation site for the target SSG platform. Use `--json` for LAFS JSON envelope output (agent/CI-friendly)._
 
-[View in API reference](./api-reference.md#initdocscommand)
+[View in API reference](/packages/cli/api-reference#initdocscommand)
 
 ```typescript
 import { initDocsCommand } from "@forge-ts/cli/commands/init-docs";
@@ -101,7 +99,7 @@ import { initDocsCommand } from "@forge-ts/cli/commands/init-docs";
 
 _Citty command definition for `forge-ts init`.  Exposes subcommands for scaffolding project artefacts._
 
-[View in API reference](./api-reference.md#initcommand)
+[View in API reference](/packages/cli/api-reference#initcommand)
 
 ```typescript
 import { initCommand } from "@forge-ts/cli/commands/init-docs";
@@ -112,7 +110,7 @@ import { initCommand } from "@forge-ts/cli/commands/init-docs";
 
 _Runs the doctest pipeline and returns a typed command output._
 
-[View in API reference](./api-reference.md#runtest)
+[View in API reference](/packages/cli/api-reference#runtest)
 
 ```typescript
 import { runTest } from "@forge-ts/cli/commands/test";

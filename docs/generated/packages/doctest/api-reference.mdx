@@ -2,8 +2,6 @@
 title: "doctest — API Reference"
 description: "Full API reference for the doctest package"
 ---
-# doctest — API Reference
-
 ## Functions
 
 ### `extractExamples()`
@@ -31,7 +29,6 @@ const examples = extractExamples(symbols);
 console.log(`Found ${examples.length} examples`);
 ```
 
-
 ### `generateTestFiles()`
 
 ```typescript
@@ -54,7 +51,6 @@ import { generateTestFiles } from "@forge-ts/doctest";
 const files = generateTestFiles(examples, { cacheDir: "/tmp/doctest-cache" });
 console.log(`Generated ${files.length} test file(s)`);
 ```
-
 
 ### `runTests()`
 
@@ -79,7 +75,6 @@ if (!result.success) {
   console.error(`${result.failed} doctest(s) failed`);
 }
 ```
-
 
 ### `doctest()`
 
@@ -106,7 +101,6 @@ if (!result.success) {
   console.error(`${result.errors.length} doctest failure(s)`);
 }
 ```
-
 
 ## Interfaces
 
@@ -166,7 +160,6 @@ number
 
 Sequential index among examples for this symbol.
 
-
 ### `GeneratorOptions`
 
 ```typescript
@@ -182,7 +175,6 @@ string
 ```
 
 Directory where virtual test files will be written.
-
 
 ### `VirtualTestFile`
 
@@ -207,7 +199,6 @@ string
 ```
 
 File contents (valid TypeScript).
-
 
 ### `RunResult`
 
@@ -256,7 +247,6 @@ TestCaseResult[]
 ```
 
 Individual test results with name and status.
-
 
 ### `TestCaseResult`
 

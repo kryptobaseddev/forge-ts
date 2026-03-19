@@ -2,8 +2,6 @@
 title: "cli — Functions"
 description: "Functions and classes for the cli package"
 ---
-# cli — Functions & Classes
-
 Functions and classes exported by this package.
 
 ## createLogger(options, )
@@ -20,8 +18,8 @@ Creates a  instance.
 
 | Name | Type | Description |
 |------|------|-------------|
-| `options` | — | Optional configuration. |
-| `` | — | options.colors - Emit ANSI colour codes.  Defaults to `process.stdout.isTTY`. |
+| `options` | `: { colors?: boolean \| undefined; } \| undefined` | Optional configuration. |
+| `` | `: { colors?: boolean \| undefined; } \| undefined` | options.colors - Emit ANSI colour codes.  Defaults to `process.stdout.isTTY`. |
 
 **Returns** — A configured logger.
 
@@ -39,9 +37,9 @@ Wraps a command result in a LAFS envelope and emits it.  - JSON mode: writes the
 
 | Name | Type | Description |
 |------|------|-------------|
-| `output` | — | Typed result from the command. |
-| `flags` | — | Output format flags from citty args. |
-| `humanFormatter` | — | Produces a human-readable string for TTY consumers. |
+| `output` | `CommandOutput<T>` | Typed result from the command. |
+| `flags` | `OutputFlags` | Output format flags from citty args. |
+| `humanFormatter` | `(data: T` | Produces a human-readable string for TTY consumers. |
 
 **Example**
 
@@ -64,7 +62,7 @@ Returns the LAFS-compliant exit code for a command output.
 
 | Name | Type | Description |
 |------|------|-------------|
-| `output` | — | Typed result from the command. |
+| `output` | `CommandOutput<unknown>` | Typed result from the command. |
 
 **Returns** — `0` on success, `1` on validation/check failure.
 
@@ -82,7 +80,7 @@ Runs the full build pipeline and returns a typed command output.
 
 | Name | Type | Description |
 |------|------|-------------|
-| `args` | — | CLI arguments for the build command. |
+| `args` | `BuildArgs` | CLI arguments for the build command. |
 
 **Returns** — A typed `CommandOutput<BuildResult>`.
 
@@ -108,7 +106,7 @@ Runs the TSDoc enforcement pass and returns a typed command output.
 
 | Name | Type | Description |
 |------|------|-------------|
-| `args` | — | CLI arguments for the check command. |
+| `args` | `CheckArgs` | CLI arguments for the check command. |
 
 **Returns** — A typed `CommandOutput<CheckResult>`.
 
@@ -134,7 +132,7 @@ Starts the local dev server for the configured SSG target.  Reads `gen.ssgTarget
 
 | Name | Type | Description |
 |------|------|-------------|
-| `args` | — | Command arguments. |
+| `args` | `{ cwd?: string \| undefined; target?: string \| undefined; port?: string \| undefined; }` | Command arguments. |
 
 **Returns** — A promise that resolves when the server exits.
 
@@ -159,7 +157,7 @@ Scaffolds a documentation site for the target SSG platform.  Resolves the target
 
 | Name | Type | Description |
 |------|------|-------------|
-| `args` | — | CLI arguments for the init docs command. |
+| `args` | `InitDocsArgs` | CLI arguments for the init docs command. |
 
 **Returns** — A typed `CommandOutput<InitDocsResult>`.
 
@@ -185,7 +183,7 @@ Runs the doctest pipeline and returns a typed command output.
 
 | Name | Type | Description |
 |------|------|-------------|
-| `args` | — | CLI arguments for the test command. |
+| `args` | `TestArgs` | CLI arguments for the test command. |
 
 **Returns** — A typed `CommandOutput<TestResult>`.
 

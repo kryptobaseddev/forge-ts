@@ -2,7 +2,9 @@
   "name": "forge-ts",
   "theme": "mint",
   "colors": {
-    "primary": "#0ea5e9"
+    "primary": "#0ea5e9",
+    "light": "#38bdf8",
+    "dark": "#0284c7"
   },
   "navigation": {
     "tabs": [
@@ -25,32 +27,17 @@
             "group": "@forge-ts/core",
             "pages": [
               "packages/core/index",
+              "packages/core/api-reference",
               "packages/core/types",
               "packages/core/functions",
               "packages/core/examples"
             ]
           },
           {
-            "group": "@forge-ts/enforcer",
-            "pages": [
-              "packages/enforcer/index",
-              "packages/enforcer/types",
-              "packages/enforcer/functions",
-              "packages/enforcer/examples"
-            ]
-          },
-          {
-            "group": "@forge-ts/doctest",
-            "pages": [
-              "packages/doctest/index",
-              "packages/doctest/functions",
-              "packages/doctest/examples"
-            ]
-          },
-          {
             "group": "@forge-ts/api",
             "pages": [
               "packages/api/index",
+              "packages/api/api-reference",
               "packages/api/types",
               "packages/api/functions",
               "packages/api/examples"
@@ -60,6 +47,7 @@
             "group": "@forge-ts/gen",
             "pages": [
               "packages/gen/index",
+              "packages/gen/api-reference",
               "packages/gen/types",
               "packages/gen/functions",
               "packages/gen/examples"
@@ -69,9 +57,30 @@
             "group": "@forge-ts/cli",
             "pages": [
               "packages/cli/index",
+              "packages/cli/api-reference",
               "packages/cli/types",
               "packages/cli/functions",
               "packages/cli/examples"
+            ]
+          },
+          {
+            "group": "@forge-ts/enforcer",
+            "pages": [
+              "packages/enforcer/index",
+              "packages/enforcer/api-reference",
+              "packages/enforcer/types",
+              "packages/enforcer/functions",
+              "packages/enforcer/examples"
+            ]
+          },
+          {
+            "group": "@forge-ts/doctest",
+            "pages": [
+              "packages/doctest/index",
+              "packages/doctest/api-reference",
+              "packages/doctest/types",
+              "packages/doctest/functions",
+              "packages/doctest/examples"
             ]
           }
         ]

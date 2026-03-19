@@ -2,8 +2,6 @@
 title: "enforcer — API Reference"
 description: "Full API reference for the enforcer package"
 ---
-# enforcer — API Reference
-
 ## Functions
 
 ### `findDeprecatedUsages()`
@@ -19,7 +17,6 @@ Scans symbols for imports of deprecated exports from other packages.
 - `symbols` — All symbols from the walker across the entire project.
 
 **Returns**: Array of deprecated usages found.
-
 
 ### `enforce()`
 
@@ -47,7 +44,6 @@ if (!result.success) {
 }
 ```
 
-
 ### `formatResults()`
 
 ```typescript
@@ -73,7 +69,6 @@ const config = await loadConfig();
 const result = await enforce(config);
 console.log(formatResults(result, { colors: true, verbose: false }));
 ```
-
 
 ## Interfaces
 
@@ -124,7 +119,6 @@ string
 ```
 
 The deprecation message.
-
 
 ### `FormatOptions`
 

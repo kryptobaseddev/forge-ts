@@ -2,8 +2,6 @@
 title: "api — Functions"
 description: "Functions and classes for the api package"
 ---
-# api — Functions & Classes
-
 Functions and classes exported by this package.
 
 ## signatureToSchema(signature)
@@ -20,7 +18,7 @@ Maps a TypeScript type signature string to an OpenAPI 3.2 schema object.  Handle
 
 | Name | Type | Description |
 |------|------|-------------|
-| `signature` | — | A TypeScript type signature string, e.g. `"string"`, `"number[]"`,   `"string \| number"`, `"Record<string, boolean>"`. |
+| `signature` | `string` | A TypeScript type signature string, e.g. `"string"`, `"number[]"`,   `"string \| number"`, `"Record<string, boolean>"`. |
 
 **Returns** — An OpenAPI schema object.
 
@@ -46,7 +44,7 @@ Extracts SDK-relevant types (interfaces, type aliases, classes, enums) from a li
 
 | Name | Type | Description |
 |------|------|-------------|
-| `symbols` | — | The symbols produced by the core AST walker. |
+| `symbols` | `ForgeSymbol[]` | The symbols produced by the core AST walker. |
 
 **Returns** — An array of  objects for public-facing type definitions.
 
@@ -72,9 +70,9 @@ Generates a production-quality OpenAPI 3.2 document from the extracted SDK types
 
 | Name | Type | Description |
 |------|------|-------------|
-| `config` | — | The resolved . |
-| `sdkTypes` | — | SDK types to include as component schemas. |
-| `symbols` | — | Raw symbols used to extract HTTP route paths from `@route` tags. |
+| `config` | `ForgeConfig` | The resolved . |
+| `sdkTypes` | `SDKType[]` | SDK types to include as component schemas. |
+| `symbols` | `: ForgeSymbol[]` | Raw symbols used to extract HTTP route paths from `@route` tags. |
 
 **Returns** — An  object.
 
@@ -101,7 +99,7 @@ Builds a structured API reference from a list of exported symbols.  Unlike the m
 
 | Name | Type | Description |
 |------|------|-------------|
-| `symbols` | — | All symbols from the AST walker. |
+| `symbols` | `ForgeSymbol[]` | All symbols from the AST walker. |
 
 **Returns** — An array of  objects sorted by name.
 
@@ -127,7 +125,7 @@ Runs the API generation pipeline: walk → extract → generate → write.
 
 | Name | Type | Description |
 |------|------|-------------|
-| `config` | — | The resolved  for the project. |
+| `config` | `ForgeConfig` | The resolved  for the project. |
 
 **Returns** — A  with success/failure and any diagnostics.
 

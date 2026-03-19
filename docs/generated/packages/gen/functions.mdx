@@ -2,8 +2,6 @@
 title: "gen — Functions"
 description: "Functions and classes for the gen package"
 ---
-# gen — Functions & Classes
-
 Functions and classes exported by this package.
 
 ## groupSymbolsByPackage(symbols, rootDir)
@@ -20,8 +18,8 @@ Groups symbols by their package based on file path.  For monorepos (symbols unde
 
 | Name | Type | Description |
 |------|------|-------------|
-| `symbols` | — | All extracted symbols. |
-| `rootDir` | — | Absolute path to the project root. |
+| `symbols` | `ForgeSymbol[]` | All extracted symbols. |
+| `rootDir` | `string` | Absolute path to the project root. |
 
 **Returns** — A map from package name to symbol list.
 
@@ -47,9 +45,9 @@ Generates a full multi-page documentation site from symbols grouped by package. 
 
 | Name | Type | Description |
 |------|------|-------------|
-| `symbolsByPackage` | — | Symbols grouped by package name. |
-| `config` | — | The resolved . |
-| `options` | — | Site generation options. |
+| `symbolsByPackage` | `Map<string` | Symbols grouped by package name. |
+| `config` | `ForgeConfig` | The resolved . |
+| `options` | `SiteGeneratorOptions` | Site generation options. |
 
 **Returns** — An array of  objects ready to be written to disk.
 
@@ -76,7 +74,7 @@ Register an SSG adapter. Called once per provider at module load time.
 
 | Name | Type | Description |
 |------|------|-------------|
-| `adapter` | — | The adapter to register. |
+| `adapter` | `SSGAdapter` | The adapter to register. |
 
 **Example**
 
@@ -99,7 +97,7 @@ Get a registered adapter by target name. Throws if the target is not registered.
 
 | Name | Type | Description |
 |------|------|-------------|
-| `target` | — | The SSG target identifier. |
+| `target` | `SSGTarget` | The SSG target identifier. |
 
 **Returns** — The registered  for the given target.
 
@@ -147,8 +145,8 @@ Generates an `llms.txt` routing manifest from the extracted symbols.  The file f
 
 | Name | Type | Description |
 |------|------|-------------|
-| `symbols` | — | The symbols to include. |
-| `config` | — | The resolved . |
+| `symbols` | `ForgeSymbol[]` | The symbols to include. |
+| `config` | `ForgeConfig` | The resolved . |
 
 **Returns** — The generated `llms.txt` content as a string.
 
@@ -174,8 +172,8 @@ Generates an `llms-full.txt` dense context file from the extracted symbols.  Unl
 
 | Name | Type | Description |
 |------|------|-------------|
-| `symbols` | — | The symbols to include. |
-| `config` | — | The resolved . |
+| `symbols` | `ForgeSymbol[]` | The symbols to include. |
+| `config` | `ForgeConfig` | The resolved . |
 
 **Returns** — The generated `llms-full.txt` content as a string.
 
@@ -201,9 +199,9 @@ Generates a Markdown (or MDX) string from a list of symbols.
 
 | Name | Type | Description |
 |------|------|-------------|
-| `symbols` | — | The symbols to document. |
-| `config` | — | The resolved . |
-| `options` | — | Rendering options. |
+| `symbols` | `ForgeSymbol[]` | The symbols to document. |
+| `config` | `ForgeConfig` | The resolved . |
+| `options` | `: MarkdownOptions` | Rendering options. |
 
 **Returns** — The generated Markdown string.
 
@@ -229,9 +227,9 @@ Injects a summary of exported symbols into a `README.md` file.  The content is p
 
 | Name | Type | Description |
 |------|------|-------------|
-| `readmePath` | — | Absolute path to the `README.md` to update. |
-| `symbols` | — | Symbols to summarise in the README. |
-| `options` | — | Options controlling sync behaviour. |
+| `readmePath` | `string` | Absolute path to the `README.md` to update. |
+| `symbols` | `ForgeSymbol[]` | Symbols to summarise in the README. |
+| `options` | `: ReadmeSyncOptions` | Options controlling sync behaviour. |
 
 **Returns** — `true` if the file was modified, `false` otherwise.
 
@@ -257,9 +255,9 @@ Generate navigation configuration file(s) for the given SSG target.  Returns one
 
 | Name | Type | Description |
 |------|------|-------------|
-| `pages` | — | The  array produced by `generateDocSite`. |
-| `target` | — | The SSG target. |
-| `projectName` | — | The project name (used in config metadata). |
+| `pages` | `DocPage[]` | The  array produced by `generateDocSite`. |
+| `target` | `"docusaurus" \| "mintlify" \| "nextra" \| "vitepress"` | The SSG target. |
+| `projectName` | `string` | The project name (used in config metadata). |
 
 **Returns** — An array of  objects ready to be written to disk.
 
@@ -285,7 +283,7 @@ Runs the full generation pipeline: walk → render → write.
 
 | Name | Type | Description |
 |------|------|-------------|
-| `config` | — | The resolved  for the project. |
+| `config` | `ForgeConfig` | The resolved  for the project. |
 
 **Returns** — A  describing the outcome.
 

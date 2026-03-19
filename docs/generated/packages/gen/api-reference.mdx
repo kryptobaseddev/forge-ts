@@ -2,8 +2,6 @@
 title: "gen — API Reference"
 description: "Full API reference for the gen package"
 ---
-# gen — API Reference
-
 ## Functions
 
 ### `groupSymbolsByPackage()`
@@ -28,7 +26,6 @@ import { groupSymbolsByPackage } from "@forge-ts/gen";
 const grouped = groupSymbolsByPackage(symbols, "/path/to/project");
 console.log(grouped.has("core")); // true for monorepo
 ```
-
 
 ### `generateDocSite()`
 
@@ -55,7 +52,6 @@ const pages = generateDocSite(grouped, config, { format: "markdown", projectName
 console.log(pages.length > 0); // true
 ```
 
-
 ### `registerAdapter()`
 
 ```typescript
@@ -74,7 +70,6 @@ Register an SSG adapter. Called once per provider at module load time.
 import { registerAdapter } from "@forge-ts/gen";
 registerAdapter(mintlifyAdapter);
 ```
-
 
 ### `getAdapter()`
 
@@ -101,7 +96,6 @@ import { getAdapter } from "@forge-ts/gen";
 const adapter = getAdapter("mintlify");
 ```
 
-
 ### `getAvailableTargets()`
 
 ```typescript
@@ -118,7 +112,6 @@ Get all registered adapter targets.
 import { getAvailableTargets } from "@forge-ts/gen";
 const targets = getAvailableTargets(); // ["mintlify", "docusaurus", ...]
 ```
-
 
 ### `generateLlmsTxt()`
 
@@ -143,7 +136,6 @@ const txt = generateLlmsTxt(symbols, config);
 console.log(txt.startsWith("# ")); // true
 ```
 
-
 ### `generateLlmsFullTxt()`
 
 ```typescript
@@ -166,7 +158,6 @@ import { generateLlmsFullTxt } from "@forge-ts/gen";
 const fullTxt = generateLlmsFullTxt(symbols, config);
 console.log(fullTxt.includes("Full Context")); // true
 ```
-
 
 ### `generateMarkdown()`
 
@@ -192,7 +183,6 @@ const md = generateMarkdown(symbols, config, { mdx: false });
 console.log(md.startsWith("# API Reference")); // true
 ```
 
-
 ### `syncReadme()`
 
 ```typescript
@@ -216,7 +206,6 @@ import { syncReadme } from "@forge-ts/gen";
 const modified = await syncReadme("/path/to/README.md", symbols);
 console.log(modified); // true if README was updated
 ```
-
 
 ### `generateSSGConfigs()`
 
@@ -242,7 +231,6 @@ const configs = generateSSGConfigs(pages, "vitepress", "my-project");
 console.log(configs[0].path); // ".vitepress/sidebar.json"
 ```
 
-
 ### `generate()`
 
 ```typescript
@@ -264,7 +252,6 @@ import { generate } from "@forge-ts/gen";
 const result = await generate(config);
 console.log(result.success); // true if all files were written
 ```
-
 
 ## Interfaces
 
@@ -299,7 +286,6 @@ Record<string, string | number | boolean>
 ```
 
 Frontmatter fields
-
 
 ### `SiteGeneratorOptions`
 
@@ -341,7 +327,6 @@ string | undefined
 
 Project description
 
-
 ### `GeneratedFile`
 
 ```typescript
@@ -365,7 +350,6 @@ string
 ```
 
 File content (string for text).
-
 
 ### `SSGStyleGuide`
 
@@ -423,7 +407,6 @@ Component imports to add at top of MDX files (if supportsMdx).
 
 Code block language for TypeScript examples.
 
-
 ### `ScaffoldManifest`
 
 ```typescript
@@ -479,7 +462,6 @@ string[]
 ```
 
 Post-scaffold instructions for the user.
-
 
 ### `AdapterContext`
 
@@ -537,7 +519,6 @@ string
 
 Output directory for generated docs.
 
-
 ### `DevServerCommand`
 
 ```typescript
@@ -585,7 +566,6 @@ string
 ```
 
 The URL the dev server will be available at.
-
 
 ### `SSGAdapter`
 
@@ -743,7 +723,6 @@ const exists = await adapter.detectExisting("./docs");
 if (exists) console.log("Scaffold already present");
 ```
 
-
 ### `MarkdownOptions`
 
 ```typescript
@@ -759,7 +738,6 @@ boolean | undefined
 ```
 
 Whether to use MDX syntax (default: Markdown).
-
 
 ### `ReadmeSyncOptions`
 
@@ -785,7 +763,6 @@ boolean | undefined
 
 Include first
 
-
 ### `SSGConfigFile`
 
 ```typescript
@@ -810,7 +787,6 @@ string
 
 File content
 
-
 ## Types
 
 ### `SSGTarget`
@@ -821,7 +797,6 @@ any
 
 Supported SSG target identifiers.
 
-
 ## Variables
 
 ### `DEFAULT_TARGET`
@@ -831,7 +806,6 @@ SSGTarget
 ```
 
 The default SSG target when none is specified.
-
 
 ### `mintlifyAdapter`
 
@@ -850,7 +824,6 @@ const configs = adapter.generateConfig(context);
 console.log(configs[0].path); // "docs.json"
 ```
 
-
 ### `docusaurusAdapter`
 
 ```typescript
@@ -868,7 +841,6 @@ const configs = adapter.generateConfig(context);
 console.log(configs[0].path); // "sidebars.ts"
 ```
 
-
 ### `nextraAdapter`
 
 ```typescript
@@ -885,7 +857,6 @@ const adapter = getAdapter("nextra");
 const configs = adapter.generateConfig(context);
 console.log(configs[0].path); // "content/_meta.js"
 ```
-
 
 ### `vitepressAdapter`
 

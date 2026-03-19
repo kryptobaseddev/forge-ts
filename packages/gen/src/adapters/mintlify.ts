@@ -30,19 +30,28 @@ function pageSlug(pagePath: string): string {
 	return pagePath.replace(/\.[^.]+$/, "");
 }
 
-interface MintlifyNavigationPage {
+/** A navigation group with pages (Mintlify v4 format). */
+interface MintlifyNavGroup {
 	group: string;
-	pages: Array<string | MintlifyNavigationPage>;
+	pages: Array<string | MintlifyNavGroup>;
 }
 
+/** A navigation tab containing groups (Mintlify v4 format). */
+interface MintlifyNavTab {
+	tab: string;
+	groups: MintlifyNavGroup[];
+}
+
+/** Mintlify v4 docs.json structure. */
 interface MintlifyDocsJson {
 	name: string;
 	theme: string;
-	colors: { primary: string };
-	navigation: MintlifyNavigationPage[];
+	colors: { primary: string; light: string; dark: string };
+	navigation: { tabs: MintlifyNavTab[] };
+	footer: { socials: Record<string, string> };
 }
 
-/** Build the docs.json navigation config from doc pages. */
+/** Build the docs.json navigation config from doc pages (Mintlify v4 format). */
 function buildDocsJson(context: AdapterContext): MintlifyDocsJson {
 	const { pages, projectName } = context;
 	const topLevel: string[] = [];
@@ -61,28 +70,31 @@ function buildDocsJson(context: AdapterContext): MintlifyDocsJson {
 		}
 	}
 
-	const navigation: MintlifyNavigationPage[] = [];
+	const tabs: MintlifyNavTab[] = [];
 
+	// Documentation tab with getting started pages
 	if (topLevel.length > 0) {
-		navigation.push({ group: "Getting Started", pages: topLevel });
+		tabs.push({
+			tab: "Documentation",
+			groups: [{ group: "Getting Started", pages: topLevel }],
+		});
 	}
 
+	// API Reference tab with per-package groups
 	if (byPackage.size > 0) {
-		const packageGroups: MintlifyNavigationPage[] = [];
+		const groups: MintlifyNavGroup[] = [];
 		for (const [pkgName, slugs] of byPackage) {
-			packageGroups.push({ group: pkgName, pages: slugs });
+			groups.push({ group: `@forge-ts/${pkgName}`, pages: slugs });
 		}
-		navigation.push({
-			group: "Packages",
-			pages: packageGroups as unknown as Array<string | MintlifyNavigationPage>,
-		});
+		tabs.push({ tab: "API Reference", groups });
 	}
 
 	return {
 		name: projectName,
 		theme: "mint",
-		colors: { primary: "#0ea5e9" },
-		navigation,
+		colors: { primary: "#0ea5e9", light: "#38bdf8", dark: "#0284c7" },
+		navigation: { tabs },
+		footer: { socials: { github: "https://github.com/kryptobaseddev/forge-ts" } },
 	};
 }
 
@@ -142,10 +154,40 @@ export const mintlifyAdapter: SSGAdapter = {
 	},
 
 	transformPages(pages: DocPage[], _context: AdapterContext): GeneratedFile[] {
-		return pages.map((page) => ({
-			path: page.path.replace(/\.md$/, ".mdx"),
-			content: addMintlifyFrontmatter(page),
-		}));
+		return pages.map((page) => {
+			let content = addMintlifyFrontmatter(page);
+			// Strip any top-level h1 lines — Mintlify renders frontmatter title as h1
+			content = content.replace(/^# .+$/m, "").replace(/\n{3,}/g, "\n\n");
+			// Ensure opening code fences that have no language tag get a typescript tag.
+			// We track fence state so we only tag opening fences, not closing ones.
+			let insideFence = false;
+			content = content
+				.split("\n")
+				.map((line) => {
+					if (insideFence) {
+						if (/^```\s*$/.test(line)) {
+							insideFence = false;
+						}
+						return line;
+					}
+					// Opening fence with a language — track but don't modify
+					if (/^```\S/.test(line)) {
+						insideFence = true;
+						return line;
+					}
+					// Opening fence with no language — add typescript
+					if (/^```\s*$/.test(line)) {
+						insideFence = true;
+						return "```typescript";
+					}
+					return line;
+				})
+				.join("\n");
+			return {
+				path: page.path.replace(/\.md$/, ".mdx"),
+				content,
+			};
+		});
 	},
 
 	generateConfig(context: AdapterContext): GeneratedFile[] {

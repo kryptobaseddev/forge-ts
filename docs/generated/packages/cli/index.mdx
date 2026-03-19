@@ -2,41 +2,49 @@
 title: "cli"
 description: "cli package overview"
 ---
-# cli
-
-## Exported Symbols
+## Functions & Classes
 
 | Symbol | Kind | Description |
 |--------|------|-------------|
-| [`Logger`](./api-reference.md#logger) | interface | A minimal structured logger used throughout the CLI commands. |
-| [`createLogger()`](./api-reference.md#createlogger) | function | Creates a  instance. |
-| [`CommandOutput`](./api-reference.md#commandoutput) | interface | Typed result from a forge-ts command. |
-| [`ForgeCliError`](./api-reference.md#forgeclierror) | interface | Structured error for CLI commands. |
-| [`ForgeCliWarning`](./api-reference.md#forgecliwarning) | interface | Structured warning for CLI commands. |
-| [`OutputFlags`](./api-reference.md#outputflags) | interface | Output format flags passed through from citty args. |
-| [`emitResult()`](./api-reference.md#emitresult) | function | Wraps a command result in a LAFS envelope and emits it.  - JSON mode: writes the projected envelope to stdout as JSON. - Human mode: calls the provided formatter function. - Quiet mode: suppresses all output regardless of format. |
-| [`resolveExitCode()`](./api-reference.md#resolveexitcode) | function | Returns the LAFS-compliant exit code for a command output. |
-| [`BuildArgs`](./api-reference.md#buildargs) | interface | Arguments for the `build` command. |
-| [`BuildStep`](./api-reference.md#buildstep) | interface | A single step in the build pipeline. |
-| [`BuildResult`](./api-reference.md#buildresult) | interface | Typed result for the `build` command. |
-| [`runBuild()`](./api-reference.md#runbuild) | function | Runs the full build pipeline and returns a typed command output. |
-| [`buildCommand`](./api-reference.md#buildcommand) | variable | Citty command definition for `forge-ts build`. |
-| [`CheckArgs`](./api-reference.md#checkargs) | interface | Arguments for the `check` command. |
-| [`CheckFileError`](./api-reference.md#checkfileerror) | interface | A single error entry within a file group, included at standard and full MVI levels. |
-| [`CheckFileWarning`](./api-reference.md#checkfilewarning) | interface | A single warning entry within a file group, included at standard and full MVI levels. |
-| [`CheckFileGroup`](./api-reference.md#checkfilegroup) | interface | Errors and warnings grouped by file, included at standard and full MVI levels. |
-| [`CheckResult`](./api-reference.md#checkresult) | interface | Typed result for the `check` command. |
-| [`runCheck()`](./api-reference.md#runcheck) | function | Runs the TSDoc enforcement pass and returns a typed command output. |
-| [`checkCommand`](./api-reference.md#checkcommand) | variable | Citty command definition for `forge-ts check`. |
-| [`runDocsDev()`](./api-reference.md#rundocsdev) | function | Starts the local dev server for the configured SSG target.  Reads `gen.ssgTarget` from the forge-ts config, resolves the adapter, and spawns the platform's dev server in the output directory. |
-| [`docsDevCommand`](./api-reference.md#docsdevcommand) | variable | Citty command definition for `forge-ts docs dev`. |
-| [`InitDocsResult`](./api-reference.md#initdocsresult) | interface | Result of the `init docs` command. |
-| [`InitDocsArgs`](./api-reference.md#initdocsargs) | interface | Arguments for the `init docs` command. |
-| [`runInitDocs()`](./api-reference.md#runinitdocs) | function | Scaffolds a documentation site for the target SSG platform.  Resolves the target from args, validates it, checks for an existing scaffold, calls the adapter's `scaffold()` method, and writes all files produced by the manifest to `outDir`. |
-| [`initDocsCommand`](./api-reference.md#initdocscommand) | variable | Citty command definition for `forge-ts init docs`.  Scaffolds a complete documentation site for the target SSG platform. Use `--json` for LAFS JSON envelope output (agent/CI-friendly). |
-| [`initCommand`](./api-reference.md#initcommand) | variable | Citty command definition for `forge-ts init`.  Exposes subcommands for scaffolding project artefacts. |
-| [`TestArgs`](./api-reference.md#testargs) | interface | Arguments for the `test` command. |
-| [`TestFailure`](./api-reference.md#testfailure) | interface | A single test failure entry, included at standard and full MVI levels. |
-| [`TestResult`](./api-reference.md#testresult) | interface | Typed result for the `test` command. |
-| [`runTest()`](./api-reference.md#runtest) | function | Runs the doctest pipeline and returns a typed command output. |
-| [`testCommand`](./api-reference.md#testcommand) | variable | Citty command definition for `forge-ts test`. |
+| [`createLogger()`](/packages/cli/api-reference#createlogger) | function | Creates a  instance. |
+| [`emitResult()`](/packages/cli/api-reference#emitresult) | function | Wraps a command result in a LAFS envelope and emits it.  - JSON mode: writes ... |
+| [`resolveExitCode()`](/packages/cli/api-reference#resolveexitcode) | function | Returns the LAFS-compliant exit code for a command output. |
+| [`runBuild()`](/packages/cli/api-reference#runbuild) | function | Runs the full build pipeline and returns a typed command output. |
+| [`runCheck()`](/packages/cli/api-reference#runcheck) | function | Runs the TSDoc enforcement pass and returns a typed command output. |
+| [`runDocsDev()`](/packages/cli/api-reference#rundocsdev) | function | Starts the local dev server for the configured SSG target.  Reads `gen.ssgTar... |
+| [`runInitDocs()`](/packages/cli/api-reference#runinitdocs) | function | Scaffolds a documentation site for the target SSG platform.  Resolves the tar... |
+| [`runTest()`](/packages/cli/api-reference#runtest) | function | Runs the doctest pipeline and returns a typed command output. |
+
+## Types & Interfaces
+
+| Symbol | Kind | Description |
+|--------|------|-------------|
+| [`Logger`](/packages/cli/api-reference#logger) | interface | A minimal structured logger used throughout the CLI commands. |
+| [`CommandOutput`](/packages/cli/api-reference#commandoutput) | interface | Typed result from a forge-ts command. |
+| [`ForgeCliError`](/packages/cli/api-reference#forgeclierror) | interface | Structured error for CLI commands. |
+| [`ForgeCliWarning`](/packages/cli/api-reference#forgecliwarning) | interface | Structured warning for CLI commands. |
+| [`OutputFlags`](/packages/cli/api-reference#outputflags) | interface | Output format flags passed through from citty args. |
+| [`BuildArgs`](/packages/cli/api-reference#buildargs) | interface | Arguments for the `build` command. |
+| [`BuildStep`](/packages/cli/api-reference#buildstep) | interface | A single step in the build pipeline. |
+| [`BuildResult`](/packages/cli/api-reference#buildresult) | interface | Typed result for the `build` command. |
+| [`CheckArgs`](/packages/cli/api-reference#checkargs) | interface | Arguments for the `check` command. |
+| [`CheckFileError`](/packages/cli/api-reference#checkfileerror) | interface | A single error entry within a file group, included at standard and full MVI l... |
+| [`CheckFileWarning`](/packages/cli/api-reference#checkfilewarning) | interface | A single warning entry within a file group, included at standard and full MVI... |
+| [`CheckFileGroup`](/packages/cli/api-reference#checkfilegroup) | interface | Errors and warnings grouped by file, included at standard and full MVI levels. |
+| [`CheckResult`](/packages/cli/api-reference#checkresult) | interface | Typed result for the `check` command. |
+| [`InitDocsResult`](/packages/cli/api-reference#initdocsresult) | interface | Result of the `init docs` command. |
+| [`InitDocsArgs`](/packages/cli/api-reference#initdocsargs) | interface | Arguments for the `init docs` command. |
+| [`TestArgs`](/packages/cli/api-reference#testargs) | interface | Arguments for the `test` command. |
+| [`TestFailure`](/packages/cli/api-reference#testfailure) | interface | A single test failure entry, included at standard and full MVI levels. |
+| [`TestResult`](/packages/cli/api-reference#testresult) | interface | Typed result for the `test` command. |
+
+## Other Exports
+
+| Symbol | Kind | Description |
+|--------|------|-------------|
+| [`buildCommand`](/packages/cli/api-reference#buildcommand) | variable | Citty command definition for `forge-ts build`. |
+| [`checkCommand`](/packages/cli/api-reference#checkcommand) | variable | Citty command definition for `forge-ts check`. |
+| [`docsDevCommand`](/packages/cli/api-reference#docsdevcommand) | variable | Citty command definition for `forge-ts docs dev`. |
+| [`initDocsCommand`](/packages/cli/api-reference#initdocscommand) | variable | Citty command definition for `forge-ts init docs`.  Scaffolds a complete docu... |
+| [`initCommand`](/packages/cli/api-reference#initcommand) | variable | Citty command definition for `forge-ts init`.  Exposes subcommands for scaffo... |
+| [`testCommand`](/packages/cli/api-reference#testcommand) | variable | Citty command definition for `forge-ts test`. |

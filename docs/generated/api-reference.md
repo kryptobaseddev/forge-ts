@@ -395,7 +395,7 @@ console.log(result.success); // true if spec was written successfully
 
 ### `groupSymbolsByPackage()`
 
-_Defined in `packages/gen/src/site-generator.ts:130`_
+_Defined in `packages/gen/src/site-generator.ts:143`_
 
 ```typescript
 (symbols: ForgeSymbol[], rootDir: string) => Map<string, ForgeSymbol[]>
@@ -420,7 +420,7 @@ console.log(grouped.has("core")); // true for monorepo
 
 ### `generateDocSite()`
 
-_Defined in `packages/gen/src/site-generator.ts:689`_
+_Defined in `packages/gen/src/site-generator.ts:750`_
 
 ```typescript
 (symbolsByPackage: Map<string, ForgeSymbol[]>, config: ForgeConfig, options: SiteGeneratorOptions) => DocPage[]
@@ -4543,7 +4543,7 @@ The default SSG target when none is specified.
 
 ### `mintlifyAdapter`
 
-_Defined in `packages/gen/src/adapters/mintlify.ts:124`_
+_Defined in `packages/gen/src/adapters/mintlify.ts:136`_
 
 ```typescript
 SSGAdapter

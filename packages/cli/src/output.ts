@@ -131,17 +131,28 @@ export function emitResult<T>(
 		mvi: (flags.mvi as MVILevel) ?? "full",
 	};
 
+	// Include warnings in the result so agents see them in the JSON envelope.
+	// Config warnings (unknown keys, invalid rules) go to stderr for TTY
+	// consumers but agents in non-TTY contexts only see the JSON envelope.
+	const resultData = output.data as Record<string, unknown>;
+	if (output.warnings && output.warnings.length > 0) {
+		resultData._warnings = output.warnings.map((w) => ({
+			code: w.code,
+			message: w.message,
+		}));
+	}
+
 	// LAFS 1.8.0: result is included on error envelopes so agents get
 	// actionable data (byFile, suggestedFix) alongside error metadata.
 	const envelope = output.success
 		? createEnvelope({
 				success: true,
-				result: output.data as Record<string, unknown>,
+				result: resultData,
 				meta,
 			})
 		: createEnvelope({
 				success: false,
-				result: output.data as Record<string, unknown>,
+				result: resultData,
 				error: {
 					code: output.errors?.[0]?.code ?? "FORGE_CHECK_FAILED",
 					message: output.errors?.[0]?.message ?? "Check failed — see result for actionable fixes",

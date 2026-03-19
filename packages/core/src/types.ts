@@ -155,6 +155,12 @@ export interface ForgeConfig {
 		 */
 		extraGotchas?: string[];
 	};
+	/**
+	 * Warnings generated during config loading (e.g., unknown keys).
+	 * Populated by loadConfig(). Agents should surface these in output.
+	 * @internal
+	 */
+	_configWarnings?: string[];
 	/** Project metadata — auto-detected from package.json if not provided. */
 	project: {
 		/** Repository URL (e.g., "https://github.com/user/repo"). */

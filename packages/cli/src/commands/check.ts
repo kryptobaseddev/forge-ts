@@ -241,11 +241,21 @@ export async function runCheck(args: CheckArgs): Promise<CommandOutput<CheckResu
 				},
 			];
 
+	// Surface config warnings so agents see them in the JSON envelope
+	const cliWarnings = config._configWarnings?.map((msg) => ({
+		code: "CONFIG_WARNING",
+		message: msg,
+		filePath: "",
+		line: 0,
+		column: 0,
+	}));
+
 	return {
 		operation: "check",
 		success: result.success,
 		data,
 		errors: cliErrors,
+		warnings: cliWarnings,
 		duration: result.duration,
 	};
 }

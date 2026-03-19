@@ -1,6 +1,6 @@
 {
 	"name": "@forge-ts/core",
-	"version": "0.6.3",
+	"version": "0.6.4",
 	"type": "module",
 	"description": "Shared types, interfaces, and core AST walker for forge-ts",
 	"license": "MIT",

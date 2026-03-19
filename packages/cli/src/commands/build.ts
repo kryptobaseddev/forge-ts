@@ -185,11 +185,20 @@ export async function runBuild(args: BuildArgs): Promise<CommandOutput<BuildResu
 		data.generatedFiles = generatedFiles;
 	}
 
+	const cliWarnings = config._configWarnings?.map((msg) => ({
+		code: "CONFIG_WARNING",
+		message: msg,
+		filePath: "",
+		line: 0,
+		column: 0,
+	}));
+
 	return {
 		operation: "build",
 		success,
 		data,
 		errors: allErrors,
+		warnings: cliWarnings,
 		duration: totalMs,
 	};
 }

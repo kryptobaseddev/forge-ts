@@ -88,26 +88,32 @@ const KNOWN_RULE_KEYS = new Set([
 ]);
 
 /**
- * Warns to stderr about unknown keys in user config.
- * Does not throw — config loading remains lenient, but unknown keys are
- * no longer silently swallowed.
+ * Collects warnings about unknown keys in user config.
+ * Also emits to stderr for TTY consumers.
+ * Returns the warnings array so it can be attached to the config for
+ * agents that only see structured JSON output.
  * @internal
  */
-function warnUnknownKeys(partial: Partial<ForgeConfig>): void {
+function collectUnknownKeyWarnings(partial: Partial<ForgeConfig>): string[] {
+	const warnings: string[] = [];
 	for (const key of Object.keys(partial)) {
 		if (!KNOWN_TOP_KEYS.has(key)) {
-			console.error(`[forge-ts] warning: unknown config key "${key}" — ignored`);
+			warnings.push(`Unknown config key "${key}" — ignored.`);
 		}
 	}
 	if (partial.enforce?.rules) {
 		for (const key of Object.keys(partial.enforce.rules)) {
 			if (!KNOWN_RULE_KEYS.has(key)) {
-				console.error(
-					`[forge-ts] warning: unknown enforce rule "${key}" — ignored. Valid rules: ${[...KNOWN_RULE_KEYS].join(", ")}`,
+				warnings.push(
+					`Unknown enforce rule "${key}" — ignored. Valid rules: ${[...KNOWN_RULE_KEYS].join(", ")}`,
 				);
 			}
 		}
 	}
+	for (const w of warnings) {
+		console.error(`[forge-ts] warning: ${w}`);
+	}
+	return warnings;
 }
 
 /**
@@ -119,9 +125,9 @@ function warnUnknownKeys(partial: Partial<ForgeConfig>): void {
  * @internal
  */
 function mergeWithDefaults(rootDir: string, partial: Partial<ForgeConfig>): ForgeConfig {
-	warnUnknownKeys(partial);
+	const warnings = collectUnknownKeyWarnings(partial);
 	const defaults = defaultConfig(rootDir);
-	return {
+	const config: ForgeConfig = {
 		...defaults,
 		...partial,
 		enforce: {
@@ -135,6 +141,10 @@ function mergeWithDefaults(rootDir: string, partial: Partial<ForgeConfig>): Forg
 		skill: { ...defaults.skill, ...partial.skill },
 		project: { ...defaults.project, ...partial.project },
 	};
+	if (warnings.length > 0) {
+		config._configWarnings = warnings;
+	}
+	return config;
 }
 
 /**

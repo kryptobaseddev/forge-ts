@@ -103,11 +103,20 @@ export async function runTest(args: TestArgs): Promise<CommandOutput<TestResult>
 				message: e.message,
 			}));
 
+	const cliWarnings = config._configWarnings?.map((msg) => ({
+		code: "CONFIG_WARNING",
+		message: msg,
+		filePath: "",
+		line: 0,
+		column: 0,
+	}));
+
 	return {
 		operation: "test",
 		success: result.success,
 		data,
 		errors: cliErrors,
+		warnings: cliWarnings,
 		duration: result.duration,
 	};
 }

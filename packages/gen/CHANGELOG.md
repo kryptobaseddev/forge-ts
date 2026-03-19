@@ -1,5 +1,19 @@
 # @forge-ts/gen
 
+## 0.6.4
+
+### Patch Changes
+
+- fix: surface config warnings in JSON envelope, deduplicate generatedFiles
+
+  - Config warnings (unknown keys, invalid rules) now appear in the JSON envelope under `result._warnings` so agents in non-TTY contexts can read them (previously only emitted to stderr which agents often cannot see)
+  - Each CLI command (check, test, build) surfaces `_configWarnings` from loadConfig as `CONFIG_WARNING` entries in the output
+  - Deduplicate writtenFiles via Set to prevent duplicates with multi-format builds
+  - Sync skill doc SSoT with agent-verified behavior
+
+- Updated dependencies []:
+  - @forge-ts/core@0.6.4
+
 ## 0.6.3
 
 ### Patch Changes

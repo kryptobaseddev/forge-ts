@@ -28,6 +28,8 @@ description: "cli package overview"
 | [`CheckResult`](./api-reference.md#checkresult) | interface | Typed result for the `check` command. |
 | [`runCheck()`](./api-reference.md#runcheck) | function | Runs the TSDoc enforcement pass and returns a typed command output. |
 | [`checkCommand`](./api-reference.md#checkcommand) | variable | Citty command definition for `forge-ts check`. |
+| [`runDocsDev()`](./api-reference.md#rundocsdev) | function | Starts the local dev server for the configured SSG target.  Reads `gen.ssgTarget` from the forge-ts config, resolves the adapter, and spawns the platform's dev server in the output directory. |
+| [`docsDevCommand`](./api-reference.md#docsdevcommand) | variable | Citty command definition for `forge-ts docs dev`. |
 | [`InitDocsResult`](./api-reference.md#initdocsresult) | interface | Result of the `init docs` command. |
 | [`InitDocsArgs`](./api-reference.md#initdocsargs) | interface | Arguments for the `init docs` command. |
 | [`runInitDocs()`](./api-reference.md#runinitdocs) | function | Scaffolds a documentation site for the target SSG platform.  Resolves the target from args, validates it, checks for an existing scaffold, calls the adapter's `scaffold()` method, and writes all files produced by the manifest to `outDir`. |

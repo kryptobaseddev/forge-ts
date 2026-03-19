@@ -283,6 +283,16 @@ export const nextraAdapter: SSGAdapter = {
 		return buildMetaFiles(context.pages);
 	},
 
+	getDevCommand(outDir: string) {
+		return {
+			bin: "npx",
+			args: ["next", "dev"],
+			cwd: outDir,
+			label: "Nextra Dev Server (Next.js)",
+			url: "http://localhost:3000",
+		};
+	},
+
 	async detectExisting(outDir: string): Promise<boolean> {
 		const { existsSync } = await import("node:fs");
 		const { join } = await import("node:path");

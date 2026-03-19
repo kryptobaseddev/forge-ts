@@ -1340,6 +1340,42 @@
           "outDir"
         ]
       },
+      "DevServerCommand": {
+        "description": "Command to start a local dev server for doc preview.",
+        "type": "object",
+        "properties": {
+          "bin": {
+            "type": "string",
+            "description": "The binary to execute (e.g., \"npx\", \"node\")."
+          },
+          "args": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Arguments to pass to the binary."
+          },
+          "cwd": {
+            "type": "string",
+            "description": "Working directory to run from."
+          },
+          "label": {
+            "type": "string",
+            "description": "Human-readable label for the command."
+          },
+          "url": {
+            "type": "string",
+            "description": "The URL the dev server will be available at."
+          }
+        },
+        "required": [
+          "bin",
+          "args",
+          "cwd",
+          "label",
+          "url"
+        ]
+      },
       "SSGAdapter": {
         "description": "The central SSG adapter interface. Every doc platform provider implements this contract. One file per provider. No shared mutable state.",
         "type": "object",

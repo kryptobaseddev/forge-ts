@@ -41,6 +41,27 @@ const output = await runCheck({ cwd: process.cwd() });
 console.log(output.data.summary.errors); // number of TSDoc errors found
 ```
 
+## `runDocsDev()`
+
+_Starts the local dev server for the configured SSG target.  Reads `gen.ssgTarget` from the forge-ts config, resolves the adapter, and spawns the platform's dev server in the output directory._
+
+[View in API reference](./api-reference.md#rundocsdev)
+
+```typescript
+import { runDocsDev } from "@forge-ts/cli";
+await runDocsDev({ cwd: "./my-project" });
+```
+
+## `docsDevCommand`
+
+_Citty command definition for `forge-ts docs dev`._
+
+[View in API reference](./api-reference.md#docsdevcommand)
+
+```typescript
+import { docsDevCommand } from "@forge-ts/cli";
+```
+
 ## `InitDocsResult`
 
 _Result of the `init docs` command._

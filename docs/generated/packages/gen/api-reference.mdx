@@ -538,6 +538,55 @@ string
 Output directory for generated docs.
 
 
+### `DevServerCommand`
+
+```typescript
+any
+```
+
+Command to start a local dev server for doc preview.
+
+#### `bin`
+
+```typescript
+string
+```
+
+The binary to execute (e.g., "npx", "node").
+
+#### `args`
+
+```typescript
+string[]
+```
+
+Arguments to pass to the binary.
+
+#### `cwd`
+
+```typescript
+string
+```
+
+Working directory to run from.
+
+#### `label`
+
+```typescript
+string
+```
+
+Human-readable label for the command.
+
+#### `url`
+
+```typescript
+string
+```
+
+The URL the dev server will be available at.
+
+
 ### `SSGAdapter`
 
 ```typescript
@@ -646,6 +695,29 @@ import { getAdapter } from "@forge-ts/gen";
 const adapter = getAdapter("vitepress");
 const configs = adapter.generateConfig(context);
 console.log(configs[0].path); // ".vitepress/sidebar.json"
+```
+
+#### `getDevCommand()`
+
+```typescript
+(outDir: string) => DevServerCommand
+```
+
+Get the command to start the local dev server for this platform. Called by `forge-ts docs dev`.
+
+**Parameters**
+
+- `outDir` — The docs output directory.
+
+**Returns**: The shell command and args to spawn, plus a display label.
+
+**Examples**
+
+```typescript
+import { getAdapter } from "@forge-ts/gen";
+const adapter = getAdapter("mintlify");
+const cmd = adapter.getDevCommand("./docs");
+// { bin: "npx", args: ["@mintlify/cli", "dev"], cwd: "./docs" }
 ```
 
 #### `detectExisting()`

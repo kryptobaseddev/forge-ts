@@ -1,7 +1,7 @@
 # . - Full Context
 
 Root: .
-Generated: 2026-03-19T00:55:31.238Z
+Generated: 2026-03-19T01:05:15.819Z
 
 ## Functions
 
@@ -487,6 +487,21 @@ Example:
   import { runCheck } from "@forge-ts/cli/commands/check";
   const output = await runCheck({ cwd: process.cwd() });
   console.log(output.data.summary.errors); // number of TSDoc errors found
+
+### runDocsDev()
+
+(args: { cwd?: string | undefined; target?: string | undefined; port?: string | undefined; }) => Promise<void>
+
+Starts the local dev server for the configured SSG target.  Reads `gen.ssgTarget` from the forge-ts config, resolves the adapter, and spawns the platform's dev server in the output directory.
+
+Parameters:
+- args: Command arguments.
+
+Returns: A promise that resolves when the server exits.
+
+Example:
+  import { runDocsDev } from "@forge-ts/cli";
+  await runDocsDev({ cwd: "./my-project" });
 
 ### runInitDocs()
 
@@ -1751,6 +1766,44 @@ string
 
 Output directory for generated docs.
 
+### DevServerCommand
+
+any
+
+Command to start a local dev server for doc preview.
+
+Members:
+
+#### bin
+
+string
+
+The binary to execute (e.g., "npx", "node").
+
+#### args
+
+string[]
+
+Arguments to pass to the binary.
+
+#### cwd
+
+string
+
+Working directory to run from.
+
+#### label
+
+string
+
+Human-readable label for the command.
+
+#### url
+
+string
+
+The URL the dev server will be available at.
+
 ### SSGAdapter
 
 any
@@ -1833,6 +1886,23 @@ Example:
   const adapter = getAdapter("vitepress");
   const configs = adapter.generateConfig(context);
   console.log(configs[0].path); // ".vitepress/sidebar.json"
+
+#### getDevCommand()
+
+(outDir: string) => DevServerCommand
+
+Get the command to start the local dev server for this platform. Called by `forge-ts docs dev`.
+
+Parameters:
+- outDir: The docs output directory.
+
+Returns: The shell command and args to spawn, plus a display label.
+
+Example:
+  import { getAdapter } from "@forge-ts/gen";
+  const adapter = getAdapter("mintlify");
+  const cmd = adapter.getDevCommand("./docs");
+  // { bin: "npx", args: ["@mintlify/cli", "dev"], cwd: "./docs" }
 
 #### detectExisting()
 
@@ -2840,6 +2910,15 @@ Citty command definition for `forge-ts build`.
 CommandDef<{ readonly cwd: { readonly type: "string"; readonly description: "Project root directory"; }; readonly strict: { readonly type: "boolean"; readonly description: "Treat warnings as errors"; readonly default: false; }; ... 4 more ...; readonly mvi: { ...; }; }>
 
 Citty command definition for `forge-ts check`.
+
+### docsDevCommand
+
+CommandDef<{ readonly cwd: { readonly type: "string"; readonly description: "Project root directory"; }; readonly target: { readonly type: "string"; readonly description: "SSG target override (reads from config by default)"; }; readonly port: { ...; }; }>
+
+Citty command definition for `forge-ts docs dev`.
+
+Example:
+  import { docsDevCommand } from "@forge-ts/cli";
 
 ### initDocsCommand
 

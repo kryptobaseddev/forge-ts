@@ -209,6 +209,16 @@ export const vitepressAdapter: SSGAdapter = {
 		];
 	},
 
+	getDevCommand(outDir: string) {
+		return {
+			bin: "npx",
+			args: ["vitepress", "dev"],
+			cwd: outDir,
+			label: "VitePress Dev Server",
+			url: "http://localhost:5173",
+		};
+	},
+
 	async detectExisting(outDir: string): Promise<boolean> {
 		const { existsSync } = await import("node:fs");
 		const { join } = await import("node:path");

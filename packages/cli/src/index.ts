@@ -5,7 +5,8 @@
  *   forge-ts check [--cwd <dir>] [--strict] [--verbose]
  *   forge-ts test  [--cwd <dir>]
  *   forge-ts build [--cwd <dir>] [--skip-api] [--skip-gen]
- *   forge-ts init docs [--target <ssg>] [--out-dir <dir>] [--force]
+ *   forge-ts docs init [--target <ssg>] [--out-dir <dir>] [--force]
+ *   forge-ts docs dev [--target <ssg>] [--port <port>]
  *
  * @packageDocumentation
  * @public
@@ -14,7 +15,8 @@
 import { defineCommand, runMain } from "citty";
 import { buildCommand } from "./commands/build.js";
 import { checkCommand } from "./commands/check.js";
-import { initCommand } from "./commands/init-docs.js";
+import { docsDevCommand } from "./commands/docs-dev.js";
+import { initDocsCommand } from "./commands/init-docs.js";
 import { testCommand } from "./commands/test.js";
 
 export { type BuildResult, type BuildStep, buildCommand } from "./commands/build.js";
@@ -25,10 +27,10 @@ export {
 	type CheckResult,
 	checkCommand,
 } from "./commands/check.js";
+export { docsDevCommand, runDocsDev } from "./commands/docs-dev.js";
 export {
-	initCommand,
-	initDocsCommand,
 	type InitDocsResult,
+	initDocsCommand,
 } from "./commands/init-docs.js";
 export { type TestFailure, type TestResult, testCommand } from "./commands/test.js";
 export { createLogger, type Logger } from "./logger.js";
@@ -41,17 +43,38 @@ export {
 	resolveExitCode,
 } from "./output.js";
 
+/**
+ * The `docs` parent command with `init` and `dev` subcommands.
+ *
+ * @example
+ * ```typescript
+ * // forge-ts docs init --target mintlify
+ * // forge-ts docs dev
+ * ```
+ * @public
+ */
+const docsCommand = defineCommand({
+	meta: {
+		name: "docs",
+		description: "Documentation site management",
+	},
+	subCommands: {
+		init: initDocsCommand,
+		dev: docsDevCommand,
+	},
+});
+
 const main = defineCommand({
 	meta: {
 		name: "forge-ts",
-		version: "0.1.0",
+		version: "0.5.0",
 		description: "Universal TypeScript Documentation Compiler",
 	},
 	subCommands: {
 		check: checkCommand,
 		test: testCommand,
 		build: buildCommand,
-		init: initCommand,
+		docs: docsCommand,
 	},
 });
 

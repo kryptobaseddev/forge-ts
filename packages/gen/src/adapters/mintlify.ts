@@ -80,7 +80,7 @@ function buildDocsJson(context: AdapterContext): MintlifyDocsJson {
 
 	return {
 		name: projectName,
-		theme: "venus",
+		theme: "mint",
 		colors: { primary: "#0ea5e9" },
 		navigation,
 	};
@@ -156,6 +156,16 @@ export const mintlifyAdapter: SSGAdapter = {
 				content: `${JSON.stringify(config, null, 2)}\n`,
 			},
 		];
+	},
+
+	getDevCommand(outDir: string) {
+		return {
+			bin: "npx",
+			args: ["@mintlify/cli", "dev"],
+			cwd: outDir,
+			label: "Mintlify Dev Server",
+			url: "http://localhost:3000",
+		};
 	},
 
 	async detectExisting(outDir: string): Promise<boolean> {

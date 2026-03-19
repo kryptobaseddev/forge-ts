@@ -17,6 +17,7 @@ description: "gen package overview"
 | [`SSGStyleGuide`](./api-reference.md#ssgstyleguide) | interface | Style guide configuration for the SSG target. |
 | [`ScaffoldManifest`](./api-reference.md#scaffoldmanifest) | interface | Scaffold manifest describing what `init docs` creates. |
 | [`AdapterContext`](./api-reference.md#adaptercontext) | interface | Context passed to adapter methods. |
+| [`DevServerCommand`](./api-reference.md#devservercommand) | interface | Command to start a local dev server for doc preview. |
 | [`SSGAdapter`](./api-reference.md#ssgadapter) | interface | The central SSG adapter interface. Every doc platform provider implements this contract. One file per provider. No shared mutable state. |
 | [`registerAdapter()`](./api-reference.md#registeradapter) | function | Register an SSG adapter. Called once per provider at module load time. |
 | [`getAdapter()`](./api-reference.md#getadapter) | function | Get a registered adapter by target name. Throws if the target is not registered. |

@@ -120,6 +120,31 @@ const output = await runCheck({ cwd: process.cwd() });
 console.log(output.data.summary.errors); // number of TSDoc errors found
 ```
 
+## runDocsDev(args)
+
+Starts the local dev server for the configured SSG target.  Reads `gen.ssgTarget` from the forge-ts config, resolves the adapter, and spawns the platform's dev server in the output directory.
+
+**Signature**
+
+```typescript
+(args: { cwd?: string | undefined; target?: string | undefined; port?: string | undefined; }) => Promise<void>
+```
+
+**Parameters**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `args` | — | Command arguments. |
+
+**Returns** — A promise that resolves when the server exits.
+
+**Example**
+
+```typescript
+import { runDocsDev } from "@forge-ts/cli";
+await runDocsDev({ cwd: "./my-project" });
+```
+
 ## runInitDocs(args)
 
 Scaffolds a documentation site for the target SSG platform.  Resolves the target from args, validates it, checks for an existing scaffold, calls the adapter's `scaffold()` method, and writes all files produced by the manifest to `outDir`.

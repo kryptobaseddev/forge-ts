@@ -83,6 +83,18 @@ Context passed to adapter methods.
 | `symbols` | `ForgeSymbol[]` | Yes | All symbols extracted from the project. |
 | `outDir` | `string` | Yes | Output directory for generated docs. |
 
+## DevServerCommand
+
+Command to start a local dev server for doc preview.
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| `bin` | `string` | Yes | The binary to execute (e.g., "npx", "node"). |
+| `args` | `string[]` | Yes | Arguments to pass to the binary. |
+| `cwd` | `string` | Yes | Working directory to run from. |
+| `label` | `string` | Yes | Human-readable label for the command. |
+| `url` | `string` | Yes | The URL the dev server will be available at. |
+
 ## SSGAdapter
 
 The central SSG adapter interface. Every doc platform provider implements this contract. One file per provider. No shared mutable state.
@@ -95,6 +107,7 @@ The central SSG adapter interface. Every doc platform provider implements this c
 | `scaffold` | `(context: AdapterContext) => ScaffoldManifest` | Yes | Generate the complete scaffold for a new doc site. Called by `forge-ts init docs --target <name>`. Returns all files, dependencies, and scripts needed. |
 | `transformPages` | `(pages: DocPage[], context: AdapterContext) => GeneratedFile[]` | Yes | Transform generic DocPages into platform-specific pages. Adds correct frontmatter, component imports, file extensions. Called during `forge-ts build`. |
 | `generateConfig` | `(context: AdapterContext) => GeneratedFile[]` | Yes | Generate platform-specific configuration files. e.g., mint.json, sidebars.js, _meta.json, .vitepress/config.ts Called during `forge-ts build`. |
+| `getDevCommand` | `(outDir: string) => DevServerCommand` | Yes | Get the command to start the local dev server for this platform. Called by `forge-ts docs dev`. |
 | `detectExisting` | `(outDir: string) => Promise<boolean>` | Yes | Check if a scaffold already exists in the output directory. Used for safety checks before init or target change. |
 
 ## MarkdownOptions

@@ -238,6 +238,16 @@ export const docusaurusAdapter: SSGAdapter = {
 		];
 	},
 
+	getDevCommand(outDir: string) {
+		return {
+			bin: "npx",
+			args: ["docusaurus", "start"],
+			cwd: outDir,
+			label: "Docusaurus Dev Server",
+			url: "http://localhost:3000",
+		};
+	},
+
 	async detectExisting(outDir: string): Promise<boolean> {
 		const { existsSync } = await import("node:fs");
 		const { join } = await import("node:path");

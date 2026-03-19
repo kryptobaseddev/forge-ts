@@ -50,6 +50,7 @@ any - A file to write to disk during scaffolding or generation.
 any - Style guide configuration for the SSG target.
 any - Scaffold manifest describing what `init docs` creates.
 any - Context passed to adapter methods.
+any - Command to start a local dev server for doc preview.
 any - The central SSG adapter interface. Every doc platform provider implements this contract. One file per provider. No shared mutable state.
 (adapter: SSGAdapter) => void - Register an SSG adapter. Called once per provider at module load time.
 (target: SSGTarget) => SSGAdapter - Get a registered adapter by target name. Throws if the target is not registered.
@@ -93,6 +94,8 @@ any - Errors and warnings grouped by file, included at standard and full MVI lev
 any - Typed result for the `check` command.
 (args: CheckArgs) => Promise<CommandOutput<CheckResult>> - Runs the TSDoc enforcement pass and returns a typed command output.
 CommandDef<{ readonly cwd: { readonly type: "string"; readonly description: "Project root directory"; }; readonly strict: { readonly type: "boolean"; readonly description: "Treat warnings as errors"; readonly default: false; }; ... 4 more ...; readonly mvi: { ...; }; }> - Citty command definition for `forge-ts check`.
+(args: { cwd?: string | undefined; target?: string | undefined; port?: string | undefined; }) => Promise<void> - Starts the local dev server for the configured SSG target.  Reads `gen.ssgTarget` from the forge-ts config, resolves the adapter, and spawns the platform's dev server in the output directory.
+CommandDef<{ readonly cwd: { readonly type: "string"; readonly description: "Project root directory"; }; readonly target: { readonly type: "string"; readonly description: "SSG target override (reads from config by default)"; }; readonly port: { ...; }; }> - Citty command definition for `forge-ts docs dev`.
 any - Result of the `init docs` command.
 any - Arguments for the `init docs` command.
 (args: InitDocsArgs) => Promise<CommandOutput<InitDocsResult>> - Scaffolds a documentation site for the target SSG platform.  Resolves the target from args, validates it, checks for an existing scaffold, calls the adapter's `scaffold()` method, and writes all files produced by the manifest to `outDir`.

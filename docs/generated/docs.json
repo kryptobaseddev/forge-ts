@@ -1,81 +1,86 @@
 {
   "name": "forge-ts",
-  "theme": "venus",
+  "theme": "mint",
   "colors": {
     "primary": "#0ea5e9"
   },
-  "navigation": [
-    {
-      "group": "Getting Started",
-      "pages": [
-        "index",
-        "getting-started"
-      ]
-    },
-    {
-      "group": "Packages",
-      "pages": [
-        {
-          "group": "core",
-          "pages": [
-            "packages/core/index",
-            "packages/core/api-reference",
-            "packages/core/types",
-            "packages/core/functions",
-            "packages/core/examples"
-          ]
-        },
-        {
-          "group": "api",
-          "pages": [
-            "packages/api/index",
-            "packages/api/api-reference",
-            "packages/api/types",
-            "packages/api/functions",
-            "packages/api/examples"
-          ]
-        },
-        {
-          "group": "gen",
-          "pages": [
-            "packages/gen/index",
-            "packages/gen/api-reference",
-            "packages/gen/types",
-            "packages/gen/functions",
-            "packages/gen/examples"
-          ]
-        },
-        {
-          "group": "cli",
-          "pages": [
-            "packages/cli/index",
-            "packages/cli/api-reference",
-            "packages/cli/types",
-            "packages/cli/functions",
-            "packages/cli/examples"
-          ]
-        },
-        {
-          "group": "enforcer",
-          "pages": [
-            "packages/enforcer/index",
-            "packages/enforcer/api-reference",
-            "packages/enforcer/types",
-            "packages/enforcer/functions",
-            "packages/enforcer/examples"
-          ]
-        },
-        {
-          "group": "doctest",
-          "pages": [
-            "packages/doctest/index",
-            "packages/doctest/api-reference",
-            "packages/doctest/types",
-            "packages/doctest/functions",
-            "packages/doctest/examples"
-          ]
-        }
-      ]
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Documentation",
+        "groups": [
+          {
+            "group": "Getting Started",
+            "pages": [
+              "index",
+              "getting-started"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "API Reference",
+        "groups": [
+          {
+            "group": "@forge-ts/core",
+            "pages": [
+              "packages/core/index",
+              "packages/core/types",
+              "packages/core/functions",
+              "packages/core/examples"
+            ]
+          },
+          {
+            "group": "@forge-ts/enforcer",
+            "pages": [
+              "packages/enforcer/index",
+              "packages/enforcer/types",
+              "packages/enforcer/functions",
+              "packages/enforcer/examples"
+            ]
+          },
+          {
+            "group": "@forge-ts/doctest",
+            "pages": [
+              "packages/doctest/index",
+              "packages/doctest/functions",
+              "packages/doctest/examples"
+            ]
+          },
+          {
+            "group": "@forge-ts/api",
+            "pages": [
+              "packages/api/index",
+              "packages/api/types",
+              "packages/api/functions",
+              "packages/api/examples"
+            ]
+          },
+          {
+            "group": "@forge-ts/gen",
+            "pages": [
+              "packages/gen/index",
+              "packages/gen/types",
+              "packages/gen/functions",
+              "packages/gen/examples"
+            ]
+          },
+          {
+            "group": "@forge-ts/cli",
+            "pages": [
+              "packages/cli/index",
+              "packages/cli/types",
+              "packages/cli/functions",
+              "packages/cli/examples"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "footer": {
+    "socials": {
+      "github": "https://github.com/kryptobaseddev/forge-ts"
     }
-  ]
+  }
 }

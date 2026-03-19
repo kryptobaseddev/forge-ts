@@ -6,6 +6,7 @@ export {
 } from "./registry.js";
 export type {
 	AdapterContext,
+	DevServerCommand,
 	GeneratedFile,
 	ScaffoldManifest,
 	SSGAdapter,

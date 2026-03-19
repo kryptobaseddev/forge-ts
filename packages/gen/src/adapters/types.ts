@@ -76,6 +76,23 @@ export interface AdapterContext {
 }
 
 /**
+ * Command to start a local dev server for doc preview.
+ * @public
+ */
+export interface DevServerCommand {
+	/** The binary to execute (e.g., "npx", "node"). */
+	bin: string;
+	/** Arguments to pass to the binary. */
+	args: string[];
+	/** Working directory to run from. */
+	cwd: string;
+	/** Human-readable label for the command. */
+	label: string;
+	/** The URL the dev server will be available at. */
+	url: string;
+}
+
+/**
  * The central SSG adapter interface.
  * Every doc platform provider implements this contract.
  * One file per provider. No shared mutable state.
@@ -149,6 +166,22 @@ export interface SSGAdapter {
 	 * ```
 	 */
 	generateConfig(context: AdapterContext): GeneratedFile[];
+
+	/**
+	 * Get the command to start the local dev server for this platform.
+	 * Called by `forge-ts docs dev`.
+	 *
+	 * @param outDir - The docs output directory.
+	 * @returns The shell command and args to spawn, plus a display label.
+	 * @example
+	 * ```typescript
+	 * import { getAdapter } from "@forge-ts/gen";
+	 * const adapter = getAdapter("mintlify");
+	 * const cmd = adapter.getDevCommand("./docs");
+	 * // { bin: "npx", args: ["@mintlify/cli", "dev"], cwd: "./docs" }
+	 * ```
+	 */
+	getDevCommand(outDir: string): DevServerCommand;
 
 	/**
 	 * Check if a scaffold already exists in the output directory.

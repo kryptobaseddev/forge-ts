@@ -184,7 +184,10 @@ function buildCheckResult(
 		return { success, summary };
 	}
 
-	const byFile = groupByFile(rawErrors, rawWarnings, mviLevel === "full");
+	// Always include suggestedFix — actionable output shouldn't require extra flags.
+	// MVI "minimal" omits byFile entirely (summary only).
+	// MVI "standard" and "full" both include suggestedFix for every error.
+	const byFile = groupByFile(rawErrors, rawWarnings, mviLevel !== "minimal");
 	return { success, summary, byFile };
 }
 
@@ -212,7 +215,9 @@ export async function runCheck(args: CheckArgs): Promise<CommandOutput<CheckResu
 	}
 
 	const result = await enforce(config);
-	const mviLevel = args.mvi ?? "standard";
+	// Default to "full" MVI so suggestedFix is always included in JSON output.
+	// Agents need actionable fixes, not just error descriptions.
+	const mviLevel = args.mvi ?? "full";
 
 	const exportedSymbolCount = result.symbols.filter((s) => s.exported).length;
 
@@ -239,7 +244,12 @@ export async function runCheck(args: CheckArgs): Promise<CommandOutput<CheckResu
 // ---------------------------------------------------------------------------
 
 /**
- * Formats a CheckResult as human-readable text.
+ * Formats a CheckResult as human-readable, actionable text.
+ *
+ * Every error includes the exact TSDoc block to add (suggestedFix).
+ * The agent or human can read the output and know exactly what to do
+ * without needing additional flags or a second pass.
+ *
  * @internal
  */
 function formatCheckHuman(result: CheckResult): string {
@@ -266,6 +276,12 @@ function formatCheckHuman(result: CheckResult): string {
 						? `${err.symbol} (${err.kind}:${err.line})`
 						: `line ${err.line}`;
 					lines.push(`    ${err.code}  ${symbolPart} — ${err.message}`);
+					// Show the exact fix — actionable, not just informational
+					if (err.suggestedFix) {
+						for (const fixLine of err.suggestedFix.split("\n")) {
+							lines.push(`           ${fixLine}`);
+						}
+					}
 				}
 			}
 			if (group.warnings.length > 0) {
@@ -275,10 +291,7 @@ function formatCheckHuman(result: CheckResult): string {
 				}
 			}
 		}
-		lines.push("");
 	}
-
-	lines.push("  Run with --json --mvi full for exact fix suggestions.");
 
 	return lines.join("\n");
 }

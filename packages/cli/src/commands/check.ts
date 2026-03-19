@@ -16,10 +16,18 @@ export interface CheckArgs {
 	verbose?: boolean;
 	/** MVI verbosity level for structured output. */
 	mvi?: string;
+	/** Filter errors to a specific rule code (e.g., "E001"). */
+	rule?: string;
+	/** Filter errors to a specific file path (substring match). */
+	file?: string;
+	/** Maximum number of file groups to return in byFile (default: 20). */
+	limit?: number;
+	/** Offset into the byFile list for pagination (default: 0). */
+	offset?: number;
 }
 
 /**
- * A single error entry within a file group, included at standard and full MVI levels.
+ * A single error entry within a file group.
  * @public
  */
 export interface CheckFileError {
@@ -33,14 +41,14 @@ export interface CheckFileError {
 	line: number;
 	/** Human-readable description. */
 	message: string;
-	/** Exact TSDoc block to add (full MVI level only). */
+	/** Exact TSDoc block to add (present at full MVI or with --rule/--file filters). */
 	suggestedFix?: string;
-	/** Recommended agent action (full MVI level only). */
+	/** Recommended agent action. */
 	agentAction?: string;
 }
 
 /**
- * A single warning entry within a file group, included at standard and full MVI levels.
+ * A single warning entry within a file group.
  * @public
  */
 export interface CheckFileWarning {
@@ -57,7 +65,7 @@ export interface CheckFileWarning {
 }
 
 /**
- * Errors and warnings grouped by file, included at standard and full MVI levels.
+ * Errors and warnings grouped by file.
  * @public
  */
 export interface CheckFileGroup {
@@ -67,6 +75,50 @@ export interface CheckFileGroup {
 	errors: CheckFileError[];
 	/** Warnings in this file. */
 	warnings: CheckFileWarning[];
+}
+
+/**
+ * Error breakdown by rule code, sorted by count descending.
+ * @public
+ */
+export interface CheckRuleCount {
+	/** Machine-readable rule code (e.g., "E001"). */
+	code: string;
+	/** Human-readable rule name (e.g., "require-summary"). */
+	rule: string;
+	/** Number of violations. */
+	count: number;
+	/** Number of unique files affected by this rule. */
+	files: number;
+}
+
+/**
+ * Triage data for prioritizing fixes.
+ * Always present when the check has errors, bounded in size (~9 rules + top 20 files).
+ * @public
+ */
+export interface CheckTriage {
+	/** Error counts by rule, sorted descending. */
+	byRule: CheckRuleCount[];
+	/** Top files by error count (max 20). */
+	topFiles: Array<{ file: string; errors: number; warnings: number }>;
+	/** Suggested fix order: rules sorted by fewest files affected first (quick wins). */
+	fixOrder: Array<{ code: string; rule: string; count: number; files: number }>;
+}
+
+/**
+ * Pagination metadata for byFile results.
+ * @public
+ */
+export interface CheckPage {
+	/** Current offset. */
+	offset: number;
+	/** Page size. */
+	limit: number;
+	/** Whether more results exist beyond this page. */
+	hasMore: boolean;
+	/** Total number of file groups (after filters). */
+	total: number;
 }
 
 /**
@@ -89,20 +141,115 @@ export interface CheckResult {
 		/** Wall-clock duration in milliseconds. */
 		duration: number;
 	};
-	/** Per-file breakdown — present at standard and full MVI levels. */
+	/** Triage data for prioritizing fixes — present when errors > 0 (except minimal). */
+	triage?: CheckTriage;
+	/** Per-file breakdown — present at standard and full MVI levels, paginated. */
 	byFile?: CheckFileGroup[];
+	/** Pagination metadata when byFile is paginated. */
+	page?: CheckPage;
+	/** Active filters applied to this result. */
+	filters?: { rule?: string; file?: string };
+	/** CLI command hint for the agent to run next. */
+	nextCommand?: string;
 }
+
+// ---------------------------------------------------------------------------
+// Rule code → name mapping
+// ---------------------------------------------------------------------------
+
+const RULE_NAMES: Record<string, string> = {
+	E001: "require-summary",
+	E002: "require-param",
+	E003: "require-returns",
+	E004: "require-example",
+	E005: "require-package-doc",
+	E006: "require-class-member-doc",
+	E007: "require-interface-member-doc",
+	E008: "require-link-target",
+	W004: "deprecated-cross-import",
+};
 
 // ---------------------------------------------------------------------------
 // Internal helpers
 // ---------------------------------------------------------------------------
 
 /**
- * Determines the recommended agent action given a ForgeError.
+ * Computes triage data from the full (unfiltered) error/warning set.
+ * Bounded output: max 9 rules + top 20 files.
  * @internal
  */
-function resolveAgentAction(_error: ForgeError): string {
-	return "retry_modified";
+function computeTriage(errors: ForgeError[], warnings: ForgeWarning[]): CheckTriage {
+	// byRule: count per code with file count
+	const ruleMap = new Map<string, { count: number; files: Set<string> }>();
+	for (const e of errors) {
+		const entry = ruleMap.get(e.code) ?? { count: 0, files: new Set<string>() };
+		entry.count++;
+		entry.files.add(e.filePath);
+		ruleMap.set(e.code, entry);
+	}
+	for (const w of warnings) {
+		const entry = ruleMap.get(w.code) ?? { count: 0, files: new Set<string>() };
+		entry.count++;
+		entry.files.add(w.filePath);
+		ruleMap.set(w.code, entry);
+	}
+
+	const byRule: CheckRuleCount[] = Array.from(ruleMap.entries())
+		.map(([code, { count, files }]) => ({
+			code,
+			rule: RULE_NAMES[code] ?? code,
+			count,
+			files: files.size,
+		}))
+		.sort((a, b) => b.count - a.count);
+
+	// topFiles: count errors/warnings per file, top 20
+	const fileMap = new Map<string, { errors: number; warnings: number }>();
+	for (const e of errors) {
+		const entry = fileMap.get(e.filePath) ?? { errors: 0, warnings: 0 };
+		entry.errors++;
+		fileMap.set(e.filePath, entry);
+	}
+	for (const w of warnings) {
+		const entry = fileMap.get(w.filePath) ?? { errors: 0, warnings: 0 };
+		entry.warnings++;
+		fileMap.set(w.filePath, entry);
+	}
+	const topFiles = Array.from(fileMap.entries())
+		.map(([file, counts]) => ({ file, ...counts }))
+		.sort((a, b) => b.errors - a.errors || a.file.localeCompare(b.file))
+		.slice(0, 20);
+
+	// fixOrder: rules sorted by fewest files (quick wins first)
+	const fixOrder = [...byRule].sort((a, b) => a.files - b.files || b.count - a.count);
+
+	return { byRule, topFiles, fixOrder };
+}
+
+/**
+ * Filters errors/warnings by rule code and/or file path substring.
+ * @internal
+ */
+function applyFilters(
+	errors: ForgeError[],
+	warnings: ForgeWarning[],
+	filters: { rule?: string; file?: string },
+): { errors: ForgeError[]; warnings: ForgeWarning[] } {
+	let filteredErrors = errors;
+	let filteredWarnings = warnings;
+
+	if (filters.rule) {
+		const r = filters.rule.toUpperCase();
+		filteredErrors = filteredErrors.filter((e) => e.code === r);
+		filteredWarnings = filteredWarnings.filter((w) => w.code === r);
+	}
+	if (filters.file) {
+		const f = filters.file;
+		filteredErrors = filteredErrors.filter((e) => e.filePath.includes(f));
+		filteredWarnings = filteredWarnings.filter((w) => w.filePath.includes(f));
+	}
+
+	return { errors: filteredErrors, warnings: filteredWarnings };
 }
 
 /**
@@ -128,11 +275,9 @@ function groupByFile(
 			line: e.line,
 			message: e.message,
 		};
-		if (includeFix) {
-			if (e.suggestedFix !== undefined) {
-				entry.suggestedFix = e.suggestedFix;
-			}
-			entry.agentAction = resolveAgentAction(e);
+		if (includeFix && e.suggestedFix !== undefined) {
+			entry.suggestedFix = e.suggestedFix;
+			entry.agentAction = "retry_modified";
 		}
 		fileMap.get(fp)?.errors.push(entry);
 	}
@@ -151,21 +296,55 @@ function groupByFile(
 		});
 	}
 
-	return Array.from(fileMap.values());
+	// Deterministic sort: most errors first, then lexicographic path
+	return Array.from(fileMap.values()).sort(
+		(a, b) => b.errors.length - a.errors.length || a.file.localeCompare(b.file),
+	);
 }
 
 /**
- * Builds an MVI-projected CheckResult from raw enforcer output.
+ * Computes the next CLI command hint for the agent.
+ * @internal
+ */
+function computeNextCommand(
+	triage: CheckTriage,
+	filters: { rule?: string; file?: string },
+	page: CheckPage | undefined,
+	hasFilters: boolean,
+): string {
+	// If paginated and has more, suggest next page
+	if (page?.hasMore) {
+		const parts = ["forge-ts check --mvi full"];
+		if (filters.rule) parts.push(`--rule ${filters.rule}`);
+		if (filters.file) parts.push(`--file "${filters.file}"`);
+		parts.push(`--limit ${page.limit} --offset ${page.offset + page.limit}`);
+		return parts.join(" ");
+	}
+
+	// If no filters yet, suggest drilling into the quickest-win rule
+	if (!hasFilters && triage.fixOrder.length > 0) {
+		const quickWin = triage.fixOrder[0];
+		return `forge-ts check --rule ${quickWin.code} --mvi full`;
+	}
+
+	// If filtered by rule, suggest re-checking after fixes
+	return "forge-ts check --mvi minimal";
+}
+
+/**
+ * Builds a CheckResult with triage, filtering, pagination, and MVI differentiation.
  * @internal
  */
 function buildCheckResult(
 	rawErrors: ForgeError[],
 	rawWarnings: ForgeWarning[],
-	_symbolCount: number,
 	exportedSymbolCount: number,
 	duration: number,
 	success: boolean,
 	mviLevel: string,
+	filters: { rule?: string; file?: string },
+	limit: number,
+	offset: number,
 ): CheckResult {
 	const uniqueFiles = new Set([
 		...rawErrors.map((e) => e.filePath),
@@ -184,11 +363,48 @@ function buildCheckResult(
 		return { success, summary };
 	}
 
-	// Always include suggestedFix — actionable output shouldn't require extra flags.
-	// MVI "minimal" omits byFile entirely (summary only).
-	// MVI "standard" and "full" both include suggestedFix for every error.
-	const byFile = groupByFile(rawErrors, rawWarnings, mviLevel !== "minimal");
-	return { success, summary, byFile };
+	// Triage: always computed from FULL unfiltered data (bounded by rule count + top 20)
+	const triage =
+		rawErrors.length > 0 || rawWarnings.length > 0
+			? computeTriage(rawErrors, rawWarnings)
+			: undefined;
+
+	// Apply filters
+	const hasFilters = !!(filters.rule || filters.file);
+	const { errors: filteredErrors, warnings: filteredWarnings } = hasFilters
+		? applyFilters(rawErrors, rawWarnings, filters)
+		: { errors: rawErrors, warnings: rawWarnings };
+
+	// Include suggestedFix at full MVI or when filters are active (targeted drill-down)
+	const includeFix = mviLevel === "full" || hasFilters;
+
+	// Group and paginate
+	const allGroups = groupByFile(filteredErrors, filteredWarnings, includeFix);
+	const total = allGroups.length;
+	const pagedGroups = allGroups.slice(offset, offset + limit);
+	const hasMore = offset + limit < total;
+
+	const page: CheckPage = { offset, limit, hasMore, total };
+
+	const nextCommand = triage ? computeNextCommand(triage, filters, page, hasFilters) : undefined;
+
+	const result: CheckResult = {
+		success,
+		summary,
+		triage,
+		byFile: pagedGroups,
+		page,
+		nextCommand,
+	};
+
+	if (hasFilters) {
+		result.filters = {
+			rule: filters.rule || undefined,
+			file: filters.file || undefined,
+		};
+	}
+
+	return result;
 }
 
 // ---------------------------------------------------------------------------
@@ -215,20 +431,25 @@ export async function runCheck(args: CheckArgs): Promise<CommandOutput<CheckResu
 	}
 
 	const result = await enforce(config);
-	// Default to "full" MVI so suggestedFix is always included in JSON output.
-	// Agents need actionable fixes, not just error descriptions.
-	const mviLevel = args.mvi ?? "full";
+	// Default to "standard" MVI — gives triage + paginated overview.
+	// Agents drill into specific rules/files with --mvi full.
+	const mviLevel = args.mvi ?? "standard";
+	const limit = args.limit ?? 20;
+	const offset = args.offset ?? 0;
+	const filters = { rule: args.rule, file: args.file };
 
 	const exportedSymbolCount = result.symbols.filter((s) => s.exported).length;
 
 	const data = buildCheckResult(
 		result.errors,
 		result.warnings,
-		result.symbols.length,
 		exportedSymbolCount,
 		result.duration,
 		result.success,
 		mviLevel,
+		filters,
+		limit,
+		offset,
 	);
 
 	// Populate top-level errors so the LAFS envelope error code is actionable.
@@ -266,11 +487,6 @@ export async function runCheck(args: CheckArgs): Promise<CommandOutput<CheckResu
 
 /**
  * Formats a CheckResult as human-readable, actionable text.
- *
- * Every error includes the exact TSDoc block to add (suggestedFix).
- * The agent or human can read the output and know exactly what to do
- * without needing additional flags or a second pass.
- *
  * @internal
  */
 function formatCheckHuman(result: CheckResult): string {
@@ -288,6 +504,33 @@ function formatCheckHuman(result: CheckResult): string {
 		`  ${result.summary.errors} error(s), ${result.summary.warnings} warning(s) across ${result.summary.files} file(s) (${result.summary.symbols} symbols checked)\n`,
 	);
 
+	// Triage: rule breakdown
+	if (result.triage) {
+		lines.push("  Rules:");
+		for (const r of result.triage.byRule) {
+			lines.push(`    ${r.code} ${r.rule}: ${r.count} violation(s) in ${r.files} file(s)`);
+		}
+		lines.push("");
+
+		if (result.triage.fixOrder.length > 0) {
+			const qw = result.triage.fixOrder[0];
+			lines.push(
+				`  Quick win: fix ${qw.code} (${qw.rule}) — ${qw.count} issue(s) in ${qw.files} file(s)`,
+			);
+			lines.push("");
+		}
+	}
+
+	// Active filters
+	if (result.filters) {
+		const parts = [];
+		if (result.filters.rule) parts.push(`rule=${result.filters.rule}`);
+		if (result.filters.file) parts.push(`file=${result.filters.file}`);
+		lines.push(`  Filtered: ${parts.join(", ")}`);
+		lines.push("");
+	}
+
+	// Per-file errors
 	if (result.byFile && result.byFile.length > 0) {
 		for (const group of result.byFile) {
 			if (group.errors.length > 0) {
@@ -297,7 +540,6 @@ function formatCheckHuman(result: CheckResult): string {
 						? `${err.symbol} (${err.kind}:${err.line})`
 						: `line ${err.line}`;
 					lines.push(`    ${err.code}  ${symbolPart} — ${err.message}`);
-					// Show the exact fix — actionable, not just informational
 					if (err.suggestedFix) {
 						for (const fixLine of err.suggestedFix.split("\n")) {
 							lines.push(`           ${fixLine}`);
@@ -312,6 +554,18 @@ function formatCheckHuman(result: CheckResult): string {
 				}
 			}
 		}
+	}
+
+	// Pagination footer
+	if (result.page && result.page.hasMore) {
+		lines.push(
+			`\n  Showing ${result.page.offset + 1}-${result.page.offset + (result.byFile?.length ?? 0)} of ${result.page.total} file(s). Use --offset ${result.page.offset + result.page.limit} to see more.`,
+		);
+	}
+
+	// Next command hint
+	if (result.nextCommand) {
+		lines.push(`\n  Next: ${result.nextCommand}`);
 	}
 
 	return lines.join("\n");
@@ -341,6 +595,22 @@ export const checkCommand = defineCommand({
 			description: "Show detailed output",
 			default: false,
 		},
+		rule: {
+			type: "string",
+			description: "Filter by rule code (e.g., E001, W004)",
+		},
+		file: {
+			type: "string",
+			description: "Filter by file path (substring match)",
+		},
+		limit: {
+			type: "string",
+			description: "Max file groups in output (default: 20)",
+		},
+		offset: {
+			type: "string",
+			description: "Skip N file groups for pagination (default: 0)",
+		},
 		json: {
 			type: "boolean",
 			description: "Output as LAFS JSON envelope (agent-friendly)",
@@ -367,6 +637,10 @@ export const checkCommand = defineCommand({
 			strict: args.strict,
 			verbose: args.verbose,
 			mvi: args.mvi,
+			rule: args.rule,
+			file: args.file,
+			limit: args.limit ? parseInt(args.limit, 10) : undefined,
+			offset: args.offset ? parseInt(args.offset, 10) : undefined,
 		});
 
 		const flags: OutputFlags = {

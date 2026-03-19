@@ -28,7 +28,10 @@ export {
 	type CheckFileError,
 	type CheckFileGroup,
 	type CheckFileWarning,
+	type CheckPage,
 	type CheckResult,
+	type CheckRuleCount,
+	type CheckTriage,
 	checkCommand,
 } from "./commands/check.js";
 export { docsDevCommand, runDocsDev } from "./commands/docs-dev.js";

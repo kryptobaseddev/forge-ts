@@ -1,5 +1,46 @@
 # @forge-ts/cli
 
+## 0.7.0
+
+### Minor Changes
+
+- feat: progressive disclosure for check command — triage, filtering, pagination
+
+  The check command now provides context-window-friendly output for LLM agents working with large codebases:
+
+  **Triage section** (always present when errors > 0, bounded by rule count + top 20 files):
+
+  - `byRule`: every rule code with violation count and file count
+  - `topFiles`: top 20 files by error count
+  - `fixOrder`: rules sorted by fewest files affected (quick wins first)
+
+  **CLI filters** for targeted drill-down:
+
+  - `--rule E001`: filter to a specific rule code
+  - `--file src/types.ts`: filter to files matching a substring
+  - `--limit 20` / `--offset 0`: paginate file groups
+
+  **MVI level differentiation**:
+
+  - `minimal`: summary counts only (~50 tokens)
+  - `standard` (new default): summary + triage + paginated byFile WITHOUT suggestedFix (~500-2000 tokens)
+  - `full`: same + suggestedFix per error (~2000-5000 tokens per page)
+
+  **`nextCommand` hint**: tells the agent exactly what CLI command to run next (drill into quick-win rule, next page, or re-check after fixes).
+
+  **Agent workflow**: overview (standard) → drill into rule (full + --rule) → fix batch → re-check (minimal) → repeat.
+
+  suggestedFix is also automatically included when `--rule` or `--file` filters are active, regardless of MVI level, since filtered output is already small.
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @forge-ts/core@0.7.0
+  - @forge-ts/enforcer@0.7.0
+  - @forge-ts/doctest@0.7.0
+  - @forge-ts/api@0.7.0
+  - @forge-ts/gen@0.7.0
+
 ## 0.6.6
 
 ### Patch Changes

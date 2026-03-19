@@ -153,7 +153,7 @@ console.log(config.enforce.enabled); // true
 
 ### `loadConfig()`
 
-_Defined in `packages/core/src/config.ts:173`_
+_Defined in `packages/core/src/config.ts:175`_
 
 ```typescript
 (rootDir?: string | undefined) => Promise<ForgeConfig>
@@ -620,7 +620,7 @@ console.log(modified); // true if README was updated
 
 ### `generateSkillPackage()`
 
-_Defined in `packages/gen/src/skill.ts:839`_
+_Defined in `packages/gen/src/skill.ts:815`_
 
 ```typescript
 (symbols: ForgeSymbol[], config: ForgeConfig) => SkillPackage
@@ -647,7 +647,7 @@ console.log(pkg.files.map(f => f.path));
 
 ### `generateSkillMd()`
 
-_Defined in `packages/gen/src/skill.ts:873`_
+_Defined in `packages/gen/src/skill.ts:849`_
 
 ```typescript
 (symbols: ForgeSymbol[], config: ForgeConfig) => string
@@ -762,7 +762,7 @@ emitResult(output, { human: true }, (data) => `Done: ${data.summary.duration}ms`
 
 ### `resolveExitCode()`
 
-_Defined in `packages/cli/src/output.ts:182`_
+_Defined in `packages/cli/src/output.ts:186`_
 
 ```typescript
 (output: CommandOutput<unknown>) => number
@@ -3257,7 +3257,7 @@ Include first
 
 ### `SkillPackage`
 
-_Defined in `packages/gen/src/skill.ts:813`_
+_Defined in `packages/gen/src/skill.ts:789`_
 
 ```typescript
 any
@@ -3267,7 +3267,7 @@ A generated skill package following the agentskills.io directory structure. Cont
 
 #### `directoryName`
 
-_Defined in `packages/gen/src/skill.ts:815`_
+_Defined in `packages/gen/src/skill.ts:791`_
 
 ```typescript
 string
@@ -3277,7 +3277,7 @@ The skill directory name (lowercase, hyphens only, max 64 chars).
 
 #### `files`
 
-_Defined in `packages/gen/src/skill.ts:817`_
+_Defined in `packages/gen/src/skill.ts:793`_
 
 ```typescript
 { path: string; content: string; }[]

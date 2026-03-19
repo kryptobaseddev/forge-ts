@@ -108,6 +108,10 @@ export function emitResult<T>(
 		human: flags.human,
 		quiet: flags.quiet,
 		mvi: flags.mvi,
+		// Default to human-readable output in TTY terminals.
+		// Non-TTY (piped, CI, agent) gets JSON per LAFS protocol default.
+		// Explicit --json or --human flags always take precedence.
+		projectDefault: !flags.json && !flags.human && process.stdout.isTTY ? "human" : undefined,
 	};
 
 	const resolved = resolveFlags(flagInput);

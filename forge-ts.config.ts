@@ -57,8 +57,12 @@ export default {
 					"| `forge-ts docs init --target mintlify` | Scaffold SSG doc site |",
 					"| `forge-ts docs dev` | Launch dev server (`npx @mintlify/cli dev`) |",
 					"",
-					"The `--mvi` flag controls verbosity: `minimal` (~50 tokens), `standard` (~200), `full` (~500+).",
-					"All JSON output uses the LAFS envelope format (`_meta`, `success`, `result`, `error`).",
+					"**Output format**: TTY gets human-readable output by default. " +
+						"Piped/non-TTY (agents, CI) gets JSON (LAFS envelope). " +
+						"Override with `--human` or `--json`. " +
+						"For monorepos, use `--cwd packages/<name>` to target a specific package.",
+					"",
+					"The `--mvi` flag controls JSON verbosity: `minimal` (~50 tokens), `standard` (~200), `full` (~500+).",
 				].join("\n"),
 			},
 			{

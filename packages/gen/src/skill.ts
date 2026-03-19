@@ -29,6 +29,7 @@ function kindLabel(kind: ForgeSymbol["kind"]): string {
  */
 function toDirectoryName(name: string): string {
 	return name
+		.replace(/^@[^/]+\//, "") // strip npm scope
 		.toLowerCase()
 		.replace(/[^a-z0-9-]+/g, "-")
 		.replace(/^-+|-+$/g, "")
@@ -37,8 +38,7 @@ function toDirectoryName(name: string): string {
 
 /**
  * Builds a description string optimized for agentskills.io discovery.
- * Uses imperative "Use this skill when..." phrasing with trigger keywords.
- * Stays under 1024 characters.
+ * Derived entirely from the project's exported symbols and metadata.
  * @internal
  */
 function buildDescription(symbols: ForgeSymbol[], config: ForgeConfig): string {
@@ -46,37 +46,38 @@ function buildDescription(symbols: ForgeSymbol[], config: ForgeConfig): string {
 	const projectName =
 		config.project.packageName ?? config.rootDir.split("/").pop() ?? "this project";
 
-	// Detect capabilities from exported symbols
-	const hasFunctions = exported.some((s) => s.kind === "function");
-	const hasTypes = exported.some((s) => s.kind === "interface" || s.kind === "type");
+	// Detect capabilities from the actual exported symbols
+	const functionCount = exported.filter((s) => s.kind === "function").length;
+	const typeCount = exported.filter(
+		(s) => s.kind === "interface" || s.kind === "type" || s.kind === "enum",
+	).length;
+	const classCount = exported.filter((s) => s.kind === "class").length;
 	const hasRoutes = exported.some((s) => s.documentation?.tags?.route !== undefined);
-	const hasClasses = exported.some((s) => s.kind === "class");
 
 	const capabilities: string[] = [];
-	if (hasFunctions) capabilities.push("functions");
-	if (hasTypes) capabilities.push("type contracts");
-	if (hasClasses) capabilities.push("classes");
+	if (functionCount > 0) capabilities.push(`${functionCount} functions`);
+	if (typeCount > 0) capabilities.push(`${typeCount} type definitions`);
+	if (classCount > 0) capabilities.push(`${classCount} classes`);
 	if (hasRoutes) capabilities.push("HTTP API routes");
 
-	// Use @packageDocumentation summary as the lead sentence if available
+	// Use @packageDocumentation summary as the lead
 	const pkgDoc = symbols.find((s) => s.documentation?.tags?.packageDocumentation);
 	const leadSentence =
 		pkgDoc?.documentation?.summary ??
 		exported.find((s) => s.documentation?.summary)?.documentation?.summary;
 
-	const capList = capabilities.length > 0 ? capabilities.join(", ") : "utilities";
+	const capList = capabilities.length > 0 ? capabilities.join(", ") : "TypeScript utilities";
 
 	let description = "";
 	if (leadSentence) {
 		description += `${leadSentence} `;
 	}
 	description +=
-		`Use this skill when working with ${projectName}. ` +
-		`It exports ${capList}. ` +
-		`Use when you need to understand the API, generate documentation, ` +
-		`check TSDoc coverage, or run code examples as tests.`;
+		`Use this skill when working with ${projectName} or when a user mentions it. ` +
+		`It provides ${capList}. ` +
+		`Use when you need to understand how to import, configure, or call its API, ` +
+		`even if the user doesn't mention the package by name.`;
 
-	// Enforce 1024-char limit
 	if (description.length > 1024) {
 		description = `${description.slice(0, 1021)}...`;
 	}
@@ -123,7 +124,6 @@ function renderPatterns(symbols: ForgeSymbol[], maxPatterns: number = 5): string
 			lines.push(sym.documentation.summary);
 			lines.push("");
 		}
-		// Only include the first example to keep size down
 		const ex = examples[0];
 		const lang = ex.language || "typescript";
 		lines.push(`\`\`\`${lang}`);
@@ -163,15 +163,53 @@ function renderKeyTypes(symbols: ForgeSymbol[], max: number = 10): string[] {
 }
 
 /**
- * Generates the full SKILL.md content for the skill package.
- * Stays under 500 lines per agentskills.io specification.
+ * Detects gotchas from the project's symbols — things an agent would get
+ * wrong without being told. Derived from @throws, @deprecated, and
+ * non-obvious type constraints.
+ * @internal
+ */
+function renderGotchas(symbols: ForgeSymbol[]): string[] {
+	const lines: string[] = [];
+	const exported = symbols.filter((s) => s.exported);
+
+	// Deprecated symbols
+	const deprecated = exported.filter((s) => s.documentation?.deprecated);
+	for (const sym of deprecated) {
+		const reason = sym.documentation?.deprecated ?? "";
+		const msg = reason && reason !== "true" ? `: ${reason}` : "";
+		lines.push(`- \`${sym.name}\` is deprecated${msg}`);
+	}
+
+	// Functions that throw
+	const throwers = exported.filter(
+		(s) => s.kind === "function" && (s.documentation?.throws?.length ?? 0) > 0,
+	);
+	for (const sym of throwers) {
+		for (const t of sym.documentation?.throws ?? []) {
+			lines.push(
+				`- \`${sym.name}()\` throws${t.type ? ` \`${t.type}\`` : ""}: ${t.description}`,
+			);
+		}
+	}
+
+	// Enums with non-obvious values
+	const enums = exported.filter((s) => s.kind === "enum" && (s.children?.length ?? 0) > 0);
+	for (const sym of enums) {
+		const values = (sym.children ?? []).map((c) => c.name).join(", ");
+		lines.push(`- \`${sym.name}\` enum values: ${values}`);
+	}
+
+	return lines;
+}
+
+/**
+ * Generates the full SKILL.md content. Generic for ANY TypeScript project.
+ * Content is derived entirely from the project's symbols and metadata.
  * @internal
  */
 function buildSkillMd(symbols: ForgeSymbol[], config: ForgeConfig, directoryName: string): string {
 	const projectName = config.project.packageName ?? config.rootDir.split("/").pop() ?? "Project";
 	const exported = symbols.filter((s) => s.exported);
-	const version = (config.project as Record<string, unknown>).version as string | undefined;
-	const author = (config.project as Record<string, unknown>).author as string | undefined;
 
 	const description = buildDescription(symbols, config);
 
@@ -183,24 +221,18 @@ function buildSkillMd(symbols: ForgeSymbol[], config: ForgeConfig, directoryName
 	lines.push("---");
 	lines.push(`name: ${directoryName}`);
 	lines.push("description: >");
-	// Indent the description block under the YAML block scalar
 	for (const segment of description.split("\n")) {
 		lines.push(`  ${segment}`);
 	}
 	lines.push("license: MIT");
-	lines.push("compatibility: Requires Node.js >=24 and TypeScript");
+	lines.push("compatibility: Requires Node.js and TypeScript");
 	lines.push("metadata:");
-	if (author) {
-		lines.push(`  author: ${author}`);
-	}
-	if (version) {
-		lines.push(`  version: "${version}"`);
-	}
+	lines.push(`  generated-by: forge-ts`);
 	lines.push("---");
 	lines.push("");
 
 	// ---------------------------------------------------------------------------
-	// Overview
+	// Overview — from @packageDocumentation or first symbol summary
 	// ---------------------------------------------------------------------------
 	lines.push(`# ${projectName}`);
 	lines.push("");
@@ -215,41 +247,39 @@ function buildSkillMd(symbols: ForgeSymbol[], config: ForgeConfig, directoryName
 	}
 
 	// ---------------------------------------------------------------------------
-	// Quick Start
+	// Installation — from package name
 	// ---------------------------------------------------------------------------
-	lines.push("## Quick Start");
+	lines.push("## Installation");
 	lines.push("");
 	lines.push("```bash");
-	lines.push(`npm install -D ${projectName}`);
+	lines.push(`npm install ${projectName}`);
 	lines.push("```");
 	lines.push("");
 
 	// ---------------------------------------------------------------------------
-	// Core Workflow — step-by-step procedures
+	// Usage — first @example block as the quick start
 	// ---------------------------------------------------------------------------
-	lines.push("## Core Workflow");
-	lines.push("");
-	lines.push("### Step 1: Check TSDoc Coverage");
-	lines.push("");
-	lines.push("```bash");
-	lines.push(`npx ${projectName} check`);
-	lines.push("```");
-	lines.push("");
-	lines.push("### Step 2: Run Doctests");
-	lines.push("");
-	lines.push("```bash");
-	lines.push(`npx ${projectName} test`);
-	lines.push("```");
-	lines.push("");
-	lines.push("### Step 3: Generate Documentation");
-	lines.push("");
-	lines.push("```bash");
-	lines.push(`npx ${projectName} build`);
-	lines.push("```");
-	lines.push("");
+	let firstExample: { code: string; language: string; symbolName: string } | undefined;
+	for (const sym of exported) {
+		if (sym.kind !== "function" && sym.kind !== "class") continue;
+		const ex = sym.documentation?.examples?.[0];
+		if (ex) {
+			firstExample = { code: ex.code, language: ex.language, symbolName: sym.name };
+			break;
+		}
+	}
+
+	if (firstExample) {
+		lines.push("## Usage");
+		lines.push("");
+		lines.push(`\`\`\`${firstExample.language || "typescript"}`);
+		lines.push(firstExample.code.trim());
+		lines.push("```");
+		lines.push("");
+	}
 
 	// ---------------------------------------------------------------------------
-	// Common Patterns (top 5 @example blocks)
+	// Common Patterns — top 5 @example blocks with context
 	// ---------------------------------------------------------------------------
 	const patternLines = renderPatterns(exported, 5);
 	if (patternLines.length > 0) {
@@ -259,19 +289,18 @@ function buildSkillMd(symbols: ForgeSymbol[], config: ForgeConfig, directoryName
 	}
 
 	// ---------------------------------------------------------------------------
-	// Gotchas
+	// Gotchas — from @deprecated, @throws, enums
 	// ---------------------------------------------------------------------------
-	lines.push("## Gotchas");
-	lines.push("");
-	lines.push("- Every exported function MUST have a `@example` block (E004)");
-	lines.push("- Every interface member MUST have a TSDoc comment (E007)");
-	lines.push("- `{@link}` references must point to existing symbols (E008)");
-	lines.push("- Symbols tagged `@internal` are excluded from documentation output");
-	lines.push("- `@packageDocumentation` must appear in the entry-point file (E005)");
-	lines.push("");
+	const gotchaLines = renderGotchas(symbols);
+	if (gotchaLines.length > 0) {
+		lines.push("## Gotchas");
+		lines.push("");
+		lines.push(...gotchaLines);
+		lines.push("");
+	}
 
 	// ---------------------------------------------------------------------------
-	// Key Types (top 10)
+	// Key Types — top 10 exported types/interfaces
 	// ---------------------------------------------------------------------------
 	const keyTypeLines = renderKeyTypes(exported);
 	if (keyTypeLines.length > 0) {
@@ -282,31 +311,34 @@ function buildSkillMd(symbols: ForgeSymbol[], config: ForgeConfig, directoryName
 	}
 
 	// ---------------------------------------------------------------------------
-	// Configuration reference pointer
+	// Configuration — only if a config-like type is detected
 	// ---------------------------------------------------------------------------
-	lines.push("## Configuration");
-	lines.push("");
-	lines.push(`Create a \`${projectName}.config.ts\`:`);
-	lines.push("");
-	lines.push("```typescript");
-	lines.push(`import type { ForgeConfig } from "${projectName}";`);
-	lines.push("");
-	lines.push("export default {");
-	lines.push('  rootDir: ".",');
-	lines.push('  outDir: "docs/generated",');
-	lines.push("} satisfies Partial<ForgeConfig>;");
-	lines.push("```");
-	lines.push("");
-	lines.push("See [references/CONFIGURATION.md](references/CONFIGURATION.md) for all options.");
-	lines.push("");
+	const configSymbol = exported.find(
+		(s) =>
+			(s.kind === "interface" || s.kind === "type") &&
+			/config/i.test(s.name) &&
+			(s.children?.length ?? 0) > 0,
+	);
+
+	if (configSymbol) {
+		lines.push("## Configuration");
+		lines.push("");
+		lines.push(`The \`${configSymbol.name}\` type defines the available options:`);
+		lines.push("");
+		for (const child of configSymbol.children ?? []) {
+			const summary = child.documentation?.summary ?? "";
+			lines.push(`- **\`${child.name}\`**${summary ? ` — ${summary}` : ""}`);
+		}
+		lines.push("");
+		lines.push("See [references/CONFIGURATION.md](references/CONFIGURATION.md) for full details.");
+		lines.push("");
+	}
 
 	// ---------------------------------------------------------------------------
-	// Validation
+	// API Reference pointer — keep SKILL.md lean
 	// ---------------------------------------------------------------------------
-	lines.push("## Validation");
-	lines.push("");
 	lines.push(
-		`Run \`npx ${projectName} check --json --mvi full\` for detailed fix suggestions with exact TSDoc blocks to add.`,
+		"See [references/API-REFERENCE.md](references/API-REFERENCE.md) for full API signatures, parameter tables, and all code examples.",
 	);
 	lines.push("");
 
@@ -318,7 +350,7 @@ function buildSkillMd(symbols: ForgeSymbol[], config: ForgeConfig, directoryName
 
 /**
  * Generates the `references/API-REFERENCE.md` content.
- * Contains the detailed API dump that is too verbose for SKILL.md.
+ * Full API dump — signatures, params, returns, examples.
  * @internal
  */
 function buildApiReferenceMd(symbols: ForgeSymbol[], config: ForgeConfig): string {
@@ -331,7 +363,6 @@ function buildApiReferenceMd(symbols: ForgeSymbol[], config: ForgeConfig): strin
 	lines.push("Full function signatures, type property tables, and all @example blocks.");
 	lines.push("");
 
-	// Full API table
 	const apiRows = renderApiRows(exported);
 	if (apiRows.length > 0) {
 		lines.push("## Exports");
@@ -342,10 +373,16 @@ function buildApiReferenceMd(symbols: ForgeSymbol[], config: ForgeConfig): strin
 		lines.push("");
 	}
 
-	// Full example listings
 	for (const sym of exported) {
-		const examples = sym.documentation?.examples ?? [];
-		if (examples.length === 0) continue;
+		if (sym.kind === "method" || sym.kind === "property") continue;
+
+		const hasDetail =
+			sym.documentation?.summary ||
+			sym.signature ||
+			(sym.documentation?.examples?.length ?? 0) > 0 ||
+			(sym.documentation?.params?.length ?? 0) > 0;
+
+		if (!hasDetail) continue;
 
 		lines.push(`## \`${sym.name}\``);
 		lines.push("");
@@ -354,8 +391,6 @@ function buildApiReferenceMd(symbols: ForgeSymbol[], config: ForgeConfig): strin
 			lines.push("");
 		}
 		if (sym.signature) {
-			lines.push("**Signature:**");
-			lines.push("");
 			lines.push("```typescript");
 			lines.push(sym.signature);
 			lines.push("```");
@@ -373,7 +408,17 @@ function buildApiReferenceMd(symbols: ForgeSymbol[], config: ForgeConfig): strin
 			lines.push(`**Returns:** ${sym.documentation.returns.description}`);
 			lines.push("");
 		}
-		for (const ex of examples) {
+		// Children (class members, interface properties)
+		if (sym.children && sym.children.length > 0) {
+			lines.push("**Members:**");
+			lines.push("");
+			for (const child of sym.children) {
+				const desc = child.documentation?.summary ?? "";
+				lines.push(`- \`${child.name}\`${desc ? ` — ${desc}` : ""}`);
+			}
+			lines.push("");
+		}
+		for (const ex of sym.documentation?.examples ?? []) {
 			const lang = ex.language || "typescript";
 			lines.push(`\`\`\`${lang}`);
 			lines.push(ex.code.trim());
@@ -390,7 +435,7 @@ function buildApiReferenceMd(symbols: ForgeSymbol[], config: ForgeConfig): strin
 
 /**
  * Generates the `references/CONFIGURATION.md` content.
- * Documents the full ForgeConfig type with all properties.
+ * Documents all config-like types with property tables.
  * @internal
  */
 function buildConfigurationMd(symbols: ForgeSymbol[], config: ForgeConfig): string {
@@ -400,12 +445,7 @@ function buildConfigurationMd(symbols: ForgeSymbol[], config: ForgeConfig): stri
 	const lines: string[] = [];
 	lines.push(`# ${projectName} — Configuration Reference`);
 	lines.push("");
-	lines.push(
-		`Full documentation for all configuration options. Create a \`${projectName}.config.ts\` at your project root.`,
-	);
-	lines.push("");
 
-	// Find all config-like interfaces
 	const configSymbols = exported.filter(
 		(s) =>
 			(s.kind === "interface" || s.kind === "type") &&
@@ -431,7 +471,7 @@ function buildConfigurationMd(symbols: ForgeSymbol[], config: ForgeConfig): stri
 	}
 
 	if (configSymbols.length === 0) {
-		lines.push("No configuration types found in exported symbols.");
+		lines.push("No configuration types detected in this project.");
 		lines.push("");
 	}
 
@@ -459,14 +499,10 @@ export interface SkillPackage {
 }
 
 /**
- * Generates a skill package directory following the agentskills.io specification
- * (https://agentskills.io/specification).
+ * Generates an agentskills.io-compliant skill package for ANY TypeScript project.
  *
- * The package includes:
- * - `SKILL.md` — metadata frontmatter + instructional content (under 500 lines)
- * - `references/API-REFERENCE.md` — full API signatures and examples
- * - `references/CONFIGURATION.md` — full config type documentation
- * - `scripts/check.sh` — helper script for TSDoc validation
+ * All content is derived from the project's exported symbols and metadata.
+ * No hardcoded project-specific content. Works for any project that forge-ts analyzes.
  *
  * @param symbols - All symbols from the project.
  * @param config - The resolved forge-ts config.
@@ -489,10 +525,18 @@ export function generateSkillPackage(symbols: ForgeSymbol[], config: ForgeConfig
 	const apiRefMd = buildApiReferenceMd(symbols, config);
 	const configMd = buildConfigurationMd(symbols, config);
 
-	const checkSh = [
+	// Generic helper script that runs the project's test suite
+	const testSh = [
 		"#!/usr/bin/env bash",
-		`# Run TSDoc coverage check with full MVI suggestions`,
-		`npx ${projectName} check --json --mvi full "$@"`,
+		"# Run the project's test suite",
+		'# Usage: ./scripts/test.sh [additional args]',
+		"",
+		"if [ -f package.json ]; then",
+		'  npm test "$@"',
+		"else",
+		'  echo "No package.json found"',
+		"  exit 1",
+		"fi",
 		"",
 	].join("\n");
 
@@ -502,18 +546,14 @@ export function generateSkillPackage(symbols: ForgeSymbol[], config: ForgeConfig
 			{ path: "SKILL.md", content: skillMd },
 			{ path: "references/API-REFERENCE.md", content: apiRefMd },
 			{ path: "references/CONFIGURATION.md", content: configMd },
-			{ path: "scripts/check.sh", content: checkSh },
+			{ path: "scripts/test.sh", content: testSh },
 		],
 	};
 }
 
 /**
- * Generates a SKILL.md string following the Agent Skills specification
- * (https://agentskills.io/specification).
- *
- * The file includes YAML frontmatter with `name` and `description` fields
- * for discovery-phase loading, followed by instructional content for
- * activation-phase loading.
+ * Generates a SKILL.md string following the Agent Skills specification.
+ * Generic for any TypeScript project — content derived from symbols.
  *
  * @param symbols - All symbols from the project.
  * @param config - The resolved forge-ts config.

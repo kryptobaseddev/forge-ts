@@ -619,13 +619,13 @@ console.log(modified); // true if README was updated
 
 ### `generateSkillPackage()`
 
-_Defined in `packages/gen/src/skill.ts:484`_
+_Defined in `packages/gen/src/skill.ts:520`_
 
 ```typescript
 (symbols: ForgeSymbol[], config: ForgeConfig) => SkillPackage
 ```
 
-Generates a skill package directory following the agentskills.io specification (https://agentskills.io/specification).  The package includes: - `SKILL.md` — metadata frontmatter + instructional content (under 500 lines) - `references/API-REFERENCE.md` — full API signatures and examples - `references/CONFIGURATION.md` — full config type documentation - `scripts/check.sh` — helper script for TSDoc validation
+Generates an agentskills.io-compliant skill package for ANY TypeScript project.  All content is derived from the project's exported symbols and metadata. No hardcoded project-specific content. Works for any project that forge-ts analyzes.
 
 **Parameters**
 
@@ -646,13 +646,13 @@ console.log(pkg.files.map(f => f.path));
 
 ### `generateSkillMd()`
 
-_Defined in `packages/gen/src/skill.ts:528`_
+_Defined in `packages/gen/src/skill.ts:568`_
 
 ```typescript
 (symbols: ForgeSymbol[], config: ForgeConfig) => string
 ```
 
-Generates a SKILL.md string following the Agent Skills specification (https://agentskills.io/specification).  The file includes YAML frontmatter with `name` and `description` fields for discovery-phase loading, followed by instructional content for activation-phase loading.
+Generates a SKILL.md string following the Agent Skills specification. Generic for any TypeScript project — content derived from symbols.
 
 **Parameters**
 
@@ -3225,7 +3225,7 @@ Include first
 
 ### `SkillPackage`
 
-_Defined in `packages/gen/src/skill.ts:454`_
+_Defined in `packages/gen/src/skill.ts:494`_
 
 ```typescript
 any
@@ -3235,7 +3235,7 @@ A generated skill package following the agentskills.io directory structure. Cont
 
 #### `directoryName`
 
-_Defined in `packages/gen/src/skill.ts:456`_
+_Defined in `packages/gen/src/skill.ts:496`_
 
 ```typescript
 string
@@ -3245,7 +3245,7 @@ The skill directory name (lowercase, hyphens only, max 64 chars).
 
 #### `files`
 
-_Defined in `packages/gen/src/skill.ts:458`_
+_Defined in `packages/gen/src/skill.ts:498`_
 
 ```typescript
 { path: string; content: string; }[]

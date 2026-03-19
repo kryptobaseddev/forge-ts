@@ -113,9 +113,9 @@ describe("generateSkillMd", () => {
 
 	it("contains a Quick Start section with a bash code block", () => {
 		const result = generateSkillMd([fnAdd], makeConfig({ packageName: "my-lib" }));
-		expect(result).toContain("## Quick Start");
+		expect(result).toContain("## Installation");
 		expect(result).toContain("```bash");
-		expect(result).toContain("npm install -D my-lib");
+		expect(result).toContain("npm install my-lib");
 	});
 
 	it("contains function patterns derived from @example blocks", () => {
@@ -149,7 +149,7 @@ describe("generateSkillMd", () => {
 	it("produces a non-empty string for an empty symbol list", () => {
 		const result = generateSkillMd([], makeConfig());
 		expect(result.length).toBeGreaterThan(0);
-		expect(result).toContain("## Quick Start");
+		expect(result).toContain("## Installation");
 		expect(result).toContain("name:"); // YAML frontmatter
 	});
 
@@ -267,7 +267,7 @@ describe("generateSkillPackage", () => {
 	it("includes scripts/check.sh file", () => {
 		const pkg = generateSkillPackage([fnAdd], makeConfig());
 		const paths = pkg.files.map((f) => f.path);
-		expect(paths).toContain("scripts/check.sh");
+		expect(paths).toContain("scripts/test.sh");
 	});
 
 	it("SKILL.md content has valid YAML frontmatter with name", () => {
@@ -318,11 +318,11 @@ describe("generateSkillPackage", () => {
 		expect(configMd?.content).toContain("strict");
 	});
 
-	it("scripts/check.sh is a valid bash script", () => {
+	it("scripts/test.sh is a valid bash script", () => {
 		const pkg = generateSkillPackage([fnAdd], makeConfig({ packageName: "my-lib" }));
-		const checkSh = pkg.files.find((f) => f.path === "scripts/check.sh");
+		const checkSh = pkg.files.find((f) => f.path === "scripts/test.sh");
 		expect(checkSh?.content).toContain("#!/usr/bin/env bash");
-		expect(checkSh?.content).toContain("my-lib");
+		expect(checkSh?.content).toContain("npm test");
 	});
 
 	it("handles empty symbol list without throwing", () => {

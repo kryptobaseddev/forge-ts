@@ -1,29 +1,40 @@
 ---
 name: forge-ts
 description: >
-  Runs the API generation pipeline: walk → extract → generate → write. Use this skill when working with forge-ts or when a user mentions it. It provides 39 functions, 60 type definitions. Use when you need to understand how to import, configure, or call its API, even if the user doesn't mention the package by name.
+  Runs the API generation pipeline: walk → extract → generate → write. Use this skill when working with forge-ts. It exports functions, type contracts. Use when you need to understand the API, generate documentation, check TSDoc coverage, or run code examples as tests.
 license: MIT
-compatibility: Requires Node.js and TypeScript
+compatibility: Requires Node.js >=24 and TypeScript
 metadata:
-  generated-by: forge-ts
 ---
 
 # forge-ts
 
 Runs the API generation pipeline: walk → extract → generate → write.
 
-## Installation
+## Quick Start
 
 ```bash
-npm install forge-ts
+npm install -D forge-ts
 ```
 
-## Usage
+## Core Workflow
 
-```typescript
-import { defaultConfig } from "@forge-ts/core";
-const config = defaultConfig("/path/to/project");
-console.log(config.enforce.enabled); // true
+### Step 1: Check TSDoc Coverage
+
+```bash
+npx forge-ts check
+```
+
+### Step 2: Run Doctests
+
+```bash
+npx forge-ts test
+```
+
+### Step 3: Generate Documentation
+
+```bash
+npx forge-ts build
 ```
 
 ## Common Patterns
@@ -79,8 +90,11 @@ const publicOnly = filterByVisibility(symbols, Visibility.Public);
 
 ## Gotchas
 
-- `getAdapter()` throws: `Error` if the target is not registered.
-- `Visibility` enum values: Public, Beta, Internal, Private
+- Every exported function MUST have a `@example` block (E004)
+- Every interface member MUST have a TSDoc comment (E007)
+- `{@link}` references must point to existing symbols (E008)
+- Symbols tagged `@internal` are excluded from documentation output
+- `@packageDocumentation` must appear in the entry-point file (E005)
 
 ## Key Types
 
@@ -97,17 +111,19 @@ const publicOnly = filterByVisibility(symbols, Visibility.Public);
 
 ## Configuration
 
-The `ForgeConfig` type defines the available options:
+Create a `forge-ts.config.ts`:
 
-- **`rootDir`** — Root directory of the project.
-- **`tsconfig`** — Path to the tsconfig.json to compile against.
-- **`outDir`** — Output directory for generated files.
-- **`enforce`** — Enforce TSDoc on all public exports.
-- **`doctest`** — DocTest configuration.
-- **`api`** — API generation configuration.
-- **`gen`** — Output generation configuration.
-- **`project`** — Project metadata — auto-detected from package.json if not provided.
+```typescript
+import type { ForgeConfig } from "forge-ts";
 
-See [references/CONFIGURATION.md](references/CONFIGURATION.md) for full details.
+export default {
+  rootDir: ".",
+  outDir: "docs/generated",
+} satisfies Partial<ForgeConfig>;
+```
 
-See [references/API-REFERENCE.md](references/API-REFERENCE.md) for full API signatures, parameter tables, and all code examples.
+See [references/CONFIGURATION.md](references/CONFIGURATION.md) for all options.
+
+## Validation
+
+Run `npx forge-ts check --json --mvi full` for detailed fix suggestions with exact TSDoc blocks to add.

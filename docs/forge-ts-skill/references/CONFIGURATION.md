@@ -1,5 +1,7 @@
 # forge-ts — Configuration Reference
 
+Full documentation for all configuration options. Create a `forge-ts.config.ts` at your project root.
+
 ## `ForgeConfig`
 
 Full configuration for a forge-ts run. Loaded from forge-ts.config.ts or the "forge-ts" key in package.json.

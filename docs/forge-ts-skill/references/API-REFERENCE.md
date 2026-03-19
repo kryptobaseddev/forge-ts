@@ -65,8 +65,8 @@ Full function signatures, type property tables, and all @example blocks.
 | `ReadmeSyncOptions` | `any` | Options controlling README sync behaviour. |
 | `syncReadme()` | `(readmePath: string, symbols: ForgeSymbol[], options?: ReadmeSyncOptions) => Promise<boolean>` | Injects a summary of exported symbols into a `README.md` file.  The content is placed between `<!-- forge-ts:start -->` and `<!-- forge-ts:end -->` comment markers.  If neither marker exists, the summary is appended to the end of the file. |
 | `SkillPackage` | `any` | A generated skill package following the agentskills.io directory structure. Contains SKILL.md plus optional references and scripts files. |
-| `generateSkillPackage()` | `(symbols: ForgeSymbol[], config: ForgeConfig) => SkillPackage` | Generates an agentskills.io-compliant skill package for ANY TypeScript project.  All content is derived from the project's exported symbols and metadata. No hardcoded project-specific content. Works for any project that forge-ts analyzes. |
-| `generateSkillMd()` | `(symbols: ForgeSymbol[], config: ForgeConfig) => string` | Generates a SKILL.md string following the Agent Skills specification. Generic for any TypeScript project — content derived from symbols. |
+| `generateSkillPackage()` | `(symbols: ForgeSymbol[], config: ForgeConfig) => SkillPackage` | Generates a skill package directory following the agentskills.io specification (https://agentskills.io/specification).  The package includes: - `SKILL.md` — metadata frontmatter + instructional content (under 500 lines) - `references/API-REFERENCE.md` — full API signatures and examples - `references/CONFIGURATION.md` — full config type documentation - `scripts/check.sh` — helper script for TSDoc validation |
+| `generateSkillMd()` | `(symbols: ForgeSymbol[], config: ForgeConfig) => string` | Generates a SKILL.md string following the Agent Skills specification (https://agentskills.io/specification).  The file includes YAML frontmatter with `name` and `description` fields for discovery-phase loading, followed by instructional content for activation-phase loading. |
 | `SSGConfigFile` | `any` | A single generated SSG configuration file. |
 | `generateSSGConfigs()` | `(pages: DocPage[], target: "docusaurus" | "mintlify" | "nextra" | "vitepress", projectName: string) => SSGConfigFile[]` | Generate navigation configuration file(s) for the given SSG target.  Returns one file for most targets, but multiple files for Nextra (which uses per-directory `_meta.json` files). |
 | `generate()` | `(config: ForgeConfig) => Promise<ForgeResult>` | Runs the full generation pipeline: walk → render → write. |
@@ -117,141 +117,11 @@ Full function signatures, type property tables, and all @example blocks.
 | `runTest()` | `(args: TestArgs) => Promise<CommandOutput<TestResult>>` | Runs the doctest pipeline and returns a typed command output. |
 | `testCommand` | `CommandDef<{ readonly cwd: { readonly type: "string"; readonly description: "Project root directory"; }; readonly json: { readonly type: "boolean"; readonly description: "Output as LAFS JSON envelope (agent-friendly)"; readonly default: false; }; readonly human: { ...; }; readonly quiet: { ...; }; readonly mvi: { .....` | Citty command definition for `forge-ts test`. |
 
-## `Visibility`
-
-Visibility levels for exported symbols. Derived from TSDoc release tags (public, beta, internal).
-
-```typescript
-typeof Visibility
-```
-
-**Members:**
-
-- `Public`
-- `Beta`
-- `Internal`
-- `Private`
-
-## `ForgeSymbol`
-
-A single extracted and annotated symbol from the TypeScript AST.
-
-```typescript
-any
-```
-
-**Members:**
-
-- `name` — The declared name of the symbol.
-- `kind` — The syntactic kind of the symbol.
-- `visibility` — Resolved visibility from TSDoc release tags.
-- `filePath` — Absolute path to the source file.
-- `line` — 1-based line number of the declaration.
-- `column` — 0-based column of the declaration.
-- `documentation` — Parsed TSDoc documentation, if present.
-- `signature` — Human-readable type signature of the symbol.
-- `children` — Child symbols (e.g., class members, enum values).
-- `exported` — Whether this symbol is part of the public module exports.
-
-## `RuleSeverity`
-
-Severity level for an individual enforcement rule. - `"error"` — violation fails the build. - `"warn"`  — violation is reported but does not fail the build. - `"off"`   — rule is disabled entirely.
-
-```typescript
-any
-```
-
-## `EnforceRules`
-
-Per-rule severity configuration for the TSDoc enforcer. Each key corresponds to one of the E001–E007 rule codes.
-
-```typescript
-any
-```
-
-**Members:**
-
-- `"require-summary"` — E001: Exported symbol missing TSDoc summary.
-- `"require-param"` — E002: Function parameter missing
-- `"require-returns"` — E003: Non-void function missing
-- `"require-example"` — E004: Exported function missing
-- `"require-package-doc"` — E005: Entry point missing packageDocumentation.
-- `"require-class-member-doc"` — E006: Class member missing documentation.
-- `"require-interface-member-doc"` — E007: Interface/type member missing documentation.
-
-## `ForgeConfig`
-
-Full configuration for a forge-ts run. Loaded from forge-ts.config.ts or the "forge-ts" key in package.json.
-
-```typescript
-any
-```
-
-**Members:**
-
-- `rootDir` — Root directory of the project.
-- `tsconfig` — Path to the tsconfig.json to compile against.
-- `outDir` — Output directory for generated files.
-- `enforce` — Enforce TSDoc on all public exports.
-- `doctest` — DocTest configuration.
-- `api` — API generation configuration.
-- `gen` — Output generation configuration.
-- `project` — Project metadata — auto-detected from package.json if not provided.
-
-## `ForgeResult`
-
-The result of a forge-ts compilation pass.
-
-```typescript
-any
-```
-
-**Members:**
-
-- `success` — Whether the run succeeded without errors.
-- `symbols` — All symbols extracted during this run.
-- `errors` — Errors that caused or would cause failure.
-- `warnings` — Non-fatal warnings.
-- `duration` — Wall-clock duration of the run in milliseconds.
-
-## `ForgeError`
-
-A diagnostic error produced during a forge-ts run.
-
-```typescript
-any
-```
-
-**Members:**
-
-- `code` — Machine-readable error code (e.g. "E001").
-- `message` — Human-readable description of the error.
-- `filePath` — Absolute path of the file where the error occurred.
-- `line` — 1-based line number.
-- `column` — 0-based column.
-- `suggestedFix` — Suggested fix for the agent — exact TSDoc block to add.
-- `symbolName` — The symbol name that needs fixing.
-- `symbolKind` — The symbol kind (function, class, interface, etc.).
-
-## `ForgeWarning`
-
-A diagnostic warning produced during a forge-ts run.
-
-```typescript
-any
-```
-
-**Members:**
-
-- `code` — Machine-readable warning code (e.g. "W001").
-- `message` — Human-readable description of the warning.
-- `filePath` — Absolute path of the file where the warning occurred.
-- `line` — 1-based line number.
-- `column` — 0-based column.
-
 ## `defaultConfig`
 
 Constructs a sensible default  rooted at `rootDir`.
+
+**Signature:**
 
 ```typescript
 (rootDir: string) => ForgeConfig
@@ -273,6 +143,8 @@ console.log(config.enforce.enabled); // true
 
 Loads the forge-ts configuration for a project.  Resolution order: 1. `<rootDir>/forge-ts.config.ts` 2. `<rootDir>/forge-ts.config.js` 3. `"forge-ts"` key inside `<rootDir>/package.json` 4. Built-in defaults (returned when none of the above is found)
 
+**Signature:**
+
 ```typescript
 (rootDir?: string | undefined) => Promise<ForgeConfig>
 ```
@@ -289,181 +161,11 @@ const config = await loadConfig("/path/to/project");
 // config is fully resolved with defaults
 ```
 
-## `OpenAPISchemaObject`
-
-OpenAPI 3.2 schema object.
-
-```typescript
-any
-```
-
-**Members:**
-
-- `type` — The data type of the schema (e.g., "string", "number", "object", "array").
-- `format` — A format hint for the data type (e.g., "int32", "date-time", "email", "uuid").
-- `description` — A human-readable description of the schema's purpose or constraints.
-- `properties` — Property definitions for object-type schemas. Maps each property name to its schema.
-- `required` — List of property names that must be present on the object.
-- `items` — Schema definition for the elements of an array-type schema. Required when `type` is "array".
-- `additionalProperties` — Controls whether additional properties are allowed (`true`/`false`) or defines their schema.
-- `enum` — Restricts the value to one of the listed constants.
-- `oneOf` — Validates the value against exactly one of the listed sub-schemas.
-- `allOf` — Validates the value against all of the listed sub-schemas (intersection).
-- `anyOf` — Validates the value against at least one of the listed sub-schemas.
-- `nullable` — Indicates that the value may be `null` in addition to its declared type.
-- `deprecated` — Marks the schema as deprecated, signalling that it may be removed in a future version.
-- `default` — The default value to use when the property is absent.
-- `$ref` — A JSON Reference (`$ref`) pointing to another schema definition in the document.
-
-## `OpenAPIInfoObject`
-
-OpenAPI 3.2 info object.
-
-```typescript
-any
-```
-
-**Members:**
-
-- `title` — The human-readable name of the API.
-- `version` — The version string for the API (e.g., "1.0.0").
-- `description` — A detailed description of the API, supporting CommonMark markdown.
-- `summary` — A short summary of the API, intended for display in tooling.
-- `license` — Licensing information for the exposed API, including name, URL, and SPDX identifier.
-
-## `OpenAPITagObject`
-
-OpenAPI 3.2 tag object.
-
-```typescript
-any
-```
-
-**Members:**
-
-- `name` — The name of the tag, used to group operations in the document.
-- `description` — An optional description of the tag, supporting CommonMark markdown.
-
-## `OpenAPIPathItemObject`
-
-OpenAPI 3.2 path item object.
-
-```typescript
-any
-```
-
-**Members:**
-
-- `summary` — A short summary of the path item, intended for tooling display.
-- `description` — A detailed description of the path item, supporting CommonMark markdown.
-- `get` — The operation definition for HTTP GET requests to this path.
-- `post` — The operation definition for HTTP POST requests to this path.
-- `put` — The operation definition for HTTP PUT requests to this path.
-- `delete` — The operation definition for HTTP DELETE requests to this path.
-- `patch` — The operation definition for HTTP PATCH requests to this path.
-- `options` — The operation definition for HTTP OPTIONS requests to this path.
-- `head` — The operation definition for HTTP HEAD requests to this path.
-- `trace` — The operation definition for HTTP TRACE requests to this path.
-- `query` — The operation definition for HTTP QUERY requests to this path (OpenAPI 3.2 extension).
-- `additionalOperations` — Additional non-standard HTTP method operations keyed by method name.
-
-## `OpenAPIOperationObject`
-
-OpenAPI 3.2 operation object.
-
-```typescript
-any
-```
-
-**Members:**
-
-- `operationId` — A unique string identifier for the operation, used by tooling to reference it.
-- `summary` — A short, human-readable summary of what the operation does.
-- `description` — A detailed description of the operation's behaviour, supporting CommonMark markdown.
-- `tags` — A list of tag names that logically group this operation in documentation and tooling.
-- `parameters` — The list of parameters applicable to this operation.
-- `responses` — The possible responses returned by this operation, keyed by HTTP status code or "default".
-
-## `OpenAPIParameterObject`
-
-OpenAPI 3.2 parameter object.
-
-```typescript
-any
-```
-
-**Members:**
-
-- `name` — The name of the parameter, case-sensitive.
-- `in` — The location of the parameter: path, query, header, cookie, or querystring.
-- `description` — A human-readable description of the parameter's purpose, supporting CommonMark markdown.
-- `required` — Whether the parameter is mandatory. Required for `in: "path"` parameters.
-- `schema` — The schema defining the type and constraints of the parameter value.
-- `deprecated` — Marks the parameter as deprecated; clients should avoid using it.
-
-## `OpenAPIEncodingObject`
-
-OpenAPI 3.2 encoding object.
-
-```typescript
-any
-```
-
-**Members:**
-
-- `contentType` — The MIME type to use for encoding a specific property (e.g., "application/json").
-- `headers` — Additional headers to send alongside the encoded part, keyed by header name.
-- `style` — The serialization style for the encoded value (e.g., "form", "spaceDelimited").
-- `explode` — Whether arrays and objects should be exploded into separate query parameters.
-- `allowReserved` — Whether reserved characters in the encoded value should be allowed without percent-encoding.
-
-## `OpenAPIMediaTypeObject`
-
-OpenAPI 3.2 media type object.
-
-```typescript
-any
-```
-
-**Members:**
-
-- `schema` — The schema defining the structure and type of the media type's payload.
-- `encoding` — Encoding information for specific properties of a `multipart` or `application/x-www-form-urlencoded` request body.
-
-## `OpenAPIResponseObject`
-
-OpenAPI 3.2 response object.
-
-```typescript
-any
-```
-
-**Members:**
-
-- `description` — A required human-readable description of the response, supporting CommonMark markdown.
-- `headers` — HTTP headers returned with this response, keyed by header name.
-- `content` — The response body content, keyed by media type (e.g., "application/json").
-
-## `OpenAPIDocument`
-
-Complete OpenAPI 3.2 document.
-
-```typescript
-any
-```
-
-**Members:**
-
-- `openapi` — The OpenAPI specification version this document conforms to. Must be "3.2.0".
-- `$self` — An optional self-referencing URL for this document, used for tooling and resolution.
-- `info` — Metadata about the API including title, version, and description.
-- `paths` — The available paths and their operations, keyed by path template (e.g., "/users/id").
-- `components` — Reusable schema and media type definitions shared across the document.
-- `tags` — A list of tags used to group operations, with optional descriptions.
-
 ## `resolveVisibility`
 
 Determines the visibility level of a symbol from its TSDoc release tags.  The precedence order is: 1. `@internal`  →  2. `@beta`      →  3. `@public`    →  4. (no tag)     →  (default for exports)
+
+**Signature:**
 
 ```typescript
 (tags: Record<string, string[]> | undefined) => Visibility
@@ -484,6 +186,8 @@ const vis = resolveVisibility({ internal: [] });
 ## `meetsVisibility`
 
 Returns whether `candidate` meets or exceeds the required minimum visibility.  "Meets" means the symbol is at least as visible as `minVisibility`. For example, `Public` meets a minimum of `Public`, but `Internal` does not.
+
+**Signature:**
 
 ```typescript
 (candidate: Visibility, minVisibility: Visibility) => boolean
@@ -506,6 +210,8 @@ meetsVisibility(Visibility.Internal, Visibility.Public); // false
 
 Filters an array of  objects to only include symbols whose visibility meets or exceeds `minVisibility`.
 
+**Signature:**
+
 ```typescript
 (symbols: ForgeSymbol[], minVisibility: Visibility) => ForgeSymbol[]
 ```
@@ -522,21 +228,11 @@ import { filterByVisibility, Visibility } from "@forge-ts/core";
 const publicOnly = filterByVisibility(symbols, Visibility.Public);
 ```
 
-## `ASTWalker`
-
-The return type of .
-
-```typescript
-any
-```
-
-**Members:**
-
-- `walk` — Walk all source files referenced by the configured tsconfig and return one  per exported declaration.
-
 ## `createWalker`
 
 Creates an  configured for the given forge config.  The walker uses the TypeScript Compiler API to create a `ts.Program` from the project's tsconfig, then visits every source file to extract exported declarations.  TSDoc comments are parsed with `@microsoft/tsdoc` to populate the `documentation` field on each .
+
+**Signature:**
 
 ```typescript
 (config: ForgeConfig) => ASTWalker
@@ -560,6 +256,8 @@ console.log(`Found ${symbols.length} symbols`);
 
 Maps a TypeScript type signature string to an OpenAPI 3.2 schema object.  Handles common primitives, arrays, unions, `Record<K, V>`, and falls back to `{ type: "object" }` for anything it cannot parse.
 
+**Signature:**
+
 ```typescript
 (signature: string) => OpenAPISchemaObject
 ```
@@ -576,44 +274,11 @@ const schema = signatureToSchema("string[]");
 // { type: "array", items: { type: "string" } }
 ```
 
-## `SDKProperty`
-
-A single property extracted from an interface or class symbol.
-
-```typescript
-any
-```
-
-**Members:**
-
-- `name` — The property name.
-- `type` — The TypeScript type string of the property.
-- `description` — TSDoc summary for this property.
-- `required` — Whether the property is required (not optional).
-- `deprecated` — Deprecation notice, if present.
-
-## `SDKType`
-
-An SDK type descriptor extracted from the symbol graph.
-
-```typescript
-any
-```
-
-**Members:**
-
-- `name` — The symbol name.
-- `kind` — Syntactic kind of the type.
-- `signature` — Human-readable type signature.
-- `description` — TSDoc summary.
-- `deprecated` — Deprecation notice, if present.
-- `visibility` — Resolved visibility level.
-- `properties` — Extracted properties (for interfaces, classes) or values (for enums).
-- `sourceFile` — Absolute path to the source file.
-
 ## `extractSDKTypes`
 
 Extracts SDK-relevant types (interfaces, type aliases, classes, enums) from a list of  objects.  Only exported symbols whose visibility is not  or  are included.
+
+**Signature:**
 
 ```typescript
 (symbols: ForgeSymbol[]) => SDKType[]
@@ -635,6 +300,8 @@ console.log(sdkTypes.length); // number of public SDK types
 
 Generates a production-quality OpenAPI 3.2 document from the extracted SDK types.  The document is populated with: - An `info` block sourced from the config or reasonable defaults. - A `components.schemas` section with one schema per exported type. - `tags` derived from unique source file paths (grouping by file). - Visibility filtering: `@internal` symbols are never emitted.  HTTP paths are not yet emitted (`paths` is always `{}`); route extraction will be added in a future release.
 
+**Signature:**
+
 ```typescript
 (config: ForgeConfig, sdkTypes: SDKType[], symbols?: ForgeSymbol[]) => OpenAPIDocument
 ```
@@ -654,32 +321,11 @@ const spec = generateOpenAPISpec(config, extractSDKTypes(symbols), symbols);
 console.log(spec.openapi); // "3.2.0"
 ```
 
-## `ReferenceEntry`
-
-A single entry in the generated API reference.
-
-```typescript
-any
-```
-
-**Members:**
-
-- `name` — Symbol name.
-- `kind` — Symbol kind.
-- `summary` — TSDoc summary.
-- `signature` — Human-readable type signature.
-- `visibility` — Resolved visibility level.
-- `deprecated` — Deprecation notice, if present.
-- `params` — Documented parameters.
-- `returns` — Documented return value.
-- `throws` — Documented thrown exceptions.
-- `examples` — Code examples from TSDoc `@example` tags.
-- `children` — Nested child symbols (class methods, interface properties, enum members).
-- `location` — Source file location.
-
 ## `buildReference`
 
 Builds a structured API reference from a list of exported symbols.  Unlike the minimal stub, this version includes nested children (class methods, interface properties) and all available TSDoc metadata.  Symbols with  or  are excluded from the top-level results. Children with private/internal visibility are also filtered out.
+
+**Signature:**
 
 ```typescript
 (symbols: ForgeSymbol[]) => ReferenceEntry[]
@@ -701,6 +347,8 @@ console.log(entries[0].name); // first symbol name, alphabetically
 
 Runs the API generation pipeline: walk → extract → generate → write.
 
+**Signature:**
+
 ```typescript
 (config: ForgeConfig) => Promise<ForgeResult>
 ```
@@ -717,40 +365,11 @@ const result = await generateApi(config);
 console.log(result.success); // true if spec was written successfully
 ```
 
-## `DocPage`
-
-A single generated documentation page.
-
-```typescript
-any
-```
-
-**Members:**
-
-- `path` — Relative path from outDir (e.g., "packages/core/index.md")
-- `content` — Page content (Markdown or MDX)
-- `frontmatter` — Frontmatter fields
-
-## `SiteGeneratorOptions`
-
-Options controlling the doc site generator.
-
-```typescript
-any
-```
-
-**Members:**
-
-- `format` — Output format
-- `ssgTarget` — SSG target for frontmatter
-- `projectName` — Project name
-- `projectDescription` — Project description
-- `repositoryUrl` — Repository URL (auto-detected from package.json).
-- `packageName` — npm package name for install commands.
-
 ## `groupSymbolsByPackage`
 
 Groups symbols by their package based on file path.  For monorepos (symbols under `packages/<name>/`) the package name is derived from the directory segment immediately after `packages/`. For non-monorepo projects all symbols fall under the project name.
+
+**Signature:**
 
 ```typescript
 (symbols: ForgeSymbol[], rootDir: string) => Map<string, ForgeSymbol[]>
@@ -773,6 +392,8 @@ console.log(grouped.has("core")); // true for monorepo
 
 Generates a full multi-page documentation site from symbols grouped by package.  Follows a 5-stage information architecture: 1. ORIENT — Landing page, Getting Started 2. LEARN — Concepts (stub) 3. BUILD — Guides (stub) 4. REFERENCE — API Reference, Types, Configuration, Changelog 5. COMMUNITY — FAQ, Contributing (stubs)
 
+**Signature:**
+
 ```typescript
 (symbolsByPackage: Map<string, ForgeSymbol[]>, config: ForgeConfig, options: SiteGeneratorOptions) => DocPage[]
 ```
@@ -792,112 +413,15 @@ const pages = generateDocSite(grouped, config, { format: "markdown", projectName
 console.log(pages.length > 0); // true
 ```
 
-## `SSGTarget`
-
-Supported SSG target identifiers.
-
-```typescript
-any
-```
-
-## `GeneratedFile`
-
-A file to write to disk during scaffolding or generation.
-
-```typescript
-any
-```
-
-**Members:**
-
-- `path` — Relative path from the docs output directory.
-- `content` — File content (string for text).
-
-## `SSGStyleGuide`
-
-Style guide configuration for the SSG target.
-
-```typescript
-any
-```
-
-**Members:**
-
-- `pageExtension` — File extension for doc pages.
-- `supportsMdx` — Whether the target supports MDX components.
-- `requiresFrontmatter` — Whether frontmatter is required on every page.
-- `maxHeadingDepth` — Maximum recommended heading depth.
-- `defaultImports` — Component imports to add at top of MDX files (if supportsMdx).
-- `codeBlockLanguage` — Code block language for TypeScript examples.
-
-## `ScaffoldManifest`
-
-Scaffold manifest describing what `init docs` creates.
-
-```typescript
-any
-```
-
-**Members:**
-
-- `target` — The SSG target this manifest is for.
-- `files` — Files that will be created.
-- `dependencies` — npm dependencies to install.
-- `devDependencies` — npm devDependencies to install.
-- `scripts` — Scripts to add to package.json.
-- `instructions` — Post-scaffold instructions for the user.
-
-## `AdapterContext`
-
-Context passed to adapter methods.
-
-```typescript
-any
-```
-
-**Members:**
-
-- `config` — Resolved forge-ts configuration.
-- `projectName` — Project name (from package.json or directory).
-- `projectDescription` — Project description.
-- `pages` — The generated doc pages (from site-generator).
-- `symbols` — All symbols extracted from the project.
-- `outDir` — Output directory for generated docs.
-
-## `DevServerCommand`
-
-Command to start a local dev server for doc preview.
-
-```typescript
-any
-```
-
-**Members:**
-
-- `bin` — The binary to execute (e.g., "npx", "node").
-- `args` — Arguments to pass to the binary.
-- `cwd` — Working directory to run from.
-- `label` — Human-readable label for the command.
-- `url` — The URL the dev server will be available at.
-
 ## `SSGAdapter`
 
 The central SSG adapter interface. Every doc platform provider implements this contract. One file per provider. No shared mutable state.
 
+**Signature:**
+
 ```typescript
 any
 ```
-
-**Members:**
-
-- `target` — Unique target identifier.
-- `displayName` — Human-readable display name.
-- `styleGuide` — Style guide for this platform.
-- `scaffold` — Generate the complete scaffold for a new doc site. Called by `forge-ts init docs --target <name>`. Returns all files, dependencies, and scripts needed.
-- `transformPages` — Transform generic DocPages into platform-specific pages. Adds correct frontmatter, component imports, file extensions. Called during `forge-ts build`.
-- `generateConfig` — Generate platform-specific configuration files. e.g., mint.json, sidebars.js, _meta.json, .vitepress/config.ts Called during `forge-ts build`.
-- `getDevCommand` — Get the command to start the local dev server for this platform. Called by `forge-ts docs dev`.
-- `detectExisting` — Check if a scaffold already exists in the output directory. Used for safety checks before init or target change.
 
 ```typescript
 import { getAdapter } from "@forge-ts/gen";
@@ -908,6 +432,8 @@ const files = adapter.transformPages(pages, context);
 ## `registerAdapter`
 
 Register an SSG adapter. Called once per provider at module load time.
+
+**Signature:**
 
 ```typescript
 (adapter: SSGAdapter) => void
@@ -925,6 +451,8 @@ registerAdapter(mintlifyAdapter);
 ## `getAdapter`
 
 Get a registered adapter by target name. Throws if the target is not registered.
+
+**Signature:**
 
 ```typescript
 (target: SSGTarget) => SSGAdapter
@@ -945,6 +473,8 @@ const adapter = getAdapter("mintlify");
 
 Get all registered adapter targets.
 
+**Signature:**
+
 ```typescript
 () => SSGTarget[]
 ```
@@ -956,17 +486,11 @@ import { getAvailableTargets } from "@forge-ts/gen";
 const targets = getAvailableTargets(); // ["mintlify", "docusaurus", ...]
 ```
 
-## `DEFAULT_TARGET`
-
-The default SSG target when none is specified.
-
-```typescript
-SSGTarget
-```
-
 ## `mintlifyAdapter`
 
 Mintlify SSG adapter. Implements the  contract for the Mintlify platform.
+
+**Signature:**
 
 ```typescript
 SSGAdapter
@@ -983,6 +507,8 @@ console.log(configs[0].path); // "docs.json"
 
 Docusaurus SSG adapter. Implements the  contract for the Docusaurus platform.
 
+**Signature:**
+
 ```typescript
 SSGAdapter
 ```
@@ -997,6 +523,8 @@ console.log(configs[0].path); // "sidebars.ts"
 ## `nextraAdapter`
 
 Nextra SSG adapter (v4, App Router). Implements the  contract for the Nextra platform.
+
+**Signature:**
 
 ```typescript
 SSGAdapter
@@ -1013,6 +541,8 @@ console.log(configs[0].path); // "content/_meta.js"
 
 VitePress SSG adapter. Implements the  contract for the VitePress platform.
 
+**Signature:**
+
 ```typescript
 SSGAdapter
 ```
@@ -1027,6 +557,8 @@ console.log(configs[0].path); // ".vitepress/config.mts"
 ## `generateLlmsTxt`
 
 Generates an `llms.txt` routing manifest from the extracted symbols.  The file follows the llms.txt specification: a compact, structured overview designed to help large language models navigate a project's documentation.
+
+**Signature:**
 
 ```typescript
 (symbols: ForgeSymbol[], config: ForgeConfig) => string
@@ -1049,6 +581,8 @@ console.log(txt.startsWith("# ")); // true
 
 Generates an `llms-full.txt` dense context file from the extracted symbols.  Unlike `llms.txt`, this file contains complete documentation for every exported symbol, intended for LLM ingestion that requires full context.
 
+**Signature:**
+
 ```typescript
 (symbols: ForgeSymbol[], config: ForgeConfig) => string
 ```
@@ -1066,21 +600,11 @@ const fullTxt = generateLlmsFullTxt(symbols, config);
 console.log(fullTxt.includes("Full Context")); // true
 ```
 
-## `MarkdownOptions`
-
-Options controlling Markdown output.
-
-```typescript
-any
-```
-
-**Members:**
-
-- `mdx` — Whether to use MDX syntax (default: Markdown).
-
 ## `generateMarkdown`
 
 Generates a Markdown (or MDX) string from a list of symbols.
+
+**Signature:**
 
 ```typescript
 (symbols: ForgeSymbol[], config: ForgeConfig, options?: MarkdownOptions) => string
@@ -1100,22 +624,11 @@ const md = generateMarkdown(symbols, config, { mdx: false });
 console.log(md.startsWith("# API Reference")); // true
 ```
 
-## `ReadmeSyncOptions`
-
-Options controlling README sync behaviour.
-
-```typescript
-any
-```
-
-**Members:**
-
-- `badge` — Include a "Documented with forge-ts" badge above the API table.
-- `includeExamples` — Include first
-
 ## `syncReadme`
 
 Injects a summary of exported symbols into a `README.md` file.  The content is placed between `<!-- forge-ts:start -->` and `<!-- forge-ts:end -->` comment markers.  If neither marker exists, the summary is appended to the end of the file.
+
+**Signature:**
 
 ```typescript
 (readmePath: string, symbols: ForgeSymbol[], options?: ReadmeSyncOptions) => Promise<boolean>
@@ -1135,22 +648,11 @@ const modified = await syncReadme("/path/to/README.md", symbols);
 console.log(modified); // true if README was updated
 ```
 
-## `SkillPackage`
-
-A generated skill package following the agentskills.io directory structure. Contains SKILL.md plus optional references and scripts files.
-
-```typescript
-any
-```
-
-**Members:**
-
-- `directoryName` — The skill directory name (lowercase, hyphens only, max 64 chars).
-- `files` — Files to write inside the skill directory.
-
 ## `generateSkillPackage`
 
-Generates an agentskills.io-compliant skill package for ANY TypeScript project.  All content is derived from the project's exported symbols and metadata. No hardcoded project-specific content. Works for any project that forge-ts analyzes.
+Generates a skill package directory following the agentskills.io specification (https://agentskills.io/specification).  The package includes: - `SKILL.md` — metadata frontmatter + instructional content (under 500 lines) - `references/API-REFERENCE.md` — full API signatures and examples - `references/CONFIGURATION.md` — full config type documentation - `scripts/check.sh` — helper script for TSDoc validation
+
+**Signature:**
 
 ```typescript
 (symbols: ForgeSymbol[], config: ForgeConfig) => SkillPackage
@@ -1173,7 +675,9 @@ console.log(pkg.files.map(f => f.path));
 
 ## `generateSkillMd`
 
-Generates a SKILL.md string following the Agent Skills specification. Generic for any TypeScript project — content derived from symbols.
+Generates a SKILL.md string following the Agent Skills specification (https://agentskills.io/specification).  The file includes YAML frontmatter with `name` and `description` fields for discovery-phase loading, followed by instructional content for activation-phase loading.
+
+**Signature:**
 
 ```typescript
 (symbols: ForgeSymbol[], config: ForgeConfig) => string
@@ -1191,22 +695,11 @@ import { generateSkillMd } from "@forge-ts/gen";
 const skill = generateSkillMd(symbols, config);
 ```
 
-## `SSGConfigFile`
-
-A single generated SSG configuration file.
-
-```typescript
-any
-```
-
-**Members:**
-
-- `path` — Relative path from outDir (e.g., "mint.json", "_meta.json")
-- `content` — File content
-
 ## `generateSSGConfigs`
 
 Generate navigation configuration file(s) for the given SSG target.  Returns one file for most targets, but multiple files for Nextra (which uses per-directory `_meta.json` files).
+
+**Signature:**
 
 ```typescript
 (pages: DocPage[], target: "docusaurus" | "mintlify" | "nextra" | "vitepress", projectName: string) => SSGConfigFile[]
@@ -1230,6 +723,8 @@ console.log(configs[0].path); // ".vitepress/sidebar.json"
 
 Runs the full generation pipeline: walk → render → write.
 
+**Signature:**
+
 ```typescript
 (config: ForgeConfig) => Promise<ForgeResult>
 ```
@@ -1246,104 +741,11 @@ const result = await generate(config);
 console.log(result.success); // true if all files were written
 ```
 
-## `Logger`
-
-A minimal structured logger used throughout the CLI commands.
-
-```typescript
-any
-```
-
-**Members:**
-
-- `info` — Print an informational message.
-- `success` — Print a success message (green ✓ prefix when colours are on).
-- `warn` — Print a warning message (yellow prefix when colours are on).
-- `error` — Print an error message (red ✗ prefix when colours are on).
-- `step` — Print a build-step line.
-
-## `createLogger`
-
-Creates a  instance.
-
-```typescript
-(options?: { colors?: boolean | undefined; } | undefined) => Logger
-```
-
-**Parameters:**
-
-- `options` — Optional configuration.
-- `` — options.colors - Emit ANSI colour codes.  Defaults to `process.stdout.isTTY`.
-
-**Returns:** A configured logger.
-
-## `CommandOutput`
-
-Typed result from a forge-ts command.
-
-```typescript
-any
-```
-
-**Members:**
-
-- `operation` — Name of the command that produced this output (e.g., "check", "build").
-- `success` — Whether the command completed successfully.
-- `data` — Strongly-typed command-specific result payload.
-- `errors` — Structured errors produced by the command, if any.
-- `warnings` — Structured warnings produced by the command, if any.
-- `duration` — Wall-clock duration of the command in milliseconds.
-
-## `ForgeCliError`
-
-Structured error for CLI commands.
-
-```typescript
-any
-```
-
-**Members:**
-
-- `code` — Machine-readable error code (e.g., "E004").
-- `message` — Human-readable error description.
-- `filePath` — Absolute path to the source file containing the error, if applicable.
-- `line` — 1-based line number of the error, if applicable.
-- `column` — 0-based column number of the error, if applicable.
-
-## `ForgeCliWarning`
-
-Structured warning for CLI commands.
-
-```typescript
-any
-```
-
-**Members:**
-
-- `code` — Machine-readable warning code.
-- `message` — Human-readable warning description.
-- `filePath` — Absolute path to the source file containing the warning, if applicable.
-- `line` — 1-based line number of the warning, if applicable.
-- `column` — 0-based column number of the warning, if applicable.
-
-## `OutputFlags`
-
-Output format flags passed through from citty args.
-
-```typescript
-any
-```
-
-**Members:**
-
-- `json` — Emit output as a LAFS JSON envelope instead of human-readable text.
-- `human` — Emit output as formatted human-readable text.
-- `quiet` — Suppress all output regardless of format.
-- `mvi` — MVI verbosity level: "minimal", "standard", or "full".
-
 ## `emitResult`
 
 Wraps a command result in a LAFS envelope and emits it.  - JSON mode: writes the projected envelope to stdout as JSON. - Human mode: calls the provided formatter function. - Quiet mode: suppresses all output regardless of format.
+
+**Signature:**
 
 ```typescript
 <T>(output: CommandOutput<T>, flags: OutputFlags, humanFormatter: (data: T, output: CommandOutput<T>) => string) => void
@@ -1360,69 +762,11 @@ import { emitResult } from "@forge-ts/cli/output";
 emitResult(output, { human: true }, (data) => `Done: ${data.summary.duration}ms`);
 ```
 
-## `resolveExitCode`
-
-Returns the LAFS-compliant exit code for a command output.
-
-```typescript
-(output: CommandOutput<unknown>) => number
-```
-
-**Parameters:**
-
-- `output` — Typed result from the command.
-
-**Returns:** `0` on success, `1` on validation/check failure.
-
-## `BuildArgs`
-
-Arguments for the `build` command.
-
-```typescript
-any
-```
-
-**Members:**
-
-- `cwd` — Project root directory (default: cwd).
-- `skipApi` — Skip API generation even if enabled in config.
-- `skipGen` — Skip doc generation even if enabled in config.
-- `mvi` — MVI verbosity level for structured output.
-
-## `BuildStep`
-
-A single step in the build pipeline.
-
-```typescript
-any
-```
-
-**Members:**
-
-- `name` — Internal step name, e.g. "api" or "gen".
-- `status` — Outcome of this step.
-- `outputPath` — Path to the primary output file produced by this step, if applicable.
-- `duration` — Wall-clock duration of this step in milliseconds.
-- `errors` — Errors produced by this step when status is "failed".
-
-## `BuildResult`
-
-Typed result for the `build` command.
-
-```typescript
-any
-```
-
-**Members:**
-
-- `success` — Whether the build succeeded.
-- `summary` — Aggregate pipeline counts — always present.
-- `steps` — Per-step details.
-- `generatedFiles` — Files written during the build — present at standard and full MVI levels.
-
 ## `runBuild`
 
 Runs the full build pipeline and returns a typed command output.
+
+**Signature:**
 
 ```typescript
 (args: BuildArgs) => Promise<CommandOutput<BuildResult>>
@@ -1440,47 +784,11 @@ const output = await runBuild({ cwd: process.cwd() });
 console.log(output.success); // true if all steps succeeded
 ```
 
-## `buildCommand`
-
-Citty command definition for `forge-ts build`.
-
-```typescript
-CommandDef<{ readonly cwd: { readonly type: "string"; readonly description: "Project root directory"; }; readonly "skip-api": { readonly type: "boolean"; readonly description: "Skip OpenAPI generation"; readonly default: false; }; ... 4 more ...; readonly mvi: { ...; }; }>
-```
-
-## `DeprecatedUsage`
-
-A detected usage of a deprecated symbol.
-
-```typescript
-any
-```
-
-**Members:**
-
-- `deprecatedSymbol` — The deprecated symbol being consumed.
-- `sourcePackage` — The package that exports the deprecated symbol.
-- `consumingFile` — The file importing the deprecated symbol.
-- `line` — Line number of the import.
-- `deprecationMessage` — The deprecation message.
-
-## `findDeprecatedUsages`
-
-Scans symbols for imports of deprecated exports from other packages.
-
-```typescript
-(symbols: ForgeSymbol[]) => DeprecatedUsage[]
-```
-
-**Parameters:**
-
-- `symbols` — All symbols from the walker across the entire project.
-
-**Returns:** Array of deprecated usages found.
-
 ## `enforce`
 
 Runs the TSDoc enforcement pass against a project.  The enforcer walks all exported symbols that meet the configured minimum visibility threshold and emits diagnostics for any documentation deficiencies it finds.  ### Error codes | Code | Severity | Condition | |------|----------|-----------| | E001 | error    | Exported symbol is missing a TSDoc summary. | | E002 | error    | Function/method parameter lacks a `@param` tag. | | E003 | error    | Non-void function/method lacks a `@returns` tag. | | E004 | error    | Exported function/method is missing an `@example` block. | | E005 | error    | Package entry point (index.ts) is missing `@packageDocumentation`. | | E006 | error    | Public/protected class member is missing a TSDoc comment. | | E007 | error    | Interface/type alias property is missing a TSDoc comment. | | W001 | warning  | TSDoc comment contains parse errors. | | W002 | warning  | Function body throws but has no `@throws` tag. | | W003 | warning  | `@deprecated` tag is present without explanation. |  When `config.enforce.strict` is `true` all warnings are promoted to errors.
+
+**Signature:**
 
 ```typescript
 (config: ForgeConfig) => Promise<ForgeResult>
@@ -1502,22 +810,11 @@ if (!result.success) {
 }
 ```
 
-## `FormatOptions`
-
-Options that control how  renders its output.
-
-```typescript
-any
-```
-
-**Members:**
-
-- `colors` — Emit ANSI colour escape sequences when `true`.
-- `verbose` — When `true`, include the symbol's type signature alongside each diagnostic so the reader has immediate context.
-
 ## `formatResults`
 
 Formats a  into a human-readable string suitable for printing to a terminal.  Diagnostics are grouped by source file.  Each file heading shows the relative-ish path, followed by indented error and warning lines.  A summary line is appended at the end.
+
+**Signature:**
 
 ```typescript
 (result: ForgeResult, options: FormatOptions) => string
@@ -1539,86 +836,11 @@ const result = await enforce(config);
 console.log(formatResults(result, { colors: true, verbose: false }));
 ```
 
-## `CheckArgs`
-
-Arguments for the `check` command.
-
-```typescript
-any
-```
-
-**Members:**
-
-- `cwd` — Project root directory (default: cwd).
-- `strict` — Exit with non-zero code on warnings as well as errors.
-- `verbose` — Include symbol signatures alongside diagnostics.
-- `mvi` — MVI verbosity level for structured output.
-
-## `CheckFileError`
-
-A single error entry within a file group, included at standard and full MVI levels.
-
-```typescript
-any
-```
-
-**Members:**
-
-- `code` — Machine-readable error code.
-- `symbol` — Symbol name that needs fixing.
-- `kind` — Symbol kind (function, class, interface, etc.).
-- `line` — 1-based line number of the error.
-- `message` — Human-readable description.
-- `suggestedFix` — Exact TSDoc block to add (full MVI level only).
-- `agentAction` — Recommended agent action (full MVI level only).
-
-## `CheckFileWarning`
-
-A single warning entry within a file group, included at standard and full MVI levels.
-
-```typescript
-any
-```
-
-**Members:**
-
-- `code` — Machine-readable warning code.
-- `symbol` — Symbol name that generated the warning.
-- `kind` — Symbol kind (function, class, interface, etc.).
-- `line` — 1-based line number of the warning.
-- `message` — Human-readable description.
-
-## `CheckFileGroup`
-
-Errors and warnings grouped by file, included at standard and full MVI levels.
-
-```typescript
-any
-```
-
-**Members:**
-
-- `file` — Absolute path to the source file.
-- `errors` — Errors in this file.
-- `warnings` — Warnings in this file.
-
-## `CheckResult`
-
-Typed result for the `check` command.
-
-```typescript
-any
-```
-
-**Members:**
-
-- `success` — Whether the check passed without errors.
-- `summary` — Aggregate counts — always present regardless of MVI level.
-- `byFile` — Per-file breakdown — present at standard and full MVI levels.
-
 ## `runCheck`
 
 Runs the TSDoc enforcement pass and returns a typed command output.
+
+**Signature:**
 
 ```typescript
 (args: CheckArgs) => Promise<CommandOutput<CheckResult>>
@@ -1636,17 +858,11 @@ const output = await runCheck({ cwd: process.cwd() });
 console.log(output.data.summary.errors); // number of TSDoc errors found
 ```
 
-## `checkCommand`
-
-Citty command definition for `forge-ts check`.
-
-```typescript
-CommandDef<{ readonly cwd: { readonly type: "string"; readonly description: "Project root directory"; }; readonly strict: { readonly type: "boolean"; readonly description: "Treat warnings as errors"; readonly default: false; }; ... 4 more ...; readonly mvi: { ...; }; }>
-```
-
 ## `runDocsDev`
 
 Starts the local dev server for the configured SSG target.  Reads `gen.ssgTarget` from the forge-ts config, resolves the adapter, and spawns the platform's dev server in the output directory.
+
+**Signature:**
 
 ```typescript
 (args: { cwd?: string | undefined; target?: string | undefined; port?: string | undefined; }) => Promise<void>
@@ -1667,6 +883,8 @@ await runDocsDev({ cwd: "./my-project" });
 
 Citty command definition for `forge-ts docs dev`.
 
+**Signature:**
+
 ```typescript
 CommandDef<{ readonly cwd: { readonly type: "string"; readonly description: "Project root directory"; }; readonly target: { readonly type: "string"; readonly description: "SSG target override (reads from config by default)"; }; readonly port: { ...; }; }>
 ```
@@ -1679,17 +897,11 @@ import { docsDevCommand } from "@forge-ts/cli";
 
 Result of the `init docs` command.
 
+**Signature:**
+
 ```typescript
 any
 ```
-
-**Members:**
-
-- `success` — Whether the scaffold succeeded.
-- `target` — The SSG target that was scaffolded.
-- `summary` — Summary of what was created.
-- `files` — Relative paths of all files created.
-- `instructions` — Post-scaffold instructions for the user.
 
 ```typescript
 import { runInitDocs } from "@forge-ts/cli/commands/init-docs";
@@ -1697,25 +909,11 @@ const output = await runInitDocs({ target: "mintlify" });
 console.log(output.data.summary.filesCreated); // number of files written
 ```
 
-## `InitDocsArgs`
-
-Arguments for the `init docs` command.
-
-```typescript
-any
-```
-
-**Members:**
-
-- `target` — SSG target to scaffold. Defaults to .
-- `cwd` — Project root directory (default: cwd).
-- `outDir` — Output directory for the doc site (default: outDir from config or ./docs).
-- `force` — Overwrite an existing scaffold without prompting.
-- `mvi` — MVI verbosity level for structured output.
-
 ## `runInitDocs`
 
 Scaffolds a documentation site for the target SSG platform.  Resolves the target from args, validates it, checks for an existing scaffold, calls the adapter's `scaffold()` method, and writes all files produced by the manifest to `outDir`.
+
+**Signature:**
 
 ```typescript
 (args: InitDocsArgs) => Promise<CommandOutput<InitDocsResult>>
@@ -1737,6 +935,8 @@ console.log(output.data.files); // list of created file paths
 
 Citty command definition for `forge-ts init docs`.  Scaffolds a complete documentation site for the target SSG platform. Use `--json` for LAFS JSON envelope output (agent/CI-friendly).
 
+**Signature:**
+
 ```typescript
 CommandDef<{ readonly target: { readonly type: "string"; readonly description: `SSG target: ${string} (default: docusaurus)` | `SSG target: ${string} (default: mintlify)` | `SSG target: ${string} (default: nextra)` | `SSG target: ${string} (default: vitepress)`; }; readonly cwd: { readonly type: "string"; readonly d...
 ```
@@ -1750,6 +950,8 @@ import { initDocsCommand } from "@forge-ts/cli/commands/init-docs";
 
 Citty command definition for `forge-ts init`.  Exposes subcommands for scaffolding project artefacts.
 
+**Signature:**
+
 ```typescript
 CommandDef<ArgsDef>
 ```
@@ -1759,26 +961,11 @@ import { initCommand } from "@forge-ts/cli/commands/init-docs";
 // Registered automatically as a subcommand of `forge-ts`
 ```
 
-## `ExtractedExample`
-
-A single extracted `@example` block ready for test generation.
-
-```typescript
-any
-```
-
-**Members:**
-
-- `symbolName` — The symbol this example belongs to.
-- `filePath` — Absolute path to the source file.
-- `line` — 1-based line number of the `@example` tag.
-- `code` — The raw code inside the fenced block.
-- `language` — The language identifier (e.g. `"typescript"`).
-- `index` — Sequential index among examples for this symbol.
-
 ## `extractExamples`
 
 Extracts all `@example` blocks from a list of  objects.
+
+**Signature:**
 
 ```typescript
 (symbols: ForgeSymbol[]) => ExtractedExample[]
@@ -1799,34 +986,11 @@ const examples = extractExamples(symbols);
 console.log(`Found ${examples.length} examples`);
 ```
 
-## `GeneratorOptions`
-
-Options for virtual test file generation.
-
-```typescript
-any
-```
-
-**Members:**
-
-- `cacheDir` — Directory where virtual test files will be written.
-
-## `VirtualTestFile`
-
-A generated virtual test file.
-
-```typescript
-any
-```
-
-**Members:**
-
-- `path` — Absolute path where the file will be written.
-- `content` — File contents (valid TypeScript).
-
 ## `generateTestFiles`
 
 Generates a virtual test file for a set of extracted examples.  Each example is wrapped in an `it()` block using the Node built-in `node:test` runner so that no additional test framework is required. Auto-imports the tested symbol from the source file, processes `// =>` assertion patterns, and appends an inline source map.
+
+**Signature:**
 
 ```typescript
 (examples: ExtractedExample[], options: GeneratorOptions) => VirtualTestFile[]
@@ -1845,39 +1009,11 @@ const files = generateTestFiles(examples, { cacheDir: "/tmp/doctest-cache" });
 console.log(`Generated ${files.length} test file(s)`);
 ```
 
-## `RunResult`
-
-Result of running the generated test files.
-
-```typescript
-any
-```
-
-**Members:**
-
-- `success` — Whether all tests passed.
-- `passed` — Number of tests that passed.
-- `failed` — Number of tests that failed.
-- `output` — Combined stdout + stderr output from the test runner.
-- `tests` — Individual test results with name and status.
-
-## `TestCaseResult`
-
-The result of a single test case.
-
-```typescript
-any
-```
-
-**Members:**
-
-- `name` — The full test name as reported by the runner.
-- `passed` — Whether this test passed.
-- `sourceFile` — The source file this test was generated from, if determinable.
-
 ## `runTests`
 
 Writes virtual test files to disk and executes them with Node 24 native TypeScript support (`--experimental-strip-types --test`).
+
+**Signature:**
 
 ```typescript
 (files: VirtualTestFile[]) => Promise<RunResult>
@@ -1901,6 +1037,8 @@ if (!result.success) {
 
 Runs the full doctest pipeline: extract → generate → run.
 
+**Signature:**
+
 ```typescript
 (config: ForgeConfig) => Promise<ForgeResult>
 ```
@@ -1921,51 +1059,11 @@ if (!result.success) {
 }
 ```
 
-## `TestArgs`
-
-Arguments for the `test` command.
-
-```typescript
-any
-```
-
-**Members:**
-
-- `cwd` — Project root directory (default: cwd).
-- `mvi` — MVI verbosity level for structured output.
-
-## `TestFailure`
-
-A single test failure entry, included at standard and full MVI levels.
-
-```typescript
-any
-```
-
-**Members:**
-
-- `symbol` — Symbol name where the doctest failed.
-- `file` — Absolute path to the source file.
-- `line` — 1-based line number of the failing example.
-- `message` — Human-readable failure message.
-
-## `TestResult`
-
-Typed result for the `test` command.
-
-```typescript
-any
-```
-
-**Members:**
-
-- `success` — Whether all doctests passed.
-- `summary` — Aggregate counts — always present regardless of MVI level.
-- `failures` — Per-failure details — present at standard and full MVI levels.
-
 ## `runTest`
 
 Runs the doctest pipeline and returns a typed command output.
+
+**Signature:**
 
 ```typescript
 (args: TestArgs) => Promise<CommandOutput<TestResult>>
@@ -1981,12 +1079,4 @@ Runs the doctest pipeline and returns a typed command output.
 import { runTest } from "@forge-ts/cli/commands/test";
 const output = await runTest({ cwd: process.cwd() });
 console.log(output.data.summary.passed); // number of passing doctests
-```
-
-## `testCommand`
-
-Citty command definition for `forge-ts test`.
-
-```typescript
-CommandDef<{ readonly cwd: { readonly type: "string"; readonly description: "Project root directory"; }; readonly json: { readonly type: "boolean"; readonly description: "Output as LAFS JSON envelope (agent-friendly)"; readonly default: false; }; readonly human: { ...; }; readonly quiet: { ...; }; readonly mvi: { .....
 ```

@@ -49,21 +49,29 @@ import { generateSkillPackage } from "./skill.js";
  * @internal
  */
 function updateAutoSections(existing: string, generated: string): string | null {
-	// Match both HTML comments (<!-- -->) and MDX comments ({/* */}) for FORGE:AUTO markers.
-	// Generated content uses HTML format; on-disk stubs may have MDX format from adapter transform.
+	// Extract auto sections from the generated content.
+	// The adapter may have converted HTML comments to MDX comments via sanitizeMdx(),
+	// so we need to check both formats in the generated content.
 	const htmlPattern = /<!-- FORGE:AUTO-START (\S+) -->([\s\S]*?)<!-- FORGE:AUTO-END \1 -->/g;
+	const mdxGenPattern =
+		/\{\/\*\s*FORGE:AUTO-START (\S+)\s*\*\/\}([\s\S]*?)\{\/\*\s*FORGE:AUTO-END \1\s*\*\/\}/g;
 
-	// Extract all auto sections from the generated content (HTML format)
 	const newSections = new Map<string, string>();
 	let match: RegExpExecArray | null;
 	// biome-ignore lint: manual exec loop is clearest for named captures
 	while ((match = htmlPattern.exec(generated)) !== null) {
 		newSections.set(match[1], match[0]);
 	}
+	// biome-ignore lint: also check MDX format in generated content
+	while ((match = mdxGenPattern.exec(generated)) !== null) {
+		if (!newSections.has(match[1])) {
+			newSections.set(match[1], match[0]);
+		}
+	}
 
 	if (newSections.size === 0) return null;
 
-	// Replace each marker section in the existing content (try both HTML and MDX formats)
+	// Replace each marker section in the existing on-disk content (try both formats)
 	let updated = existing;
 	let changed = false;
 	for (const [id, replacement] of newSections) {
@@ -71,7 +79,7 @@ function updateAutoSections(existing: string, generated: string): string | null 
 			`<!-- FORGE:AUTO-START ${id} -->[\\s\\S]*?<!-- FORGE:AUTO-END ${id} -->`,
 		);
 		const mdxSectionPattern = new RegExp(
-			`\\{/\\* FORGE:AUTO-START ${id} \\*/\\}[\\s\\S]*?\\{/\\* FORGE:AUTO-END ${id} \\*/\\}`,
+			`\\{/\\*\\s*FORGE:AUTO-START ${id}\\s*\\*/\\}[\\s\\S]*?\\{/\\*\\s*FORGE:AUTO-END ${id}\\s*\\*/\\}`,
 		);
 		if (htmlSectionPattern.test(updated)) {
 			updated = updated.replace(htmlSectionPattern, replacement);

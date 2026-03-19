@@ -1,5 +1,16 @@
 # @forge-ts/cli
 
+## 0.7.2
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @forge-ts/gen@0.7.2
+  - @forge-ts/core@0.7.2
+  - @forge-ts/enforcer@0.7.2
+  - @forge-ts/doctest@0.7.2
+  - @forge-ts/api@0.7.2
+
 ## 0.7.1
 
 ### Patch Changes

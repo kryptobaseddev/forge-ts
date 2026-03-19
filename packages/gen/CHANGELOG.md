@@ -1,5 +1,16 @@
 # @forge-ts/gen
 
+## 0.7.2
+
+### Patch Changes
+
+- fix: FORGE:AUTO marker matching after MDX sanitization
+
+  updateAutoSections now extracts markers from both HTML and MDX comment formats in generated content. Previously, after the Mintlify adapter converted `<!-- FORGE:AUTO-START -->` to `{/* FORGE:AUTO-START */}` via sanitizeMdx, the marker extractor only checked HTML format and found nothing — causing stub page updates to silently skip on subsequent builds.
+
+- Updated dependencies []:
+  - @forge-ts/core@0.7.2
+
 ## 0.7.1
 
 ### Patch Changes

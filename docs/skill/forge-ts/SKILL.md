@@ -164,7 +164,7 @@ Zero-config works out of the box. Full options: [references/configuration.md](re
 ## Key Gotchas
 
 - Enforcer checks ALL files in tsconfig. Exclude test fixtures via `exclude`.
-- Unknown config keys and unknown `enforce.rules` entries warn to stderr and are ignored.
+- Unknown config keys and unknown `enforce.rules` entries warn to stderr and appear in the JSON envelope under `result._warnings`. If the config file fails to load (e.g. `.ts` config without `"type": "module"`), that is also warned.
 - `@example` blocks require fenced code blocks. Bare code is silently ignored.
 - `// => value` in examples auto-converts to `assert.strictEqual()` during doctest.
 - `@internal` symbols excluded from ALL output. `@beta` filtered at `minVisibility: "public"`.

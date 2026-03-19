@@ -1,5 +1,13 @@
 # @forge-ts/core
 
+## 0.6.6
+
+### Patch Changes
+
+- fix: surface config load failures instead of silently falling back to defaults
+
+  Config files that exist but fail to import (e.g. `.ts` config in a CommonJS project without `"type": "module"`) now produce a warning to stderr and in `_configWarnings` on the config object. Previously the error was silently swallowed, causing forge-ts to run with default config while the user's config file was ignored with no feedback.
+
 ## 0.6.5
 
 ### Patch Changes

@@ -176,7 +176,13 @@ async function loadModuleConfig(filePath: string): Promise<Partial<ForgeConfig> 
 			default?: Partial<ForgeConfig>;
 		};
 		return mod.default ?? null;
-	} catch {
+	} catch (err) {
+		// File exists but failed to import — warn instead of silently falling back.
+		// Common cause: .ts config in a CommonJS project without "type": "module".
+		const msg = err instanceof Error ? err.message : String(err);
+		console.error(
+			`[forge-ts] warning: failed to load config file "${filePath}" — ${msg.split("\n")[0]}`,
+		);
 		return null;
 	}
 }
@@ -244,6 +250,7 @@ export async function loadConfig(rootDir?: string): Promise<ForgeConfig> {
 
 	const candidates = [join(root, "forge-ts.config.ts"), join(root, "forge-ts.config.js")];
 	let found = false;
+	const loadWarnings: string[] = [];
 
 	for (const candidate of candidates) {
 		if (existsSync(candidate)) {
@@ -253,6 +260,10 @@ export async function loadConfig(rootDir?: string): Promise<ForgeConfig> {
 				found = true;
 				break;
 			}
+			// Config file exists but failed to load — track the warning
+			loadWarnings.push(
+				`Config file "${candidate}" exists but could not be loaded. Check that your project has "type": "module" in package.json or use a .js config file.`,
+			);
 		}
 	}
 
@@ -311,6 +322,11 @@ export async function loadConfig(rootDir?: string): Promise<ForgeConfig> {
 		} catch {
 			// Ignore parse errors
 		}
+	}
+
+	// Attach any config load warnings so CLI commands can surface them
+	if (loadWarnings.length > 0) {
+		config._configWarnings = [...(config._configWarnings ?? []), ...loadWarnings];
 	}
 
 	return config;

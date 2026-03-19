@@ -225,6 +225,7 @@ export const mintlifyAdapter: SSGAdapter = {
 			return {
 				path: page.path.replace(/\.md$/, ".mdx"),
 				content,
+				stub: page.stub,
 			};
 		});
 	},

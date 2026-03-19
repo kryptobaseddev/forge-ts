@@ -11,7 +11,8 @@ description: >
   (5) producing AI context files (llms.txt, llms-full.txt, SKILL.md),
   (6) configuring forge-ts.config.ts or per-rule enforcement,
   (7) understanding auto-generated vs stub doc pages and their idempotency,
-  (8) user mentions "forge-ts", "TSDoc enforcement", "doctest", "documentation
+  (8) injecting custom skill sections via config.skill,
+  (9) user mentions "forge-ts", "TSDoc enforcement", "doctest", "documentation
   compiler", or asks about generating docs from TypeScript source.
 ---
 
@@ -39,11 +40,12 @@ forge-ts docs dev  -->  Preview locally
 
 ```bash
 npm install -D @forge-ts/cli
-npx forge-ts check          # Enforce TSDoc coverage
-npx forge-ts test           # Run @example blocks as tests
-npx forge-ts build          # Generate all artifacts
-npx forge-ts docs init      # Scaffold Mintlify doc site
-npx forge-ts docs dev       # Launch dev server
+npx forge-ts check              # Enforce TSDoc coverage
+npx forge-ts test               # Run @example blocks as tests
+npx forge-ts build              # Generate all artifacts
+npx forge-ts build --force-stubs  # Reset stubs to scaffolding
+npx forge-ts docs init          # Scaffold Mintlify doc site
+npx forge-ts docs dev           # Launch dev server
 ```
 
 ## SSoT Principle
@@ -71,7 +73,7 @@ becomes a doctest AND a doc page entry AND part of the SKILL.md.
 | `<project>/SKILL.md` | agentskills.io package |
 | `docs.json` | SSG navigation config |
 
-### Stubs (created once, never overwritten)
+### Stubs (created once, progressively enriched)
 
 | Output | Purpose |
 |--------|---------|
@@ -81,16 +83,40 @@ becomes a doctest AND a doc page entry AND part of the SKILL.md.
 | `contributing.mdx` | Contribution guidelines |
 | `changelog.mdx` | Release history |
 
-Stubs are marked with a blockquote notice:
-`> This is a stub page. Edit this file to add your project's conceptual documentation.`
+Stubs contain `<!-- FORGE:AUTO-START id -->` / `<!-- FORGE:AUTO-END id -->`
+markers. On rebuild, content inside markers is updated from source while
+manual content outside markers is preserved.
 
-**Idempotency guarantee**: Auto pages are always overwritten from source.
-Stub pages are created only if they don't exist yet — manual edits are
-preserved across every subsequent `forge-ts build`.
+**Idempotency**: Auto pages always overwritten. Stubs never overwritten
+(only their FORGE:AUTO marker sections are refreshed).
 
 **Progressive generation**: As your project grows (new packages, new exports),
-auto-generated pages grow automatically on next build. New packages get their
-own `packages/<name>/` directory. New functions appear in the API reference.
+auto pages grow automatically. Stub marker sections update with new types
+and abstractions without touching your manual content.
+
+**Force reset**: `forge-ts build --force-stubs` overwrites stubs entirely,
+resetting them to their scaffolding state.
+
+## Skill Package Configuration
+
+Inject custom workflow knowledge into the generated SKILL.md:
+
+```typescript
+// forge-ts.config.ts
+skill: {
+  customSections: [
+    { heading: "The Flow", content: "check -> build -> docs init -> docs dev" },
+    { heading: "SSoT Principle", content: "Source code IS documentation." },
+  ],
+  extraGotchas: [
+    "Stub pages are NEVER overwritten — safe to edit after first build.",
+    "@example blocks require fenced code blocks. Bare code is ignored.",
+  ],
+}
+```
+
+Custom sections appear after the auto-generated API summary. Extra gotchas
+are appended to the auto-detected ones (@deprecated, @throws, enums).
 
 ## Enforcer Rules
 
@@ -107,11 +133,9 @@ own `packages/<name>/` directory. New functions appear in the API reference.
 | W004 | Importing `@deprecated` symbol cross-package |
 
 Rules accept `"error"` | `"warn"` | `"off"` in config `enforce.rules`.
-When `strict: true`, all warnings become errors.
-When `--json --mvi full` is passed, each error includes `suggestedFix` with
-the exact TSDoc block to paste.
+When `--json --mvi full`, each error includes `suggestedFix`.
 
-Fix examples and per-rule config: [references/enforcer-rules.md](references/enforcer-rules.md)
+Fix examples: [references/enforcer-rules.md](references/enforcer-rules.md)
 
 ## Configuration
 
@@ -126,20 +150,21 @@ export default {
     enabled: true,
     minVisibility: "public",
     strict: false,
-    rules: {
-      "require-example": "warn",    // downgrade E004
-      "require-package-doc": "off", // disable E005
-    },
+    rules: { "require-example": "warn" },
   },
   gen: {
     formats: ["markdown"],
     llmsTxt: true,
-    ssgTarget: "mintlify",  // or "docusaurus" | "nextra" | "vitepress"
+    ssgTarget: "mintlify",
+  },
+  skill: {
+    customSections: [],
+    extraGotchas: [],
   },
 } satisfies Partial<ForgeConfig>;
 ```
 
-Zero-config works out of the box. Full options: [references/configuration.md](references/configuration.md)
+Full options: [references/configuration.md](references/configuration.md)
 
 ## Key Gotchas
 
@@ -149,7 +174,8 @@ Zero-config works out of the box. Full options: [references/configuration.md](re
 - `@internal` symbols excluded from ALL output. `@beta` filtered at `minVisibility: "public"`.
 - OpenAPI paths require `@route GET /path` tags. No `@route` = empty `paths`.
 - Mintlify adapter generates `docs.json` (v4 format), not `mint.json`.
-- Stub pages are NEVER overwritten — safe to edit immediately after first build.
+- Stub pages use FORGE:AUTO markers — manual content outside markers is safe.
+- `--force-stubs` resets stubs to scaffolding; use with care on edited stubs.
 
 ## Packages
 

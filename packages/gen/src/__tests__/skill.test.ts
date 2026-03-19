@@ -21,6 +21,7 @@ function makeConfig(overrides: Partial<ForgeConfig["project"]> = {}): ForgeConfi
 			llmsTxt: true,
 			readmeSync: false,
 		},
+		skill: {},
 		project: {
 			packageName: "my-lib",
 			...overrides,
@@ -299,6 +300,42 @@ describe("generateSkillMd", () => {
 		);
 		expect(result).toContain("math");
 		expect(result).toContain("utils");
+	});
+
+	// -------------------------------------------------------------------------
+	// Skill config: custom sections and extra gotchas
+	// -------------------------------------------------------------------------
+
+	it("injects custom sections from config.skill.customSections", () => {
+		const cfg = makeConfig();
+		cfg.skill = {
+			customSections: [
+				{ heading: "The Flow", content: "check -> build -> docs" },
+			],
+		};
+		const result = generateSkillMd([fnAdd], cfg);
+		expect(result).toContain("## The Flow");
+		expect(result).toContain("check -> build -> docs");
+	});
+
+	it("appends extra gotchas from config.skill.extraGotchas", () => {
+		const cfg = makeConfig();
+		cfg.skill = {
+			extraGotchas: ["Stubs are never overwritten after first build."],
+		};
+		const result = generateSkillMd([fnAdd], cfg);
+		expect(result).toContain("Stubs are never overwritten after first build.");
+	});
+
+	// -------------------------------------------------------------------------
+	// Type extraction fix
+	// -------------------------------------------------------------------------
+
+	it("extracts types correctly for simple property signatures", () => {
+		const result = generateSkillMd([ifaceConfig], makeConfig());
+		// rootDir has signature "string" (bare type from checker)
+		// Should appear in config code example, not as empty string
+		expect(result).toContain("rootDir");
 	});
 });
 

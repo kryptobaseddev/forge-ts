@@ -197,6 +197,7 @@ export const vitepressAdapter: SSGAdapter = {
 		return pages.map((page) => ({
 			path: page.path.endsWith(".mdx") ? page.path.replace(/\.mdx$/, ".md") : page.path,
 			content: addVitepressFrontmatter(page),
+			stub: page.stub,
 		}));
 	},
 

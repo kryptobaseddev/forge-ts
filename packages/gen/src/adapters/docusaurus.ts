@@ -226,6 +226,7 @@ export const docusaurusAdapter: SSGAdapter = {
 		return pages.map((page) => ({
 			path: page.path.replace(/\.md$/, ".mdx"),
 			content: addDocusaurusFrontmatter(page),
+			stub: page.stub,
 		}));
 	},
 

@@ -51,6 +51,7 @@ export function defaultConfig(rootDir: string): ForgeConfig {
 			llmsTxt: true,
 			readmeSync: false,
 		},
+		skill: {},
 		project: {},
 	};
 }
@@ -76,6 +77,7 @@ function mergeWithDefaults(rootDir: string, partial: Partial<ForgeConfig>): Forg
 		doctest: { ...defaults.doctest, ...partial.doctest },
 		api: { ...defaults.api, ...partial.api },
 		gen: { ...defaults.gen, ...partial.gen },
+		skill: { ...defaults.skill, ...partial.skill },
 		project: { ...defaults.project, ...partial.project },
 	};
 }

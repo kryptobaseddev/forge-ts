@@ -9,11 +9,11 @@ import type { ForgeConfig } from "forge-ts";
 
 const config: Partial<ForgeConfig> = {
   // Root directory of the project.
-  rootDir: ".",
+  rootDir: "...",
   // Path to the tsconfig.json to compile against.
-  tsconfig: undefined,
+  tsconfig: "...",
   // Output directory for generated files.
-  outDir: ".",
+  outDir: "...",
   // Enforce TSDoc on all public exports.
   enforce: true,
   // DocTest configuration.
@@ -22,6 +22,8 @@ const config: Partial<ForgeConfig> = {
   api: true,
   // Output generation configuration.
   gen: true,
+  // Skill package generation settings. Custom sections here are merged into the generated SKILL.md, allowing projects to inject workflow knowledge, domain gotchas, and other context that cannot be derived from symbols alone.
+  skill: true,
   // Project metadata — auto-detected from package.json if not provided.
   project: "...",
 };
@@ -29,13 +31,14 @@ const config: Partial<ForgeConfig> = {
 
 | Property | Type | Description |
 |----------|------|-------------|
-| `rootDir` | `` | Root directory of the project. |
-| `tsconfig` | `` | Path to the tsconfig.json to compile against. |
-| `outDir` | `` | Output directory for generated files. |
+| `rootDir` | `string` | Root directory of the project. |
+| `tsconfig` | `string` | Path to the tsconfig.json to compile against. |
+| `outDir` | `string` | Output directory for generated files. |
 | `enforce` | `boolean; minVisibility: Visibility; strict: boolean; rules: EnforceRules; }` | Enforce TSDoc on all public exports. |
 | `doctest` | `boolean; cacheDir: string; }` | DocTest configuration. |
 | `api` | `boolean; openapi: boolean; openapiPath: string; }` | API generation configuration. |
 | `gen` | `boolean; formats: ("markdown" | "mdx")[]; llmsTxt: boolean; readmeSync: boolean; ssgTarget?: "docusaurus" | "mintlify" | "nextra" | "vitepress" | undefined; }` | Output generation configuration. |
+| `skill` | `boolean | undefined; customSections?: { heading: string; content: string; }[] | undefined; extraGotchas?: string[] | undefined; }` | Skill package generation settings. Custom sections here are merged into the generated SKILL.md, allowing projects to inject workflow knowledge, domain gotchas, and other context that cannot be derived from symbols alone. |
 | `project` | `string | undefined; homepage?: string | undefined; packageName?: string | undefined; description?: string | undefined; version?: string | undefined; bin?: Record<string, string> | undefined; scripts?: Record<...> | undefined; keywords?: string[] | undefined; }` | Project metadata — auto-detected from package.json if not provided. |
 
 ## `SSGConfigFile`
@@ -47,13 +50,13 @@ import type { SSGConfigFile } from "forge-ts";
 
 const config: Partial<SSGConfigFile> = {
   // Relative path from outDir (e.g., "mint.json", "_meta.json")
-  path: ".",
+  path: "...",
   // File content
-  content: undefined,
+  content: "...",
 };
 ```
 
 | Property | Type | Description |
 |----------|------|-------------|
-| `path` | `` | Relative path from outDir (e.g., "mint.json", "_meta.json") |
-| `content` | `` | File content |
+| `path` | `string` | Relative path from outDir (e.g., "mint.json", "_meta.json") |
+| `content` | `string` | File content |

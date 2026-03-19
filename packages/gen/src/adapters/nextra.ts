@@ -276,6 +276,7 @@ export const nextraAdapter: SSGAdapter = {
 		return pages.map((page) => ({
 			path: page.path.replace(/\.md$/, ".mdx"),
 			content: addNextraFrontmatter(page),
+			stub: page.stub,
 		}));
 	},
 

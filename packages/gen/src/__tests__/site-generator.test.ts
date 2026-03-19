@@ -22,6 +22,7 @@ function makeConfig(overrides: Partial<ForgeConfig["gen"]> = {}): ForgeConfig {
 			readmeSync: false,
 			...overrides,
 		},
+		skill: {},
 	};
 }
 
@@ -402,6 +403,23 @@ describe("concepts page", () => {
 		const concepts = pages.find((p) => p.path === "concepts.md");
 		// No type symbols, so Key Abstractions section should be absent
 		expect(concepts?.content).not.toContain("## Key Abstractions");
+	});
+
+	it("wraps auto sections in FORGE:AUTO markers for progressive enrichment", () => {
+		const map = makeSymbolsByPackage([fnAdd, ifaceConfig]);
+		const pages = generateDocSite(map, makeConfig(), baseOptions);
+		const concepts = pages.find((p) => p.path === "concepts.md");
+		expect(concepts?.content).toContain("<!-- FORGE:AUTO-START how-it-works -->");
+		expect(concepts?.content).toContain("<!-- FORGE:AUTO-END how-it-works -->");
+		expect(concepts?.content).toContain("<!-- FORGE:AUTO-START key-abstractions -->");
+		expect(concepts?.content).toContain("<!-- FORGE:AUTO-END key-abstractions -->");
+	});
+
+	it("is marked as a stub page", () => {
+		const map = makeSymbolsByPackage([fnAdd]);
+		const pages = generateDocSite(map, makeConfig(), baseOptions);
+		const concepts = pages.find((p) => p.path === "concepts.md");
+		expect(concepts?.stub).toBe(true);
 	});
 });
 

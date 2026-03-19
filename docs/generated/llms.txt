@@ -71,7 +71,8 @@ any - A generated skill package following the agentskills.io directory structure
 (symbols: ForgeSymbol[], config: ForgeConfig) => string - Generates a SKILL.md string following the Agent Skills specification. Generic for any TypeScript project — content derived from symbols.
 any - A single generated SSG configuration file.
 (pages: DocPage[], target: "docusaurus" | "mintlify" | "nextra" | "vitepress", projectName: string) => SSGConfigFile[] - Generate navigation configuration file(s) for the given SSG target.  Returns one file for most targets, but multiple files for Nextra (which uses per-directory `_meta.json` files).
-(config: ForgeConfig) => Promise<ForgeResult> - Runs the full generation pipeline: walk → render → write.
+any - Options for the generation pipeline.
+(config: ForgeConfig, options?: GenerateOptions | undefined) => Promise<ForgeResult> - Runs the full generation pipeline: walk → render → write.  Auto-generated pages are always regenerated from source code. Stub pages (scaffolding for human/agent editing) are only created if they don't already exist, preserving manual edits across builds. Pass `{ forceStubs: true }` to overwrite stubs.
 any - A minimal structured logger used throughout the CLI commands.
 (options?: { colors?: boolean | undefined; } | undefined) => Logger - Creates a  instance.
 any - Typed result from a forge-ts command.
@@ -84,7 +85,7 @@ any - Arguments for the `build` command.
 any - A single step in the build pipeline.
 any - Typed result for the `build` command.
 (args: BuildArgs) => Promise<CommandOutput<BuildResult>> - Runs the full build pipeline and returns a typed command output.
-CommandDef<{ readonly cwd: { readonly type: "string"; readonly description: "Project root directory"; }; readonly "skip-api": { readonly type: "boolean"; readonly description: "Skip OpenAPI generation"; readonly default: false; }; ... 4 more ...; readonly mvi: { ...; }; }> - Citty command definition for `forge-ts build`.
+CommandDef<{ readonly cwd: { readonly type: "string"; readonly description: "Project root directory"; }; readonly "skip-api": { readonly type: "boolean"; readonly description: "Skip OpenAPI generation"; readonly default: false; }; ... 5 more ...; readonly mvi: { ...; }; }> - Citty command definition for `forge-ts build`.
 any - A detected usage of a deprecated symbol.
 (symbols: ForgeSymbol[]) => DeprecatedUsage[] - Scans symbols for imports of deprecated exports from other packages.
 (config: ForgeConfig) => Promise<ForgeResult> - Runs the TSDoc enforcement pass against a project.  The enforcer walks all exported symbols that meet the configured minimum visibility threshold and emits diagnostics for any documentation deficiencies it finds.  ### Error codes | Code | Severity | Condition | |------|----------|-----------| | E001 | error    | Exported symbol is missing a TSDoc summary. | | E002 | error    | Function/method parameter lacks a `@param` tag. | | E003 | error    | Non-void function/method lacks a `@returns` tag. | | E004 | error    | Exported function/method is missing an `@example` block. | | E005 | error    | Package entry point (index.ts) is missing `@packageDocumentation`. | | E006 | error    | Public/protected class member is missing a TSDoc comment. | | E007 | error    | Interface/type alias property is missing a TSDoc comment. | | W001 | warning  | TSDoc comment contains parse errors. | | W002 | warning  | Function body throws but has no `@throws` tag. | | W003 | warning  | `@deprecated` tag is present without explanation. |  When `config.enforce.strict` is `true` all warnings are promoted to errors.

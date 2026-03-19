@@ -414,13 +414,15 @@ function renderConceptsPage(
 	lines.push(
 		"> This is a stub page. Edit this file to add your project's conceptual documentation.",
 	);
+	lines.push("> Auto-generated sections below (inside FORGE:AUTO markers) update on every build.");
 	lines.push("");
 
-	// Auto-generated description from @packageDocumentation
+	// Auto-enriched section: How It Works — regenerated even in existing stubs
 	const pkgDoc = [...symbolsByPackage.values()]
 		.flatMap((syms) => syms.map((s) => s.documentation?.tags?.packageDocumentation?.[0]))
 		.find(Boolean);
 
+	lines.push("<!-- FORGE:AUTO-START how-it-works -->");
 	lines.push("## How It Works");
 	lines.push("");
 	if (pkgDoc) {
@@ -431,19 +433,24 @@ function renderConceptsPage(
 		);
 	}
 	lines.push("");
+	lines.push("<!-- FORGE:AUTO-END how-it-works -->");
+	lines.push("");
 
-	// Key abstractions — list exported types as bullet points
+	// Auto-enriched section: Key Abstractions — regenerated even in existing stubs
 	const allTypeSymbols = [...symbolsByPackage.values()]
 		.flat()
 		.filter((s) => s.exported && TYPE_KINDS.has(s.kind));
 
 	if (allTypeSymbols.length > 0) {
+		lines.push("<!-- FORGE:AUTO-START key-abstractions -->");
 		lines.push("## Key Abstractions");
 		lines.push("");
 		for (const s of allTypeSymbols) {
 			const desc = s.documentation?.summary ?? `The \`${s.name}\` ${s.kind}.`;
 			lines.push(`- **\`${s.name}\`** — ${desc}`);
 		}
+		lines.push("");
+		lines.push("<!-- FORGE:AUTO-END key-abstractions -->");
 		lines.push("");
 	}
 

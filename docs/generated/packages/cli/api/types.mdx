@@ -73,6 +73,7 @@ Arguments for the `build` command.
 | `cwd` | `string \| undefined` | No | Project root directory (default: cwd). |
 | `skipApi` | `boolean \| undefined` | No | Skip API generation even if enabled in config. |
 | `skipGen` | `boolean \| undefined` | No | Skip doc generation even if enabled in config. |
+| `forceStubs` | `boolean \| undefined` | No | Overwrite stub pages even if they already exist on disk. Normally stub pages (concepts, guides, faq, contributing, changelog) are only created on the first build to preserve manual edits. Use this to reset stubs to their scaffolding state. |
 | `mvi` | `string \| undefined` | No | MVI verbosity level for structured output. |
 
 ## BuildStep

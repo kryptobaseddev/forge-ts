@@ -482,15 +482,16 @@ console.log(configs[0].path); // ".vitepress/sidebar.json"
 
 ### `generate`
 
-Runs the full generation pipeline: walk → render → write.
+Runs the full generation pipeline: walk → render → write.  Auto-generated pages are always regenerated from source code. Stub pages (scaffolding for human/agent editing) are only created if they don't already exist, preserving manual edits across builds. Pass `{ forceStubs: true }` to overwrite stubs.
 
 ```typescript
-(config: ForgeConfig) => Promise<ForgeResult>
+(config: ForgeConfig, options?: GenerateOptions | undefined) => Promise<ForgeResult>
 ```
 
 **Parameters:**
 
 - `config` — The resolved  for the project.
+- `options` — Optional generation flags (e.g., forceStubs).
 
 **Returns:** A  describing the outcome.
 
@@ -880,6 +881,7 @@ any
 - `doctest` — DocTest configuration.
 - `api` — API generation configuration.
 - `gen` — Output generation configuration.
+- `skill` — Skill package generation settings. Custom sections here are merged into the generated SKILL.md, allowing projects to inject workflow knowledge, domain gotchas, and other context that cannot be derived from symbols alone.
 - `project` — Project metadata — auto-detected from package.json if not provided.
 
 ### `ForgeResult`
@@ -1227,6 +1229,7 @@ any
 
 - `path` — Relative path from the docs output directory.
 - `content` — File content (string for text).
+- `stub` — When true, this file is scaffolding intended for human/agent editing. Stub files are created only on the first build and never overwritten, preserving manual edits across subsequent `forge-ts build` runs. Callers should check this flag and skip writing if the file exists.
 
 ### `SSGStyleGuide`
 
@@ -1371,6 +1374,18 @@ any
 - `path` — Relative path from outDir (e.g., "mint.json", "_meta.json")
 - `content` — File content
 
+### `GenerateOptions`
+
+Options for the generation pipeline.
+
+```typescript
+any
+```
+
+**Members:**
+
+- `forceStubs` — When true, overwrite stub pages even if they already exist on disk. Normally stub pages (concepts, guides, faq, contributing, changelog) are only created on the first build to preserve manual edits. Use this to reset stubs to their scaffolding state.
+
 ### `Logger`
 
 A minimal structured logger used throughout the CLI commands.
@@ -1464,6 +1479,7 @@ any
 - `cwd` — Project root directory (default: cwd).
 - `skipApi` — Skip API generation even if enabled in config.
 - `skipGen` — Skip doc generation even if enabled in config.
+- `forceStubs` — Overwrite stub pages even if they already exist on disk. Normally stub pages (concepts, guides, faq, contributing, changelog) are only created on the first build to preserve manual edits. Use this to reset stubs to their scaffolding state.
 - `mvi` — MVI verbosity level for structured output.
 
 ### `BuildStep`
@@ -1830,7 +1846,7 @@ console.log(configs[0].path); // ".vitepress/config.mts"
 Citty command definition for `forge-ts build`.
 
 ```typescript
-CommandDef<{ readonly cwd: { readonly type: "string"; readonly description: "Project root directory"; }; readonly "skip-api": { readonly type: "boolean"; readonly description: "Skip OpenAPI generation"; readonly default: false; }; ... 4 more ...; readonly mvi: { ...; }; }>
+CommandDef<{ readonly cwd: { readonly type: "string"; readonly description: "Project root directory"; }; readonly "skip-api": { readonly type: "boolean"; readonly description: "Skip OpenAPI generation"; readonly default: false; }; ... 5 more ...; readonly mvi: { ...; }; }>
 ```
 
 ### `checkCommand`

@@ -1,7 +1,7 @@
 ---
 name: forge-ts
 description: >
-  Runs the API generation pipeline: walk → extract → generate → write. Use when: (1) calling its 39 API functions, (2) configuring forge-ts, (3) understanding its 60 type definitions, (4) user mentions "forge-ts" or asks about its API.
+  Runs the API generation pipeline: walk → extract → generate → write. Use when: (1) calling its 39 API functions, (2) configuring forge-ts, (3) understanding its 61 type definitions, (4) user mentions "forge-ts" or asks about its API.
 ---
 
 # forge-ts
@@ -48,11 +48,11 @@ import type { ForgeConfig } from "forge-ts";
 
 const config: Partial<ForgeConfig> = {
   // Root directory of the project.
-  rootDir: ".",
+  rootDir: "...",
   // Path to the tsconfig.json to compile against.
-  tsconfig: undefined,
+  tsconfig: "...",
   // Output directory for generated files.
-  outDir: ".",
+  outDir: "...",
   // Enforce TSDoc on all public exports.
   enforce: true,
   // DocTest configuration.
@@ -61,6 +61,8 @@ const config: Partial<ForgeConfig> = {
   api: true,
   // Output generation configuration.
   gen: true,
+  // Skill package generation settings. Custom sections here are merged into the generated SKILL.md, allowing projects to inject workflow knowledge, domain gotchas, and other context that cannot be derived from symbols alone.
+  skill: true,
   // Project metadata — auto-detected from package.json if not provided.
   project: "...",
 };

@@ -16,6 +16,13 @@ export interface GeneratedFile {
 	path: string;
 	/** File content (string for text). */
 	content: string;
+	/**
+	 * When true, this file is scaffolding intended for human/agent editing.
+	 * Stub files are created only on the first build and never overwritten,
+	 * preserving manual edits across subsequent `forge-ts build` runs.
+	 * Callers should check this flag and skip writing if the file exists.
+	 */
+	stub?: boolean;
 }
 
 /**

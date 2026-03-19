@@ -285,7 +285,7 @@ function renderConfigSection(symbols: ForgeSymbol[], config: ForgeConfig): strin
 				lines.push(`  // ${comment}`);
 			}
 			// Infer a sensible default value from the type
-			const type = child.signature?.split(":").slice(1).join(":").trim() ?? "";
+			const type = extractType(child.signature);
 			const defaultVal = inferDefaultValue(type, child.name);
 			lines.push(`  ${child.name}: ${defaultVal},`);
 		}
@@ -300,6 +300,24 @@ function renderConfigSection(symbols: ForgeSymbol[], config: ForgeConfig): strin
 	lines.push("See [references/CONFIGURATION.md](references/CONFIGURATION.md) for full details.");
 	lines.push("");
 	return lines;
+}
+
+/**
+ * Extracts the type portion from a property signature.
+ * For `name: type` signatures, returns the part after the first `:`.
+ * For bare type strings (e.g., `string` from `checker.typeToString`),
+ * returns the whole string — these come from interface property children
+ * where the TypeScript checker returns just the type, not `name: type`.
+ *
+ * @param signature - The raw signature string from the walker.
+ * @returns The extracted type string, or empty string if no signature.
+ * @internal
+ */
+function extractType(signature: string | undefined): string {
+	if (!signature) return "";
+	const colonIdx = signature.indexOf(":");
+	if (colonIdx === -1) return signature.trim();
+	return signature.slice(colonIdx + 1).trim();
 }
 
 /**
@@ -418,9 +436,26 @@ function buildSkillMd(symbols: ForgeSymbol[], config: ForgeConfig, directoryName
 	lines.push(...renderConfigSection(symbols, config));
 
 	// ---------------------------------------------------------------------------
-	// Gotchas — from @deprecated, @throws, enums
+	// Custom sections — injected from config.skill.customSections
+	// These allow projects to add workflow knowledge, domain context,
+	// and other information that cannot be derived from symbols alone.
+	// ---------------------------------------------------------------------------
+	const customSections = config.skill.customSections ?? [];
+	for (const section of customSections) {
+		lines.push(`## ${section.heading}`);
+		lines.push("");
+		lines.push(section.content);
+		lines.push("");
+	}
+
+	// ---------------------------------------------------------------------------
+	// Gotchas — from @deprecated, @throws, enums + config.skill.extraGotchas
 	// ---------------------------------------------------------------------------
 	const gotchaLines = renderGotchas(symbols);
+	const extraGotchas = config.skill.extraGotchas ?? [];
+	for (const gotcha of extraGotchas) {
+		gotchaLines.push(`- ${gotcha}`);
+	}
 	if (gotchaLines.length > 0) {
 		lines.push("## Gotchas");
 		lines.push("");
@@ -636,9 +671,7 @@ function buildConfigurationMd(symbols: ForgeSymbol[], config: ForgeConfig): stri
 				if (child.documentation?.summary) {
 					lines.push(`  // ${child.documentation.summary}`);
 				}
-				const type = child.signature
-					? child.signature.split(":").slice(1).join(":").trim()
-					: "";
+				const type = extractType(child.signature);
 				const defaultVal = inferDefaultValue(type, child.name);
 				lines.push(`  ${child.name}: ${defaultVal},`);
 			}
@@ -651,7 +684,7 @@ function buildConfigurationMd(symbols: ForgeSymbol[], config: ForgeConfig): stri
 		lines.push("| Property | Type | Description |");
 		lines.push("|----------|------|-------------|");
 		for (const child of children) {
-			const type = child.signature ? child.signature.split(":").slice(1).join(":").trim() : "";
+			const type = extractType(child.signature);
 			const desc = child.documentation?.summary ?? "";
 			lines.push(`| \`${child.name}\` | \`${type}\` | ${desc} |`);
 		}

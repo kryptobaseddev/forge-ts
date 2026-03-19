@@ -44,6 +44,7 @@ A file to write to disk during scaffolding or generation.
 |----------|------|----------|-------------|
 | `path` | `string` | Yes | Relative path from the docs output directory. |
 | `content` | `string` | Yes | File content (string for text). |
+| `stub` | `boolean \| undefined` | No | When true, this file is scaffolding intended for human/agent editing. Stub files are created only on the first build and never overwritten, preserving manual edits across subsequent `forge-ts build` runs. Callers should check this flag and skip writing if the file exists. |
 
 ## SSGStyleGuide
 
@@ -145,3 +146,11 @@ A single generated SSG configuration file.
 |----------|------|----------|-------------|
 | `path` | `string` | Yes | Relative path from outDir (e.g., "mint.json", "_meta.json") |
 | `content` | `string` | Yes | File content |
+
+## GenerateOptions
+
+Options for the generation pipeline.
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| `forceStubs` | `boolean \| undefined` | No | When true, overwrite stub pages even if they already exist on disk. Normally stub pages (concepts, guides, faq, contributing, changelog) are only created on the first build to preserve manual edits. Use this to reset stubs to their scaffolding state. |

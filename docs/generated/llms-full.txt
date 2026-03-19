@@ -1,7 +1,7 @@
 # . - Full Context
 
 Root: .
-Generated: 2026-03-19T05:02:44.416Z
+Generated: 2026-03-19T05:49:36.798Z
 
 ## Functions
 
@@ -388,12 +388,13 @@ Example:
 
 ### generate()
 
-(config: ForgeConfig) => Promise<ForgeResult>
+(config: ForgeConfig, options?: GenerateOptions | undefined) => Promise<ForgeResult>
 
-Runs the full generation pipeline: walk → render → write.
+Runs the full generation pipeline: walk → render → write.  Auto-generated pages are always regenerated from source code. Stub pages (scaffolding for human/agent editing) are only created if they don't already exist, preserving manual edits across builds. Pass `{ forceStubs: true }` to overwrite stubs.
 
 Parameters:
 - config: The resolved  for the project.
+- options: Optional generation flags (e.g., forceStubs).
 
 Returns: A  describing the outcome.
 
@@ -818,6 +819,12 @@ API generation configuration.
 { enabled: boolean; formats: ("markdown" | "mdx")[]; llmsTxt: boolean; readmeSync: boolean; ssgTarget?: "docusaurus" | "mintlify" | "nextra" | "vitepress" | undefined; }
 
 Output generation configuration.
+
+#### skill
+
+{ enabled?: boolean | undefined; customSections?: { heading: string; content: string; }[] | undefined; extraGotchas?: string[] | undefined; }
+
+Skill package generation settings. Custom sections here are merged into the generated SKILL.md, allowing projects to inject workflow knowledge, domain gotchas, and other context that cannot be derived from symbols alone.
 
 #### project
 
@@ -1693,6 +1700,12 @@ string
 
 File content (string for text).
 
+#### stub
+
+boolean | undefined
+
+When true, this file is scaffolding intended for human/agent editing. Stub files are created only on the first build and never overwritten, preserving manual edits across subsequent `forge-ts build` runs. Callers should check this flag and skip writing if the file exists.
+
 ### SSGStyleGuide
 
 any
@@ -2054,6 +2067,23 @@ string
 
 File content
 
+### GenerateOptions
+
+any
+
+Options for the generation pipeline.
+
+Members:
+
+#### forceStubs
+
+boolean | undefined
+
+When true, overwrite stub pages even if they already exist on disk. Normally stub pages (concepts, guides, faq, contributing, changelog) are only created on the first build to preserve manual edits. Use this to reset stubs to their scaffolding state.
+
+Example:
+  await generate(config, { forceStubs: true });
+
 ### Logger
 
 any
@@ -2274,6 +2304,12 @@ Skip API generation even if enabled in config.
 boolean | undefined
 
 Skip doc generation even if enabled in config.
+
+#### forceStubs
+
+boolean | undefined
+
+Overwrite stub pages even if they already exist on disk. Normally stub pages (concepts, guides, faq, contributing, changelog) are only created on the first build to preserve manual edits. Use this to reset stubs to their scaffolding state.
 
 #### mvi
 
@@ -2980,7 +3016,7 @@ Example:
 
 ### buildCommand
 
-CommandDef<{ readonly cwd: { readonly type: "string"; readonly description: "Project root directory"; }; readonly "skip-api": { readonly type: "boolean"; readonly description: "Skip OpenAPI generation"; readonly default: false; }; ... 4 more ...; readonly mvi: { ...; }; }>
+CommandDef<{ readonly cwd: { readonly type: "string"; readonly description: "Project root directory"; }; readonly "skip-api": { readonly type: "boolean"; readonly description: "Skip OpenAPI generation"; readonly default: false; }; ... 5 more ...; readonly mvi: { ...; }; }>
 
 Citty command definition for `forge-ts build`.
 

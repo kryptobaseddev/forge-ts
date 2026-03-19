@@ -25,6 +25,9 @@
       "name": "generator"
     },
     {
+      "name": "index"
+    },
+    {
       "name": "init-docs"
     },
     {
@@ -255,6 +258,10 @@
               }
             ],
             "description": "Output generation configuration."
+          },
+          "skill": {
+            "type": "object",
+            "description": "Skill package generation settings. Custom sections here are merged into the generated SKILL.md, allowing projects to inject workflow knowledge, domain gotchas, and other context that cannot be derived from symbols alone."
           },
           "project": {
             "type": "object",
@@ -1200,11 +1207,16 @@
           "content": {
             "type": "string",
             "description": "File content (string for text)."
+          },
+          "stub": {
+            "type": "boolean",
+            "description": "When true, this file is scaffolding intended for human/agent editing. Stub files are created only on the first build and never overwritten, preserving manual edits across subsequent `forge-ts build` runs. Callers should check this flag and skip writing if the file exists."
           }
         },
         "required": [
           "path",
-          "content"
+          "content",
+          "stub"
         ]
       },
       "SSGStyleGuide": {
@@ -1489,6 +1501,19 @@
         "required": [
           "path",
           "content"
+        ]
+      },
+      "GenerateOptions": {
+        "description": "Options for the generation pipeline.",
+        "type": "object",
+        "properties": {
+          "forceStubs": {
+            "type": "boolean",
+            "description": "When true, overwrite stub pages even if they already exist on disk. Normally stub pages (concepts, guides, faq, contributing, changelog) are only created on the first build to preserve manual edits. Use this to reset stubs to their scaffolding state."
+          }
+        },
+        "required": [
+          "forceStubs"
         ]
       },
       "CommandOutput": {

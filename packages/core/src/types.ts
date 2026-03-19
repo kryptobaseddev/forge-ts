@@ -126,6 +126,35 @@ export interface ForgeConfig {
 		/** Static site generator to target for output format. */
 		ssgTarget?: "docusaurus" | "mintlify" | "nextra" | "vitepress";
 	};
+	/**
+	 * Skill package generation settings.
+	 * Custom sections here are merged into the generated SKILL.md,
+	 * allowing projects to inject workflow knowledge, domain gotchas,
+	 * and other context that cannot be derived from symbols alone.
+	 */
+	skill: {
+		/** When true, generate a SKILL.md package alongside llms.txt. Defaults to following `gen.llmsTxt`. */
+		enabled?: boolean;
+		/**
+		 * Custom sections to inject into the generated SKILL.md body.
+		 * Each entry becomes a `## heading` section with the provided markdown content.
+		 * Sections are inserted after the auto-generated API section and before Gotchas.
+		 *
+		 * @example
+		 * ```typescript
+		 * customSections: [
+		 *   { heading: "The Flow", content: "check → build → docs init → docs dev" },
+		 *   { heading: "SSoT Principle", content: "Source code IS documentation." },
+		 * ]
+		 * ```
+		 */
+		customSections?: Array<{ heading: string; content: string }>;
+		/**
+		 * Extra gotcha lines to append to the auto-detected Gotchas section.
+		 * Each string becomes a `- ` bullet point.
+		 */
+		extraGotchas?: string[];
+	};
 	/** Project metadata — auto-detected from package.json if not provided. */
 	project: {
 		/** Repository URL (e.g., "https://github.com/user/repo"). */

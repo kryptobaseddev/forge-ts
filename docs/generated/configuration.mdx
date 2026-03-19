@@ -4,8 +4,6 @@ description: "Configuration reference for forge-ts"
 ---
 Configuration reference for **forge-ts**.
 
-> This is a stub page. Edit this file to document your configuration options.
-
 ## forge-ts.config.ts
 
 Create a `forge-ts.config.ts` file in your project root:
@@ -32,4 +30,5 @@ Full configuration for a forge-ts run. Loaded from forge-ts.config.ts or the "fo
 | `doctest` | `{ enabled: boolean; cacheDir: string; }` | Yes | DocTest configuration. |
 | `api` | `{ enabled: boolean; openapi: boolean; openapiPath: string; }` | Yes | API generation configuration. |
 | `gen` | `{ enabled: boolean; formats: ("markdown" \| "mdx")[]; llmsTxt: boolean; readmeSync: boolean; ssgTarget?: "docusaurus" \| "mintlify" \| "nextra" \| "vitepress" \| undefined; }` | No | Output generation configuration. |
+| `skill` | `{ enabled?: boolean \| undefined; customSections?: { heading: string; content: string; }[] \| undefined; extraGotchas?: string[] \| undefined; }` | No | Skill package generation settings. Custom sections here are merged into the generated SKILL.md, allowing projects to inject workflow knowledge, domain gotchas, and other context that cannot be derived from symbols alone. |
 | `project` | `{ repository?: string \| undefined; homepage?: string \| undefined; packageName?: string \| undefined; description?: string \| undefined; version?: string \| undefined; bin?: Record<string, string> \| undefined; scripts?: Record<...> \| undefined; keywords?: string[] \| undefined; }` | No | Project metadata — auto-detected from package.json if not provided. |

@@ -25,7 +25,7 @@ export { generateSkillMd, generateSkillPackage, type SkillPackage } from "./skil
 export { generateSSGConfigs, type SSGConfigFile } from "./ssg-config.js";
 
 import { existsSync } from "node:fs";
-import { mkdir, writeFile } from "node:fs/promises";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { createWalker, type ForgeConfig, type ForgeResult } from "@forge-ts/core";
 import { DEFAULT_TARGET, getAdapter } from "./adapters/index.js";
@@ -37,9 +37,75 @@ import { generateDocSite, groupSymbolsByPackage } from "./site-generator.js";
 import { generateSkillPackage } from "./skill.js";
 
 /**
+ * Updates auto-enriched sections in an existing stub file.
+ * Replaces content between `<!-- FORGE:AUTO-START id -->` and
+ * `<!-- FORGE:AUTO-END id -->` markers with fresh content from the
+ * newly generated version. Manual content outside markers is preserved.
+ *
+ * @param existing - The current file content on disk.
+ * @param generated - The freshly generated content with updated markers.
+ * @returns The merged content, or null if no markers were found to update.
+ * @internal
+ */
+function updateAutoSections(existing: string, generated: string): string | null {
+	const markerPattern = /<!-- FORGE:AUTO-START (\S+) -->([\s\S]*?)<!-- FORGE:AUTO-END \1 -->/g;
+
+	// Extract all auto sections from the generated content
+	const newSections = new Map<string, string>();
+	let match: RegExpExecArray | null;
+	// biome-ignore lint: manual exec loop is clearest for named captures
+	while ((match = markerPattern.exec(generated)) !== null) {
+		newSections.set(match[1], match[0]);
+	}
+
+	if (newSections.size === 0) return null;
+
+	// Replace each marker section in the existing content
+	let updated = existing;
+	let changed = false;
+	for (const [id, replacement] of newSections) {
+		const sectionPattern = new RegExp(
+			`<!-- FORGE:AUTO-START ${id} -->[\\s\\S]*?<!-- FORGE:AUTO-END ${id} -->`,
+		);
+		if (sectionPattern.test(updated)) {
+			updated = updated.replace(sectionPattern, replacement);
+			changed = true;
+		}
+	}
+
+	return changed ? updated : null;
+}
+
+/**
+ * Options for the generation pipeline.
+ *
+ * @public
+ */
+export interface GenerateOptions {
+	/**
+	 * When true, overwrite stub pages even if they already exist on disk.
+	 * Normally stub pages (concepts, guides, faq, contributing, changelog)
+	 * are only created on the first build to preserve manual edits.
+	 * Use this to reset stubs to their scaffolding state.
+	 *
+	 * @example
+	 * ```typescript
+	 * await generate(config, { forceStubs: true });
+	 * ```
+	 */
+	forceStubs?: boolean;
+}
+
+/**
  * Runs the full generation pipeline: walk → render → write.
  *
+ * Auto-generated pages are always regenerated from source code.
+ * Stub pages (scaffolding for human/agent editing) are only created
+ * if they don't already exist, preserving manual edits across builds.
+ * Pass `{ forceStubs: true }` to overwrite stubs.
+ *
  * @param config - The resolved {@link ForgeConfig} for the project.
+ * @param options - Optional generation flags (e.g., forceStubs).
  * @returns A {@link ForgeResult} describing the outcome.
  * @example
  * ```typescript
@@ -50,8 +116,9 @@ import { generateSkillPackage } from "./skill.js";
  * @public
  * @packageDocumentation
  */
-export async function generate(config: ForgeConfig): Promise<ForgeResult> {
+export async function generate(config: ForgeConfig, options?: GenerateOptions): Promise<ForgeResult> {
 	const start = Date.now();
+	const forceStubs = options?.forceStubs ?? false;
 
 	const walker = createWalker(config);
 	const symbols = walker.walk();
@@ -84,12 +151,6 @@ export async function generate(config: ForgeConfig): Promise<ForgeResult> {
 			packageName: config.project.packageName,
 		});
 
-		// Collect stub page paths so we can skip overwriting them if they already exist.
-		// Stub pages are scaffolding for human/agent editing — only created on first build.
-		const stubPaths = new Set(
-			pages.filter((p) => p.stub).map((p) => p.path),
-		);
-
 		const adapterContext: AdapterContext = {
 			config,
 			projectName,
@@ -98,17 +159,22 @@ export async function generate(config: ForgeConfig): Promise<ForgeResult> {
 			outDir: config.outDir,
 		};
 
-		// Transform pages through the adapter (adds correct frontmatter and extensions)
+		// Transform pages through the adapter (adds correct frontmatter and extensions).
+		// The adapter propagates the stub flag from DocPage to GeneratedFile.
 		const transformedPages = adapter.transformPages(pages, adapterContext);
 		for (const file of transformedPages) {
 			const filePath = join(config.outDir, file.path);
 
-			// Stub pages: only write if the file doesn't already exist.
-			// This preserves manual edits across subsequent builds.
-			const originalPath = pages.find(
-				(p) => file.path.replace(/\.\w+$/, "") === p.path.replace(/\.\w+$/, ""),
-			)?.path;
-			if (originalPath && stubPaths.has(originalPath) && existsSync(filePath)) {
+			// Stub pages: preserve manual edits across subsequent builds.
+			// If the stub exists on disk, update only FORGE:AUTO marker sections
+			// (progressive enrichment) while leaving manual content untouched.
+			// With --force-stubs, overwrite the entire file.
+			if (file.stub && existsSync(filePath) && !forceStubs) {
+				const existingContent = await readFile(filePath, "utf8");
+				const merged = updateAutoSections(existingContent, file.content);
+				if (merged) {
+					await writeFile(filePath, merged, "utf8");
+				}
 				continue;
 			}
 
@@ -134,13 +200,17 @@ export async function generate(config: ForgeConfig): Promise<ForgeResult> {
 		const llmsFull = generateLlmsFullTxt(symbols, config);
 		await writeFile(join(config.outDir, "llms-full.txt"), llmsFull, "utf8");
 
-		const skillPkg = generateSkillPackage(symbols, config);
-		const skillDir = join(config.outDir, skillPkg.directoryName);
-		await mkdir(skillDir, { recursive: true });
-		for (const file of skillPkg.files) {
-			const filePath = join(skillDir, file.path);
-			await mkdir(dirname(filePath), { recursive: true });
-			await writeFile(filePath, file.content, "utf8");
+		// Skill package generation — follows gen.llmsTxt unless skill.enabled is explicitly false
+		const skillEnabled = config.skill.enabled !== false;
+		if (skillEnabled) {
+			const skillPkg = generateSkillPackage(symbols, config);
+			const skillDir = join(config.outDir, skillPkg.directoryName);
+			await mkdir(skillDir, { recursive: true });
+			for (const file of skillPkg.files) {
+				const filePath = join(skillDir, file.path);
+				await mkdir(dirname(filePath), { recursive: true });
+				await writeFile(filePath, file.content, "utf8");
+			}
 		}
 	}
 

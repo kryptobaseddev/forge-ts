@@ -1,7 +1,7 @@
 import { join } from "node:path";
 import { generateApi } from "@forge-ts/api";
 import { loadConfig } from "@forge-ts/core";
-import { generate } from "@forge-ts/gen";
+import { generate, type GenerateOptions } from "@forge-ts/gen";
 import { defineCommand } from "citty";
 import { createLogger } from "../logger.js";
 import {
@@ -23,6 +23,13 @@ export interface BuildArgs {
 	skipApi?: boolean;
 	/** Skip doc generation even if enabled in config. */
 	skipGen?: boolean;
+	/**
+	 * Overwrite stub pages even if they already exist on disk.
+	 * Normally stub pages (concepts, guides, faq, contributing, changelog)
+	 * are only created on the first build to preserve manual edits.
+	 * Use this to reset stubs to their scaffolding state.
+	 */
+	forceStubs?: boolean;
 	/** MVI verbosity level for structured output. */
 	mvi?: string;
 }
@@ -128,7 +135,7 @@ export async function runBuild(args: BuildArgs): Promise<CommandOutput<BuildResu
 	}
 
 	if (config.gen.enabled && !args.skipGen) {
-		const result = await generate(config);
+		const result = await generate(config, { forceStubs: args.forceStubs });
 		if (!result.success) {
 			const errors: ForgeCliError[] = result.errors.map((e) => ({
 				code: e.code,
@@ -218,6 +225,11 @@ export const buildCommand = defineCommand({
 			description: "Skip doc generation",
 			default: false,
 		},
+		"force-stubs": {
+			type: "boolean",
+			description: "Overwrite stub pages even if they exist (reset to scaffolding)",
+			default: false,
+		},
 		json: {
 			type: "boolean",
 			description: "Output as LAFS JSON envelope (agent-friendly)",
@@ -243,6 +255,7 @@ export const buildCommand = defineCommand({
 			cwd: args.cwd,
 			skipApi: args["skip-api"],
 			skipGen: args["skip-gen"],
+			forceStubs: args["force-stubs"],
 			mvi: args.mvi,
 		});
 

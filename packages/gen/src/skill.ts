@@ -10,12 +10,14 @@ import type { ForgeConfig, ForgeSymbol } from "@forge-ts/core";
  * @internal
  */
 function toDirectoryName(name: string): string {
-	return name
+	const slug = name
 		.replace(/^@[^/]+\//, "") // strip npm scope
 		.toLowerCase()
 		.replace(/[^a-z0-9-]+/g, "-")
-		.replace(/^-+|-+$/g, "")
-		.slice(0, 64);
+		.replace(/^-+|-+$/g, "");
+	// agentskills.io convention: SKILL-{project} prefix
+	const prefixed = slug.startsWith("skill-") ? slug : `SKILL-${slug}`;
+	return prefixed.slice(0, 64);
 }
 
 /**

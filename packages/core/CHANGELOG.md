@@ -1,5 +1,17 @@
 # @forge-ts/core
 
+## 0.6.5
+
+### Patch Changes
+
+- fix: SKILL-{project} directory naming, skill references, config warnings in envelope
+
+  - Generated skill directory uses `SKILL-{project}` prefix convention (e.g. `SKILL-core` instead of `core`)
+  - Config warnings surfaced in JSON envelope under `result._warnings` for agent visibility
+  - New skill references: `references/skill-config.md` (skill package configuration), `references/guides.md` (auto-generated vs stub pages, editing strategy)
+  - Updated `references/configuration.md` with skill config, project metadata fields, and unknown-key warning behavior
+  - Deduplicated `generatedFiles` via Set
+
 ## 0.6.4
 
 ### Patch Changes

@@ -71,7 +71,7 @@ becomes a doctest AND a doc page entry AND part of the SKILL.md.
 | `packages/<name>/api/examples.mdx` | Aggregated @example blocks |
 | `api/openapi.json` | Types + @route tags |
 | `llms.txt` / `llms-full.txt` | Compact/dense AI context |
-| `<project>/SKILL.md` | agentskills.io package |
+| `SKILL-{project}/SKILL.md` | agentskills.io package |
 | `docs.json` | SSG navigation config (when ssgTarget set) |
 
 ### Stubs (created once, never overwritten)
@@ -103,26 +103,14 @@ written. `forge-ts docs init` adds SSG-specific adapter config and scaffold
 files (e.g. `docs.json` for Mintlify). Run `build` first for content, then
 `docs init` if you need platform-specific setup.
 
-## Skill Package Configuration
+## Skill Package
 
-Inject custom workflow knowledge into the generated SKILL.md:
+`forge-ts build` generates a `SKILL-{project}/` directory containing the
+skill package. Configure with `config.skill.customSections` and
+`config.skill.extraGotchas` to inject workflow knowledge that can't be
+derived from types alone.
 
-```typescript
-// forge-ts.config.ts
-skill: {
-  customSections: [
-    { heading: "The Flow", content: "check -> build -> docs init -> docs dev" },
-    { heading: "SSoT Principle", content: "Source code IS documentation." },
-  ],
-  extraGotchas: [
-    "Stub pages are NEVER overwritten — safe to edit after first build.",
-    "@example blocks require fenced code blocks. Bare code is ignored.",
-  ],
-}
-```
-
-Custom sections appear after the auto-generated API summary. Extra gotchas
-are appended to the auto-detected ones (@deprecated, @throws, enums).
+Details: [references/skill-config.md](references/skill-config.md)
 
 ## Enforcer Rules
 
@@ -199,6 +187,10 @@ Zero-config works out of the box. Full options: [references/configuration.md](re
 
 ## References
 
-- [references/configuration.md](references/configuration.md) — Full config options and defaults
-- [references/enforcer-rules.md](references/enforcer-rules.md) — Rule details with fix examples
-- [references/api-reference.md](references/api-reference.md) — Programmatic API (functions, types, signatures)
+| Need | Reference | When to load |
+|------|-----------|-------------|
+| Config options, defaults, project metadata | [references/configuration.md](references/configuration.md) | Setting up `forge-ts.config.ts` or troubleshooting unknown keys |
+| Fix a specific enforcer error (E001-E008) | [references/enforcer-rules.md](references/enforcer-rules.md) | `check` reports errors and you need fix examples |
+| Programmatic API (functions, types, sigs) | [references/api-reference.md](references/api-reference.md) | Calling forge-ts from code instead of CLI |
+| Skill package config, custom sections, naming | [references/skill-config.md](references/skill-config.md) | Customizing generated SKILL.md or understanding `SKILL-{project}` |
+| Auto vs stub pages, editing strategy, markers | [references/guides.md](references/guides.md) | Understanding which pages to edit and which are hands-off |

@@ -188,10 +188,9 @@ describe("generateSkillMd", () => {
 		expect(result).toContain("name:");
 	});
 
-	it("YAML frontmatter name is lowercase with hyphens only", () => {
+	it("YAML frontmatter name uses SKILL- prefix with lowercase slug", () => {
 		const result = generateSkillMd([fnAdd], makeConfig({ packageName: "MyLib" }));
-		expect(result).toMatch(/name: [a-z0-9-]+/);
-		expect(result).not.toMatch(/name: [A-Z]/);
+		expect(result).toMatch(/name: SKILL-[a-z0-9-]+/);
 	});
 
 	it("YAML frontmatter contains description field", () => {
@@ -346,9 +345,9 @@ describe("generateSkillPackage", () => {
 		expect(Array.isArray(pkg.files)).toBe(true);
 	});
 
-	it("directoryName is lowercase-hyphenated", () => {
+	it("directoryName uses SKILL- prefix with lowercase slug", () => {
 		const pkg = generateSkillPackage([fnAdd], makeConfig({ packageName: "MyLib" }));
-		expect(pkg.directoryName).toMatch(/^[a-z0-9-]+$/);
+		expect(pkg.directoryName).toMatch(/^SKILL-[a-z0-9-]+$/);
 	});
 
 	it("directoryName matches the name field in SKILL.md frontmatter", () => {
@@ -402,10 +401,10 @@ describe("generateSkillPackage", () => {
 		expect(testSh?.content).toContain("npm test");
 	});
 
-	it("SKILL.md content has valid YAML frontmatter with name", () => {
+	it("SKILL.md content has valid YAML frontmatter with SKILL- prefixed name", () => {
 		const pkg = generateSkillPackage([fnAdd], makeConfig({ packageName: "test-pkg" }));
 		const skillMd = pkg.files.find((f) => f.path === "SKILL.md");
-		expect(skillMd?.content).toContain("name: test-pkg");
+		expect(skillMd?.content).toContain("name: SKILL-test-pkg");
 	});
 
 	it("SKILL.md description uses imperative phrasing", () => {

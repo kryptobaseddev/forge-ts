@@ -1,7 +1,7 @@
 # . - Full Context
 
 Root: .
-Generated: 2026-03-19T00:49:52.021Z
+Generated: 2026-03-19T00:55:31.238Z
 
 ## Functions
 
@@ -103,62 +103,6 @@ Example:
   const walker = createWalker(config);
   const symbols = walker.walk();
   console.log(`Found ${symbols.length} symbols`);
-
-### calculate()
-
-(operation: string, a: number, b: number) => number
-
-Get a calculator result.   GET /calculate/operation
-
-Parameters:
-- operation: The math operation to perform.
-- a: First operand.
-- b: Second operand.
-
-Returns: The calculation result.
-
-### add()
-
-(a: number, b: number) => number
-
-Adds two numbers together.
-
-Parameters:
-- a: The first number.
-- b: The second number.
-
-Returns: The sum of `a` and `b`.
-
-Example:
-  import { add } from "./math.js";
-  const result = add(1, 2);
-  // => 3
-
-### subtract()
-
-(a: number, b: number) => number
-
-Subtracts the second number from the first.
-
-Parameters:
-- a: The number to subtract from.
-- b: The number to subtract.
-
-Returns: The difference `a - b`.
-
-### multiply()
-
-(a: number, b: number) => number
-
-Multiplies two numbers.
-
-### _internalHelper()
-
-() => void
-
-### noDocsFunction()
-
-(x: number) => number
 
 ### signatureToSchema()
 
@@ -1422,48 +1366,6 @@ Members:
 () => ForgeSymbol[]
 
 Walk all source files referenced by the configured tsconfig and return one  per exported declaration.
-
-### CalculatorConfig
-
-any
-
-Configuration for the calculator.
-
-Example:
-  const config: CalculatorConfig = {
-    precision: 2,
-    mode: "standard",
-  };
-
-Members:
-
-#### precision
-
-number
-
-Number of decimal places.
-
-#### mode
-
-"standard" | "scientific"
-
-Calculator mode.
-
-#### label
-
-string | undefined
-
-Optional label.
-
-### NoDocsInterface
-
-any
-
-Members:
-
-#### value
-
-string
 
 ### SDKProperty
 
@@ -2839,12 +2741,6 @@ any
 
 Severity level for an individual enforcement rule. - `"error"` — violation fails the build. - `"warn"`  — violation is reported but does not fail the build. - `"off"`   — rule is disabled entirely.
 
-### LegacyConfig
-
-any
-
-DEPRECATED: Use `CalculatorConfig` instead.
-
 ### SSGTarget
 
 any
@@ -2876,30 +2772,6 @@ Visibility.Internal
 #### Private
 
 Visibility.Private
-
-### Operation
-
-typeof Operation
-
-Supported operations.
-
-Members:
-
-#### Add
-
-Operation.Add
-
-#### Subtract
-
-Operation.Subtract
-
-#### Multiply
-
-Operation.Multiply
-
-#### Divide
-
-Operation.Divide
 
 ## Variables
 

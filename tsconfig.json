@@ -32,5 +32,5 @@
 		{ "path": "./packages/gen" },
 		{ "path": "./packages/cli" }
 	],
-	"exclude": ["node_modules", "packages/*/dist", "packages/*/node_modules"]
+	"exclude": ["node_modules", "packages/*/dist", "packages/*/node_modules", "docs", "fixtures"]
 }

@@ -65,7 +65,8 @@ export async function generate(config: ForgeConfig): Promise<ForgeResult> {
 	}
 
 	// Multi-page site output — writes directly to outDir via adapters
-	const projectName = config.rootDir.split("/").pop() ?? "Project";
+	const resolvedRoot = config.rootDir === "." ? process.cwd() : config.rootDir;
+	const projectName = resolvedRoot.split("/").pop() ?? "Project";
 	const symbolsByPackage = groupSymbolsByPackage(symbols, config.rootDir);
 
 	const target = config.gen.ssgTarget ?? DEFAULT_TARGET;

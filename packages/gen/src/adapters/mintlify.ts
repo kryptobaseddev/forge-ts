@@ -135,8 +135,7 @@ export const mintlifyAdapter: SSGAdapter = {
 			devDependencies: {},
 			scripts: {},
 			instructions: [
-				"Install Mintlify CLI: npm i -g mint",
-				"Preview locally: mint dev",
+				"Preview locally: npx @mintlify/cli dev",
 				"Deploy: Push to GitHub and connect at mintlify.com",
 			],
 		};

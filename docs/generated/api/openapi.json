@@ -61,9 +61,6 @@
       "name": "types"
     },
     {
-      "name": "undocumented"
-    },
-    {
       "name": "walker"
     }
   ],
@@ -883,60 +880,6 @@
       "ASTWalker": {
         "description": "The return type of .",
         "type": "object"
-      },
-      "CalculatorConfig": {
-        "description": "Configuration for the calculator.",
-        "type": "object",
-        "properties": {
-          "precision": {
-            "type": "number",
-            "description": "Number of decimal places."
-          },
-          "mode": {
-            "oneOf": [
-              {
-                "type": "object"
-              },
-              {
-                "type": "object"
-              }
-            ],
-            "description": "Calculator mode."
-          },
-          "label": {
-            "type": "string",
-            "description": "Optional label."
-          }
-        },
-        "required": [
-          "precision",
-          "mode",
-          "label"
-        ]
-      },
-      "Operation": {
-        "description": "Supported operations.",
-        "type": "string",
-        "enum": [
-          "Add",
-          "Subtract",
-          "Multiply",
-          "Divide"
-        ]
-      },
-      "LegacyConfig": {
-        "deprecated": true
-      },
-      "NoDocsInterface": {
-        "type": "object",
-        "properties": {
-          "value": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "value"
-        ]
       },
       "SDKProperty": {
         "description": "A single property extracted from an interface or class symbol.",

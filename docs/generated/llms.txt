@@ -33,16 +33,6 @@ any - Complete OpenAPI 3.2 document.
 (symbols: ForgeSymbol[], minVisibility: Visibility) => ForgeSymbol[] - Filters an array of  objects to only include symbols whose visibility meets or exceeds `minVisibility`.
 any - The return type of .
 (config: ForgeConfig) => ASTWalker - Creates an  configured for the given forge config.  The walker uses the TypeScript Compiler API to create a `ts.Program` from the project's tsconfig, then visits every source file to extract exported declarations.  TSDoc comments are parsed with `@microsoft/tsdoc` to populate the `documentation` field on each .
-(operation: string, a: number, b: number) => number - Get a calculator result.   GET /calculate/operation
-(a: number, b: number) => number - Adds two numbers together.
-(a: number, b: number) => number - Subtracts the second number from the first.
-(a: number, b: number) => number - Multiplies two numbers.
-() => void
-any - Configuration for the calculator.
-typeof Operation - Supported operations.
-any
-(x: number) => number
-any
 (signature: string) => OpenAPISchemaObject - Maps a TypeScript type signature string to an OpenAPI 3.2 schema object.  Handles common primitives, arrays, unions, `Record<K, V>`, and falls back to `{ type: "object" }` for anything it cannot parse.
 any - A single property extracted from an interface or class symbol.
 any - An SDK type descriptor extracted from the symbol graph.

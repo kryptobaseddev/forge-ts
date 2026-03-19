@@ -1,5 +1,5 @@
 {
-  "name": ".",
+  "name": "forge-ts",
   "theme": "venus",
   "colors": {
     "primary": "#0ea5e9"
@@ -23,16 +23,6 @@
             "packages/core/types",
             "packages/core/functions",
             "packages/core/examples"
-          ]
-        },
-        {
-          "group": ".",
-          "pages": [
-            "packages/./index",
-            "packages/./api-reference",
-            "packages/./types",
-            "packages/./functions",
-            "packages/./examples"
           ]
         },
         {

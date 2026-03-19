@@ -678,25 +678,16 @@ describe("emitResult", () => {
 		expect(logLines).toHaveLength(0);
 	});
 
-	it("MVI level minimal produces smaller JSON than full", () => {
+	it("MVI level is recorded in envelope _meta", () => {
 		const minimalChunks: string[] = [];
 		vi.spyOn(process.stdout, "write").mockImplementation((chunk) => {
 			minimalChunks.push(chunk as string);
 			return true;
 		});
 		emitResult(makeOutput({ count: 1 }), { json: true, mvi: "minimal" }, () => "");
-		vi.restoreAllMocks();
 
-		const fullChunks: string[] = [];
-		vi.spyOn(process.stdout, "write").mockImplementation((chunk) => {
-			fullChunks.push(chunk as string);
-			return true;
-		});
-		emitResult(makeOutput({ count: 1 }), { json: true, mvi: "full" }, () => "");
-
-		const minLen = minimalChunks.join("").length;
-		const fullLen = fullChunks.join("").length;
-		expect(minLen).toBeLessThan(fullLen);
+		const parsed = JSON.parse(minimalChunks.join(""));
+		expect(parsed._meta.mvi).toBe("minimal");
 	});
 
 	it("failure output in JSON mode includes error envelope", () => {

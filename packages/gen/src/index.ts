@@ -21,6 +21,7 @@ export {
 	type SiteGeneratorOptions,
 } from "./site-generator.js";
 export { generateSSGConfigs, type SSGConfigFile } from "./ssg-config.js";
+export * from "./adapters/index.js";
 
 import { mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";

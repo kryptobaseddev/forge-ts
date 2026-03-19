@@ -11,8 +11,7 @@ description: >
   (5) producing AI context files (llms.txt, llms-full.txt, SKILL.md),
   (6) configuring forge-ts.config.ts or per-rule enforcement,
   (7) understanding auto-generated vs stub doc pages and their idempotency,
-  (8) injecting custom skill sections via config.skill,
-  (9) user mentions "forge-ts", "TSDoc enforcement", "doctest", "documentation
+  (8) user mentions "forge-ts", "TSDoc enforcement", "doctest", "documentation
   compiler", or asks about generating docs from TypeScript source.
 ---
 
@@ -31,7 +30,7 @@ forge-ts check   -->  FAILS if docs incomplete (exact fix suggestions)
   v
 forge-ts build   -->  Generates ALL artifacts from TSDoc
   v
-forge-ts docs init --target mintlify  -->  Adds SSG adapter config (e.g. docs.json)
+forge-ts docs init --target mintlify  -->  Writes adapter scaffold/config
   v
 forge-ts docs dev  -->  Preview locally
 ```
@@ -40,23 +39,15 @@ forge-ts docs dev  -->  Preview locally
 
 ```bash
 npm install -D @forge-ts/cli
-npx forge-ts check              # Enforce TSDoc coverage
-npx forge-ts test               # Run @example blocks as tests
-npx forge-ts build              # Generate all artifacts
-npx forge-ts build --force-stubs  # Reset stubs to scaffolding
-npx forge-ts docs init          # Add SSG adapter config (docs.json, etc.)
-npx forge-ts docs dev           # Launch dev server
+npx forge-ts check          # Enforce TSDoc coverage
+npx forge-ts test           # Run @example blocks as tests
+npx forge-ts build          # Generate all artifacts
+npx forge-ts docs init      # Write Mintlify adapter scaffold/config
+npx forge-ts docs dev       # Launch dev server
 ```
 
-## Output Format (Agent-First)
-
-forge-ts uses TTY detection to choose the default output format:
-- **Non-TTY** (pipes, CI, agents): JSON (LAFS envelope) — no flag needed.
-- **TTY** (human terminal): human-readable text.
-- Explicit `--json` or `--human` flags always override the default.
-
-Agents running forge-ts in a pipe or subprocess get structured JSON
-automatically. Do NOT add `--human` unless you need formatted text.
+JSON envelopes are actionable by default — agents in non-TTY contexts get
+structured JSON automatically without needing `--human` or `--json` flags.
 
 ## SSoT Principle
 
@@ -83,7 +74,7 @@ becomes a doctest AND a doc page entry AND part of the SKILL.md.
 | `<project>/SKILL.md` | agentskills.io package |
 | `docs.json` | SSG navigation config (when ssgTarget set) |
 
-### Stubs (created once, progressively enriched)
+### Stubs (created once, never overwritten)
 
 | Output | Purpose |
 |--------|---------|
@@ -101,11 +92,8 @@ manual content outside markers is preserved.
 (only their FORGE:AUTO marker sections are refreshed).
 
 **Progressive generation**: As your project grows (new packages, new exports),
-auto pages grow automatically. Stub marker sections update with new types
-and abstractions without touching your manual content.
-
-**Force reset**: `forge-ts build --force-stubs` overwrites stubs entirely,
-resetting them to their scaffolding state.
+auto pages grow automatically. New packages get their own
+`packages/<name>/` directory. New functions appear in the API reference.
 
 ## build vs docs init
 
@@ -151,9 +139,11 @@ are appended to the auto-detected ones (@deprecated, @throws, enums).
 | W004 | Importing `@deprecated` symbol cross-package |
 
 Rules accept `"error"` | `"warn"` | `"off"` in config `enforce.rules`.
-Each error includes `suggestedFix` by default (MVI defaults to full for check).
+When `strict: true`, all warnings become errors.
+Actionable JSON envelopes include `suggestedFix` so agents can apply the exact
+TSDoc block to paste.
 
-Fix examples: [references/enforcer-rules.md](references/enforcer-rules.md)
+Fix examples and per-rule config: [references/enforcer-rules.md](references/enforcer-rules.md)
 
 ## Configuration
 
@@ -168,36 +158,33 @@ export default {
     enabled: true,
     minVisibility: "public",
     strict: false,
-    rules: { "require-example": "warn" },
+    rules: {
+      "require-example": "warn",    // downgrade E004
+      "require-package-doc": "off", // disable E005
+    },
   },
   gen: {
     formats: ["markdown"],
     llmsTxt: true,
-    ssgTarget: "mintlify",
-  },
-  skill: {
-    customSections: [],
-    extraGotchas: [],
+    ssgTarget: "mintlify",  // or "docusaurus" | "nextra" | "vitepress"
   },
 } satisfies Partial<ForgeConfig>;
 ```
 
-Unknown config keys produce a warning to stderr. Only keys documented in the
-ForgeConfig type are recognized. See [references/configuration.md](references/configuration.md).
-
-Full options: [references/configuration.md](references/configuration.md)
+Zero-config works out of the box. Full options: [references/configuration.md](references/configuration.md)
 
 ## Key Gotchas
 
 - Enforcer checks ALL files in tsconfig. Exclude test fixtures via `exclude`.
+- Unknown config keys and unknown `enforce.rules` entries warn to stderr and are ignored.
 - `@example` blocks require fenced code blocks. Bare code is silently ignored.
 - `// => value` in examples auto-converts to `assert.strictEqual()` during doctest.
 - `@internal` symbols excluded from ALL output. `@beta` filtered at `minVisibility: "public"`.
 - OpenAPI paths require `@route GET /path` tags. No `@route` = empty `paths`.
 - Mintlify adapter generates `docs.json` (v4 format), not `mint.json`.
-- Stub pages use FORGE:AUTO markers — manual content outside markers is safe.
-- `--force-stubs` resets stubs to scaffolding; use with care on edited stubs.
-- Config loader warns about unknown keys but does not reject them.
+- `forge-ts build` writes the documentation pages into `outDir`; `docs init`
+  adds target-specific scaffold/config for the chosen SSG.
+- Stub pages are NEVER overwritten — safe to edit immediately after first build.
 
 ## Packages
 

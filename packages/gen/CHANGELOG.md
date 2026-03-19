@@ -1,5 +1,17 @@
 # @forge-ts/gen
 
+## 0.6.3
+
+### Patch Changes
+
+- fix: deduplicate generatedFiles, sync skill doc with verified behavior
+
+  - Deduplicate writtenFiles array to prevent duplicates when multiple formats generate the same path
+  - Sync skill doc SSoT with agent-verified behavior: accurate docs init description, config example with two rule overrides, zero-config note, confirmed config warnings go to stderr
+
+- Updated dependencies []:
+  - @forge-ts/core@0.6.3
+
 ## 0.6.2
 
 ### Patch Changes

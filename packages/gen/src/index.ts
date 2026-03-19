@@ -240,6 +240,6 @@ export async function generate(
 		errors: [],
 		warnings: [],
 		duration: Date.now() - start,
-		writtenFiles,
+		writtenFiles: [...new Set(writtenFiles)],
 	};
 }

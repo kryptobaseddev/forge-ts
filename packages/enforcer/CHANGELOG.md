@@ -1,5 +1,35 @@
 # @forge-ts/enforcer
 
+## 0.6.0
+
+### Minor Changes
+
+- Skill generator v2 with stub idempotency, progressive enrichment, and config-driven customization.
+
+  **New features:**
+
+  - `ForgeConfig.skill` section: inject `customSections` and `extraGotchas` into generated SKILL.md
+  - `--force-stubs` CLI flag to reset stub pages to scaffolding state
+  - Progressive stub enrichment via `FORGE:AUTO-START`/`FORGE:AUTO-END` markers
+  - `GeneratedFile.stub` flag propagated through all SSG adapters
+  - `ForgeConfig.project` extended with `description`, `version`, `bin`, `scripts`, `keywords`
+  - CLI detection from `bin` field generates purpose-built scripts and `-D` install flag
+  - Numbered trigger scenarios in SKILL.md description
+
+  **Bug fixes:**
+
+  - `{@link Target}` tags in TSDoc summaries now render as `` `Target` `` instead of being silently stripped
+  - Configuration type columns show correct types (`string` instead of empty, `{ enabled: boolean; ... }` instead of `boolean; ...}`)
+  - Stub pages (concepts, guides, faq, contributing, changelog) no longer overwritten on rebuild
+  - `configuration.mdx` correctly classified as auto-generated (not stub)
+
+  **Breaking changes:** None. All new fields are optional with backwards-compatible defaults.
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @forge-ts/core@0.6.0
+
 ## 0.5.0
 
 ### Patch Changes

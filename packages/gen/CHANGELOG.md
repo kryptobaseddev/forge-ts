@@ -1,5 +1,24 @@
 # @forge-ts/gen
 
+## 0.7.1
+
+### Patch Changes
+
+- fix: MDX parsing errors in generated Mintlify pages
+
+  Generated .mdx files could fail Mintlify deployment with parsing errors:
+
+  - HTML comments (`<!-- FORGE:AUTO-START -->`) invalid in MDX — now converted to `{/* */}` by Mintlify adapter
+  - Unescaped `{@link Foo}` in summaries parsed as MDX expressions — curly braces now escaped
+  - TypeScript generics like `Array<string>`, `Record<K, V>` parsed as JSX tags — angle brackets now escaped
+
+  The Mintlify adapter's `transformPages` now runs `sanitizeMdx()` which processes content line-by-line, skipping code fence interiors, and escapes MDX-unsafe characters only in prose content.
+
+  Also handles both HTML and MDX comment formats in FORGE:AUTO marker matching for stub page updates.
+
+- Updated dependencies []:
+  - @forge-ts/core@0.7.1
+
 ## 0.7.0
 
 ### Patch Changes

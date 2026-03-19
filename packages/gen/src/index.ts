@@ -17,6 +17,7 @@ export {
 export { type ReadmeSyncOptions, syncReadme } from "./readme-sync.js";
 export {
 	type DocPage,
+	escapeMdx,
 	generateDocSite,
 	groupSymbolsByPackage,
 	type SiteGeneratorOptions,
@@ -48,27 +49,35 @@ import { generateSkillPackage } from "./skill.js";
  * @internal
  */
 function updateAutoSections(existing: string, generated: string): string | null {
-	const markerPattern = /<!-- FORGE:AUTO-START (\S+) -->([\s\S]*?)<!-- FORGE:AUTO-END \1 -->/g;
+	// Match both HTML comments (<!-- -->) and MDX comments ({/* */}) for FORGE:AUTO markers.
+	// Generated content uses HTML format; on-disk stubs may have MDX format from adapter transform.
+	const htmlPattern = /<!-- FORGE:AUTO-START (\S+) -->([\s\S]*?)<!-- FORGE:AUTO-END \1 -->/g;
 
-	// Extract all auto sections from the generated content
+	// Extract all auto sections from the generated content (HTML format)
 	const newSections = new Map<string, string>();
 	let match: RegExpExecArray | null;
 	// biome-ignore lint: manual exec loop is clearest for named captures
-	while ((match = markerPattern.exec(generated)) !== null) {
+	while ((match = htmlPattern.exec(generated)) !== null) {
 		newSections.set(match[1], match[0]);
 	}
 
 	if (newSections.size === 0) return null;
 
-	// Replace each marker section in the existing content
+	// Replace each marker section in the existing content (try both HTML and MDX formats)
 	let updated = existing;
 	let changed = false;
 	for (const [id, replacement] of newSections) {
-		const sectionPattern = new RegExp(
+		const htmlSectionPattern = new RegExp(
 			`<!-- FORGE:AUTO-START ${id} -->[\\s\\S]*?<!-- FORGE:AUTO-END ${id} -->`,
 		);
-		if (sectionPattern.test(updated)) {
-			updated = updated.replace(sectionPattern, replacement);
+		const mdxSectionPattern = new RegExp(
+			`\\{/\\* FORGE:AUTO-START ${id} \\*/\\}[\\s\\S]*?\\{/\\* FORGE:AUTO-END ${id} \\*/\\}`,
+		);
+		if (htmlSectionPattern.test(updated)) {
+			updated = updated.replace(htmlSectionPattern, replacement);
+			changed = true;
+		} else if (mdxSectionPattern.test(updated)) {
+			updated = updated.replace(mdxSectionPattern, replacement);
 			changed = true;
 		}
 	}

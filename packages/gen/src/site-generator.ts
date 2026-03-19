@@ -58,6 +58,32 @@ function escapePipe(text: string): string {
 	return text.replace(/\|/g, "\\|");
 }
 
+/**
+ * Escape MDX-unsafe characters in text that appears outside code fences.
+ *
+ * MDX parses `<Word>` as JSX tags and `{expr}` as JS expressions.
+ * In documentation content (summaries, descriptions, table cells), these
+ * come from TypeScript generics (`Array<string>`) and TSDoc inline tags
+ * (`{@link Foo}`). We escape them so MDX treats them as literal text.
+ *
+ * This is exported so SSG adapters can apply it during page transformation.
+ *
+ * @public
+ */
+export function escapeMdx(text: string): string {
+	return (
+		text
+			// Escape { and } — prevents MDX expression parsing of {@link}, {Type}, etc.
+			.replace(/\{/g, "\\{")
+			.replace(/\}/g, "\\}")
+			// Escape < and > that look like JSX tags — prevents MDX tag parsing
+			// of Array<string>, Record<K, V>, Promise<void>, etc.
+			// Only escape angle brackets that are followed by word chars (tag-like).
+			.replace(/<(\w)/g, "&lt;$1")
+			.replace(/(\w)>/g, "$1&gt;")
+	);
+}
+
 /** Build a frontmatter block string from the fields map. */
 function serializeFrontmatter(fields: Record<string, string | number | boolean>): string {
 	if (Object.keys(fields).length === 0) return "";

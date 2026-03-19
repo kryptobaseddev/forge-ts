@@ -1,5 +1,20 @@
 # @forge-ts/doctest
 
+## 0.6.1
+
+### Patch Changes
+
+- fix: CLI version SSoT, actionable error envelopes, config validation
+
+  - Read CLI version from package.json at runtime instead of hardcoding (prevents version mismatch between published package and --help output)
+  - Populate top-level errors on check/test CommandOutput so LAFS JSON envelopes include actionable error codes and messages instead of generic "Command failed"
+  - Reconcile doctest exit code with TAP-parsed failures: when node:test exits non-zero but no test failures were parsed (compilation/import error), report failed >= 1 with D002 diagnostic including runner output
+  - Add config schema validation that warns on unknown top-level keys and unknown enforce rules (no longer silently ignored)
+  - Update skill docs and scripts to reflect agent-first defaults (non-TTY auto-selects JSON, no --json flag needed)
+
+- Updated dependencies []:
+  - @forge-ts/core@0.6.1
+
 ## 0.6.0
 
 ### Minor Changes

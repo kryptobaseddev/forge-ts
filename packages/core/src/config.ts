@@ -57,6 +57,60 @@ export function defaultConfig(rootDir: string): ForgeConfig {
 }
 
 /**
+ * Known top-level keys in {@link ForgeConfig}.
+ * Used to warn about unrecognised config keys that are silently ignored.
+ * @internal
+ */
+const KNOWN_TOP_KEYS = new Set([
+	"rootDir",
+	"tsconfig",
+	"outDir",
+	"enforce",
+	"doctest",
+	"api",
+	"gen",
+	"skill",
+	"project",
+]);
+
+/**
+ * Known keys within `enforce.rules`.
+ * @internal
+ */
+const KNOWN_RULE_KEYS = new Set([
+	"require-summary",
+	"require-param",
+	"require-returns",
+	"require-example",
+	"require-package-doc",
+	"require-class-member-doc",
+	"require-interface-member-doc",
+]);
+
+/**
+ * Warns to stderr about unknown keys in user config.
+ * Does not throw — config loading remains lenient, but unknown keys are
+ * no longer silently swallowed.
+ * @internal
+ */
+function warnUnknownKeys(partial: Partial<ForgeConfig>): void {
+	for (const key of Object.keys(partial)) {
+		if (!KNOWN_TOP_KEYS.has(key)) {
+			console.error(`[forge-ts] warning: unknown config key "${key}" — ignored`);
+		}
+	}
+	if (partial.enforce?.rules) {
+		for (const key of Object.keys(partial.enforce.rules)) {
+			if (!KNOWN_RULE_KEYS.has(key)) {
+				console.error(
+					`[forge-ts] warning: unknown enforce rule "${key}" — ignored. Valid rules: ${[...KNOWN_RULE_KEYS].join(", ")}`,
+				);
+			}
+		}
+	}
+}
+
+/**
  * Merges a partial user config with the defaults so every field is present.
  *
  * @param rootDir - Absolute path to the project root.
@@ -65,6 +119,7 @@ export function defaultConfig(rootDir: string): ForgeConfig {
  * @internal
  */
 function mergeWithDefaults(rootDir: string, partial: Partial<ForgeConfig>): ForgeConfig {
+	warnUnknownKeys(partial);
 	const defaults = defaultConfig(rootDir);
 	return {
 		...defaults,

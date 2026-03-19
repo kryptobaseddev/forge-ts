@@ -12,12 +12,16 @@
  * @public
  */
 
+import { createRequire } from "node:module";
 import { defineCommand, runMain } from "citty";
 import { buildCommand } from "./commands/build.js";
 import { checkCommand } from "./commands/check.js";
 import { docsDevCommand } from "./commands/docs-dev.js";
 import { initDocsCommand } from "./commands/init-docs.js";
 import { testCommand } from "./commands/test.js";
+
+const require = createRequire(import.meta.url);
+const pkg = require("../package.json") as { version: string };
 
 export { type BuildResult, type BuildStep, buildCommand } from "./commands/build.js";
 export {
@@ -67,7 +71,7 @@ const docsCommand = defineCommand({
 const main = defineCommand({
 	meta: {
 		name: "forge-ts",
-		version: "0.5.0",
+		version: pkg.version,
 		description: "Universal TypeScript Documentation Compiler",
 	},
 	subCommands: {

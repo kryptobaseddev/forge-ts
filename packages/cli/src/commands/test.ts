@@ -95,10 +95,19 @@ export async function runTest(args: TestArgs): Promise<CommandOutput<TestResult>
 		}));
 	}
 
+	// Populate top-level errors so the LAFS envelope error code is actionable.
+	const cliErrors = result.success
+		? undefined
+		: result.errors.map((e) => ({
+				code: e.code,
+				message: e.message,
+			}));
+
 	return {
 		operation: "test",
 		success: result.success,
 		data,
+		errors: cliErrors,
 		duration: result.duration,
 	};
 }

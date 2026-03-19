@@ -143,10 +143,17 @@ export async function runTests(files: VirtualTestFile[]): Promise<RunResult> {
 				}
 			}
 
+			// Reconcile exit code with parsed failures.
+			// If node:test exits non-zero but TAP parsing found 0 failures,
+			// the runner itself had an error (compilation, import, etc.).
+			// Ensure failed >= 1 so consumers never see "0 failures" with exit 1.
+			const actualFailed = code !== 0 && failed === 0 ? 1 : failed;
+			const actualPassed = actualFailed > failed ? Math.max(0, passed - 1) : passed;
+
 			resolve({
 				success: code === 0,
-				passed,
-				failed,
+				passed: actualPassed,
+				failed: actualFailed,
 				output: enrichedOutput,
 				tests: annotated,
 			});

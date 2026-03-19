@@ -48,6 +48,16 @@ npx forge-ts docs init          # Scaffold Mintlify doc site
 npx forge-ts docs dev           # Launch dev server
 ```
 
+## Output Format (Agent-First)
+
+forge-ts uses TTY detection to choose the default output format:
+- **Non-TTY** (pipes, CI, agents): JSON (LAFS envelope) — no flag needed.
+- **TTY** (human terminal): human-readable text.
+- Explicit `--json` or `--human` flags always override the default.
+
+Agents running forge-ts in a pipe or subprocess get structured JSON
+automatically. Do NOT add `--human` unless you need formatted text.
+
 ## SSoT Principle
 
 Source code IS documentation. Change a function signature, docs update on
@@ -164,6 +174,9 @@ export default {
 } satisfies Partial<ForgeConfig>;
 ```
 
+Unknown config keys produce a warning to stderr. Only keys documented in the
+ForgeConfig type are recognized. See [references/configuration.md](references/configuration.md).
+
 Full options: [references/configuration.md](references/configuration.md)
 
 ## Key Gotchas
@@ -176,6 +189,7 @@ Full options: [references/configuration.md](references/configuration.md)
 - Mintlify adapter generates `docs.json` (v4 format), not `mint.json`.
 - Stub pages use FORGE:AUTO markers — manual content outside markers is safe.
 - `--force-stubs` resets stubs to scaffolding; use with care on edited stubs.
+- Config loader warns about unknown keys but does not reject them.
 
 ## Packages
 

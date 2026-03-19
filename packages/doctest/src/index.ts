@@ -48,21 +48,31 @@ export async function doctest(config: ForgeConfig): Promise<ForgeResult> {
 	const files = generateTestFiles(examples, { cacheDir: config.doctest.cacheDir });
 	const runResult = await runTests(files);
 
+	const errors = [];
+	if (runResult.failed > 0) {
+		errors.push({
+			code: "D001",
+			message: `${runResult.failed} doctest(s) failed. See output for details.`,
+			filePath: "",
+			line: 0,
+			column: 0,
+		});
+	} else if (!runResult.success) {
+		// Runner exited non-zero without parsed test failures — likely a
+		// compilation or import error in the generated test files.
+		errors.push({
+			code: "D002",
+			message: `Doctest runner exited with an error. ${runResult.output ? `Output:\n${runResult.output.slice(0, 2000)}` : "No output captured."}`,
+			filePath: "",
+			line: 0,
+			column: 0,
+		});
+	}
+
 	return {
 		success: runResult.success,
 		symbols,
-		errors:
-			runResult.failed > 0
-				? [
-						{
-							code: "D001",
-							message: `${runResult.failed} doctest(s) failed. See output for details.`,
-							filePath: "",
-							line: 0,
-							column: 0,
-						},
-					]
-				: [],
+		errors,
 		warnings: [],
 		duration: Date.now() - start,
 	};

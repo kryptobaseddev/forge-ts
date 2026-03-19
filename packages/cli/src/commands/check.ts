@@ -231,10 +231,21 @@ export async function runCheck(args: CheckArgs): Promise<CommandOutput<CheckResu
 		mviLevel,
 	);
 
+	// Populate top-level errors so the LAFS envelope error code is actionable.
+	const cliErrors = result.success
+		? undefined
+		: [
+				{
+					code: "FORGE_CHECK_FAILED",
+					message: `TSDoc coverage check failed: ${result.errors.length} error(s), ${result.warnings.length} warning(s) across ${data.summary.files} file(s)`,
+				},
+			];
+
 	return {
 		operation: "check",
 		success: result.success,
 		data,
+		errors: cliErrors,
 		duration: result.duration,
 	};
 }

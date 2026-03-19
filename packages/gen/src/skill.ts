@@ -304,10 +304,15 @@ function renderConfigSection(symbols: ForgeSymbol[], config: ForgeConfig): strin
 
 /**
  * Extracts the type portion from a property signature.
- * For `name: type` signatures, returns the part after the first `:`.
- * For bare type strings (e.g., `string` from `checker.typeToString`),
- * returns the whole string — these come from interface property children
- * where the TypeScript checker returns just the type, not `name: type`.
+ *
+ * The TypeScript checker returns different formats depending on the symbol:
+ * - Simple properties: just the type, e.g. `string`, `boolean`
+ * - Complex objects: the full inline type, e.g. `{ enabled: boolean; strict: boolean; }`
+ * - Named properties: `name: type` (rare — most children are bare types)
+ *
+ * This function only splits on `:` when the left side is a simple identifier
+ * (no braces, parens, or pipes). Otherwise it returns the whole string as-is,
+ * since it IS the type.
  *
  * @param signature - The raw signature string from the walker.
  * @returns The extracted type string, or empty string if no signature.
@@ -315,9 +320,19 @@ function renderConfigSection(symbols: ForgeSymbol[], config: ForgeConfig): strin
  */
 function extractType(signature: string | undefined): string {
 	if (!signature) return "";
-	const colonIdx = signature.indexOf(":");
-	if (colonIdx === -1) return signature.trim();
-	return signature.slice(colonIdx + 1).trim();
+	const trimmed = signature.trim();
+	// If it starts with { or ( or contains |, it's already a type expression
+	if (/^[{(]/.test(trimmed) || /[|]/.test(trimmed.split(":")[0])) {
+		return trimmed;
+	}
+	const colonIdx = trimmed.indexOf(":");
+	if (colonIdx === -1) return trimmed;
+	// Only split if the left side looks like a simple identifier (no special chars)
+	const left = trimmed.slice(0, colonIdx).trim();
+	if (/^[a-zA-Z_$][a-zA-Z0-9_$?]*$/.test(left)) {
+		return trimmed.slice(colonIdx + 1).trim();
+	}
+	return trimmed;
 }
 
 /**

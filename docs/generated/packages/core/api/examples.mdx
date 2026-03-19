@@ -6,7 +6,7 @@ All usage examples from the package, aggregated for quick reference.
 
 ## `defaultConfig()`
 
-_Constructs a sensible default  rooted at `rootDir`._
+_Constructs a sensible default `ForgeConfig` rooted at `rootDir`._
 
 [View in API reference](/packages/core/api/functions#defaultconfig)
 
@@ -30,7 +30,7 @@ const config = await loadConfig("/path/to/project");
 
 ## `resolveVisibility()`
 
-_Determines the visibility level of a symbol from its TSDoc release tags.  The precedence order is: 1. `@internal`  →  2. `@beta`      →  3. `@public`    →  4. (no tag)     →  (default for exports)_
+_Determines the visibility level of a symbol from its TSDoc release tags.  The precedence order is: 1. `@internal`  → `Visibility.Internal` 2. `@beta`      → `Visibility.Beta` 3. `@public`    → `Visibility.Public` 4. (no tag)     → `Visibility.Public` (default for exports)_
 
 [View in API reference](/packages/core/api/functions#resolvevisibility)
 
@@ -54,7 +54,7 @@ meetsVisibility(Visibility.Internal, Visibility.Public); // false
 
 ## `filterByVisibility()`
 
-_Filters an array of  objects to only include symbols whose visibility meets or exceeds `minVisibility`._
+_Filters an array of `ForgeSymbol` objects to only include symbols whose visibility meets or exceeds `minVisibility`._
 
 [View in API reference](/packages/core/api/functions#filterbyvisibility)
 
@@ -65,7 +65,7 @@ const publicOnly = filterByVisibility(symbols, Visibility.Public);
 
 ## `createWalker()`
 
-_Creates an  configured for the given forge config.  The walker uses the TypeScript Compiler API to create a `ts.Program` from the project's tsconfig, then visits every source file to extract exported declarations.  TSDoc comments are parsed with `@microsoft/tsdoc` to populate the `documentation` field on each ._
+_Creates an `ASTWalker` configured for the given forge config.  The walker uses the TypeScript Compiler API to create a `ts.Program` from the project's tsconfig, then visits every source file to extract exported declarations.  TSDoc comments are parsed with `@microsoft/tsdoc` to populate the `documentation` field on each `ForgeSymbol`._
 
 [View in API reference](/packages/core/api/functions#createwalker)
 

@@ -892,7 +892,7 @@
         ]
       },
       "ASTWalker": {
-        "description": "The return type of .",
+        "description": "The return type of `createWalker`.",
         "type": "object"
       },
       "SDKProperty": {
@@ -1768,7 +1768,7 @@
         ]
       },
       "FormatOptions": {
-        "description": "Options that control how  renders its output.",
+        "description": "Options that control how `formatResults` renders its output.",
         "type": "object",
         "properties": {
           "colors": {

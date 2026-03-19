@@ -10,7 +10,7 @@
 
 ### `defaultConfig`
 
-Constructs a sensible default  rooted at `rootDir`.
+Constructs a sensible default `ForgeConfig` rooted at `rootDir`.
 
 ```typescript
 (rootDir: string) => ForgeConfig
@@ -40,7 +40,7 @@ Loads the forge-ts configuration for a project.  Resolution order: 1. `<rootDir>
 
 - `rootDir` — The project root to search for config.  Defaults to `process.cwd()`.
 
-**Returns:** A fully-resolved .
+**Returns:** A fully-resolved `ForgeConfig`.
 
 ```typescript
 import { loadConfig } from "@forge-ts/core";
@@ -50,7 +50,7 @@ const config = await loadConfig("/path/to/project");
 
 ### `resolveVisibility`
 
-Determines the visibility level of a symbol from its TSDoc release tags.  The precedence order is: 1. `@internal`  →  2. `@beta`      →  3. `@public`    →  4. (no tag)     →  (default for exports)
+Determines the visibility level of a symbol from its TSDoc release tags.  The precedence order is: 1. `@internal`  → `Visibility.Internal` 2. `@beta`      → `Visibility.Beta` 3. `@public`    → `Visibility.Public` 4. (no tag)     → `Visibility.Public` (default for exports)
 
 ```typescript
 (tags: Record<string, string[]> | undefined) => Visibility
@@ -60,7 +60,7 @@ Determines the visibility level of a symbol from its TSDoc release tags.  The pr
 
 - `tags` — The parsed `tags` map from `ForgeSymbol.documentation`.
 
-**Returns:** The resolved  value.
+**Returns:** The resolved `Visibility` value.
 
 ```typescript
 import { resolveVisibility } from "@forge-ts/core";
@@ -91,7 +91,7 @@ meetsVisibility(Visibility.Internal, Visibility.Public); // false
 
 ### `filterByVisibility`
 
-Filters an array of  objects to only include symbols whose visibility meets or exceeds `minVisibility`.
+Filters an array of `ForgeSymbol` objects to only include symbols whose visibility meets or exceeds `minVisibility`.
 
 ```typescript
 (symbols: ForgeSymbol[], minVisibility: Visibility) => ForgeSymbol[]
@@ -111,7 +111,7 @@ const publicOnly = filterByVisibility(symbols, Visibility.Public);
 
 ### `createWalker`
 
-Creates an  configured for the given forge config.  The walker uses the TypeScript Compiler API to create a `ts.Program` from the project's tsconfig, then visits every source file to extract exported declarations.  TSDoc comments are parsed with `@microsoft/tsdoc` to populate the `documentation` field on each .
+Creates an `ASTWalker` configured for the given forge config.  The walker uses the TypeScript Compiler API to create a `ts.Program` from the project's tsconfig, then visits every source file to extract exported declarations.  TSDoc comments are parsed with `@microsoft/tsdoc` to populate the `documentation` field on each `ForgeSymbol`.
 
 ```typescript
 (config: ForgeConfig) => ASTWalker
@@ -119,9 +119,9 @@ Creates an  configured for the given forge config.  The walker uses the TypeScri
 
 **Parameters:**
 
-- `config` — The resolved  for the project.
+- `config` — The resolved `ForgeConfig` for the project.
 
-**Returns:** An  instance whose `walk()` method performs the extraction.
+**Returns:** An `ASTWalker` instance whose `walk()` method performs the extraction.
 
 ```typescript
 import { loadConfig, createWalker } from "@forge-ts/core";
@@ -153,7 +153,7 @@ const schema = signatureToSchema("string[]");
 
 ### `extractSDKTypes`
 
-Extracts SDK-relevant types (interfaces, type aliases, classes, enums) from a list of  objects.  Only exported symbols whose visibility is not  or  are included.
+Extracts SDK-relevant types (interfaces, type aliases, classes, enums) from a list of `ForgeSymbol` objects.  Only exported symbols whose visibility is not `Visibility.Internal` or `Visibility.Private` are included.
 
 ```typescript
 (symbols: ForgeSymbol[]) => SDKType[]
@@ -163,7 +163,7 @@ Extracts SDK-relevant types (interfaces, type aliases, classes, enums) from a li
 
 - `symbols` — The symbols produced by the core AST walker.
 
-**Returns:** An array of  objects for public-facing type definitions.
+**Returns:** An array of `SDKType` objects for public-facing type definitions.
 
 ```typescript
 import { extractSDKTypes } from "@forge-ts/api";
@@ -181,11 +181,11 @@ Generates a production-quality OpenAPI 3.2 document from the extracted SDK types
 
 **Parameters:**
 
-- `config` — The resolved .
+- `config` — The resolved `ForgeConfig`.
 - `sdkTypes` — SDK types to include as component schemas.
 - `symbols` — Raw symbols used to extract HTTP route paths from `@route` tags.
 
-**Returns:** An  object.
+**Returns:** An `OpenAPIDocument` object.
 
 ```typescript
 import { generateOpenAPISpec } from "@forge-ts/api";
@@ -196,7 +196,7 @@ console.log(spec.openapi); // "3.2.0"
 
 ### `buildReference`
 
-Builds a structured API reference from a list of exported symbols.  Unlike the minimal stub, this version includes nested children (class methods, interface properties) and all available TSDoc metadata.  Symbols with  or  are excluded from the top-level results. Children with private/internal visibility are also filtered out.
+Builds a structured API reference from a list of exported symbols.  Unlike the minimal stub, this version includes nested children (class methods, interface properties) and all available TSDoc metadata.  Symbols with `Visibility.Internal` or `Visibility.Private` are excluded from the top-level results. Children with private/internal visibility are also filtered out.
 
 ```typescript
 (symbols: ForgeSymbol[]) => ReferenceEntry[]
@@ -206,7 +206,7 @@ Builds a structured API reference from a list of exported symbols.  Unlike the m
 
 - `symbols` — All symbols from the AST walker.
 
-**Returns:** An array of  objects sorted by name.
+**Returns:** An array of `ReferenceEntry` objects sorted by name.
 
 ```typescript
 import { buildReference } from "@forge-ts/api";
@@ -224,9 +224,9 @@ Runs the API generation pipeline: walk → extract → generate → write.
 
 **Parameters:**
 
-- `config` — The resolved  for the project.
+- `config` — The resolved `ForgeConfig` for the project.
 
-**Returns:** A  with success/failure and any diagnostics.
+**Returns:** A `ForgeResult` with success/failure and any diagnostics.
 
 ```typescript
 import { generateApi } from "@forge-ts/api";
@@ -266,10 +266,10 @@ Generates a full multi-page documentation site from symbols grouped by package. 
 **Parameters:**
 
 - `symbolsByPackage` — Symbols grouped by package name.
-- `config` — The resolved .
+- `config` — The resolved `ForgeConfig`.
 - `options` — Site generation options.
 
-**Returns:** An array of  objects ready to be written to disk.
+**Returns:** An array of `DocPage` objects ready to be written to disk.
 
 ```typescript
 import { generateDocSite, groupSymbolsByPackage } from "@forge-ts/gen";
@@ -307,7 +307,7 @@ Get a registered adapter by target name. Throws if the target is not registered.
 
 - `target` — The SSG target identifier.
 
-**Returns:** The registered  for the given target.
+**Returns:** The registered `SSGAdapter` for the given target.
 
 ```typescript
 import { getAdapter } from "@forge-ts/gen";
@@ -322,7 +322,7 @@ Get all registered adapter targets.
 () => SSGTarget[]
 ```
 
-**Returns:** An array of all registered  identifiers.
+**Returns:** An array of all registered `SSGTarget` identifiers.
 
 ```typescript
 import { getAvailableTargets } from "@forge-ts/gen";
@@ -340,7 +340,7 @@ Generates an `llms.txt` routing manifest from the extracted symbols.  The file f
 **Parameters:**
 
 - `symbols` — The symbols to include.
-- `config` — The resolved .
+- `config` — The resolved `ForgeConfig`.
 
 **Returns:** The generated `llms.txt` content as a string.
 
@@ -361,7 +361,7 @@ Generates an `llms-full.txt` dense context file from the extracted symbols.  Unl
 **Parameters:**
 
 - `symbols` — The symbols to include.
-- `config` — The resolved .
+- `config` — The resolved `ForgeConfig`.
 
 **Returns:** The generated `llms-full.txt` content as a string.
 
@@ -382,7 +382,7 @@ Generates a Markdown (or MDX) string from a list of symbols.
 **Parameters:**
 
 - `symbols` — The symbols to document.
-- `config` — The resolved .
+- `config` — The resolved `ForgeConfig`.
 - `options` — Rendering options.
 
 **Returns:** The generated Markdown string.
@@ -428,7 +428,7 @@ Generates an agentskills.io-compliant skill package for ANY TypeScript project. 
 - `symbols` — All symbols from the project.
 - `config` — The resolved forge-ts config.
 
-**Returns:** A  describing the directory and its files.
+**Returns:** A `SkillPackage` describing the directory and its files.
 
 ```typescript
 import { generateSkillPackage } from "@forge-ts/gen";
@@ -468,11 +468,11 @@ Generate navigation configuration file(s) for the given SSG target.  Returns one
 
 **Parameters:**
 
-- `pages` — The  array produced by `generateDocSite`.
+- `pages` — The `DocPage` array produced by `generateDocSite`.
 - `target` — The SSG target.
 - `projectName` — The project name (used in config metadata).
 
-**Returns:** An array of  objects ready to be written to disk.
+**Returns:** An array of `SSGConfigFile` objects ready to be written to disk.
 
 ```typescript
 import { generateSSGConfigs } from "@forge-ts/gen";
@@ -490,10 +490,10 @@ Runs the full generation pipeline: walk → render → write.  Auto-generated pa
 
 **Parameters:**
 
-- `config` — The resolved  for the project.
+- `config` — The resolved `ForgeConfig` for the project.
 - `options` — Optional generation flags (e.g., forceStubs).
 
-**Returns:** A  describing the outcome.
+**Returns:** A `ForgeResult` describing the outcome.
 
 ```typescript
 import { generate } from "@forge-ts/gen";
@@ -503,7 +503,7 @@ console.log(result.success); // true if all files were written
 
 ### `createLogger`
 
-Creates a  instance.
+Creates a `Logger` instance.
 
 ```typescript
 (options?: { colors?: boolean | undefined; } | undefined) => Logger
@@ -593,9 +593,9 @@ Runs the TSDoc enforcement pass against a project.  The enforcer walks all expor
 
 **Parameters:**
 
-- `config` — The resolved  for the project.
+- `config` — The resolved `ForgeConfig` for the project.
 
-**Returns:** A  describing which symbols passed or failed.
+**Returns:** A `ForgeResult` describing which symbols passed or failed.
 
 ```typescript
 import { loadConfig } from "@forge-ts/core";
@@ -609,7 +609,7 @@ if (!result.success) {
 
 ### `formatResults`
 
-Formats a  into a human-readable string suitable for printing to a terminal.  Diagnostics are grouped by source file.  Each file heading shows the relative-ish path, followed by indented error and warning lines.  A summary line is appended at the end.
+Formats a `ForgeResult` into a human-readable string suitable for printing to a terminal.  Diagnostics are grouped by source file.  Each file heading shows the relative-ish path, followed by indented error and warning lines.  A summary line is appended at the end.
 
 ```typescript
 (result: ForgeResult, options: FormatOptions) => string
@@ -617,7 +617,7 @@ Formats a  into a human-readable string suitable for printing to a terminal.  Di
 
 **Parameters:**
 
-- `result` — The result produced by .
+- `result` — The result produced by `enforce`.
 - `options` — Rendering options (colours, verbosity).
 
 **Returns:** A formatted string ready to write to stdout or stderr.
@@ -692,7 +692,7 @@ console.log(output.data.files); // list of created file paths
 
 ### `extractExamples`
 
-Extracts all `@example` blocks from a list of  objects.
+Extracts all `@example` blocks from a list of `ForgeSymbol` objects.
 
 ```typescript
 (symbols: ForgeSymbol[]) => ExtractedExample[]
@@ -702,7 +702,7 @@ Extracts all `@example` blocks from a list of  objects.
 
 - `symbols` — The symbols produced by the core AST walker.
 
-**Returns:** A flat array of  objects, one per code block.
+**Returns:** A flat array of `ExtractedExample` objects, one per code block.
 
 ```typescript
 import { createWalker, loadConfig } from "@forge-ts/core";
@@ -726,7 +726,7 @@ Generates a virtual test file for a set of extracted examples.  Each example is 
 - `examples` — Examples to include in the generated file.
 - `options` — Output configuration.
 
-**Returns:** An array of  objects (one per source file).
+**Returns:** An array of `VirtualTestFile` objects (one per source file).
 
 ```typescript
 import { generateTestFiles } from "@forge-ts/doctest";
@@ -746,7 +746,7 @@ Writes virtual test files to disk and executes them with Node 24 native TypeScri
 
 - `files` — The virtual test files to write and run.
 
-**Returns:** A  summarising the test outcome.
+**Returns:** A `RunResult` summarising the test outcome.
 
 ```typescript
 import { runTests } from "@forge-ts/doctest";
@@ -766,9 +766,9 @@ Runs the full doctest pipeline: extract → generate → run.
 
 **Parameters:**
 
-- `config` — The resolved  for the project.
+- `config` — The resolved `ForgeConfig` for the project.
 
-**Returns:** A  with success/failure and any diagnostics.
+**Returns:** A `ForgeResult` with success/failure and any diagnostics.
 
 ```typescript
 import { loadConfig } from "@forge-ts/core";
@@ -1109,7 +1109,7 @@ any
 
 ### `ASTWalker`
 
-The return type of .
+The return type of `createWalker`.
 
 ```typescript
 any
@@ -1117,7 +1117,7 @@ any
 
 **Members:**
 
-- `walk` — Walk all source files referenced by the configured tsconfig and return one  per exported declaration.
+- `walk` — Walk all source files referenced by the configured tsconfig and return one `ForgeSymbol` per exported declaration.
 
 ### `SDKProperty`
 
@@ -1531,7 +1531,7 @@ any
 
 ### `FormatOptions`
 
-Options that control how  renders its output.
+Options that control how `formatResults` renders its output.
 
 ```typescript
 any
@@ -1651,7 +1651,7 @@ any
 
 **Members:**
 
-- `target` — SSG target to scaffold. Defaults to .
+- `target` — SSG target to scaffold. Defaults to `DEFAULT_TARGET`.
 - `cwd` — Project root directory (default: cwd).
 - `outDir` — Output directory for the doc site (default: outDir from config or ./docs).
 - `force` — Overwrite an existing scaffold without prompting.
@@ -1783,7 +1783,7 @@ SSGTarget
 
 ### `mintlifyAdapter`
 
-Mintlify SSG adapter. Implements the  contract for the Mintlify platform.
+Mintlify SSG adapter. Implements the `SSGAdapter` contract for the Mintlify platform.
 
 ```typescript
 SSGAdapter
@@ -1798,7 +1798,7 @@ console.log(configs[0].path); // "docs.json"
 
 ### `docusaurusAdapter`
 
-Docusaurus SSG adapter. Implements the  contract for the Docusaurus platform.
+Docusaurus SSG adapter. Implements the `SSGAdapter` contract for the Docusaurus platform.
 
 ```typescript
 SSGAdapter
@@ -1813,7 +1813,7 @@ console.log(configs[0].path); // "sidebars.ts"
 
 ### `nextraAdapter`
 
-Nextra SSG adapter (v4, App Router). Implements the  contract for the Nextra platform.
+Nextra SSG adapter (v4, App Router). Implements the `SSGAdapter` contract for the Nextra platform.
 
 ```typescript
 SSGAdapter
@@ -1828,7 +1828,7 @@ console.log(configs[0].path); // "content/_meta.js"
 
 ### `vitepressAdapter`
 
-VitePress SSG adapter. Implements the  contract for the VitePress platform.
+VitePress SSG adapter. Implements the `SSGAdapter` contract for the VitePress platform.
 
 ```typescript
 SSGAdapter

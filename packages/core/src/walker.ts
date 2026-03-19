@@ -39,7 +39,12 @@ export interface ASTWalker {
 // TSDoc helpers
 // ---------------------------------------------------------------------------
 
-/** Render inline nodes (PlainText, CodeSpan, SoftBreak) to a plain string. @internal */
+/**
+ * Render inline nodes (PlainText, CodeSpan, SoftBreak, LinkTag) to a plain string.
+ * `{@link Target}` references are rendered as backtick-wrapped target names
+ * (e.g., `` `ForgeConfig` ``) so they appear correctly in generated Markdown.
+ * @internal
+ */
 function renderInlineNodes(nodes: readonly DocNode[]): string {
 	const parts: string[] = [];
 	for (const node of nodes) {
@@ -57,6 +62,21 @@ function renderInlineNodes(nodes: readonly DocNode[]): string {
 				// Recurse into paragraph nodes to extract nested text
 				parts.push(renderInlineNodes((node as DocParagraph).nodes));
 				break;
+			case DocNodeKind.LinkTag: {
+				// Render {@link Target} as `Target` in output text.
+				// Uses the link text if provided, otherwise the code destination.
+				const linkTag = node as DocLinkTag;
+				const linkText =
+					linkTag.linkText ??
+					linkTag.codeDestination?.memberReferences
+						.map((ref) => ref.memberIdentifier?.identifier)
+						.filter(Boolean)
+						.join(".");
+				if (linkText) {
+					parts.push(`\`${linkText}\``);
+				}
+				break;
+			}
 			default:
 				break;
 		}

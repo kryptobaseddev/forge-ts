@@ -6,7 +6,7 @@ Functions and classes exported by this package.
 
 ## defaultConfig(rootDir)
 
-Constructs a sensible default  rooted at `rootDir`.
+Constructs a sensible default `ForgeConfig` rooted at `rootDir`.
 
 **Signature**
 
@@ -46,7 +46,7 @@ Loads the forge-ts configuration for a project.  Resolution order: 1. `<rootDir>
 |------|------|-------------|
 | `rootDir` | `: string \| undefined` | The project root to search for config.  Defaults to `process.cwd()`. |
 
-**Returns** — A fully-resolved .
+**Returns** — A fully-resolved `ForgeConfig`.
 
 **Example**
 
@@ -58,7 +58,7 @@ const config = await loadConfig("/path/to/project");
 
 ## resolveVisibility(tags)
 
-Determines the visibility level of a symbol from its TSDoc release tags.  The precedence order is: 1. `@internal`  →  2. `@beta`      →  3. `@public`    →  4. (no tag)     →  (default for exports)
+Determines the visibility level of a symbol from its TSDoc release tags.  The precedence order is: 1. `@internal`  → `Visibility.Internal` 2. `@beta`      → `Visibility.Beta` 3. `@public`    → `Visibility.Public` 4. (no tag)     → `Visibility.Public` (default for exports)
 
 **Signature**
 
@@ -72,7 +72,7 @@ Determines the visibility level of a symbol from its TSDoc release tags.  The pr
 |------|------|-------------|
 | `tags` | `Record<string` | The parsed `tags` map from `ForgeSymbol.documentation`. |
 
-**Returns** — The resolved  value.
+**Returns** — The resolved `Visibility` value.
 
 **Example**
 
@@ -111,7 +111,7 @@ meetsVisibility(Visibility.Internal, Visibility.Public); // false
 
 ## filterByVisibility(symbols, minVisibility)
 
-Filters an array of  objects to only include symbols whose visibility meets or exceeds `minVisibility`.
+Filters an array of `ForgeSymbol` objects to only include symbols whose visibility meets or exceeds `minVisibility`.
 
 **Signature**
 
@@ -137,7 +137,7 @@ const publicOnly = filterByVisibility(symbols, Visibility.Public);
 
 ## createWalker(config)
 
-Creates an  configured for the given forge config.  The walker uses the TypeScript Compiler API to create a `ts.Program` from the project's tsconfig, then visits every source file to extract exported declarations.  TSDoc comments are parsed with `@microsoft/tsdoc` to populate the `documentation` field on each .
+Creates an `ASTWalker` configured for the given forge config.  The walker uses the TypeScript Compiler API to create a `ts.Program` from the project's tsconfig, then visits every source file to extract exported declarations.  TSDoc comments are parsed with `@microsoft/tsdoc` to populate the `documentation` field on each `ForgeSymbol`.
 
 **Signature**
 
@@ -149,9 +149,9 @@ Creates an  configured for the given forge config.  The walker uses the TypeScri
 
 | Name | Type | Description |
 |------|------|-------------|
-| `config` | `ForgeConfig` | The resolved  for the project. |
+| `config` | `ForgeConfig` | The resolved `ForgeConfig` for the project. |
 
-**Returns** — An  instance whose `walk()` method performs the extraction.
+**Returns** — An `ASTWalker` instance whose `walk()` method performs the extraction.
 
 **Example**
 

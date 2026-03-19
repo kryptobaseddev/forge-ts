@@ -32,7 +32,7 @@ const schema = signatureToSchema("string[]");
 
 ## extractSDKTypes(symbols)
 
-Extracts SDK-relevant types (interfaces, type aliases, classes, enums) from a list of  objects.  Only exported symbols whose visibility is not  or  are included.
+Extracts SDK-relevant types (interfaces, type aliases, classes, enums) from a list of `ForgeSymbol` objects.  Only exported symbols whose visibility is not `Visibility.Internal` or `Visibility.Private` are included.
 
 **Signature**
 
@@ -46,7 +46,7 @@ Extracts SDK-relevant types (interfaces, type aliases, classes, enums) from a li
 |------|------|-------------|
 | `symbols` | `ForgeSymbol[]` | The symbols produced by the core AST walker. |
 
-**Returns** — An array of  objects for public-facing type definitions.
+**Returns** — An array of `SDKType` objects for public-facing type definitions.
 
 **Example**
 
@@ -70,11 +70,11 @@ Generates a production-quality OpenAPI 3.2 document from the extracted SDK types
 
 | Name | Type | Description |
 |------|------|-------------|
-| `config` | `ForgeConfig` | The resolved . |
+| `config` | `ForgeConfig` | The resolved `ForgeConfig`. |
 | `sdkTypes` | `SDKType[]` | SDK types to include as component schemas. |
 | `symbols` | `: ForgeSymbol[]` | Raw symbols used to extract HTTP route paths from `@route` tags. |
 
-**Returns** — An  object.
+**Returns** — An `OpenAPIDocument` object.
 
 **Example**
 
@@ -87,7 +87,7 @@ console.log(spec.openapi); // "3.2.0"
 
 ## buildReference(symbols)
 
-Builds a structured API reference from a list of exported symbols.  Unlike the minimal stub, this version includes nested children (class methods, interface properties) and all available TSDoc metadata.  Symbols with  or  are excluded from the top-level results. Children with private/internal visibility are also filtered out.
+Builds a structured API reference from a list of exported symbols.  Unlike the minimal stub, this version includes nested children (class methods, interface properties) and all available TSDoc metadata.  Symbols with `Visibility.Internal` or `Visibility.Private` are excluded from the top-level results. Children with private/internal visibility are also filtered out.
 
 **Signature**
 
@@ -101,7 +101,7 @@ Builds a structured API reference from a list of exported symbols.  Unlike the m
 |------|------|-------------|
 | `symbols` | `ForgeSymbol[]` | All symbols from the AST walker. |
 
-**Returns** — An array of  objects sorted by name.
+**Returns** — An array of `ReferenceEntry` objects sorted by name.
 
 **Example**
 
@@ -125,9 +125,9 @@ Runs the API generation pipeline: walk → extract → generate → write.
 
 | Name | Type | Description |
 |------|------|-------------|
-| `config` | `ForgeConfig` | The resolved  for the project. |
+| `config` | `ForgeConfig` | The resolved `ForgeConfig` for the project. |
 
-**Returns** — A  with success/failure and any diagnostics.
+**Returns** — A `ForgeResult` with success/failure and any diagnostics.
 
 **Example**
 

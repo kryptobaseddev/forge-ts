@@ -6,12 +6,12 @@ description: "core package overview"
 
 | Symbol | Kind | Description |
 |--------|------|-------------|
-| [`defaultConfig()`](/packages/core/api/index#defaultconfig) | function | Constructs a sensible default  rooted at `rootDir`. |
+| [`defaultConfig()`](/packages/core/api/index#defaultconfig) | function | Constructs a sensible default `ForgeConfig` rooted at `rootDir`. |
 | [`loadConfig()`](/packages/core/api/index#loadconfig) | function | Loads the forge-ts configuration for a project.  Resolution order: 1. `<rootD... |
 | [`resolveVisibility()`](/packages/core/api/index#resolvevisibility) | function | Determines the visibility level of a symbol from its TSDoc release tags.  The... |
 | [`meetsVisibility()`](/packages/core/api/index#meetsvisibility) | function | Returns whether `candidate` meets or exceeds the required minimum visibility.... |
-| [`filterByVisibility()`](/packages/core/api/index#filterbyvisibility) | function | Filters an array of  objects to only include symbols whose visibility meets o... |
-| [`createWalker()`](/packages/core/api/index#createwalker) | function | Creates an  configured for the given forge config.  The walker uses the TypeS... |
+| [`filterByVisibility()`](/packages/core/api/index#filterbyvisibility) | function | Filters an array of `ForgeSymbol` objects to only include symbols whose visib... |
+| [`createWalker()`](/packages/core/api/index#createwalker) | function | Creates an `ASTWalker` configured for the given forge config.  The walker use... |
 
 ## Types & Interfaces
 
@@ -35,4 +35,4 @@ description: "core package overview"
 | [`OpenAPIMediaTypeObject`](/packages/core/api/index#openapimediatypeobject) | interface | OpenAPI 3.2 media type object. |
 | [`OpenAPIResponseObject`](/packages/core/api/index#openapiresponseobject) | interface | OpenAPI 3.2 response object. |
 | [`OpenAPIDocument`](/packages/core/api/index#openapidocument) | interface | Complete OpenAPI 3.2 document. |
-| [`ASTWalker`](/packages/core/api/index#astwalker) | interface | The return type of . |
+| [`ASTWalker`](/packages/core/api/index#astwalker) | interface | The return type of `createWalker`. |

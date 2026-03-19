@@ -15,17 +15,17 @@ const config: Partial<ForgeConfig> = {
   // Output directory for generated files.
   outDir: "...",
   // Enforce TSDoc on all public exports.
-  enforce: true,
+  enforce: { /* ... */ },
   // DocTest configuration.
-  doctest: true,
+  doctest: { /* ... */ },
   // API generation configuration.
-  api: true,
+  api: { /* ... */ },
   // Output generation configuration.
-  gen: true,
+  gen: [],
   // Skill package generation settings. Custom sections here are merged into the generated SKILL.md, allowing projects to inject workflow knowledge, domain gotchas, and other context that cannot be derived from symbols alone.
-  skill: true,
+  skill: [],
   // Project metadata — auto-detected from package.json if not provided.
-  project: "...",
+  project: [],
 };
 ```
 
@@ -34,12 +34,12 @@ const config: Partial<ForgeConfig> = {
 | `rootDir` | `string` | Root directory of the project. |
 | `tsconfig` | `string` | Path to the tsconfig.json to compile against. |
 | `outDir` | `string` | Output directory for generated files. |
-| `enforce` | `boolean; minVisibility: Visibility; strict: boolean; rules: EnforceRules; }` | Enforce TSDoc on all public exports. |
-| `doctest` | `boolean; cacheDir: string; }` | DocTest configuration. |
-| `api` | `boolean; openapi: boolean; openapiPath: string; }` | API generation configuration. |
-| `gen` | `boolean; formats: ("markdown" | "mdx")[]; llmsTxt: boolean; readmeSync: boolean; ssgTarget?: "docusaurus" | "mintlify" | "nextra" | "vitepress" | undefined; }` | Output generation configuration. |
-| `skill` | `boolean | undefined; customSections?: { heading: string; content: string; }[] | undefined; extraGotchas?: string[] | undefined; }` | Skill package generation settings. Custom sections here are merged into the generated SKILL.md, allowing projects to inject workflow knowledge, domain gotchas, and other context that cannot be derived from symbols alone. |
-| `project` | `string | undefined; homepage?: string | undefined; packageName?: string | undefined; description?: string | undefined; version?: string | undefined; bin?: Record<string, string> | undefined; scripts?: Record<...> | undefined; keywords?: string[] | undefined; }` | Project metadata — auto-detected from package.json if not provided. |
+| `enforce` | `{ enabled: boolean; minVisibility: Visibility; strict: boolean; rules: EnforceRules; }` | Enforce TSDoc on all public exports. |
+| `doctest` | `{ enabled: boolean; cacheDir: string; }` | DocTest configuration. |
+| `api` | `{ enabled: boolean; openapi: boolean; openapiPath: string; }` | API generation configuration. |
+| `gen` | `{ enabled: boolean; formats: ("markdown" | "mdx")[]; llmsTxt: boolean; readmeSync: boolean; ssgTarget?: "docusaurus" | "mintlify" | "nextra" | "vitepress" | undefined; }` | Output generation configuration. |
+| `skill` | `{ enabled?: boolean | undefined; customSections?: { heading: string; content: string; }[] | undefined; extraGotchas?: string[] | undefined; }` | Skill package generation settings. Custom sections here are merged into the generated SKILL.md, allowing projects to inject workflow knowledge, domain gotchas, and other context that cannot be derived from symbols alone. |
+| `project` | `{ repository?: string | undefined; homepage?: string | undefined; packageName?: string | undefined; description?: string | undefined; version?: string | undefined; bin?: Record<string, string> | undefined; scripts?: Record<...> | undefined; keywords?: string[] | undefined; }` | Project metadata — auto-detected from package.json if not provided. |
 
 ## `SSGConfigFile`
 

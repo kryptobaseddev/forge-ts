@@ -35,7 +35,7 @@ forge-ts processes your TypeScript source with a single AST traversal, extractin
 - **`OpenAPIMediaTypeObject`** — OpenAPI 3.2 media type object.
 - **`OpenAPIResponseObject`** — OpenAPI 3.2 response object.
 - **`OpenAPIDocument`** — Complete OpenAPI 3.2 document.
-- **`ASTWalker`** — The return type of .
+- **`ASTWalker`** — The return type of `createWalker`.
 - **`SDKProperty`** — A single property extracted from an interface or class symbol.
 - **`SDKType`** — An SDK type descriptor extracted from the symbol graph.
 - **`ReferenceEntry`** — A single entry in the generated API reference.
@@ -72,7 +72,7 @@ forge-ts processes your TypeScript source with a single AST traversal, extractin
 - **`TestFailure`** — A single test failure entry, included at standard and full MVI levels.
 - **`TestResult`** — Typed result for the `test` command.
 - **`DeprecatedUsage`** — A detected usage of a deprecated symbol.
-- **`FormatOptions`** — Options that control how  renders its output.
+- **`FormatOptions`** — Options that control how `formatResults` renders its output.
 - **`ExtractedExample`** — A single extracted `@example` block ready for test generation.
 - **`GeneratorOptions`** — Options for virtual test file generation.
 - **`VirtualTestFile`** — A generated virtual test file.

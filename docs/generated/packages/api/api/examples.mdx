@@ -18,7 +18,7 @@ const schema = signatureToSchema("string[]");
 
 ## `extractSDKTypes()`
 
-_Extracts SDK-relevant types (interfaces, type aliases, classes, enums) from a list of  objects.  Only exported symbols whose visibility is not  or  are included._
+_Extracts SDK-relevant types (interfaces, type aliases, classes, enums) from a list of `ForgeSymbol` objects.  Only exported symbols whose visibility is not `Visibility.Internal` or `Visibility.Private` are included._
 
 [View in API reference](/packages/api/api/functions#extractsdktypes)
 
@@ -43,7 +43,7 @@ console.log(spec.openapi); // "3.2.0"
 
 ## `buildReference()`
 
-_Builds a structured API reference from a list of exported symbols.  Unlike the minimal stub, this version includes nested children (class methods, interface properties) and all available TSDoc metadata.  Symbols with  or  are excluded from the top-level results. Children with private/internal visibility are also filtered out._
+_Builds a structured API reference from a list of exported symbols.  Unlike the minimal stub, this version includes nested children (class methods, interface properties) and all available TSDoc metadata.  Symbols with `Visibility.Internal` or `Visibility.Private` are excluded from the top-level results. Children with private/internal visibility are also filtered out._
 
 [View in API reference](/packages/api/api/functions#buildreference)
 

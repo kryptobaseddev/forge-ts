@@ -6,7 +6,7 @@ Functions and classes exported by this package.
 
 ## extractExamples(symbols)
 
-Extracts all `@example` blocks from a list of  objects.
+Extracts all `@example` blocks from a list of `ForgeSymbol` objects.
 
 **Signature**
 
@@ -20,7 +20,7 @@ Extracts all `@example` blocks from a list of  objects.
 |------|------|-------------|
 | `symbols` | `ForgeSymbol[]` | The symbols produced by the core AST walker. |
 
-**Returns** — A flat array of  objects, one per code block.
+**Returns** — A flat array of `ExtractedExample` objects, one per code block.
 
 **Example**
 
@@ -50,7 +50,7 @@ Generates a virtual test file for a set of extracted examples.  Each example is 
 | `examples` | `ExtractedExample[]` | Examples to include in the generated file. |
 | `options` | `GeneratorOptions` | Output configuration. |
 
-**Returns** — An array of  objects (one per source file).
+**Returns** — An array of `VirtualTestFile` objects (one per source file).
 
 **Example**
 
@@ -76,7 +76,7 @@ Writes virtual test files to disk and executes them with Node 24 native TypeScri
 |------|------|-------------|
 | `files` | `VirtualTestFile[]` | The virtual test files to write and run. |
 
-**Returns** — A  summarising the test outcome.
+**Returns** — A `RunResult` summarising the test outcome.
 
 **Example**
 
@@ -102,9 +102,9 @@ Runs the full doctest pipeline: extract → generate → run.
 
 | Name | Type | Description |
 |------|------|-------------|
-| `config` | `ForgeConfig` | The resolved  for the project. |
+| `config` | `ForgeConfig` | The resolved `ForgeConfig` for the project. |
 
-**Returns** — A  with success/failure and any diagnostics.
+**Returns** — A `ForgeResult` with success/failure and any diagnostics.
 
 **Example**
 

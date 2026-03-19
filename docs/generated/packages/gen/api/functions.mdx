@@ -46,10 +46,10 @@ Generates a full multi-page documentation site from symbols grouped by package. 
 | Name | Type | Description |
 |------|------|-------------|
 | `symbolsByPackage` | `Map<string` | Symbols grouped by package name. |
-| `config` | `ForgeConfig` | The resolved . |
+| `config` | `ForgeConfig` | The resolved `ForgeConfig`. |
 | `options` | `SiteGeneratorOptions` | Site generation options. |
 
-**Returns** — An array of  objects ready to be written to disk.
+**Returns** — An array of `DocPage` objects ready to be written to disk.
 
 **Example**
 
@@ -99,7 +99,7 @@ Get a registered adapter by target name. Throws if the target is not registered.
 |------|------|-------------|
 | `target` | `SSGTarget` | The SSG target identifier. |
 
-**Returns** — The registered  for the given target.
+**Returns** — The registered `SSGAdapter` for the given target.
 
 **Throws**
 
@@ -122,7 +122,7 @@ Get all registered adapter targets.
 () => SSGTarget[]
 ```
 
-**Returns** — An array of all registered  identifiers.
+**Returns** — An array of all registered `SSGTarget` identifiers.
 
 **Example**
 
@@ -146,7 +146,7 @@ Generates an `llms.txt` routing manifest from the extracted symbols.  The file f
 | Name | Type | Description |
 |------|------|-------------|
 | `symbols` | `ForgeSymbol[]` | The symbols to include. |
-| `config` | `ForgeConfig` | The resolved . |
+| `config` | `ForgeConfig` | The resolved `ForgeConfig`. |
 
 **Returns** — The generated `llms.txt` content as a string.
 
@@ -173,7 +173,7 @@ Generates an `llms-full.txt` dense context file from the extracted symbols.  Unl
 | Name | Type | Description |
 |------|------|-------------|
 | `symbols` | `ForgeSymbol[]` | The symbols to include. |
-| `config` | `ForgeConfig` | The resolved . |
+| `config` | `ForgeConfig` | The resolved `ForgeConfig`. |
 
 **Returns** — The generated `llms-full.txt` content as a string.
 
@@ -200,7 +200,7 @@ Generates a Markdown (or MDX) string from a list of symbols.
 | Name | Type | Description |
 |------|------|-------------|
 | `symbols` | `ForgeSymbol[]` | The symbols to document. |
-| `config` | `ForgeConfig` | The resolved . |
+| `config` | `ForgeConfig` | The resolved `ForgeConfig`. |
 | `options` | `: MarkdownOptions` | Rendering options. |
 
 **Returns** — The generated Markdown string.
@@ -258,7 +258,7 @@ Generates an agentskills.io-compliant skill package for ANY TypeScript project. 
 | `symbols` | `ForgeSymbol[]` | All symbols from the project. |
 | `config` | `ForgeConfig` | The resolved forge-ts config. |
 
-**Returns** — A  describing the directory and its files.
+**Returns** — A `SkillPackage` describing the directory and its files.
 
 **Example**
 
@@ -310,11 +310,11 @@ Generate navigation configuration file(s) for the given SSG target.  Returns one
 
 | Name | Type | Description |
 |------|------|-------------|
-| `pages` | `DocPage[]` | The  array produced by `generateDocSite`. |
+| `pages` | `DocPage[]` | The `DocPage` array produced by `generateDocSite`. |
 | `target` | `"docusaurus" \| "mintlify" \| "nextra" \| "vitepress"` | The SSG target. |
 | `projectName` | `string` | The project name (used in config metadata). |
 
-**Returns** — An array of  objects ready to be written to disk.
+**Returns** — An array of `SSGConfigFile` objects ready to be written to disk.
 
 **Example**
 
@@ -338,10 +338,10 @@ Runs the full generation pipeline: walk → render → write.  Auto-generated pa
 
 | Name | Type | Description |
 |------|------|-------------|
-| `config` | `ForgeConfig` | The resolved  for the project. |
+| `config` | `ForgeConfig` | The resolved `ForgeConfig` for the project. |
 | `options` | `: GenerateOptions \| undefined` | Optional generation flags (e.g., forceStubs). |
 
-**Returns** — A  describing the outcome.
+**Returns** — A `ForgeResult` describing the outcome.
 
 **Example**
 

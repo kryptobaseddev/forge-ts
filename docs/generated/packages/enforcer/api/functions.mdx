@@ -36,9 +36,9 @@ Runs the TSDoc enforcement pass against a project.  The enforcer walks all expor
 
 | Name | Type | Description |
 |------|------|-------------|
-| `config` | `ForgeConfig` | The resolved  for the project. |
+| `config` | `ForgeConfig` | The resolved `ForgeConfig` for the project. |
 
-**Returns** — A  describing which symbols passed or failed.
+**Returns** — A `ForgeResult` describing which symbols passed or failed.
 
 **Example**
 
@@ -54,7 +54,7 @@ if (!result.success) {
 
 ## formatResults(result, options)
 
-Formats a  into a human-readable string suitable for printing to a terminal.  Diagnostics are grouped by source file.  Each file heading shows the relative-ish path, followed by indented error and warning lines.  A summary line is appended at the end.
+Formats a `ForgeResult` into a human-readable string suitable for printing to a terminal.  Diagnostics are grouped by source file.  Each file heading shows the relative-ish path, followed by indented error and warning lines.  A summary line is appended at the end.
 
 **Signature**
 
@@ -66,7 +66,7 @@ Formats a  into a human-readable string suitable for printing to a terminal.  Di
 
 | Name | Type | Description |
 |------|------|-------------|
-| `result` | `ForgeResult` | The result produced by . |
+| `result` | `ForgeResult` | The result produced by `enforce`. |
 | `options` | `FormatOptions` | Rendering options (colours, verbosity). |
 
 **Returns** — A formatted string ready to write to stdout or stderr.

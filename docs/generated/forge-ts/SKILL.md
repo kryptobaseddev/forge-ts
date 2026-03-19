@@ -24,16 +24,16 @@ console.log(config.enforce.enabled); // true
 
 | Function | Description |
 |----------|-------------|
-| `defaultConfig()` | Constructs a sensible default  rooted at `rootDir`. |
+| `defaultConfig()` | Constructs a sensible default `ForgeConfig` rooted at `rootDir`. |
 | `loadConfig()` | Loads the forge-ts configuration for a project.  Resolution order: 1. `<rootDir>/forge-ts.config.ts` 2. `<rootDir>/forge-ts.config.js` 3. `"forge-ts"` key inside `<rootDir>/package.json` 4. Built-in defaults (returned when none of the above is found) |
-| `resolveVisibility()` | Determines the visibility level of a symbol from its TSDoc release tags.  The precedence order is: 1. `@internal`  →  2. `@beta`      →  3. `@public`    →  4. (no tag)     →  (default for exports) |
+| `resolveVisibility()` | Determines the visibility level of a symbol from its TSDoc release tags.  The precedence order is: 1. `@internal`  → `Visibility.Internal` 2. `@beta`      → `Visibility.Beta` 3. `@public`    → `Visibility.Public` 4. (no tag)     → `Visibility.Public` (default for exports) |
 | `meetsVisibility()` | Returns whether `candidate` meets or exceeds the required minimum visibility.  "Meets" means the symbol is at least as visible as `minVisibility`. For example, `Public` meets a minimum of `Public`, but `Internal` does not. |
-| `filterByVisibility()` | Filters an array of  objects to only include symbols whose visibility meets or exceeds `minVisibility`. |
-| `createWalker()` | Creates an  configured for the given forge config.  The walker uses the TypeScript Compiler API to create a `ts.Program` from the project's tsconfig, then visits every source file to extract exported declarations.  TSDoc comments are parsed with `@microsoft/tsdoc` to populate the `documentation` field on each . |
+| `filterByVisibility()` | Filters an array of `ForgeSymbol` objects to only include symbols whose visibility meets or exceeds `minVisibility`. |
+| `createWalker()` | Creates an `ASTWalker` configured for the given forge config.  The walker uses the TypeScript Compiler API to create a `ts.Program` from the project's tsconfig, then visits every source file to extract exported declarations.  TSDoc comments are parsed with `@microsoft/tsdoc` to populate the `documentation` field on each `ForgeSymbol`. |
 | `signatureToSchema()` | Maps a TypeScript type signature string to an OpenAPI 3.2 schema object.  Handles common primitives, arrays, unions, `Record<K, V>`, and falls back to `{ type: "object" }` for anything it cannot parse. |
-| `extractSDKTypes()` | Extracts SDK-relevant types (interfaces, type aliases, classes, enums) from a list of  objects.  Only exported symbols whose visibility is not  or  are included. |
+| `extractSDKTypes()` | Extracts SDK-relevant types (interfaces, type aliases, classes, enums) from a list of `ForgeSymbol` objects.  Only exported symbols whose visibility is not `Visibility.Internal` or `Visibility.Private` are included. |
 | `generateOpenAPISpec()` | Generates a production-quality OpenAPI 3.2 document from the extracted SDK types.  The document is populated with: - An `info` block sourced from the config or reasonable defaults. - A `components.schemas` section with one schema per exported type. - `tags` derived from unique source file paths (grouping by file). - Visibility filtering: `@internal` symbols are never emitted.  HTTP paths are not yet emitted (`paths` is always `{}`); route extraction will be added in a future release. |
-| `buildReference()` | Builds a structured API reference from a list of exported symbols.  Unlike the minimal stub, this version includes nested children (class methods, interface properties) and all available TSDoc metadata.  Symbols with  or  are excluded from the top-level results. Children with private/internal visibility are also filtered out. |
+| `buildReference()` | Builds a structured API reference from a list of exported symbols.  Unlike the minimal stub, this version includes nested children (class methods, interface properties) and all available TSDoc metadata.  Symbols with `Visibility.Internal` or `Visibility.Private` are excluded from the top-level results. Children with private/internal visibility are also filtered out. |
 | `generateApi()` | Runs the API generation pipeline: walk → extract → generate → write. |
 | `groupSymbolsByPackage()` | Groups symbols by their package based on file path.  For monorepos (symbols under `packages/<name>/`) the package name is derived from the directory segment immediately after `packages/`. For non-monorepo projects all symbols fall under the project name. |
 | `generateDocSite()` | Generates a full multi-page documentation site from symbols grouped by package.  Follows a 5-stage information architecture: 1. ORIENT — Landing page, Getting Started 2. LEARN — Concepts (stub) 3. BUILD — Guides (stub) 4. REFERENCE — API Reference, Types, Configuration, Changelog 5. COMMUNITY — FAQ, Contributing (stubs) |
@@ -54,17 +54,17 @@ const config: Partial<ForgeConfig> = {
   // Output directory for generated files.
   outDir: "...",
   // Enforce TSDoc on all public exports.
-  enforce: true,
+  enforce: { /* ... */ },
   // DocTest configuration.
-  doctest: true,
+  doctest: { /* ... */ },
   // API generation configuration.
-  api: true,
+  api: { /* ... */ },
   // Output generation configuration.
-  gen: true,
+  gen: [],
   // Skill package generation settings. Custom sections here are merged into the generated SKILL.md, allowing projects to inject workflow knowledge, domain gotchas, and other context that cannot be derived from symbols alone.
-  skill: true,
+  skill: [],
   // Project metadata — auto-detected from package.json if not provided.
-  project: "...",
+  project: [],
 };
 ```
 

@@ -1,0 +1,254 @@
+---
+title: "core — Types"
+description: "Type contracts for the core package"
+---
+# core — Types
+
+Type contracts exported by this package: interfaces, type aliases, and enums.
+
+## Visibility
+
+Visibility levels for exported symbols. Derived from TSDoc release tags (public, beta, internal).
+
+```typescript
+typeof Visibility
+```
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| `Public` | `Visibility.Public` | Yes |  |
+| `Beta` | `Visibility.Beta` | Yes |  |
+| `Internal` | `Visibility.Internal` | Yes |  |
+| `Private` | `Visibility.Private` | Yes |  |
+
+## ForgeSymbol
+
+A single extracted and annotated symbol from the TypeScript AST.
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| `name` | `string` | Yes | The declared name of the symbol. |
+| `kind` | `"function" \| "class" \| "interface" \| "type" \| "enum" \| "variable" \| "method" \| "property"` | Yes | The syntactic kind of the symbol. |
+| `visibility` | `Visibility` | Yes | Resolved visibility from TSDoc release tags. |
+| `filePath` | `string` | Yes | Absolute path to the source file. |
+| `line` | `number` | Yes | 1-based line number of the declaration. |
+| `column` | `number` | Yes | 0-based column of the declaration. |
+| `documentation` | `{ summary?: string \| undefined; params?: { name: string; description: string; type?: string \| undefined; }[] \| undefined; returns?: { description: string; type?: string \| undefined; } \| undefined; ... 4 more ...; links?: { ...; }[] \| undefined; } \| undefined` | No | Parsed TSDoc documentation, if present. |
+| `signature` | `string \| undefined` | No | Human-readable type signature of the symbol. |
+| `children` | `ForgeSymbol[] \| undefined` | No | Child symbols (e.g., class members, enum values). |
+| `exported` | `boolean` | Yes | Whether this symbol is part of the public module exports. |
+
+## RuleSeverity
+
+Severity level for an individual enforcement rule. - `"error"` — violation fails the build. - `"warn"`  — violation is reported but does not fail the build. - `"off"`   — rule is disabled entirely.
+
+```typescript
+any
+```
+
+## EnforceRules
+
+Per-rule severity configuration for the TSDoc enforcer. Each key corresponds to one of the E001–E007 rule codes.
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| `"require-summary"` | `RuleSeverity` | Yes | E001: Exported symbol missing TSDoc summary. |
+| `"require-param"` | `RuleSeverity` | Yes | E002: Function parameter missing |
+| `"require-returns"` | `RuleSeverity` | Yes | E003: Non-void function missing |
+| `"require-example"` | `RuleSeverity` | Yes | E004: Exported function missing |
+| `"require-package-doc"` | `RuleSeverity` | Yes | E005: Entry point missing packageDocumentation. |
+| `"require-class-member-doc"` | `RuleSeverity` | Yes | E006: Class member missing documentation. |
+| `"require-interface-member-doc"` | `RuleSeverity` | Yes | E007: Interface/type member missing documentation. |
+
+## ForgeConfig
+
+Full configuration for a forge-ts run. Loaded from forge-ts.config.ts or the "forge-ts" key in package.json.
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| `rootDir` | `string` | Yes | Root directory of the project. |
+| `tsconfig` | `string` | Yes | Path to the tsconfig.json to compile against. |
+| `outDir` | `string` | Yes | Output directory for generated files. |
+| `enforce` | `{ enabled: boolean; minVisibility: Visibility; strict: boolean; rules: EnforceRules; }` | Yes | Enforce TSDoc on all public exports. |
+| `doctest` | `{ enabled: boolean; cacheDir: string; }` | Yes | DocTest configuration. |
+| `api` | `{ enabled: boolean; openapi: boolean; openapiPath: string; }` | Yes | API generation configuration. |
+| `gen` | `{ enabled: boolean; formats: ("markdown" \| "mdx")[]; llmsTxt: boolean; readmeSync: boolean; ssgTarget?: "docusaurus" \| "mintlify" \| "nextra" \| "vitepress" \| undefined; }` | No | Output generation configuration. |
+
+## ForgeResult
+
+The result of a forge-ts compilation pass.
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| `success` | `boolean` | Yes | Whether the run succeeded without errors. |
+| `symbols` | `ForgeSymbol[]` | Yes | All symbols extracted during this run. |
+| `errors` | `ForgeError[]` | Yes | Errors that caused or would cause failure. |
+| `warnings` | `ForgeWarning[]` | Yes | Non-fatal warnings. |
+| `duration` | `number` | Yes | Wall-clock duration of the run in milliseconds. |
+
+## ForgeError
+
+A diagnostic error produced during a forge-ts run.
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| `code` | `string` | Yes | Machine-readable error code (e.g. "E001"). |
+| `message` | `string` | Yes | Human-readable description of the error. |
+| `filePath` | `string` | Yes | Absolute path of the file where the error occurred. |
+| `line` | `number` | Yes | 1-based line number. |
+| `column` | `number` | Yes | 0-based column. |
+| `suggestedFix` | `string \| undefined` | No | Suggested fix for the agent — exact TSDoc block to add. |
+| `symbolName` | `string \| undefined` | No | The symbol name that needs fixing. |
+| `symbolKind` | `string \| undefined` | No | The symbol kind (function, class, interface, etc.). |
+
+## ForgeWarning
+
+A diagnostic warning produced during a forge-ts run.
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| `code` | `string` | Yes | Machine-readable warning code (e.g. "W001"). |
+| `message` | `string` | Yes | Human-readable description of the warning. |
+| `filePath` | `string` | Yes | Absolute path of the file where the warning occurred. |
+| `line` | `number` | Yes | 1-based line number. |
+| `column` | `number` | Yes | 0-based column. |
+
+## OpenAPISchemaObject
+
+OpenAPI 3.2 schema object.
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| `type` | `"string" \| "number" \| "boolean" \| "object" \| "integer" \| "array" \| "null" \| undefined` | No | The data type of the schema (e.g., "string", "number", "object", "array"). |
+| `format` | `string \| undefined` | No | A format hint for the data type (e.g., "int32", "date-time", "email", "uuid"). |
+| `description` | `string \| undefined` | No | A human-readable description of the schema's purpose or constraints. |
+| `properties` | `Record<string, OpenAPISchemaObject> \| undefined` | No | Property definitions for object-type schemas. Maps each property name to its schema. |
+| `required` | `string[] \| undefined` | No | List of property names that must be present on the object. |
+| `items` | `OpenAPISchemaObject \| undefined` | No | Schema definition for the elements of an array-type schema. Required when `type` is "array". |
+| `additionalProperties` | `boolean \| OpenAPISchemaObject \| undefined` | No | Controls whether additional properties are allowed (`true`/`false`) or defines their schema. |
+| `enum` | `(string \| number \| boolean)[] \| undefined` | No | Restricts the value to one of the listed constants. |
+| `oneOf` | `OpenAPISchemaObject[] \| undefined` | No | Validates the value against exactly one of the listed sub-schemas. |
+| `allOf` | `OpenAPISchemaObject[] \| undefined` | No | Validates the value against all of the listed sub-schemas (intersection). |
+| `anyOf` | `OpenAPISchemaObject[] \| undefined` | No | Validates the value against at least one of the listed sub-schemas. |
+| `nullable` | `boolean \| undefined` | No | Indicates that the value may be `null` in addition to its declared type. |
+| `deprecated` | `boolean \| undefined` | No | Marks the schema as deprecated, signalling that it may be removed in a future version. |
+| `default` | `string \| number \| boolean \| null \| undefined` | No | The default value to use when the property is absent. |
+| `$ref` | `string \| undefined` | No | A JSON Reference (`$ref`) pointing to another schema definition in the document. |
+
+## OpenAPIInfoObject
+
+OpenAPI 3.2 info object.
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| `title` | `string` | Yes | The human-readable name of the API. |
+| `version` | `string` | Yes | The version string for the API (e.g., "1.0.0"). |
+| `description` | `string \| undefined` | No | A detailed description of the API, supporting CommonMark markdown. |
+| `summary` | `string \| undefined` | No | A short summary of the API, intended for display in tooling. |
+| `license` | `{ name: string; url?: string \| undefined; identifier?: string \| undefined; } \| undefined` | No | Licensing information for the exposed API, including name, URL, and SPDX identifier. |
+
+## OpenAPITagObject
+
+OpenAPI 3.2 tag object.
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| `name` | `string` | Yes | The name of the tag, used to group operations in the document. |
+| `description` | `string \| undefined` | No | An optional description of the tag, supporting CommonMark markdown. |
+
+## OpenAPIPathItemObject
+
+OpenAPI 3.2 path item object.
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| `summary` | `string \| undefined` | No | A short summary of the path item, intended for tooling display. |
+| `description` | `string \| undefined` | No | A detailed description of the path item, supporting CommonMark markdown. |
+| `get` | `OpenAPIOperationObject \| undefined` | No | The operation definition for HTTP GET requests to this path. |
+| `post` | `OpenAPIOperationObject \| undefined` | No | The operation definition for HTTP POST requests to this path. |
+| `put` | `OpenAPIOperationObject \| undefined` | No | The operation definition for HTTP PUT requests to this path. |
+| `delete` | `OpenAPIOperationObject \| undefined` | No | The operation definition for HTTP DELETE requests to this path. |
+| `patch` | `OpenAPIOperationObject \| undefined` | No | The operation definition for HTTP PATCH requests to this path. |
+| `options` | `OpenAPIOperationObject \| undefined` | No | The operation definition for HTTP OPTIONS requests to this path. |
+| `head` | `OpenAPIOperationObject \| undefined` | No | The operation definition for HTTP HEAD requests to this path. |
+| `trace` | `OpenAPIOperationObject \| undefined` | No | The operation definition for HTTP TRACE requests to this path. |
+| `query` | `OpenAPIOperationObject \| undefined` | No | The operation definition for HTTP QUERY requests to this path (OpenAPI 3.2 extension). |
+| `additionalOperations` | `Record<string, OpenAPIOperationObject> \| undefined` | No | Additional non-standard HTTP method operations keyed by method name. |
+
+## OpenAPIOperationObject
+
+OpenAPI 3.2 operation object.
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| `operationId` | `string \| undefined` | No | A unique string identifier for the operation, used by tooling to reference it. |
+| `summary` | `string \| undefined` | No | A short, human-readable summary of what the operation does. |
+| `description` | `string \| undefined` | No | A detailed description of the operation's behaviour, supporting CommonMark markdown. |
+| `tags` | `string[] \| undefined` | No | A list of tag names that logically group this operation in documentation and tooling. |
+| `parameters` | `OpenAPIParameterObject[] \| undefined` | No | The list of parameters applicable to this operation. |
+| `responses` | `Record<string, OpenAPIResponseObject> \| undefined` | No | The possible responses returned by this operation, keyed by HTTP status code or "default". |
+
+## OpenAPIParameterObject
+
+OpenAPI 3.2 parameter object.
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| `name` | `string` | Yes | The name of the parameter, case-sensitive. |
+| `in` | `"query" \| "header" \| "path" \| "cookie" \| "querystring"` | Yes | The location of the parameter: path, query, header, cookie, or querystring. |
+| `description` | `string \| undefined` | No | A human-readable description of the parameter's purpose, supporting CommonMark markdown. |
+| `required` | `boolean \| undefined` | No | Whether the parameter is mandatory. Required for `in: "path"` parameters. |
+| `schema` | `OpenAPISchemaObject \| undefined` | No | The schema defining the type and constraints of the parameter value. |
+| `deprecated` | `boolean \| undefined` | No | Marks the parameter as deprecated; clients should avoid using it. |
+
+## OpenAPIEncodingObject
+
+OpenAPI 3.2 encoding object.
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| `contentType` | `string \| undefined` | No | The MIME type to use for encoding a specific property (e.g., "application/json"). |
+| `headers` | `Record<string, OpenAPIParameterObject> \| undefined` | No | Additional headers to send alongside the encoded part, keyed by header name. |
+| `style` | `string \| undefined` | No | The serialization style for the encoded value (e.g., "form", "spaceDelimited"). |
+| `explode` | `boolean \| undefined` | No | Whether arrays and objects should be exploded into separate query parameters. |
+| `allowReserved` | `boolean \| undefined` | No | Whether reserved characters in the encoded value should be allowed without percent-encoding. |
+
+## OpenAPIMediaTypeObject
+
+OpenAPI 3.2 media type object.
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| `schema` | `OpenAPISchemaObject \| undefined` | No | The schema defining the structure and type of the media type's payload. |
+| `encoding` | `Record<string, OpenAPIEncodingObject> \| undefined` | No | Encoding information for specific properties of a `multipart` or `application/x-www-form-urlencoded` request body. |
+
+## OpenAPIResponseObject
+
+OpenAPI 3.2 response object.
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| `description` | `string` | Yes | A required human-readable description of the response, supporting CommonMark markdown. |
+| `headers` | `Record<string, OpenAPIParameterObject> \| undefined` | No | HTTP headers returned with this response, keyed by header name. |
+| `content` | `Record<string, OpenAPIMediaTypeObject> \| undefined` | No | The response body content, keyed by media type (e.g., "application/json"). |
+
+## OpenAPIDocument
+
+Complete OpenAPI 3.2 document.
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| `openapi` | `"3.2.0"` | Yes | The OpenAPI specification version this document conforms to. Must be "3.2.0". |
+| `$self` | `string \| undefined` | No | An optional self-referencing URL for this document, used for tooling and resolution. |
+| `info` | `OpenAPIInfoObject` | Yes | Metadata about the API including title, version, and description. |
+| `paths` | `Record<string, OpenAPIPathItemObject>` | Yes | The available paths and their operations, keyed by path template (e.g., "/users/id"). |
+| `components` | `{ schemas: Record<string, OpenAPISchemaObject>; mediaTypes?: Record<string, OpenAPIMediaTypeObject> \| undefined; }` | No | Reusable schema and media type definitions shared across the document. |
+| `tags` | `OpenAPITagObject[] \| undefined` | No | A list of tags used to group operations, with optional descriptions. |
+
+## ASTWalker
+
+The return type of .
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| `walk` | `() => ForgeSymbol[]` | Yes | Walk all source files referenced by the configured tsconfig and return one  per exported declaration. |

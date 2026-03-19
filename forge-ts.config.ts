@@ -23,6 +23,6 @@ export default {
 		formats: ["markdown"],
 		llmsTxt: true,
 		readmeSync: false,
-		ssgTarget: "vitepress",
+		ssgTarget: "mintlify",
 	},
 } satisfies Partial<ForgeConfig>;

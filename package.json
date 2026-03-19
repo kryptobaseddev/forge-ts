@@ -24,14 +24,16 @@
 		"prerelease": "pnpm build && pnpm test",
 		"forge:check": "forge-ts check --cwd packages/core",
 		"forge:build": "forge-ts build",
-		"forge:test": "forge-ts test --cwd packages/core"
+		"forge:test": "forge-ts test --cwd packages/core",
+		"docs:dev": "cd docs/generated && npx mint dev",
+		"docs:generate": "pnpm build && forge-ts build"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "^2.4.0",
 		"@changesets/changelog-github": "^0.6.0",
 		"@changesets/cli": "^2.30.0",
 		"@cleocode/lafs-protocol": "^1.7.0",
-		"@forge-ts/cli": "^0.3.0",
+		"@forge-ts/cli": "^0.5.0",
 		"@microsoft/tsdoc": "^0.16.0",
 		"@types/node": "^25.5.0",
 		"tsup": "^8.5.0",

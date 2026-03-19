@@ -1,6 +1,5 @@
 ---
 title: API Reference
-outline: deep
 ---
 
 # API Reference

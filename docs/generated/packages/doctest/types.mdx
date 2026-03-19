@@ -1,0 +1,59 @@
+---
+title: "doctest — Types"
+description: "Type contracts for the doctest package"
+---
+# doctest — Types
+
+Type contracts exported by this package: interfaces, type aliases, and enums.
+
+## ExtractedExample
+
+A single extracted `@example` block ready for test generation.
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| `symbolName` | `string` | Yes | The symbol this example belongs to. |
+| `filePath` | `string` | Yes | Absolute path to the source file. |
+| `line` | `number` | Yes | 1-based line number of the `@example` tag. |
+| `code` | `string` | Yes | The raw code inside the fenced block. |
+| `language` | `string` | Yes | The language identifier (e.g. `"typescript"`). |
+| `index` | `number` | Yes | Sequential index among examples for this symbol. |
+
+## GeneratorOptions
+
+Options for virtual test file generation.
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| `cacheDir` | `string` | Yes | Directory where virtual test files will be written. |
+
+## VirtualTestFile
+
+A generated virtual test file.
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| `path` | `string` | Yes | Absolute path where the file will be written. |
+| `content` | `string` | Yes | File contents (valid TypeScript). |
+
+## RunResult
+
+Result of running the generated test files.
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| `success` | `boolean` | Yes | Whether all tests passed. |
+| `passed` | `number` | Yes | Number of tests that passed. |
+| `failed` | `number` | Yes | Number of tests that failed. |
+| `output` | `string` | Yes | Combined stdout + stderr output from the test runner. |
+| `tests` | `TestCaseResult[]` | Yes | Individual test results with name and status. |
+
+## TestCaseResult
+
+The result of a single test case.
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| `name` | `string` | Yes | The full test name as reported by the runner. |
+| `passed` | `boolean` | Yes | Whether this test passed. |
+| `sourceFile` | `string \| undefined` | No | The source file this test was generated from, if determinable. |

@@ -1,0 +1,37 @@
+---
+title: "gen"
+description: "gen package overview"
+---
+# gen
+
+## Exported Symbols
+
+| Symbol | Kind | Description |
+|--------|------|-------------|
+| [`DocPage`](./api-reference.md#docpage) | interface | A single generated documentation page. |
+| [`SiteGeneratorOptions`](./api-reference.md#sitegeneratoroptions) | interface | Options controlling the doc site generator. |
+| [`groupSymbolsByPackage()`](./api-reference.md#groupsymbolsbypackage) | function | Groups symbols by their package based on file path.  For monorepos (symbols under `packages/<name>/`) the package name is derived from the directory segment immediately after `packages/`. For non-monorepo projects all symbols fall under the project name. |
+| [`generateDocSite()`](./api-reference.md#generatedocsite) | function | Generates a full multi-page documentation site from symbols grouped by package.  Produces an index page, a getting-started page, and per-package pages for the API reference, types, functions, and examples. |
+| [`SSGTarget`](./api-reference.md#ssgtarget) | type | Supported SSG target identifiers. |
+| [`GeneratedFile`](./api-reference.md#generatedfile) | interface | A file to write to disk during scaffolding or generation. |
+| [`SSGStyleGuide`](./api-reference.md#ssgstyleguide) | interface | Style guide configuration for the SSG target. |
+| [`ScaffoldManifest`](./api-reference.md#scaffoldmanifest) | interface | Scaffold manifest describing what `init docs` creates. |
+| [`AdapterContext`](./api-reference.md#adaptercontext) | interface | Context passed to adapter methods. |
+| [`SSGAdapter`](./api-reference.md#ssgadapter) | interface | The central SSG adapter interface. Every doc platform provider implements this contract. One file per provider. No shared mutable state. |
+| [`registerAdapter()`](./api-reference.md#registeradapter) | function | Register an SSG adapter. Called once per provider at module load time. |
+| [`getAdapter()`](./api-reference.md#getadapter) | function | Get a registered adapter by target name. Throws if the target is not registered. |
+| [`getAvailableTargets()`](./api-reference.md#getavailabletargets) | function | Get all registered adapter targets. |
+| [`DEFAULT_TARGET`](./api-reference.md#defaulttarget) | variable | The default SSG target when none is specified. |
+| [`mintlifyAdapter`](./api-reference.md#mintlifyadapter) | variable | Mintlify SSG adapter. Implements the  contract for the Mintlify platform. |
+| [`docusaurusAdapter`](./api-reference.md#docusaurusadapter) | variable | Docusaurus SSG adapter. Implements the  contract for the Docusaurus platform. |
+| [`nextraAdapter`](./api-reference.md#nextraadapter) | variable | Nextra SSG adapter (v4, App Router). Implements the  contract for the Nextra platform. |
+| [`vitepressAdapter`](./api-reference.md#vitepressadapter) | variable | VitePress SSG adapter. Implements the  contract for the VitePress platform. |
+| [`generateLlmsTxt()`](./api-reference.md#generatellmstxt) | function | Generates an `llms.txt` routing manifest from the extracted symbols.  The file follows the llms.txt specification: a compact, structured overview designed to help large language models navigate a project's documentation. |
+| [`generateLlmsFullTxt()`](./api-reference.md#generatellmsfulltxt) | function | Generates an `llms-full.txt` dense context file from the extracted symbols.  Unlike `llms.txt`, this file contains complete documentation for every exported symbol, intended for LLM ingestion that requires full context. |
+| [`MarkdownOptions`](./api-reference.md#markdownoptions) | interface | Options controlling Markdown output. |
+| [`generateMarkdown()`](./api-reference.md#generatemarkdown) | function | Generates a Markdown (or MDX) string from a list of symbols. |
+| [`ReadmeSyncOptions`](./api-reference.md#readmesyncoptions) | interface | Options controlling README sync behaviour. |
+| [`syncReadme()`](./api-reference.md#syncreadme) | function | Injects a summary of exported symbols into a `README.md` file.  The content is placed between `<!-- forge-ts:start -->` and `<!-- forge-ts:end -->` comment markers.  If neither marker exists, the summary is appended to the end of the file. |
+| [`SSGConfigFile`](./api-reference.md#ssgconfigfile) | interface | A single generated SSG configuration file. |
+| [`generateSSGConfigs()`](./api-reference.md#generatessgconfigs) | function | Generate navigation configuration file(s) for the given SSG target.  Returns one file for most targets, but multiple files for Nextra (which uses per-directory `_meta.json` files). |
+| [`generate()`](./api-reference.md#generate) | function | Runs the full generation pipeline: walk → render → write. |

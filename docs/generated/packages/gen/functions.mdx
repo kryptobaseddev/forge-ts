@@ -1,0 +1,298 @@
+---
+title: "gen — Functions"
+description: "Functions and classes for the gen package"
+---
+# gen — Functions & Classes
+
+Functions and classes exported by this package.
+
+## groupSymbolsByPackage(symbols, rootDir)
+
+Groups symbols by their package based on file path.  For monorepos (symbols under `packages/<name>/`) the package name is derived from the directory segment immediately after `packages/`. For non-monorepo projects all symbols fall under the project name.
+
+**Signature**
+
+```typescript
+(symbols: ForgeSymbol[], rootDir: string) => Map<string, ForgeSymbol[]>
+```
+
+**Parameters**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `symbols` | — | All extracted symbols. |
+| `rootDir` | — | Absolute path to the project root. |
+
+**Returns** — A map from package name to symbol list.
+
+**Example**
+
+```typescript
+import { groupSymbolsByPackage } from "@forge-ts/gen";
+const grouped = groupSymbolsByPackage(symbols, "/path/to/project");
+console.log(grouped.has("core")); // true for monorepo
+```
+
+## generateDocSite(symbolsByPackage, config, options)
+
+Generates a full multi-page documentation site from symbols grouped by package.  Produces an index page, a getting-started page, and per-package pages for the API reference, types, functions, and examples.
+
+**Signature**
+
+```typescript
+(symbolsByPackage: Map<string, ForgeSymbol[]>, config: ForgeConfig, options: SiteGeneratorOptions) => DocPage[]
+```
+
+**Parameters**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `symbolsByPackage` | — | Symbols grouped by package name. |
+| `config` | — | The resolved . |
+| `options` | — | Site generation options. |
+
+**Returns** — An array of  objects ready to be written to disk.
+
+**Example**
+
+```typescript
+import { generateDocSite, groupSymbolsByPackage } from "@forge-ts/gen";
+const grouped = groupSymbolsByPackage(symbols, config.rootDir);
+const pages = generateDocSite(grouped, config, { format: "markdown", projectName: "my-project" });
+console.log(pages.length > 0); // true
+```
+
+## registerAdapter(adapter)
+
+Register an SSG adapter. Called once per provider at module load time.
+
+**Signature**
+
+```typescript
+(adapter: SSGAdapter) => void
+```
+
+**Parameters**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `adapter` | — | The adapter to register. |
+
+**Example**
+
+```typescript
+import { registerAdapter } from "@forge-ts/gen";
+registerAdapter(mintlifyAdapter);
+```
+
+## getAdapter(target)
+
+Get a registered adapter by target name. Throws if the target is not registered.
+
+**Signature**
+
+```typescript
+(target: SSGTarget) => SSGAdapter
+```
+
+**Parameters**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `target` | — | The SSG target identifier. |
+
+**Returns** — The registered  for the given target.
+
+**Throws**
+
+- `Error` if the target is not registered.
+
+**Example**
+
+```typescript
+import { getAdapter } from "@forge-ts/gen";
+const adapter = getAdapter("mintlify");
+```
+
+## getAvailableTargets()
+
+Get all registered adapter targets.
+
+**Signature**
+
+```typescript
+() => SSGTarget[]
+```
+
+**Returns** — An array of all registered  identifiers.
+
+**Example**
+
+```typescript
+import { getAvailableTargets } from "@forge-ts/gen";
+const targets = getAvailableTargets(); // ["mintlify", "docusaurus", ...]
+```
+
+## generateLlmsTxt(symbols, config)
+
+Generates an `llms.txt` routing manifest from the extracted symbols.  The file follows the llms.txt specification: a compact, structured overview designed to help large language models navigate a project's documentation.
+
+**Signature**
+
+```typescript
+(symbols: ForgeSymbol[], config: ForgeConfig) => string
+```
+
+**Parameters**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `symbols` | — | The symbols to include. |
+| `config` | — | The resolved . |
+
+**Returns** — The generated `llms.txt` content as a string.
+
+**Example**
+
+```typescript
+import { generateLlmsTxt } from "@forge-ts/gen";
+const txt = generateLlmsTxt(symbols, config);
+console.log(txt.startsWith("# ")); // true
+```
+
+## generateLlmsFullTxt(symbols, config)
+
+Generates an `llms-full.txt` dense context file from the extracted symbols.  Unlike `llms.txt`, this file contains complete documentation for every exported symbol, intended for LLM ingestion that requires full context.
+
+**Signature**
+
+```typescript
+(symbols: ForgeSymbol[], config: ForgeConfig) => string
+```
+
+**Parameters**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `symbols` | — | The symbols to include. |
+| `config` | — | The resolved . |
+
+**Returns** — The generated `llms-full.txt` content as a string.
+
+**Example**
+
+```typescript
+import { generateLlmsFullTxt } from "@forge-ts/gen";
+const fullTxt = generateLlmsFullTxt(symbols, config);
+console.log(fullTxt.includes("Full Context")); // true
+```
+
+## generateMarkdown(symbols, config, options)
+
+Generates a Markdown (or MDX) string from a list of symbols.
+
+**Signature**
+
+```typescript
+(symbols: ForgeSymbol[], config: ForgeConfig, options?: MarkdownOptions) => string
+```
+
+**Parameters**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `symbols` | — | The symbols to document. |
+| `config` | — | The resolved . |
+| `options` | — | Rendering options. |
+
+**Returns** — The generated Markdown string.
+
+**Example**
+
+```typescript
+import { generateMarkdown } from "@forge-ts/gen";
+const md = generateMarkdown(symbols, config, { mdx: false });
+console.log(md.startsWith("# API Reference")); // true
+```
+
+## syncReadme(readmePath, symbols, options)
+
+Injects a summary of exported symbols into a `README.md` file.  The content is placed between `<!-- forge-ts:start -->` and `<!-- forge-ts:end -->` comment markers.  If neither marker exists, the summary is appended to the end of the file.
+
+**Signature**
+
+```typescript
+(readmePath: string, symbols: ForgeSymbol[], options?: ReadmeSyncOptions) => Promise<boolean>
+```
+
+**Parameters**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `readmePath` | — | Absolute path to the `README.md` to update. |
+| `symbols` | — | Symbols to summarise in the README. |
+| `options` | — | Options controlling sync behaviour. |
+
+**Returns** — `true` if the file was modified, `false` otherwise.
+
+**Example**
+
+```typescript
+import { syncReadme } from "@forge-ts/gen";
+const modified = await syncReadme("/path/to/README.md", symbols);
+console.log(modified); // true if README was updated
+```
+
+## generateSSGConfigs(pages, target, projectName)
+
+Generate navigation configuration file(s) for the given SSG target.  Returns one file for most targets, but multiple files for Nextra (which uses per-directory `_meta.json` files).
+
+**Signature**
+
+```typescript
+(pages: DocPage[], target: "docusaurus" | "mintlify" | "nextra" | "vitepress", projectName: string) => SSGConfigFile[]
+```
+
+**Parameters**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `pages` | — | The  array produced by `generateDocSite`. |
+| `target` | — | The SSG target. |
+| `projectName` | — | The project name (used in config metadata). |
+
+**Returns** — An array of  objects ready to be written to disk.
+
+**Example**
+
+```typescript
+import { generateSSGConfigs } from "@forge-ts/gen";
+const configs = generateSSGConfigs(pages, "vitepress", "my-project");
+console.log(configs[0].path); // ".vitepress/sidebar.json"
+```
+
+## generate(config)
+
+Runs the full generation pipeline: walk → render → write.
+
+**Signature**
+
+```typescript
+(config: ForgeConfig) => Promise<ForgeResult>
+```
+
+**Parameters**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `config` | — | The resolved  for the project. |
+
+**Returns** — A  describing the outcome.
+
+**Example**
+
+```typescript
+import { generate } from "@forge-ts/gen";
+const result = await generate(config);
+console.log(result.success); // true if all files were written
+```

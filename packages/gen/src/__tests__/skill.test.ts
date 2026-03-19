@@ -102,13 +102,13 @@ describe("generateSkillMd", () => {
 
 	it("contains the project name in the heading", () => {
 		const result = generateSkillMd([fnAdd], makeConfig({ packageName: "my-lib" }));
-		expect(result).toContain("# my-lib Skill");
+		expect(result).toContain("# my-lib");
 	});
 
 	it("uses rootDir basename as fallback when packageName is absent", () => {
 		const result = generateSkillMd([fnAdd], makeConfig({ packageName: undefined }));
 		// rootDir is /project → fallback is "project"
-		expect(result).toContain("# project Skill");
+		expect(result).toContain("# project");
 	});
 
 	it("contains an Installation section with a bash code block", () => {
@@ -121,7 +121,7 @@ describe("generateSkillMd", () => {
 	it("contains function patterns derived from @example blocks", () => {
 		const result = generateSkillMd([fnAdd], makeConfig());
 		expect(result).toContain("## Common Patterns");
-		expect(result).toContain("### Pattern: add");
+		expect(result).toContain("### add");
 		expect(result).toContain("add(1, 2) // => 3");
 	});
 
@@ -133,7 +133,7 @@ describe("generateSkillMd", () => {
 	it("contains an API quick-reference table", () => {
 		const result = generateSkillMd([fnAdd, fnNoExample], makeConfig());
 		expect(result).toContain("## API Quick Reference");
-		expect(result).toContain("| Function | Signature | Description |");
+		expect(result).toContain("| Symbol | Signature | Description |");
 		expect(result).toContain("`add()`");
 		expect(result).toContain("`subtract()`");
 	});
@@ -169,8 +169,8 @@ describe("generateSkillMd", () => {
 	it("produces a non-empty string for an empty symbol list", () => {
 		const result = generateSkillMd([], makeConfig());
 		expect(result.length).toBeGreaterThan(0);
-		expect(result).toContain("## Overview");
 		expect(result).toContain("## Installation");
+		expect(result).toContain("name:");  // YAML frontmatter
 	});
 
 	it("excludes unexported symbols from all sections", () => {

@@ -23,17 +23,6 @@ function kindLabel(kind: ForgeSymbol["kind"]): string {
 }
 
 /**
- * Derives the return type from a function signature string.
- * Returns an empty string when it cannot be determined.
- * @internal
- */
-function extractReturnType(signature: string | undefined): string {
-	if (!signature) return "";
-	const match = /\):\s*(.+)$/.exec(signature);
-	return match ? match[1].trim() : "";
-}
-
-/**
  * Renders the API quick-reference table rows for a set of symbols.
  * @internal
  */
@@ -52,37 +41,42 @@ function renderApiRows(symbols: ForgeSymbol[]): string[] {
 }
 
 /**
- * Renders pattern sections for all exported functions that carry @example blocks.
+ * Renders pattern sections for exported functions with @example blocks.
+ * Limited to keep SKILL.md under 500 lines per Agent Skills spec.
  * @internal
  */
-function renderPatterns(symbols: ForgeSymbol[]): string[] {
+function renderPatterns(symbols: ForgeSymbol[], maxPatterns: number = 10): string[] {
 	const lines: string[] = [];
+	let count = 0;
+
 	for (const sym of symbols) {
+		if (count >= maxPatterns) break;
 		if (!sym.exported) continue;
 		if (sym.kind !== "function" && sym.kind !== "class") continue;
 
 		const examples = sym.documentation?.examples ?? [];
 		if (examples.length === 0) continue;
 
-		lines.push(`### Pattern: ${sym.name}`);
+		lines.push(`### ${sym.name}`);
 		lines.push("");
 		if (sym.documentation?.summary) {
 			lines.push(sym.documentation.summary);
 			lines.push("");
 		}
-		for (const ex of examples) {
-			const lang = ex.language || "typescript";
-			lines.push(`\`\`\`${lang}`);
-			lines.push(ex.code.trim());
-			lines.push("```");
-			lines.push("");
-		}
+		// Only include the first example to keep size down
+		const ex = examples[0];
+		const lang = ex.language || "typescript";
+		lines.push(`\`\`\`${lang}`);
+		lines.push(ex.code.trim());
+		lines.push("```");
+		lines.push("");
+		count++;
 	}
 	return lines;
 }
 
 /**
- * Returns true when `kind` is a concept-level declaration (type, interface, class, enum).
+ * Returns true when `kind` is a concept-level declaration.
  * @internal
  */
 function isConceptKind(kind: ForgeSymbol["kind"]): boolean {
@@ -95,11 +89,9 @@ function isConceptKind(kind: ForgeSymbol["kind"]): boolean {
  */
 function renderConcepts(symbols: ForgeSymbol[]): string[] {
 	const lines: string[] = [];
-
 	for (const sym of symbols) {
 		if (!sym.exported) continue;
 		if (!isConceptKind(sym.kind)) continue;
-
 		const summary = sym.documentation?.summary ?? "";
 		const label = summary ? `**\`${sym.name}\`** — ${summary}` : `**\`${sym.name}\`**`;
 		lines.push(`- ${label}`);
@@ -112,19 +104,16 @@ function renderConcepts(symbols: ForgeSymbol[]): string[] {
 // ---------------------------------------------------------------------------
 
 /**
- * Generates a `skill.md` file that teaches AI assistants about the project.
+ * Generates a SKILL.md file following the Agent Skills specification
+ * (https://agentskills.io/specification).
  *
- * The file contains:
- * - Project overview and purpose
- * - Installation instructions
- * - Key concepts and types
- * - Common usage patterns (from @example blocks)
- * - API quick reference
- * - Configuration reference
+ * The file includes YAML frontmatter with `name` and `description` fields
+ * for discovery-phase loading, followed by instructional content for
+ * activation-phase loading.
  *
  * @param symbols - All symbols from the project.
  * @param config - The resolved forge-ts config.
- * @returns The skill.md content as a string.
+ * @returns The SKILL.md content as a string.
  * @example
  * ```typescript
  * import { generateSkillMd } from "@forge-ts/gen";
@@ -136,34 +125,34 @@ export function generateSkillMd(symbols: ForgeSymbol[], config: ForgeConfig): st
 	const projectName = config.project.packageName ?? config.rootDir.split("/").pop() ?? "Project";
 	const exported = symbols.filter((s) => s.exported);
 
-	// Derive description from @packageDocumentation symbol, if any
+	// Derive description from @packageDocumentation or first summary
 	const pkgDoc = symbols.find((s) => s.documentation?.tags?.packageDocumentation);
 	const description =
 		pkgDoc?.documentation?.summary ??
 		exported.find((s) => s.documentation?.summary)?.documentation?.summary ??
-		`A TypeScript library.`;
+		"A TypeScript library.";
 
 	const lines: string[] = [];
 
 	// ---------------------------------------------------------------------------
-	// Header
+	// YAML Frontmatter (Agent Skills spec: required for discovery phase)
 	// ---------------------------------------------------------------------------
-	lines.push(`# ${projectName} Skill`);
-	lines.push("");
-	lines.push(`> This file teaches AI assistants how to use ${projectName}.`);
+	lines.push("---");
+	lines.push(`name: ${projectName}`);
+	lines.push(`description: "${description.replace(/"/g, '\\"')}"`);
+	lines.push("---");
 	lines.push("");
 
 	// ---------------------------------------------------------------------------
-	// Overview
+	// Instructional Content (Agent Skills spec: activation phase)
 	// ---------------------------------------------------------------------------
-	lines.push("## Overview");
+
+	lines.push(`# ${projectName}`);
 	lines.push("");
 	lines.push(description);
 	lines.push("");
 
-	// ---------------------------------------------------------------------------
 	// Installation
-	// ---------------------------------------------------------------------------
 	lines.push("## Installation");
 	lines.push("");
 	lines.push("```bash");
@@ -171,9 +160,7 @@ export function generateSkillMd(symbols: ForgeSymbol[], config: ForgeConfig): st
 	lines.push("```");
 	lines.push("");
 
-	// ---------------------------------------------------------------------------
-	// Key Concepts
-	// ---------------------------------------------------------------------------
+	// Key Concepts (types, interfaces, enums)
 	const conceptLines = renderConcepts(exported);
 	if (conceptLines.length > 0) {
 		lines.push("## Key Concepts");
@@ -182,32 +169,26 @@ export function generateSkillMd(symbols: ForgeSymbol[], config: ForgeConfig): st
 		lines.push("");
 	}
 
-	// ---------------------------------------------------------------------------
-	// Common Patterns
-	// ---------------------------------------------------------------------------
-	const patternLines = renderPatterns(exported);
+	// Common Patterns (from @example blocks, limited to 10)
+	const patternLines = renderPatterns(exported, 10);
 	if (patternLines.length > 0) {
 		lines.push("## Common Patterns");
 		lines.push("");
 		lines.push(...patternLines);
 	}
 
-	// ---------------------------------------------------------------------------
 	// API Quick Reference
-	// ---------------------------------------------------------------------------
 	const apiRows = renderApiRows(exported);
 	if (apiRows.length > 0) {
 		lines.push("## API Quick Reference");
 		lines.push("");
-		lines.push("| Function | Signature | Description |");
-		lines.push("|----------|-----------|-------------|");
+		lines.push("| Symbol | Signature | Description |");
+		lines.push("|--------|-----------|-------------|");
 		lines.push(...apiRows);
 		lines.push("");
 	}
 
-	// ---------------------------------------------------------------------------
-	// Configuration
-	// ---------------------------------------------------------------------------
+	// Configuration (if a Config-like type exists)
 	const configSymbol = exported.find(
 		(s) =>
 			(s.kind === "interface" || s.kind === "type") &&
@@ -221,17 +202,13 @@ export function generateSkillMd(symbols: ForgeSymbol[], config: ForgeConfig): st
 		lines.push(`\`${configSymbol.name}\` properties:`);
 		lines.push("");
 		for (const child of configSymbol.children) {
-			const retType = extractReturnType(child.signature ?? "");
-			const typeStr = retType ? ` (\`${retType}\`)` : "";
 			const summary = child.documentation?.summary ?? "";
-			lines.push(`- **\`${child.name}\`**${typeStr}${summary ? ` — ${summary}` : ""}`);
+			lines.push(`- **\`${child.name}\`**${summary ? ` — ${summary}` : ""}`);
 		}
 		lines.push("");
 	}
 
-	// ---------------------------------------------------------------------------
-	// Rules / Constraints (enforcer rules)
-	// ---------------------------------------------------------------------------
+	// Rules / Constraints
 	const enforceRulesSymbol = exported.find(
 		(s) => (s.kind === "interface" || s.kind === "type") && /rule/i.test(s.name),
 	);

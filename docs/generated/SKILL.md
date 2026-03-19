@@ -1,8 +1,9 @@
-# forge-ts Skill
+---
+name: forge-ts
+description: "Runs the API generation pipeline: walk → extract → generate → write."
+---
 
-> This file teaches AI assistants how to use forge-ts.
-
-## Overview
+# forge-ts
 
 Runs the API generation pipeline: walk → extract → generate → write.
 
@@ -76,7 +77,7 @@ npm install -D forge-ts
 
 ## Common Patterns
 
-### Pattern: defaultConfig
+### defaultConfig
 
 Constructs a sensible default  rooted at `rootDir`.
 
@@ -86,7 +87,7 @@ const config = defaultConfig("/path/to/project");
 console.log(config.enforce.enabled); // true
 ```
 
-### Pattern: loadConfig
+### loadConfig
 
 Loads the forge-ts configuration for a project.  Resolution order: 1. `<rootDir>/forge-ts.config.ts` 2. `<rootDir>/forge-ts.config.js` 3. `"forge-ts"` key inside `<rootDir>/package.json` 4. Built-in defaults (returned when none of the above is found)
 
@@ -96,7 +97,7 @@ const config = await loadConfig("/path/to/project");
 // config is fully resolved with defaults
 ```
 
-### Pattern: resolveVisibility
+### resolveVisibility
 
 Determines the visibility level of a symbol from its TSDoc release tags.  The precedence order is: 1. `@internal`  →  2. `@beta`      →  3. `@public`    →  4. (no tag)     →  (default for exports)
 
@@ -106,7 +107,7 @@ const vis = resolveVisibility({ internal: [] });
 // vis === Visibility.Internal
 ```
 
-### Pattern: meetsVisibility
+### meetsVisibility
 
 Returns whether `candidate` meets or exceeds the required minimum visibility.  "Meets" means the symbol is at least as visible as `minVisibility`. For example, `Public` meets a minimum of `Public`, but `Internal` does not.
 
@@ -116,7 +117,7 @@ meetsVisibility(Visibility.Public, Visibility.Public); // true
 meetsVisibility(Visibility.Internal, Visibility.Public); // false
 ```
 
-### Pattern: filterByVisibility
+### filterByVisibility
 
 Filters an array of  objects to only include symbols whose visibility meets or exceeds `minVisibility`.
 
@@ -125,7 +126,7 @@ import { filterByVisibility, Visibility } from "@forge-ts/core";
 const publicOnly = filterByVisibility(symbols, Visibility.Public);
 ```
 
-### Pattern: createWalker
+### createWalker
 
 Creates an  configured for the given forge config.  The walker uses the TypeScript Compiler API to create a `ts.Program` from the project's tsconfig, then visits every source file to extract exported declarations.  TSDoc comments are parsed with `@microsoft/tsdoc` to populate the `documentation` field on each .
 
@@ -137,7 +138,7 @@ const symbols = walker.walk();
 console.log(`Found ${symbols.length} symbols`);
 ```
 
-### Pattern: signatureToSchema
+### signatureToSchema
 
 Maps a TypeScript type signature string to an OpenAPI 3.2 schema object.  Handles common primitives, arrays, unions, `Record<K, V>`, and falls back to `{ type: "object" }` for anything it cannot parse.
 
@@ -147,7 +148,7 @@ const schema = signatureToSchema("string[]");
 // { type: "array", items: { type: "string" } }
 ```
 
-### Pattern: extractSDKTypes
+### extractSDKTypes
 
 Extracts SDK-relevant types (interfaces, type aliases, classes, enums) from a list of  objects.  Only exported symbols whose visibility is not  or  are included.
 
@@ -157,7 +158,7 @@ const sdkTypes = extractSDKTypes(symbols);
 console.log(sdkTypes.length); // number of public SDK types
 ```
 
-### Pattern: generateOpenAPISpec
+### generateOpenAPISpec
 
 Generates a production-quality OpenAPI 3.2 document from the extracted SDK types.  The document is populated with: - An `info` block sourced from the config or reasonable defaults. - A `components.schemas` section with one schema per exported type. - `tags` derived from unique source file paths (grouping by file). - Visibility filtering: `@internal` symbols are never emitted.  HTTP paths are not yet emitted (`paths` is always `{}`); route extraction will be added in a future release.
 
@@ -168,7 +169,7 @@ const spec = generateOpenAPISpec(config, extractSDKTypes(symbols), symbols);
 console.log(spec.openapi); // "3.2.0"
 ```
 
-### Pattern: buildReference
+### buildReference
 
 Builds a structured API reference from a list of exported symbols.  Unlike the minimal stub, this version includes nested children (class methods, interface properties) and all available TSDoc metadata.  Symbols with  or  are excluded from the top-level results. Children with private/internal visibility are also filtered out.
 
@@ -178,271 +179,10 @@ const entries = buildReference(symbols);
 console.log(entries[0].name); // first symbol name, alphabetically
 ```
 
-### Pattern: generateApi
-
-Runs the API generation pipeline: walk → extract → generate → write.
-
-```typescript
-import { generateApi } from "@forge-ts/api";
-const result = await generateApi(config);
-console.log(result.success); // true if spec was written successfully
-```
-
-### Pattern: groupSymbolsByPackage
-
-Groups symbols by their package based on file path.  For monorepos (symbols under `packages/<name>/`) the package name is derived from the directory segment immediately after `packages/`. For non-monorepo projects all symbols fall under the project name.
-
-```typescript
-import { groupSymbolsByPackage } from "@forge-ts/gen";
-const grouped = groupSymbolsByPackage(symbols, "/path/to/project");
-console.log(grouped.has("core")); // true for monorepo
-```
-
-### Pattern: generateDocSite
-
-Generates a full multi-page documentation site from symbols grouped by package.  Follows a 5-stage information architecture: 1. ORIENT — Landing page, Getting Started 2. LEARN — Concepts (stub) 3. BUILD — Guides (stub) 4. REFERENCE — API Reference, Types, Configuration, Changelog 5. COMMUNITY — FAQ, Contributing (stubs)
-
-```typescript
-import { generateDocSite, groupSymbolsByPackage } from "@forge-ts/gen";
-const grouped = groupSymbolsByPackage(symbols, config.rootDir);
-const pages = generateDocSite(grouped, config, { format: "markdown", projectName: "my-project" });
-console.log(pages.length > 0); // true
-```
-
-### Pattern: registerAdapter
-
-Register an SSG adapter. Called once per provider at module load time.
-
-```typescript
-import { registerAdapter } from "@forge-ts/gen";
-registerAdapter(mintlifyAdapter);
-```
-
-### Pattern: getAdapter
-
-Get a registered adapter by target name. Throws if the target is not registered.
-
-```typescript
-import { getAdapter } from "@forge-ts/gen";
-const adapter = getAdapter("mintlify");
-```
-
-### Pattern: getAvailableTargets
-
-Get all registered adapter targets.
-
-```typescript
-import { getAvailableTargets } from "@forge-ts/gen";
-const targets = getAvailableTargets(); // ["mintlify", "docusaurus", ...]
-```
-
-### Pattern: generateLlmsTxt
-
-Generates an `llms.txt` routing manifest from the extracted symbols.  The file follows the llms.txt specification: a compact, structured overview designed to help large language models navigate a project's documentation.
-
-```typescript
-import { generateLlmsTxt } from "@forge-ts/gen";
-const txt = generateLlmsTxt(symbols, config);
-console.log(txt.startsWith("# ")); // true
-```
-
-### Pattern: generateLlmsFullTxt
-
-Generates an `llms-full.txt` dense context file from the extracted symbols.  Unlike `llms.txt`, this file contains complete documentation for every exported symbol, intended for LLM ingestion that requires full context.
-
-```typescript
-import { generateLlmsFullTxt } from "@forge-ts/gen";
-const fullTxt = generateLlmsFullTxt(symbols, config);
-console.log(fullTxt.includes("Full Context")); // true
-```
-
-### Pattern: generateMarkdown
-
-Generates a Markdown (or MDX) string from a list of symbols.
-
-```typescript
-import { generateMarkdown } from "@forge-ts/gen";
-const md = generateMarkdown(symbols, config, { mdx: false });
-console.log(md.startsWith("# API Reference")); // true
-```
-
-### Pattern: syncReadme
-
-Injects a summary of exported symbols into a `README.md` file.  The content is placed between `<!-- forge-ts:start -->` and `<!-- forge-ts:end -->` comment markers.  If neither marker exists, the summary is appended to the end of the file.
-
-```typescript
-import { syncReadme } from "@forge-ts/gen";
-const modified = await syncReadme("/path/to/README.md", symbols);
-console.log(modified); // true if README was updated
-```
-
-### Pattern: generateSkillMd
-
-Generates a `skill.md` file that teaches AI assistants about the project.  The file contains: - Project overview and purpose - Installation instructions - Key concepts and types - Common usage patterns (from
-
-```typescript
-import { generateSkillMd } from "@forge-ts/gen";
-const skill = generateSkillMd(symbols, config);
-```
-
-### Pattern: generateSSGConfigs
-
-Generate navigation configuration file(s) for the given SSG target.  Returns one file for most targets, but multiple files for Nextra (which uses per-directory `_meta.json` files).
-
-```typescript
-import { generateSSGConfigs } from "@forge-ts/gen";
-const configs = generateSSGConfigs(pages, "vitepress", "my-project");
-console.log(configs[0].path); // ".vitepress/sidebar.json"
-```
-
-### Pattern: generate
-
-Runs the full generation pipeline: walk → render → write.
-
-```typescript
-import { generate } from "@forge-ts/gen";
-const result = await generate(config);
-console.log(result.success); // true if all files were written
-```
-
-### Pattern: emitResult
-
-Wraps a command result in a LAFS envelope and emits it.  - JSON mode: writes the projected envelope to stdout as JSON. - Human mode: calls the provided formatter function. - Quiet mode: suppresses all output regardless of format.
-
-```typescript
-import { emitResult } from "@forge-ts/cli/output";
-emitResult(output, { human: true }, (data) => `Done: ${data.summary.duration}ms`);
-```
-
-### Pattern: runBuild
-
-Runs the full build pipeline and returns a typed command output.
-
-```typescript
-import { runBuild } from "@forge-ts/cli/commands/build";
-const output = await runBuild({ cwd: process.cwd() });
-console.log(output.success); // true if all steps succeeded
-```
-
-### Pattern: enforce
-
-Runs the TSDoc enforcement pass against a project.  The enforcer walks all exported symbols that meet the configured minimum visibility threshold and emits diagnostics for any documentation deficiencies it finds.  ### Error codes | Code | Severity | Condition | |------|----------|-----------| | E001 | error    | Exported symbol is missing a TSDoc summary. | | E002 | error    | Function/method parameter lacks a `@param` tag. | | E003 | error    | Non-void function/method lacks a `@returns` tag. | | E004 | error    | Exported function/method is missing an `@example` block. | | E005 | error    | Package entry point (index.ts) is missing `@packageDocumentation`. | | E006 | error    | Public/protected class member is missing a TSDoc comment. | | E007 | error    | Interface/type alias property is missing a TSDoc comment. | | W001 | warning  | TSDoc comment contains parse errors. | | W002 | warning  | Function body throws but has no `@throws` tag. | | W003 | warning  | `@deprecated` tag is present without explanation. |  When `config.enforce.strict` is `true` all warnings are promoted to errors.
-
-```typescript
-import { loadConfig } from "@forge-ts/core";
-import { enforce } from "@forge-ts/enforcer";
-const config = await loadConfig();
-const result = await enforce(config);
-if (!result.success) {
-  console.error(`${result.errors.length} errors found`);
-}
-```
-
-### Pattern: formatResults
-
-Formats a  into a human-readable string suitable for printing to a terminal.  Diagnostics are grouped by source file.  Each file heading shows the relative-ish path, followed by indented error and warning lines.  A summary line is appended at the end.
-
-```typescript
-import { enforce } from "@forge-ts/enforcer";
-import { formatResults } from "@forge-ts/enforcer";
-import { loadConfig } from "@forge-ts/core";
-const config = await loadConfig();
-const result = await enforce(config);
-console.log(formatResults(result, { colors: true, verbose: false }));
-```
-
-### Pattern: runCheck
-
-Runs the TSDoc enforcement pass and returns a typed command output.
-
-```typescript
-import { runCheck } from "@forge-ts/cli/commands/check";
-const output = await runCheck({ cwd: process.cwd() });
-console.log(output.data.summary.errors); // number of TSDoc errors found
-```
-
-### Pattern: runDocsDev
-
-Starts the local dev server for the configured SSG target.  Reads `gen.ssgTarget` from the forge-ts config, resolves the adapter, and spawns the platform's dev server in the output directory.
-
-```typescript
-import { runDocsDev } from "@forge-ts/cli";
-await runDocsDev({ cwd: "./my-project" });
-```
-
-### Pattern: runInitDocs
-
-Scaffolds a documentation site for the target SSG platform.  Resolves the target from args, validates it, checks for an existing scaffold, calls the adapter's `scaffold()` method, and writes all files produced by the manifest to `outDir`.
-
-```typescript
-import { runInitDocs } from "@forge-ts/cli/commands/init-docs";
-const output = await runInitDocs({ target: "mintlify", cwd: process.cwd() });
-console.log(output.data.files); // list of created file paths
-```
-
-### Pattern: extractExamples
-
-Extracts all `@example` blocks from a list of  objects.
-
-```typescript
-import { createWalker, loadConfig } from "@forge-ts/core";
-import { extractExamples } from "@forge-ts/doctest";
-const config = await loadConfig();
-const symbols = createWalker(config).walk();
-const examples = extractExamples(symbols);
-console.log(`Found ${examples.length} examples`);
-```
-
-### Pattern: generateTestFiles
-
-Generates a virtual test file for a set of extracted examples.  Each example is wrapped in an `it()` block using the Node built-in `node:test` runner so that no additional test framework is required. Auto-imports the tested symbol from the source file, processes `// =>` assertion patterns, and appends an inline source map.
-
-```typescript
-import { generateTestFiles } from "@forge-ts/doctest";
-const files = generateTestFiles(examples, { cacheDir: "/tmp/doctest-cache" });
-console.log(`Generated ${files.length} test file(s)`);
-```
-
-### Pattern: runTests
-
-Writes virtual test files to disk and executes them with Node 24 native TypeScript support (`--experimental-strip-types --test`).
-
-```typescript
-import { runTests } from "@forge-ts/doctest";
-const result = await runTests(virtualFiles);
-if (!result.success) {
-  console.error(`${result.failed} doctest(s) failed`);
-}
-```
-
-### Pattern: doctest
-
-Runs the full doctest pipeline: extract → generate → run.
-
-```typescript
-import { loadConfig } from "@forge-ts/core";
-import { doctest } from "@forge-ts/doctest";
-const config = await loadConfig();
-const result = await doctest(config);
-if (!result.success) {
-  console.error(`${result.errors.length} doctest failure(s)`);
-}
-```
-
-### Pattern: runTest
-
-Runs the doctest pipeline and returns a typed command output.
-
-```typescript
-import { runTest } from "@forge-ts/cli/commands/test";
-const output = await runTest({ cwd: process.cwd() });
-console.log(output.data.summary.passed); // number of passing doctests
-```
-
 ## API Quick Reference
 
-| Function | Signature | Description |
-|----------|-----------|-------------|
+| Symbol | Signature | Description |
+|--------|-----------|-------------|
 | `Visibility` | `typeof Visibility` | Visibility levels for exported symbols. Derived from TSDoc release tags (public, beta, internal). |
 | `ForgeSymbol` | `any` | A single extracted and annotated symbol from the TypeScript AST. |
 | `RuleSeverity` | `any` | Severity level for an individual enforcement rule. - `"error"` — violation fails the build. - `"warn"`  — violation is reported but does not fail the build. - `"off"`   — rule is disabled entirely. |
@@ -501,7 +241,7 @@ console.log(output.data.summary.passed); // number of passing doctests
 | `generateMarkdown()` | `(symbols: ForgeSymbol[], config: ForgeConfig, options?: MarkdownOptions) => string` | Generates a Markdown (or MDX) string from a list of symbols. |
 | `ReadmeSyncOptions` | `any` | Options controlling README sync behaviour. |
 | `syncReadme()` | `(readmePath: string, symbols: ForgeSymbol[], options?: ReadmeSyncOptions) => Promise<boolean>` | Injects a summary of exported symbols into a `README.md` file.  The content is placed between `<!-- forge-ts:start -->` and `<!-- forge-ts:end -->` comment markers.  If neither marker exists, the summary is appended to the end of the file. |
-| `generateSkillMd()` | `(symbols: ForgeSymbol[], config: ForgeConfig) => string` | Generates a `skill.md` file that teaches AI assistants about the project.  The file contains: - Project overview and purpose - Installation instructions - Key concepts and types - Common usage patterns (from |
+| `generateSkillMd()` | `(symbols: ForgeSymbol[], config: ForgeConfig) => string` | Generates a SKILL.md file following the Agent Skills specification (https://agentskills.io/specification).  The file includes YAML frontmatter with `name` and `description` fields for discovery-phase loading, followed by instructional content for activation-phase loading. |
 | `SSGConfigFile` | `any` | A single generated SSG configuration file. |
 | `generateSSGConfigs()` | `(pages: DocPage[], target: "docusaurus" | "mintlify" | "nextra" | "vitepress", projectName: string) => SSGConfigFile[]` | Generate navigation configuration file(s) for the given SSG target.  Returns one file for most targets, but multiple files for Nextra (which uses per-directory `_meta.json` files). |
 | `generate()` | `(config: ForgeConfig) => Promise<ForgeResult>` | Runs the full generation pipeline: walk → render → write. |

@@ -243,7 +243,7 @@ console.log(modified); // true if README was updated
 
 ## generateSkillMd(symbols, config)
 
-Generates a `skill.md` file that teaches AI assistants about the project.  The file contains: - Project overview and purpose - Installation instructions - Key concepts and types - Common usage patterns (from
+Generates a SKILL.md file following the Agent Skills specification (https://agentskills.io/specification).  The file includes YAML frontmatter with `name` and `description` fields for discovery-phase loading, followed by instructional content for activation-phase loading.
 
 **Signature**
 
@@ -258,7 +258,7 @@ Generates a `skill.md` file that teaches AI assistants about the project.  The f
 | `symbols` | `ForgeSymbol[]` | All symbols from the project. |
 | `config` | `ForgeConfig` | The resolved forge-ts config. |
 
-**Returns** — The skill.md content as a string.
+**Returns** — The SKILL.md content as a string.
 
 **Example**
 

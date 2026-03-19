@@ -118,7 +118,7 @@ export async function generate(config: ForgeConfig): Promise<ForgeResult> {
 		await writeFile(join(config.outDir, "llms-full.txt"), llmsFull, "utf8");
 
 		const skill = generateSkillMd(symbols, config);
-		await writeFile(join(config.outDir, "skill.md"), skill, "utf8");
+		await writeFile(join(config.outDir, "SKILL.md"), skill, "utf8");
 	}
 
 	if (config.gen.readmeSync) {

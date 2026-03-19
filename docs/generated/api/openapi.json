@@ -52,6 +52,9 @@
       "name": "site-generator"
     },
     {
+      "name": "skill"
+    },
+    {
       "name": "ssg-config"
     },
     {
@@ -1442,6 +1445,27 @@
         "required": [
           "badge",
           "includeExamples"
+        ]
+      },
+      "SkillPackage": {
+        "description": "A generated skill package following the agentskills.io directory structure. Contains SKILL.md plus optional references and scripts files.",
+        "type": "object",
+        "properties": {
+          "directoryName": {
+            "type": "string",
+            "description": "The skill directory name (lowercase, hyphens only, max 64 chars)."
+          },
+          "files": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            },
+            "description": "Files to write inside the skill directory."
+          }
+        },
+        "required": [
+          "directoryName",
+          "files"
         ]
       },
       "SSGConfigFile": {

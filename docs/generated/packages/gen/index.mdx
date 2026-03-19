@@ -15,7 +15,8 @@ description: "gen package overview"
 | [`generateLlmsFullTxt()`](/packages/gen/api/index#generatellmsfulltxt) | function | Generates an `llms-full.txt` dense context file from the extracted symbols.  ... |
 | [`generateMarkdown()`](/packages/gen/api/index#generatemarkdown) | function | Generates a Markdown (or MDX) string from a list of symbols. |
 | [`syncReadme()`](/packages/gen/api/index#syncreadme) | function | Injects a summary of exported symbols into a `README.md` file.  The content i... |
-| [`generateSkillMd()`](/packages/gen/api/index#generateskillmd) | function | Generates a SKILL.md file following the Agent Skills specification (https://a... |
+| [`generateSkillPackage()`](/packages/gen/api/index#generateskillpackage) | function | Generates a skill package directory following the agentskills.io specificatio... |
+| [`generateSkillMd()`](/packages/gen/api/index#generateskillmd) | function | Generates a SKILL.md string following the Agent Skills specification (https:/... |
 | [`generateSSGConfigs()`](/packages/gen/api/index#generatessgconfigs) | function | Generate navigation configuration file(s) for the given SSG target.  Returns ... |
 | [`generate()`](/packages/gen/api/index#generate) | function | Runs the full generation pipeline: walk → render → write. |
 
@@ -34,6 +35,7 @@ description: "gen package overview"
 | [`SSGAdapter`](/packages/gen/api/index#ssgadapter) | interface | The central SSG adapter interface. Every doc platform provider implements thi... |
 | [`MarkdownOptions`](/packages/gen/api/index#markdownoptions) | interface | Options controlling Markdown output. |
 | [`ReadmeSyncOptions`](/packages/gen/api/index#readmesyncoptions) | interface | Options controlling README sync behaviour. |
+| [`SkillPackage`](/packages/gen/api/index#skillpackage) | interface | A generated skill package following the agentskills.io directory structure. C... |
 | [`SSGConfigFile`](/packages/gen/api/index#ssgconfigfile) | interface | A single generated SSG configuration file. |
 
 ## Other Exports

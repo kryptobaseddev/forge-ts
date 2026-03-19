@@ -1,7 +1,7 @@
 # . - Full Context
 
 Root: .
-Generated: 2026-03-19T04:14:31.890Z
+Generated: 2026-03-19T04:25:49.205Z
 
 ## Functions
 
@@ -333,11 +333,30 @@ Example:
   const modified = await syncReadme("/path/to/README.md", symbols);
   console.log(modified); // true if README was updated
 
+### generateSkillPackage()
+
+(symbols: ForgeSymbol[], config: ForgeConfig) => SkillPackage
+
+Generates a skill package directory following the agentskills.io specification (https://agentskills.io/specification).  The package includes: - `SKILL.md` — metadata frontmatter + instructional content (under 500 lines) - `references/API-REFERENCE.md` — full API signatures and examples - `references/CONFIGURATION.md` — full config type documentation - `scripts/check.sh` — helper script for TSDoc validation
+
+Parameters:
+- symbols: All symbols from the project.
+- config: The resolved forge-ts config.
+
+Returns: A  describing the directory and its files.
+
+Example:
+  import { generateSkillPackage } from "@forge-ts/gen";
+  const pkg = generateSkillPackage(symbols, config);
+  console.log(pkg.directoryName); // "my-lib"
+  console.log(pkg.files.map(f => f.path));
+  // ["SKILL.md", "references/API-REFERENCE.md", ...]
+
 ### generateSkillMd()
 
 (symbols: ForgeSymbol[], config: ForgeConfig) => string
 
-Generates a SKILL.md file following the Agent Skills specification (https://agentskills.io/specification).  The file includes YAML frontmatter with `name` and `description` fields for discovery-phase loading, followed by instructional content for activation-phase loading.
+Generates a SKILL.md string following the Agent Skills specification (https://agentskills.io/specification).  The file includes YAML frontmatter with `name` and `description` fields for discovery-phase loading, followed by instructional content for activation-phase loading.
 
 Parameters:
 - symbols: All symbols from the project.
@@ -1988,6 +2007,26 @@ Include a "Documented with forge-ts" badge above the API table.
 boolean | undefined
 
 Include first
+
+### SkillPackage
+
+any
+
+A generated skill package following the agentskills.io directory structure. Contains SKILL.md plus optional references and scripts files.
+
+Members:
+
+#### directoryName
+
+string
+
+The skill directory name (lowercase, hyphens only, max 64 chars).
+
+#### files
+
+{ path: string; content: string; }[]
+
+Files to write inside the skill directory.
 
 ### SSGConfigFile
 

@@ -21,7 +21,7 @@ export {
 	groupSymbolsByPackage,
 	type SiteGeneratorOptions,
 } from "./site-generator.js";
-export { generateSkillMd } from "./skill.js";
+export { generateSkillMd, generateSkillPackage, type SkillPackage } from "./skill.js";
 export { generateSSGConfigs, type SSGConfigFile } from "./ssg-config.js";
 
 import { mkdir, writeFile } from "node:fs/promises";
@@ -33,7 +33,7 @@ import { generateLlmsFullTxt, generateLlmsTxt } from "./llms.js";
 import { generateMarkdown } from "./markdown.js";
 import { syncReadme } from "./readme-sync.js";
 import { generateDocSite, groupSymbolsByPackage } from "./site-generator.js";
-import { generateSkillMd } from "./skill.js";
+import { generateSkillPackage } from "./skill.js";
 
 /**
  * Runs the full generation pipeline: walk → render → write.
@@ -117,8 +117,14 @@ export async function generate(config: ForgeConfig): Promise<ForgeResult> {
 		const llmsFull = generateLlmsFullTxt(symbols, config);
 		await writeFile(join(config.outDir, "llms-full.txt"), llmsFull, "utf8");
 
-		const skill = generateSkillMd(symbols, config);
-		await writeFile(join(config.outDir, "SKILL.md"), skill, "utf8");
+		const skillPkg = generateSkillPackage(symbols, config);
+		const skillDir = join(config.outDir, skillPkg.directoryName);
+		await mkdir(skillDir, { recursive: true });
+		for (const file of skillPkg.files) {
+			const filePath = join(skillDir, file.path);
+			await mkdir(dirname(filePath), { recursive: true });
+			await writeFile(filePath, file.content, "utf8");
+		}
 	}
 
 	if (config.gen.readmeSync) {

@@ -127,6 +127,15 @@ Options controlling README sync behaviour.
 | `badge` | `boolean \| undefined` | No | Include a "Documented with forge-ts" badge above the API table. |
 | `includeExamples` | `boolean \| undefined` | No | Include first |
 
+## SkillPackage
+
+A generated skill package following the agentskills.io directory structure. Contains SKILL.md plus optional references and scripts files.
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| `directoryName` | `string` | Yes | The skill directory name (lowercase, hyphens only, max 64 chars). |
+| `files` | `{ path: string; content: string; }[]` | Yes | Files to write inside the skill directory. |
+
 ## SSGConfigFile
 
 A single generated SSG configuration file.

@@ -174,9 +174,23 @@ const modified = await syncReadme("/path/to/README.md", symbols);
 console.log(modified); // true if README was updated
 ```
 
+## `generateSkillPackage()`
+
+_Generates a skill package directory following the agentskills.io specification (https://agentskills.io/specification).  The package includes: - `SKILL.md` — metadata frontmatter + instructional content (under 500 lines) - `references/API-REFERENCE.md` — full API signatures and examples - `references/CONFIGURATION.md` — full config type documentation - `scripts/check.sh` — helper script for TSDoc validation_
+
+[View in API reference](/packages/gen/api/functions#generateskillpackage)
+
+```typescript
+import { generateSkillPackage } from "@forge-ts/gen";
+const pkg = generateSkillPackage(symbols, config);
+console.log(pkg.directoryName); // "my-lib"
+console.log(pkg.files.map(f => f.path));
+// ["SKILL.md", "references/API-REFERENCE.md", ...]
+```
+
 ## `generateSkillMd()`
 
-_Generates a SKILL.md file following the Agent Skills specification (https://agentskills.io/specification).  The file includes YAML frontmatter with `name` and `description` fields for discovery-phase loading, followed by instructional content for activation-phase loading._
+_Generates a SKILL.md string following the Agent Skills specification (https://agentskills.io/specification).  The file includes YAML frontmatter with `name` and `description` fields for discovery-phase loading, followed by instructional content for activation-phase loading._
 
 [View in API reference](/packages/gen/api/functions#generateskillmd)
 

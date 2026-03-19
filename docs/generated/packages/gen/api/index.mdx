@@ -17,7 +17,8 @@ API reference for the `gen` package.
 | [`generateLlmsFullTxt()`](/packages/gen/api/functions#generatellmsfulltxt) | function | Generates an `llms-full.txt` dense context file from the extracted symbols.  ... |
 | [`generateMarkdown()`](/packages/gen/api/functions#generatemarkdown) | function | Generates a Markdown (or MDX) string from a list of symbols. |
 | [`syncReadme()`](/packages/gen/api/functions#syncreadme) | function | Injects a summary of exported symbols into a `README.md` file.  The content i... |
-| [`generateSkillMd()`](/packages/gen/api/functions#generateskillmd) | function | Generates a SKILL.md file following the Agent Skills specification (https://a... |
+| [`generateSkillPackage()`](/packages/gen/api/functions#generateskillpackage) | function | Generates a skill package directory following the agentskills.io specificatio... |
+| [`generateSkillMd()`](/packages/gen/api/functions#generateskillmd) | function | Generates a SKILL.md string following the Agent Skills specification (https:/... |
 | [`generateSSGConfigs()`](/packages/gen/api/functions#generatessgconfigs) | function | Generate navigation configuration file(s) for the given SSG target.  Returns ... |
 | [`generate()`](/packages/gen/api/functions#generate) | function | Runs the full generation pipeline: walk → render → write. |
 
@@ -36,6 +37,7 @@ API reference for the `gen` package.
 | [`SSGAdapter`](/packages/gen/api/types#ssgadapter) | interface | The central SSG adapter interface. Every doc platform provider implements thi... |
 | [`MarkdownOptions`](/packages/gen/api/types#markdownoptions) | interface | Options controlling Markdown output. |
 | [`ReadmeSyncOptions`](/packages/gen/api/types#readmesyncoptions) | interface | Options controlling README sync behaviour. |
+| [`SkillPackage`](/packages/gen/api/types#skillpackage) | interface | A generated skill package following the agentskills.io directory structure. C... |
 | [`SSGConfigFile`](/packages/gen/api/types#ssgconfigfile) | interface | A single generated SSG configuration file. |
 
 ## Other Exports

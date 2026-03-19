@@ -1,7 +1,7 @@
 import type { ForgeConfig, ForgeSymbol } from "@forge-ts/core";
 import { Visibility } from "@forge-ts/core";
 import { describe, expect, it } from "vitest";
-import { generateSkillMd } from "../skill.js";
+import { generateSkillMd, generateSkillPackage } from "../skill.js";
 
 // ---------------------------------------------------------------------------
 // Fixtures
@@ -91,7 +91,7 @@ const typeAlias = sym({
 });
 
 // ---------------------------------------------------------------------------
-// Tests
+// generateSkillMd — legacy backward-compat tests
 // ---------------------------------------------------------------------------
 
 describe("generateSkillMd", () => {
@@ -111,9 +111,9 @@ describe("generateSkillMd", () => {
 		expect(result).toContain("# project");
 	});
 
-	it("contains an Installation section with a bash code block", () => {
+	it("contains a Quick Start section with a bash code block", () => {
 		const result = generateSkillMd([fnAdd], makeConfig({ packageName: "my-lib" }));
-		expect(result).toContain("## Installation");
+		expect(result).toContain("## Quick Start");
 		expect(result).toContain("```bash");
 		expect(result).toContain("npm install -D my-lib");
 	});
@@ -130,36 +130,16 @@ describe("generateSkillMd", () => {
 		expect(result).not.toContain("## Common Patterns");
 	});
 
-	it("contains an API quick-reference table", () => {
-		const result = generateSkillMd([fnAdd, fnNoExample], makeConfig());
-		expect(result).toContain("## API Quick Reference");
-		expect(result).toContain("| Symbol | Signature | Description |");
-		expect(result).toContain("`add()`");
-		expect(result).toContain("`subtract()`");
-	});
-
-	it("includes function summary in the API table", () => {
+	it("includes function summary in the output", () => {
 		const result = generateSkillMd([fnAdd], makeConfig());
 		expect(result).toContain("Adds two numbers together.");
 	});
 
-	it("lists types and interfaces in Key Concepts section", () => {
+	it("lists types and interfaces in Key Types section", () => {
 		const result = generateSkillMd([ifaceConfig, typeAlias], makeConfig());
-		expect(result).toContain("## Key Concepts");
+		expect(result).toContain("## Key Types");
 		expect(result).toContain("`MyConfig`");
 		expect(result).toContain("`ID`");
-	});
-
-	it("renders Configuration section from an interface named *Config with children", () => {
-		const result = generateSkillMd([ifaceConfig], makeConfig());
-		expect(result).toContain("## Configuration");
-		expect(result).toContain("`rootDir`");
-		expect(result).toContain("`strict`");
-	});
-
-	it("skips Configuration section when no config-like interface is present", () => {
-		const result = generateSkillMd([fnAdd, typeAlias], makeConfig());
-		expect(result).not.toContain("## Configuration");
 	});
 
 	it("handles an empty symbol list gracefully without throwing", () => {
@@ -169,8 +149,8 @@ describe("generateSkillMd", () => {
 	it("produces a non-empty string for an empty symbol list", () => {
 		const result = generateSkillMd([], makeConfig());
 		expect(result.length).toBeGreaterThan(0);
-		expect(result).toContain("## Installation");
-		expect(result).toContain("name:");  // YAML frontmatter
+		expect(result).toContain("## Quick Start");
+		expect(result).toContain("name:"); // YAML frontmatter
 	});
 
 	it("excludes unexported symbols from all sections", () => {
@@ -179,16 +159,179 @@ describe("generateSkillMd", () => {
 		expect(result).not.toContain("internalFn");
 	});
 
-	it("omits method and property rows from the API table", () => {
+	it("omits method and property rows from the key types section", () => {
 		const method = sym({ name: "log", kind: "method", exported: true });
 		const result = generateSkillMd([method], makeConfig());
-		// Table should not appear if the only symbol is a method
-		expect(result).not.toContain("| `log()`");
+		expect(result).not.toContain("log");
 	});
 
 	it("ends with a single trailing newline", () => {
 		const result = generateSkillMd([fnAdd], makeConfig());
 		expect(result.endsWith("\n")).toBe(true);
 		expect(result.endsWith("\n\n")).toBe(false);
+	});
+
+	// -------------------------------------------------------------------------
+	// YAML frontmatter compliance (agentskills.io spec)
+	// -------------------------------------------------------------------------
+
+	it("YAML frontmatter contains name field", () => {
+		const result = generateSkillMd([fnAdd], makeConfig({ packageName: "my-lib" }));
+		expect(result).toContain("name:");
+	});
+
+	it("YAML frontmatter name is lowercase with hyphens only", () => {
+		const result = generateSkillMd([fnAdd], makeConfig({ packageName: "MyLib" }));
+		expect(result).toMatch(/name: [a-z0-9-]+/);
+		expect(result).not.toMatch(/name: [A-Z]/);
+	});
+
+	it("YAML frontmatter contains description field", () => {
+		const result = generateSkillMd([fnAdd], makeConfig());
+		expect(result).toContain("description:");
+	});
+
+	it("description uses imperative phrasing with 'Use'", () => {
+		const result = generateSkillMd([fnAdd], makeConfig());
+		expect(result).toContain("Use");
+	});
+
+	it("description is under 1024 characters", () => {
+		const result = generateSkillMd([fnAdd], makeConfig());
+		// Extract the description value from the YAML block scalar
+		const descMatch = result.match(/description: >\n([\s\S]*?)(?=\nlicense:)/);
+		if (descMatch) {
+			const descContent = descMatch[1]
+				.split("\n")
+				.map((l) => l.replace(/^ {2}/, ""))
+				.join("\n")
+				.trim();
+			expect(descContent.length).toBeLessThanOrEqual(1024);
+		}
+	});
+
+	it("YAML frontmatter contains license field", () => {
+		const result = generateSkillMd([fnAdd], makeConfig());
+		expect(result).toContain("license: MIT");
+	});
+
+	it("SKILL.md is under 500 lines", () => {
+		const result = generateSkillMd([fnAdd, fnNoExample, ifaceConfig, typeAlias], makeConfig());
+		const lineCount = result.split("\n").length;
+		expect(lineCount).toBeLessThan(500);
+	});
+});
+
+// ---------------------------------------------------------------------------
+// generateSkillPackage — new directory structure tests
+// ---------------------------------------------------------------------------
+
+describe("generateSkillPackage", () => {
+	it("returns a SkillPackage with directoryName and files array", () => {
+		const pkg = generateSkillPackage([fnAdd], makeConfig({ packageName: "my-lib" }));
+		expect(pkg).toHaveProperty("directoryName");
+		expect(pkg).toHaveProperty("files");
+		expect(Array.isArray(pkg.files)).toBe(true);
+	});
+
+	it("directoryName is lowercase-hyphenated", () => {
+		const pkg = generateSkillPackage([fnAdd], makeConfig({ packageName: "MyLib" }));
+		expect(pkg.directoryName).toMatch(/^[a-z0-9-]+$/);
+	});
+
+	it("directoryName matches the name field in SKILL.md frontmatter", () => {
+		const pkg = generateSkillPackage([fnAdd], makeConfig({ packageName: "my-lib" }));
+		const skillMd = pkg.files.find((f) => f.path === "SKILL.md");
+		expect(skillMd).toBeDefined();
+		expect(skillMd?.content).toContain(`name: ${pkg.directoryName}`);
+	});
+
+	it("includes SKILL.md file", () => {
+		const pkg = generateSkillPackage([fnAdd], makeConfig());
+		const paths = pkg.files.map((f) => f.path);
+		expect(paths).toContain("SKILL.md");
+	});
+
+	it("includes references/API-REFERENCE.md file", () => {
+		const pkg = generateSkillPackage([fnAdd], makeConfig());
+		const paths = pkg.files.map((f) => f.path);
+		expect(paths).toContain("references/API-REFERENCE.md");
+	});
+
+	it("includes references/CONFIGURATION.md file", () => {
+		const pkg = generateSkillPackage([fnAdd], makeConfig());
+		const paths = pkg.files.map((f) => f.path);
+		expect(paths).toContain("references/CONFIGURATION.md");
+	});
+
+	it("includes scripts/check.sh file", () => {
+		const pkg = generateSkillPackage([fnAdd], makeConfig());
+		const paths = pkg.files.map((f) => f.path);
+		expect(paths).toContain("scripts/check.sh");
+	});
+
+	it("SKILL.md content has valid YAML frontmatter with name", () => {
+		const pkg = generateSkillPackage([fnAdd], makeConfig({ packageName: "test-pkg" }));
+		const skillMd = pkg.files.find((f) => f.path === "SKILL.md");
+		expect(skillMd?.content).toContain("name: test-pkg");
+	});
+
+	it("SKILL.md description uses imperative phrasing", () => {
+		const pkg = generateSkillPackage([fnAdd], makeConfig());
+		const skillMd = pkg.files.find((f) => f.path === "SKILL.md");
+		expect(skillMd?.content).toContain("Use");
+	});
+
+	it("SKILL.md description is under 1024 chars", () => {
+		const pkg = generateSkillPackage([fnAdd], makeConfig());
+		const skillMd = pkg.files.find((f) => f.path === "SKILL.md");
+		const descMatch = skillMd?.content.match(/description: >\n([\s\S]*?)(?=\nlicense:)/);
+		if (descMatch) {
+			const descContent = descMatch[1]
+				.split("\n")
+				.map((l) => l.replace(/^ {2}/, ""))
+				.join("\n")
+				.trim();
+			expect(descContent.length).toBeLessThanOrEqual(1024);
+		}
+	});
+
+	it("SKILL.md is under 500 lines", () => {
+		const pkg = generateSkillPackage([fnAdd, fnNoExample, ifaceConfig, typeAlias], makeConfig());
+		const skillMd = pkg.files.find((f) => f.path === "SKILL.md");
+		const lineCount = skillMd?.content.split("\n").length ?? 0;
+		expect(lineCount).toBeLessThan(500);
+	});
+
+	it("API-REFERENCE.md contains full function signatures", () => {
+		const pkg = generateSkillPackage([fnAdd], makeConfig());
+		const apiRef = pkg.files.find((f) => f.path === "references/API-REFERENCE.md");
+		expect(apiRef?.content).toContain("add");
+		expect(apiRef?.content).toContain("Adds two numbers together.");
+	});
+
+	it("CONFIGURATION.md contains config interface properties", () => {
+		const pkg = generateSkillPackage([ifaceConfig], makeConfig());
+		const configMd = pkg.files.find((f) => f.path === "references/CONFIGURATION.md");
+		expect(configMd?.content).toContain("MyConfig");
+		expect(configMd?.content).toContain("rootDir");
+		expect(configMd?.content).toContain("strict");
+	});
+
+	it("scripts/check.sh is a valid bash script", () => {
+		const pkg = generateSkillPackage([fnAdd], makeConfig({ packageName: "my-lib" }));
+		const checkSh = pkg.files.find((f) => f.path === "scripts/check.sh");
+		expect(checkSh?.content).toContain("#!/usr/bin/env bash");
+		expect(checkSh?.content).toContain("my-lib");
+	});
+
+	it("handles empty symbol list without throwing", () => {
+		expect(() => generateSkillPackage([], makeConfig())).not.toThrow();
+	});
+
+	it("directoryName max length is 64 chars", () => {
+		const longName = "a".repeat(100);
+		const pkg = generateSkillPackage([], makeConfig({ packageName: longName }));
+		expect(pkg.directoryName.length).toBeLessThanOrEqual(64);
 	});
 });

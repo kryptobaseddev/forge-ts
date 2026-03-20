@@ -1,3 +1,4 @@
+import { stringifyWithFrontmatter, stripFrontmatter } from "../markdown-utils.js";
 import type { DocPage } from "../site-generator.js";
 import { registerAdapter } from "./registry.js";
 import type {
@@ -146,7 +147,7 @@ function buildPackageJson(context: AdapterContext): string {
 	return `${JSON.stringify(pkg, null, 2)}\n`;
 }
 
-/** Add Docusaurus-compatible frontmatter to a doc page. */
+/** Add Docusaurus-compatible frontmatter to a doc page using gray-matter. */
 function addDocusaurusFrontmatter(page: DocPage): string {
 	const title = String(page.frontmatter.title ?? "");
 	const description = page.frontmatter.description
@@ -157,17 +158,19 @@ function addDocusaurusFrontmatter(page: DocPage): string {
 		: title;
 	const sidebarPosition = page.frontmatter.sidebar_position;
 
-	const lines = ["---", `title: "${title}"`, `sidebar_label: "${sidebarLabel}"`];
+	const fields: Record<string, string | number | boolean> = {
+		title,
+		sidebar_label: sidebarLabel,
+	};
 	if (sidebarPosition !== undefined) {
-		lines.push(`sidebar_position: ${sidebarPosition}`);
+		fields.sidebar_position = sidebarPosition as number;
 	}
 	if (description) {
-		lines.push(`description: "${description}"`);
+		fields.description = description;
 	}
-	lines.push("---", "");
 
-	const body = page.content.replace(/^---[\s\S]*?---\n+/, "");
-	return lines.join("\n") + body;
+	const body = stripFrontmatter(page.content);
+	return stringifyWithFrontmatter(body, fields);
 }
 
 // ---------------------------------------------------------------------------

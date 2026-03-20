@@ -1,3 +1,4 @@
+import { stringifyWithFrontmatter, stripFrontmatter } from "../markdown-utils.js";
 import type { DocPage } from "../site-generator.js";
 import { registerAdapter } from "./registry.js";
 import type {
@@ -209,16 +210,15 @@ function buildPackageJson(context: AdapterContext): string {
 	return `${JSON.stringify(pkg, null, 2)}\n`;
 }
 
-/** Add Nextra-compatible frontmatter to a doc page (title only — description optional). */
+/** Add Nextra-compatible frontmatter to a doc page using gray-matter. */
 function addNextraFrontmatter(page: DocPage): string {
 	const title = String(page.frontmatter.title ?? "");
 	if (!title) {
 		return page.content;
 	}
 
-	const lines = ["---", `title: "${title}"`, "---", ""];
-	const body = page.content.replace(/^---[\s\S]*?---\n+/, "");
-	return lines.join("\n") + body;
+	const body = stripFrontmatter(page.content);
+	return stringifyWithFrontmatter(body, { title });
 }
 
 // ---------------------------------------------------------------------------

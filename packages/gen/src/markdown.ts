@@ -1,5 +1,6 @@
 import { relative } from "node:path";
 import type { ForgeConfig, ForgeSymbol } from "@forge-ts/core";
+import { stringifyWithFrontmatter } from "./markdown-utils.js";
 
 /**
  * Options controlling Markdown output.
@@ -41,36 +42,32 @@ function toAnchor(text: string): string {
 		.replace(/\s+/g, "-");
 }
 
-/** Build the frontmatter block for the configured SSG target. */
-function buildFrontmatter(config: ForgeConfig, mdx: boolean): string {
+/** Build the frontmatter block for the configured SSG target using gray-matter. */
+function buildFrontmatter(config: ForgeConfig, _mdx: boolean): string {
 	const target = config.gen.ssgTarget;
 	if (!target) return "";
 
-	const lines: string[] = ["---"];
+	const fields: Record<string, string | number | boolean> = {};
 
 	switch (target) {
 		case "docusaurus":
-			lines.push("sidebar_position: 1");
-			lines.push("title: API Reference");
+			fields.sidebar_position = 1;
+			fields.title = "API Reference";
 			break;
 		case "mintlify":
-			lines.push("title: API Reference");
+			fields.title = "API Reference";
 			break;
 		case "nextra":
-			lines.push("title: API Reference");
-			lines.push("description: Auto-generated API reference");
+			fields.title = "API Reference";
+			fields.description = "Auto-generated API reference";
 			break;
 		case "vitepress":
-			lines.push("title: API Reference");
-			lines.push("outline: deep");
+			fields.title = "API Reference";
+			fields.outline = "deep";
 			break;
 	}
 
-	lines.push("---");
-	if (mdx) {
-		lines.push("");
-	}
-	return `${lines.join("\n")}\n`;
+	return stringifyWithFrontmatter("", fields);
 }
 
 /** Build MDX import block for custom components. */

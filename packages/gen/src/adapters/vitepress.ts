@@ -1,3 +1,4 @@
+import { stringifyWithFrontmatter, stripFrontmatter } from "../markdown-utils.js";
 import type { DocPage } from "../site-generator.js";
 import { registerAdapter } from "./registry.js";
 import type {
@@ -133,21 +134,20 @@ function buildPackageJson(context: AdapterContext): string {
 	return `${JSON.stringify(pkg, null, 2)}\n`;
 }
 
-/** Add VitePress-compatible frontmatter to a doc page. */
+/** Add VitePress-compatible frontmatter to a doc page using gray-matter. */
 function addVitepressFrontmatter(page: DocPage): string {
 	const title = String(page.frontmatter.title ?? "");
 	const description = page.frontmatter.description
 		? String(page.frontmatter.description)
 		: undefined;
 
-	const lines = ["---", `title: "${title}"`, "outline: deep"];
+	const fields: Record<string, string | number | boolean> = { title, outline: "deep" };
 	if (description) {
-		lines.push(`description: "${description}"`);
+		fields.description = description;
 	}
-	lines.push("---", "");
 
-	const body = page.content.replace(/^---[\s\S]*?---\n+/, "");
-	return lines.join("\n") + body;
+	const body = stripFrontmatter(page.content);
+	return stringifyWithFrontmatter(body, fields);
 }
 
 // ---------------------------------------------------------------------------

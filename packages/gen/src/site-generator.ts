@@ -1,5 +1,6 @@
 import { basename, relative } from "node:path";
 import type { ForgeConfig, ForgeSymbol } from "@forge-ts/core";
+import { stringifyWithFrontmatter } from "./markdown-utils.js";
 
 /**
  * A single generated documentation page.
@@ -84,15 +85,11 @@ export function escapeMdx(text: string): string {
 	);
 }
 
-/** Build a frontmatter block string from the fields map. */
+/** Build a frontmatter block string from the fields map using gray-matter. */
 function serializeFrontmatter(fields: Record<string, string | number | boolean>): string {
 	if (Object.keys(fields).length === 0) return "";
-	const lines = ["---"];
-	for (const [key, value] of Object.entries(fields)) {
-		lines.push(`${key}: ${value}`);
-	}
-	lines.push("---");
-	return `${lines.join("\n")}\n\n`;
+	// stringifyWithFrontmatter produces `---\ndata\n---\n\nbody` — we only need the frontmatter prefix
+	return stringifyWithFrontmatter("", fields);
 }
 
 /**

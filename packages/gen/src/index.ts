@@ -14,6 +14,13 @@ export {
 	generateMarkdown,
 	type MarkdownOptions,
 } from "./markdown.js";
+export {
+	type FrontmatterResult,
+	parseFrontmatter,
+	sanitizeForMdx,
+	stringifyWithFrontmatter,
+	stripFrontmatter,
+} from "./markdown-utils.js";
 export { type ReadmeSyncOptions, syncReadme } from "./readme-sync.js";
 export {
 	type DocPage,
@@ -33,65 +40,10 @@ import { DEFAULT_TARGET, getAdapter } from "./adapters/index.js";
 import type { AdapterContext } from "./adapters/types.js";
 import { generateLlmsFullTxt, generateLlmsTxt } from "./llms.js";
 import { generateMarkdown } from "./markdown.js";
+import { updateAutoSections } from "./markdown-utils.js";
 import { syncReadme } from "./readme-sync.js";
 import { generateDocSite, groupSymbolsByPackage } from "./site-generator.js";
 import { generateSkillPackage } from "./skill.js";
-
-/**
- * Updates auto-enriched sections in an existing stub file.
- * Replaces content between `<!-- FORGE:AUTO-START id -->` and
- * `<!-- FORGE:AUTO-END id -->` markers with fresh content from the
- * newly generated version. Manual content outside markers is preserved.
- *
- * @param existing - The current file content on disk.
- * @param generated - The freshly generated content with updated markers.
- * @returns The merged content, or null if no markers were found to update.
- * @internal
- */
-function updateAutoSections(existing: string, generated: string): string | null {
-	// Extract auto sections from the generated content.
-	// The adapter may have converted HTML comments to MDX comments via sanitizeMdx(),
-	// so we need to check both formats in the generated content.
-	const htmlPattern = /<!-- FORGE:AUTO-START (\S+) -->([\s\S]*?)<!-- FORGE:AUTO-END \1 -->/g;
-	const mdxGenPattern =
-		/\{\/\*\s*FORGE:AUTO-START (\S+)\s*\*\/\}([\s\S]*?)\{\/\*\s*FORGE:AUTO-END \1\s*\*\/\}/g;
-
-	const newSections = new Map<string, string>();
-	let match: RegExpExecArray | null;
-	// biome-ignore lint: manual exec loop is clearest for named captures
-	while ((match = htmlPattern.exec(generated)) !== null) {
-		newSections.set(match[1], match[0]);
-	}
-	// biome-ignore lint: also check MDX format in generated content
-	while ((match = mdxGenPattern.exec(generated)) !== null) {
-		if (!newSections.has(match[1])) {
-			newSections.set(match[1], match[0]);
-		}
-	}
-
-	if (newSections.size === 0) return null;
-
-	// Replace each marker section in the existing on-disk content (try both formats)
-	let updated = existing;
-	let changed = false;
-	for (const [id, replacement] of newSections) {
-		const htmlSectionPattern = new RegExp(
-			`<!-- FORGE:AUTO-START ${id} -->[\\s\\S]*?<!-- FORGE:AUTO-END ${id} -->`,
-		);
-		const mdxSectionPattern = new RegExp(
-			`\\{/\\*\\s*FORGE:AUTO-START ${id}\\s*\\*/\\}[\\s\\S]*?\\{/\\*\\s*FORGE:AUTO-END ${id}\\s*\\*/\\}`,
-		);
-		if (htmlSectionPattern.test(updated)) {
-			updated = updated.replace(htmlSectionPattern, replacement);
-			changed = true;
-		} else if (mdxSectionPattern.test(updated)) {
-			updated = updated.replace(mdxSectionPattern, replacement);
-			changed = true;
-		}
-	}
-
-	return changed ? updated : null;
-}
 
 /**
  * Options for the generation pipeline.

@@ -1,3 +1,4 @@
+import { sanitizeForMdx, stringifyWithFrontmatter, stripFrontmatter } from "../markdown-utils.js";
 import type { DocPage } from "../site-generator.js";
 import { registerAdapter } from "./registry.js";
 import type {
@@ -7,50 +8,6 @@ import type {
 	SSGAdapter,
 	SSGStyleGuide,
 } from "./types.js";
-
-/**
- * Sanitize content for MDX compatibility.
- *
- * Processes content line-by-line, skipping code fence interiors.
- * Outside code fences: converts HTML comments to MDX comments,
- * escapes curly braces and angle brackets that MDX would parse
- * as JSX tags or expressions.
- *
- * @internal
- */
-function sanitizeMdx(content: string): string {
-	const lines = content.split("\n");
-	const result: string[] = [];
-	let insideFence = false;
-
-	for (const line of lines) {
-		if (insideFence) {
-			result.push(line);
-			if (/^```\s*$/.test(line)) {
-				insideFence = false;
-			}
-			continue;
-		}
-		if (/^```/.test(line)) {
-			insideFence = true;
-			result.push(line);
-			continue;
-		}
-		// Outside code fences — sanitize for MDX
-		let safe = line;
-		// Convert HTML comments to MDX comments
-		safe = safe.replace(/<!--([\s\S]*?)-->/g, "{/* $1 */}");
-		// Escape { } that aren't part of MDX comments we just created
-		safe = safe.replace(/\{(?!\/\*)/g, "\\{").replace(/(?<!\*\/)\}/g, "\\}");
-		// Escape < that starts a word (JSX tag-like): Array<string> → Array&lt;string>
-		safe = safe.replace(/<(\w)/g, "&lt;$1");
-		// Escape > preceded by a word char
-		safe = safe.replace(/(\w)>/g, "$1&gt;");
-		result.push(safe);
-	}
-
-	return result.join("\n");
-}
 
 // ---------------------------------------------------------------------------
 // Style guide
@@ -181,22 +138,20 @@ function buildDocsJson(context: AdapterContext): MintlifyDocsJson {
 	};
 }
 
-/** Add Mintlify-compatible frontmatter to a doc page. */
+/** Add Mintlify-compatible frontmatter to a doc page using gray-matter. */
 function addMintlifyFrontmatter(page: DocPage): string {
 	const title = String(page.frontmatter.title ?? "");
 	const description = page.frontmatter.description
 		? String(page.frontmatter.description)
 		: undefined;
 
-	const lines = ["---", `title: "${title}"`];
+	const fields: Record<string, string | number | boolean> = { title };
 	if (description) {
-		lines.push(`description: "${description}"`);
+		fields.description = description;
 	}
-	lines.push("---", "");
 
-	// Strip existing frontmatter block if present, then prepend ours
-	const body = page.content.replace(/^---[\s\S]*?---\n+/, "");
-	return lines.join("\n") + body;
+	const body = stripFrontmatter(page.content);
+	return stringifyWithFrontmatter(body, fields);
 }
 
 // ---------------------------------------------------------------------------
@@ -267,8 +222,9 @@ export const mintlifyAdapter: SSGAdapter = {
 				})
 				.join("\n");
 			// Sanitize for MDX: escape {}, <>, and convert HTML comments.
-			// Must run AFTER code fence tagging since sanitizeMdx skips fence interiors.
-			content = sanitizeMdx(content);
+			// Must run AFTER code fence tagging. Uses AST-aware processing
+			// so code blocks and inline code are automatically preserved.
+			content = sanitizeForMdx(content);
 			return {
 				path: page.path.replace(/\.md$/, ".mdx"),
 				content,

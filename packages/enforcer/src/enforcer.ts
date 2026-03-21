@@ -146,6 +146,7 @@ const RULE_MAP: Record<string, keyof EnforceRules> = {
 	E005: "require-package-doc",
 	E006: "require-class-member-doc",
 	E007: "require-interface-member-doc",
+	W006: "require-tsdoc-syntax",
 };
 
 // ---------------------------------------------------------------------------
@@ -172,6 +173,7 @@ const RULE_MAP: Record<string, keyof EnforceRules> = {
  * | W001 | warning  | TSDoc comment contains parse errors. |
  * | W002 | warning  | Function body throws but has no `@throws` tag. |
  * | W003 | warning  | `@deprecated` tag is present without explanation. |
+ * | W006 | warning  | TSDoc parser-level syntax error (invalid tag, malformed block, etc.). |
  *
  * When `config.enforce.strict` is `true` all warnings are promoted to errors.
  *
@@ -350,6 +352,44 @@ export async function enforce(config: ForgeConfig): Promise<ForgeResult> {
 					symbolKind: symbol.kind,
 				},
 			);
+		}
+
+		// W006 — TSDoc parser syntax messages
+		if (symbol.documentation?.parseMessages) {
+			for (const msg of symbol.documentation.parseMessages) {
+				emit(
+					"W006",
+					`TSDoc syntax: ${msg.text} [${msg.messageId}]`,
+					symbol.filePath,
+					msg.line,
+					symbol.column,
+					{
+						symbolName: symbol.name,
+						symbolKind: symbol.kind,
+					},
+				);
+			}
+		}
+
+		// W006 — TSDoc parser syntax messages on child symbols
+		if (symbol.children) {
+			for (const child of symbol.children) {
+				if (child.documentation?.parseMessages) {
+					for (const msg of child.documentation.parseMessages) {
+						emit(
+							"W006",
+							`TSDoc syntax: ${msg.text} [${msg.messageId}]`,
+							child.filePath,
+							msg.line,
+							child.column,
+							{
+								symbolName: child.name,
+								symbolKind: child.kind,
+							},
+						);
+					}
+				}
+			}
 		}
 	}
 

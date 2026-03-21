@@ -190,7 +190,6 @@ export function parseInline(markdown: string): MdPhrasing[] {
 export function parseBlocks(markdown: string): MdBlock[] {
 	if (!markdown) return [];
 	const tree = inlineParser.parse(markdown);
-	// biome-ignore lint: mdast children are compatible with our MdBlock
 	return tree.children as unknown as MdBlock[];
 }
 

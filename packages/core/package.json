@@ -29,7 +29,8 @@
 		"typecheck": "tsc --noEmit"
 	},
 	"dependencies": {
-		"@microsoft/tsdoc": "^0.15.1",
+		"@microsoft/tsdoc": "^0.16.0",
+		"@microsoft/tsdoc-config": "^0.18.1",
 		"typescript": "^5.8.2"
 	},
 	"devDependencies": {

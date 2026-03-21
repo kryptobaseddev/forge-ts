@@ -1,0 +1,21 @@
+{
+	"name": "@forge-ts/tsdoc-config",
+	"version": "0.8.0",
+	"type": "module",
+	"description": "Opinionated TSDoc preset for forge-ts with custom tag definitions",
+	"license": "MIT",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/kryptobaseddev/forge-ts"
+	},
+	"publishConfig": {
+		"access": "public"
+	},
+	"files": [
+		"tsdoc.json"
+	],
+	"exports": {
+		".": "./tsdoc.json",
+		"./tsdoc.json": "./tsdoc.json"
+	}
+}

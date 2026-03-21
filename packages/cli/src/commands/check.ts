@@ -557,7 +557,7 @@ function formatCheckHuman(result: CheckResult): string {
 	}
 
 	// Pagination footer
-	if (result.page && result.page.hasMore) {
+	if (result.page?.hasMore) {
 		lines.push(
 			`\n  Showing ${result.page.offset + 1}-${result.page.offset + (result.byFile?.length ?? 0)} of ${result.page.total} file(s). Use --offset ${result.page.offset + result.page.limit} to see more.`,
 		);

@@ -38,6 +38,7 @@
 		"@forge-ts/doctest": "workspace:*",
 		"@forge-ts/enforcer": "workspace:*",
 		"@forge-ts/gen": "workspace:*",
+		"@forge-ts/tsdoc-config": "workspace:*",
 		"citty": "^0.2.1"
 	},
 	"devDependencies": {

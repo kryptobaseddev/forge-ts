@@ -22,6 +22,7 @@ const DEFAULT_RULES: EnforceRules = {
 	"require-package-doc": "warn",
 	"require-class-member-doc": "error",
 	"require-interface-member-doc": "error",
+	"require-tsdoc-syntax": "warn",
 };
 
 /**
@@ -45,6 +46,18 @@ function makeConfig(overrides?: Partial<ForgeConfig["enforce"]>): ForgeConfig {
 		doctest: { enabled: false, cacheDir: "/fake/.cache" },
 		api: { enabled: false, openapi: false, openapiPath: "/fake/docs/openapi.json" },
 		gen: { enabled: false, formats: [], llmsTxt: false, readmeSync: false },
+		skill: {},
+		tsdoc: {
+			writeConfig: true,
+			customTags: [],
+			enforce: { core: "error", extended: "warn", discretionary: "off" },
+		},
+		guards: {
+			tsconfig: { enabled: false, requiredFlags: [] },
+			biome: { enabled: false, lockedRules: [] },
+			packageJson: { enabled: false, minNodeVersion: "22.0.0", requiredFields: [] },
+		},
+		project: {},
 	};
 }
 
@@ -924,6 +937,240 @@ describe("enforce — per-rule configuration", () => {
 		expect(e005Warn).toHaveLength(1);
 		// Should still succeed since there are no errors
 		expect(result.success).toBe(true);
+	});
+});
+
+// ---------------------------------------------------------------------------
+// W006 TSDoc parser syntax messages
+// ---------------------------------------------------------------------------
+
+describe("enforce — W006 TSDoc parser syntax messages", () => {
+	it("emits W006 for each parseMessage on a symbol's documentation", async () => {
+		const sym = makeSymbol({
+			name: "badDoc",
+			documentation: {
+				summary: "Has parse errors.",
+				examples: [{ code: "badDoc();", language: "typescript", line: 5 }],
+				parseMessages: [
+					{
+						messageId: "tsdoc-param-tag-missing-hyphen",
+						text: "The @param block should be followed by a parameter name and then a hyphen",
+						line: 10,
+					},
+				],
+			},
+		});
+		const result = await runEnforce([sym]);
+		const w006 = result.warnings.filter((w) => w.code === "W006");
+		expect(w006).toHaveLength(1);
+		expect(w006[0].message).toContain("tsdoc-param-tag-missing-hyphen");
+		expect(w006[0].message).toContain("TSDoc syntax:");
+		expect(w006[0].line).toBe(10);
+	});
+
+	it("emits multiple W006 for multiple parseMessages", async () => {
+		const sym = makeSymbol({
+			name: "veryBadDoc",
+			documentation: {
+				summary: "Has many parse errors.",
+				examples: [{ code: "veryBadDoc();", language: "typescript", line: 5 }],
+				parseMessages: [
+					{
+						messageId: "tsdoc-param-tag-missing-hyphen",
+						text: "The @param block should be followed by a parameter name and then a hyphen",
+						line: 10,
+					},
+					{
+						messageId: "tsdoc-undefined-tag",
+						text: 'The TSDoc tag "@unknownTag" is not defined',
+						line: 12,
+					},
+					{
+						messageId: "tsdoc-code-fence-opening-indent",
+						text: "The opening backtick for a code fence must appear at the start of the line",
+						line: 15,
+					},
+				],
+			},
+		});
+		const result = await runEnforce([sym]);
+		const w006 = result.warnings.filter((w) => w.code === "W006");
+		expect(w006).toHaveLength(3);
+		expect(w006[0].message).toContain("tsdoc-param-tag-missing-hyphen");
+		expect(w006[1].message).toContain("tsdoc-undefined-tag");
+		expect(w006[2].message).toContain("tsdoc-code-fence-opening-indent");
+	});
+
+	it("does not emit W006 when there are no parseMessages", async () => {
+		const sym = makeSymbol({
+			name: "goodDoc",
+			documentation: {
+				summary: "Clean documentation.",
+				examples: [{ code: "goodDoc();", language: "typescript", line: 5 }],
+			},
+		});
+		const result = await runEnforce([sym]);
+		const w006 = result.warnings.filter((w) => w.code === "W006");
+		expect(w006).toHaveLength(0);
+	});
+
+	it("does not emit W006 when parseMessages is an empty array", async () => {
+		const sym = makeSymbol({
+			name: "cleanDoc",
+			documentation: {
+				summary: "No parse errors.",
+				examples: [{ code: "cleanDoc();", language: "typescript", line: 5 }],
+				parseMessages: [],
+			},
+		});
+		const result = await runEnforce([sym]);
+		const w006 = result.warnings.filter((w) => w.code === "W006");
+		expect(w006).toHaveLength(0);
+	});
+
+	it("respects require-tsdoc-syntax set to 'off'", async () => {
+		const sym = makeSymbol({
+			name: "badDoc",
+			documentation: {
+				summary: "Has parse errors.",
+				examples: [{ code: "badDoc();", language: "typescript", line: 5 }],
+				parseMessages: [
+					{
+						messageId: "tsdoc-param-tag-missing-hyphen",
+						text: "Missing hyphen",
+						line: 10,
+					},
+				],
+			},
+		});
+		const result = await runEnforce([sym], {
+			rules: { "require-tsdoc-syntax": "off" },
+		});
+		const w006 = result.warnings.filter((w) => w.code === "W006");
+		const e006 = result.errors.filter((e) => e.code === "W006");
+		expect(w006).toHaveLength(0);
+		expect(e006).toHaveLength(0);
+	});
+
+	it("respects require-tsdoc-syntax set to 'error'", async () => {
+		const sym = makeSymbol({
+			name: "badDoc",
+			documentation: {
+				summary: "Has parse errors.",
+				examples: [{ code: "badDoc();", language: "typescript", line: 5 }],
+				parseMessages: [
+					{
+						messageId: "tsdoc-undefined-tag",
+						text: "Undefined tag @foo",
+						line: 10,
+					},
+				],
+			},
+		});
+		const result = await runEnforce([sym], {
+			rules: { "require-tsdoc-syntax": "error" },
+		});
+		const w006Errors = result.errors.filter((e) => e.code === "W006");
+		const w006Warnings = result.warnings.filter((w) => w.code === "W006");
+		expect(w006Errors).toHaveLength(1);
+		expect(w006Warnings).toHaveLength(0);
+		expect(result.success).toBe(false);
+	});
+
+	it("promotes W006 to error in strict mode", async () => {
+		const sym = makeSymbol({
+			name: "badDoc",
+			documentation: {
+				summary: "Has parse errors.",
+				examples: [{ code: "badDoc();", language: "typescript", line: 5 }],
+				parseMessages: [
+					{
+						messageId: "tsdoc-code-fence-opening-indent",
+						text: "Code fence indentation problem",
+						line: 10,
+					},
+				],
+			},
+		});
+		const result = await runEnforce([sym], { strict: true });
+		const w006Errors = result.errors.filter((e) => e.code === "W006");
+		const w006Warnings = result.warnings.filter((w) => w.code === "W006");
+		expect(w006Errors).toHaveLength(1);
+		expect(w006Warnings).toHaveLength(0);
+	});
+
+	it("W006 default severity is warn (success remains true)", async () => {
+		const sym = makeSymbol({
+			name: "badDoc",
+			documentation: {
+				summary: "Has parse errors.",
+				examples: [{ code: "badDoc();", language: "typescript", line: 5 }],
+				parseMessages: [
+					{
+						messageId: "tsdoc-param-tag-missing-hyphen",
+						text: "Missing hyphen",
+						line: 10,
+					},
+				],
+			},
+		});
+		const result = await runEnforce([sym]);
+		expect(result.success).toBe(true);
+		const w006 = result.warnings.filter((w) => w.code === "W006");
+		expect(w006).toHaveLength(1);
+	});
+
+	it("includes symbolName and symbolKind in W006 diagnostics", async () => {
+		const sym = makeSymbol({
+			name: "myMethod",
+			kind: "method",
+			documentation: {
+				summary: "A method.",
+				parseMessages: [
+					{
+						messageId: "tsdoc-escape-right-brace",
+						text: "A right curly brace must be escaped",
+						line: 3,
+					},
+				],
+			},
+		});
+		const result = await runEnforce([sym]);
+		const w006 = result.warnings.find((w) => w.code === "W006");
+		expect(w006).toBeDefined();
+		expect(w006?.symbolName).toBe("myMethod");
+		expect(w006?.symbolKind).toBe("method");
+	});
+
+	it("emits W006 for parseMessages on child symbols", async () => {
+		const sym = makeSymbol({
+			name: "MyClass",
+			kind: "class",
+			documentation: { summary: "A class." },
+			children: [
+				makeSymbol({
+					name: "badMethod",
+					kind: "method",
+					filePath: "/fake/src/module.ts",
+					line: 20,
+					documentation: {
+						summary: "A method with parse errors.",
+						parseMessages: [
+							{
+								messageId: "tsdoc-inline-tag-missing-braces",
+								text: "Inline tag is missing braces",
+								line: 20,
+							},
+						],
+					},
+				}),
+			],
+		});
+		const result = await runEnforce([sym]);
+		const w006 = result.warnings.filter((w) => w.code === "W006");
+		expect(w006).toHaveLength(1);
+		expect(w006[0].message).toContain("tsdoc-inline-tag-missing-braces");
+		expect(w006[0].symbolName).toBe("badMethod");
 	});
 });
 

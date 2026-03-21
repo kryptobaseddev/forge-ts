@@ -34,6 +34,7 @@ export function defaultConfig(rootDir: string): ForgeConfig {
 				"require-package-doc": "warn",
 				"require-class-member-doc": "error",
 				"require-interface-member-doc": "error",
+				"require-tsdoc-syntax": "warn",
 			},
 		},
 		doctest: {
@@ -52,6 +53,30 @@ export function defaultConfig(rootDir: string): ForgeConfig {
 			readmeSync: false,
 		},
 		skill: {},
+		tsdoc: {
+			writeConfig: true,
+			customTags: [],
+			enforce: {
+				core: "error",
+				extended: "warn",
+				discretionary: "off",
+			},
+		},
+		guards: {
+			tsconfig: {
+				enabled: true,
+				requiredFlags: ["strict", "strictNullChecks", "noImplicitAny"],
+			},
+			biome: {
+				enabled: false,
+				lockedRules: [],
+			},
+			packageJson: {
+				enabled: true,
+				minNodeVersion: "22.0.0",
+				requiredFields: ["type", "engines"],
+			},
+		},
 		project: {},
 	};
 }
@@ -70,6 +95,8 @@ const KNOWN_TOP_KEYS = new Set([
 	"api",
 	"gen",
 	"skill",
+	"tsdoc",
+	"guards",
 	"project",
 ]);
 
@@ -85,7 +112,61 @@ const KNOWN_RULE_KEYS = new Set([
 	"require-package-doc",
 	"require-class-member-doc",
 	"require-interface-member-doc",
+	"require-tsdoc-syntax",
 ]);
+
+/**
+ * Known keys within `tsdoc`.
+ * @internal
+ */
+const KNOWN_TSDOC_KEYS = new Set(["writeConfig", "customTags", "enforce"]);
+
+/**
+ * Known keys within `tsdoc.enforce`.
+ * @internal
+ */
+const KNOWN_TSDOC_ENFORCE_KEYS = new Set(["core", "extended", "discretionary"]);
+
+/**
+ * Known keys within `guards`.
+ * @internal
+ */
+const KNOWN_GUARDS_KEYS = new Set(["tsconfig", "biome", "packageJson"]);
+
+/**
+ * Known keys within `guards.tsconfig`.
+ * @internal
+ */
+const KNOWN_GUARDS_TSCONFIG_KEYS = new Set(["enabled", "requiredFlags"]);
+
+/**
+ * Known keys within `guards.biome`.
+ * @internal
+ */
+const KNOWN_GUARDS_BIOME_KEYS = new Set(["enabled", "lockedRules"]);
+
+/**
+ * Known keys within `guards.packageJson`.
+ * @internal
+ */
+const KNOWN_GUARDS_PACKAGE_JSON_KEYS = new Set(["enabled", "minNodeVersion", "requiredFields"]);
+
+/**
+ * Validates an object against a set of known keys and collects warnings.
+ * @internal
+ */
+function validateKnownKeys(
+	obj: Record<string, unknown>,
+	knownKeys: Set<string>,
+	section: string,
+	warnings: string[],
+): void {
+	for (const key of Object.keys(obj)) {
+		if (!knownKeys.has(key)) {
+			warnings.push(`Unknown key "${key}" in ${section} — ignored.`);
+		}
+	}
+}
 
 /**
  * Collects warnings about unknown keys in user config.
@@ -108,6 +189,54 @@ function collectUnknownKeyWarnings(partial: Partial<ForgeConfig>): string[] {
 					`Unknown enforce rule "${key}" — ignored. Valid rules: ${[...KNOWN_RULE_KEYS].join(", ")}`,
 				);
 			}
+		}
+	}
+	if (partial.tsdoc) {
+		validateKnownKeys(
+			partial.tsdoc as unknown as Record<string, unknown>,
+			KNOWN_TSDOC_KEYS,
+			"tsdoc",
+			warnings,
+		);
+		if (partial.tsdoc.enforce) {
+			validateKnownKeys(
+				partial.tsdoc.enforce as unknown as Record<string, unknown>,
+				KNOWN_TSDOC_ENFORCE_KEYS,
+				"tsdoc.enforce",
+				warnings,
+			);
+		}
+	}
+	if (partial.guards) {
+		validateKnownKeys(
+			partial.guards as unknown as Record<string, unknown>,
+			KNOWN_GUARDS_KEYS,
+			"guards",
+			warnings,
+		);
+		if (partial.guards.tsconfig) {
+			validateKnownKeys(
+				partial.guards.tsconfig as unknown as Record<string, unknown>,
+				KNOWN_GUARDS_TSCONFIG_KEYS,
+				"guards.tsconfig",
+				warnings,
+			);
+		}
+		if (partial.guards.biome) {
+			validateKnownKeys(
+				partial.guards.biome as unknown as Record<string, unknown>,
+				KNOWN_GUARDS_BIOME_KEYS,
+				"guards.biome",
+				warnings,
+			);
+		}
+		if (partial.guards.packageJson) {
+			validateKnownKeys(
+				partial.guards.packageJson as unknown as Record<string, unknown>,
+				KNOWN_GUARDS_PACKAGE_JSON_KEYS,
+				"guards.packageJson",
+				warnings,
+			);
 		}
 	}
 	for (const w of warnings) {
@@ -139,6 +268,18 @@ function mergeWithDefaults(rootDir: string, partial: Partial<ForgeConfig>): Forg
 		api: { ...defaults.api, ...partial.api },
 		gen: { ...defaults.gen, ...partial.gen },
 		skill: { ...defaults.skill, ...partial.skill },
+		tsdoc: {
+			...defaults.tsdoc,
+			...partial.tsdoc,
+			enforce: { ...defaults.tsdoc.enforce, ...partial.tsdoc?.enforce },
+		},
+		guards: {
+			...defaults.guards,
+			...partial.guards,
+			tsconfig: { ...defaults.guards.tsconfig, ...partial.guards?.tsconfig },
+			biome: { ...defaults.guards.biome, ...partial.guards?.biome },
+			packageJson: { ...defaults.guards.packageJson, ...partial.guards?.packageJson },
+		},
 		project: { ...defaults.project, ...partial.project },
 	};
 	if (warnings.length > 0) {

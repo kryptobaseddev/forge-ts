@@ -1,13 +1,19 @@
-import { resolve } from "node:path";
+import { mkdirSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join, resolve } from "node:path";
 import { extractSDKTypes, generateOpenAPISpec } from "@forge-ts/api";
 import { enforce } from "@forge-ts/enforcer";
 import { generateLlmsTxt, generateMarkdown } from "@forge-ts/gen";
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
 import {
+	clearTSDocConfigCache,
 	createWalker,
+	defaultConfig,
 	type EnforceRules,
 	type ForgeConfig,
 	filterByVisibility,
+	loadConfig,
+	loadTSDocConfiguration,
 	Visibility,
 } from "../index.js";
 
@@ -28,6 +34,7 @@ const DEFAULT_E2E_RULES: EnforceRules = {
 	"require-package-doc": "warn",
 	"require-class-member-doc": "error",
 	"require-interface-member-doc": "error",
+	"require-tsdoc-syntax": "warn",
 };
 
 function makeFixtureConfig(overrides: Partial<ForgeConfig> = {}): ForgeConfig {
@@ -53,6 +60,18 @@ function makeFixtureConfig(overrides: Partial<ForgeConfig> = {}): ForgeConfig {
 			llmsTxt: true,
 			readmeSync: false,
 		},
+		skill: {},
+		tsdoc: {
+			writeConfig: true,
+			customTags: [],
+			enforce: { core: "error", extended: "warn", discretionary: "off" },
+		},
+		guards: {
+			tsconfig: { enabled: false, requiredFlags: [] },
+			biome: { enabled: false, lockedRules: [] },
+			packageJson: { enabled: false, minNodeVersion: "22.0.0", requiredFields: [] },
+		},
+		project: {},
 		...overrides,
 	};
 }
@@ -306,5 +325,325 @@ describe("E2E — gen integration", () => {
 		const opSchema = spec.components.schemas.Operation;
 		expect(opSchema.type).toBe("string");
 		expect(Array.isArray(opSchema.enum)).toBe(true);
+	});
+});
+
+// ---------------------------------------------------------------------------
+// v0.9.0 — TSDoc configuration integration
+// ---------------------------------------------------------------------------
+
+describe("E2E — v0.9.0 tsdoc.json loading", () => {
+	const tempDir = join(tmpdir(), `forge-ts-tsdoc-test-${Date.now()}`);
+
+	afterEach(() => {
+		clearTSDocConfigCache();
+		try {
+			rmSync(tempDir, { recursive: true, force: true });
+		} catch {
+			// Ignore cleanup failures
+		}
+	});
+
+	it("loadTSDocConfiguration returns a valid configuration for a folder without tsdoc.json", () => {
+		const config = loadTSDocConfiguration(FIXTURE_DIR);
+		// Should return a default TSDocConfiguration (no crash, no undefined)
+		expect(config).toBeDefined();
+		// Default configuration has standard tags enabled
+		expect(config.tagDefinitions.length).toBeGreaterThan(0);
+	});
+
+	it("loadTSDocConfiguration loads custom tags from tsdoc.json when present", () => {
+		mkdirSync(tempDir, { recursive: true });
+
+		// loadForFolder needs a package.json to identify the project root
+		writeFileSync(join(tempDir, "package.json"), JSON.stringify({ name: "test-pkg" }));
+
+		const tsdocJson = {
+			$schema: "https://developer.microsoft.com/json-schemas/tsdoc/v0/tsdoc.schema.json",
+			noStandardTags: false,
+			tagDefinitions: [{ tagName: "@myCustomTag", syntaxKind: "block" }],
+			supportForTags: {
+				"@myCustomTag": true,
+			},
+		};
+		writeFileSync(join(tempDir, "tsdoc.json"), JSON.stringify(tsdocJson));
+
+		const config = loadTSDocConfiguration(tempDir);
+		expect(config).toBeDefined();
+
+		// The custom tag @myCustomTag should be present in the configuration
+		const customTag = config.tagDefinitions.find((t) => t.tagName === "@myCustomTag");
+		expect(customTag).toBeDefined();
+	});
+
+	it("loadTSDocConfiguration caches results per folder", () => {
+		const config1 = loadTSDocConfiguration(FIXTURE_DIR);
+		const config2 = loadTSDocConfiguration(FIXTURE_DIR);
+		// Same object reference due to caching
+		expect(config1).toBe(config2);
+	});
+
+	it("clearTSDocConfigCache invalidates the cache", () => {
+		const config1 = loadTSDocConfiguration(FIXTURE_DIR);
+		clearTSDocConfigCache();
+		const config2 = loadTSDocConfiguration(FIXTURE_DIR);
+		// Different object reference after cache clear
+		expect(config1).not.toBe(config2);
+	});
+
+	it("walker uses tsdoc.json custom tags to suppress parse warnings for known tags", () => {
+		// Create a fixture-like project with a custom tag and a tsdoc.json
+		mkdirSync(join(tempDir, "src"), { recursive: true });
+
+		// package.json is needed for TSDocConfigFile.loadForFolder to find tsdoc.json
+		writeFileSync(join(tempDir, "package.json"), JSON.stringify({ name: "test-pkg" }));
+
+		// Write a tsconfig.json
+		writeFileSync(
+			join(tempDir, "tsconfig.json"),
+			JSON.stringify({
+				compilerOptions: {
+					target: "ESNext",
+					module: "NodeNext",
+					moduleResolution: "NodeNext",
+					strict: true,
+					outDir: "dist",
+					rootDir: "src",
+				},
+				include: ["src/**/*"],
+			}),
+		);
+
+		// Write a source file using @myCustomTag
+		writeFileSync(
+			join(tempDir, "src", "example.ts"),
+			`/**
+ * Does something.
+ *
+ * @myCustomTag This is custom info.
+ * @public
+ */
+export function doSomething(): void {}
+`,
+		);
+
+		// Write a tsdoc.json defining @myCustomTag
+		writeFileSync(
+			join(tempDir, "tsdoc.json"),
+			JSON.stringify({
+				$schema: "https://developer.microsoft.com/json-schemas/tsdoc/v0/tsdoc.schema.json",
+				noStandardTags: false,
+				tagDefinitions: [{ tagName: "@myCustomTag", syntaxKind: "block" }],
+				supportForTags: { "@myCustomTag": true },
+			}),
+		);
+
+		const config = makeFixtureConfig({
+			rootDir: tempDir,
+			tsconfig: join(tempDir, "tsconfig.json"),
+			outDir: join(tempDir, "docs"),
+		});
+
+		const walker = createWalker(config);
+		const symbols = walker.walk();
+
+		const doSomething = symbols.find((s) => s.name === "doSomething");
+		expect(doSomething).toBeDefined();
+		expect(doSomething?.documentation?.summary).toContain("Does something");
+
+		// With tsdoc.json present, @myCustomTag should NOT produce parse warnings
+		const parseMessages = doSomething?.documentation?.parseMessages ?? [];
+		const customTagWarnings = parseMessages.filter((m) => m.text.includes("@myCustomTag"));
+		expect(customTagWarnings).toHaveLength(0);
+	});
+
+	it("walker produces parseMessages for unknown tags when no tsdoc.json is present", () => {
+		// Create a fixture-like project WITHOUT a tsdoc.json
+		mkdirSync(join(tempDir, "src"), { recursive: true });
+
+		writeFileSync(
+			join(tempDir, "tsconfig.json"),
+			JSON.stringify({
+				compilerOptions: {
+					target: "ESNext",
+					module: "NodeNext",
+					moduleResolution: "NodeNext",
+					strict: true,
+					outDir: "dist",
+					rootDir: "src",
+				},
+				include: ["src/**/*"],
+			}),
+		);
+
+		// Write a source file using @myCustomTag WITHOUT a tsdoc.json
+		writeFileSync(
+			join(tempDir, "src", "example.ts"),
+			`/**
+ * Does something else.
+ *
+ * @myCustomTag This is custom info.
+ * @public
+ */
+export function doSomethingElse(): void {}
+`,
+		);
+
+		const config = makeFixtureConfig({
+			rootDir: tempDir,
+			tsconfig: join(tempDir, "tsconfig.json"),
+			outDir: join(tempDir, "docs"),
+		});
+
+		const walker = createWalker(config);
+		const symbols = walker.walk();
+
+		const doSomethingElse = symbols.find((s) => s.name === "doSomethingElse");
+		expect(doSomethingElse).toBeDefined();
+
+		// Without tsdoc.json, @myCustomTag should produce a parse warning
+		const parseMessages = doSomethingElse?.documentation?.parseMessages ?? [];
+		const customTagWarnings = parseMessages.filter((m) => m.text.includes("@myCustomTag"));
+		expect(customTagWarnings.length).toBeGreaterThan(0);
+	});
+});
+
+// ---------------------------------------------------------------------------
+// v0.9.0 — W006 integration (through real walker + enforcer)
+// ---------------------------------------------------------------------------
+
+describe("E2E — v0.9.0 W006 fires for malformed TSDoc", () => {
+	const tempDir = join(tmpdir(), `forge-ts-w006-test-${Date.now()}`);
+
+	afterEach(() => {
+		clearTSDocConfigCache();
+		try {
+			rmSync(tempDir, { recursive: true, force: true });
+		} catch {
+			// Ignore cleanup failures
+		}
+	});
+
+	it("W006 fires when walker encounters an undefined TSDoc tag", async () => {
+		mkdirSync(join(tempDir, "src"), { recursive: true });
+
+		writeFileSync(
+			join(tempDir, "tsconfig.json"),
+			JSON.stringify({
+				compilerOptions: {
+					target: "ESNext",
+					module: "NodeNext",
+					moduleResolution: "NodeNext",
+					strict: true,
+					outDir: "dist",
+					rootDir: "src",
+				},
+				include: ["src/**/*"],
+			}),
+		);
+
+		// Use an intentionally malformed TSDoc: @badTag is undefined
+		writeFileSync(
+			join(tempDir, "src", "bad.ts"),
+			`/**
+ * Has bad doc.
+ *
+ * @badTag this tag is not defined
+ * @public
+ */
+export function badDocFunction(): void {}
+`,
+		);
+
+		const config = makeFixtureConfig({
+			rootDir: tempDir,
+			tsconfig: join(tempDir, "tsconfig.json"),
+			outDir: join(tempDir, "docs"),
+		});
+
+		const result = await enforce(config);
+
+		// W006 should fire for the undefined @badTag
+		const w006 = result.warnings.filter((w) => w.code === "W006");
+		expect(w006.length).toBeGreaterThan(0);
+		expect(w006.some((w) => w.message.includes("@badTag"))).toBe(true);
+	});
+});
+
+// ---------------------------------------------------------------------------
+// v0.9.0 — ForgeConfig tsdoc/guards sections
+// ---------------------------------------------------------------------------
+
+describe("E2E — v0.9.0 ForgeConfig tsdoc and guards sections", () => {
+	it("defaultConfig includes tsdoc section with correct defaults", () => {
+		const config = defaultConfig("/fake");
+		expect(config.tsdoc).toBeDefined();
+		expect(config.tsdoc.writeConfig).toBe(true);
+		expect(config.tsdoc.customTags).toEqual([]);
+		expect(config.tsdoc.enforce).toEqual({
+			core: "error",
+			extended: "warn",
+			discretionary: "off",
+		});
+	});
+
+	it("defaultConfig includes guards section with correct defaults", () => {
+		const config = defaultConfig("/fake");
+		expect(config.guards).toBeDefined();
+		expect(config.guards.tsconfig).toEqual({
+			enabled: true,
+			requiredFlags: ["strict", "strictNullChecks", "noImplicitAny"],
+		});
+		expect(config.guards.biome).toEqual({
+			enabled: false,
+			lockedRules: [],
+		});
+		expect(config.guards.packageJson).toEqual({
+			enabled: true,
+			minNodeVersion: "22.0.0",
+			requiredFields: ["type", "engines"],
+		});
+	});
+
+	it("defaultConfig includes require-tsdoc-syntax rule defaulting to warn", () => {
+		const config = defaultConfig("/fake");
+		expect(config.enforce.rules["require-tsdoc-syntax"]).toBe("warn");
+	});
+
+	it("loadConfig merges tsdoc overrides with defaults", async () => {
+		const config = await loadConfig(FIXTURE_DIR);
+		// Fixture has no forge-ts config, so defaults should apply
+		expect(config.tsdoc).toBeDefined();
+		expect(config.tsdoc.writeConfig).toBe(true);
+		expect(config.tsdoc.enforce.core).toBe("error");
+	});
+
+	it("loadConfig merges guards overrides with defaults", async () => {
+		const config = await loadConfig(FIXTURE_DIR);
+		// Fixture has no forge-ts config, so defaults should apply
+		expect(config.guards).toBeDefined();
+		expect(config.guards.tsconfig.enabled).toBe(true);
+		expect(config.guards.biome.enabled).toBe(false);
+	});
+
+	it("ForgeConfig type includes parseMessages in documentation", () => {
+		const config = makeFixtureConfig();
+		const walker = createWalker(config);
+		const symbols = walker.walk();
+
+		// Verify the parseMessages field exists on the type (even if empty)
+		for (const sym of symbols) {
+			if (sym.documentation) {
+				// parseMessages can be undefined or an array — verify the shape
+				if (sym.documentation.parseMessages !== undefined) {
+					expect(Array.isArray(sym.documentation.parseMessages)).toBe(true);
+					for (const msg of sym.documentation.parseMessages) {
+						expect(typeof msg.messageId).toBe("string");
+						expect(typeof msg.text).toBe("string");
+						expect(typeof msg.line).toBe("number");
+					}
+				}
+			}
+		}
 	});
 });

@@ -1,5 +1,5 @@
 import { readFileSync } from "node:fs";
-import { resolve } from "node:path";
+import { dirname, resolve } from "node:path";
 import {
 	type DocBlock,
 	type DocCodeSpan,
@@ -15,9 +15,61 @@ import {
 	TSDocConfiguration,
 	TSDocParser,
 } from "@microsoft/tsdoc";
+import { TSDocConfigFile } from "@microsoft/tsdoc-config";
 import ts from "typescript";
 import type { ForgeConfig, ForgeSymbol } from "./types.js";
 import { resolveVisibility } from "./visibility.js";
+
+// ---------------------------------------------------------------------------
+// TSDoc configuration cache (keyed by folder path)
+// ---------------------------------------------------------------------------
+
+/**
+ * Per-folder cache of resolved TSDoc configurations. Prevents re-loading
+ * `tsdoc.json` for every comment in the same directory.
+ * @internal
+ */
+const tsdocConfigCache = new Map<string, TSDocConfiguration>();
+
+/** Clears the TSDoc configuration cache. Intended for use in tests only. @internal */
+export function clearTSDocConfigCache(): void {
+	tsdocConfigCache.clear();
+}
+
+/**
+ * Resolve the {@link TSDocConfiguration} to use when parsing comments in
+ * files under `folderPath`.
+ *
+ * If a `tsdoc.json` file exists in or above the folder and can be loaded
+ * without errors, its settings are applied to a fresh configuration via
+ * {@link TSDocConfigFile.configureParser}. Otherwise the default
+ * `TSDocConfiguration` is returned (backward-compatible behaviour).
+ *
+ * Results are cached per folder path so the file system is only consulted
+ * once per unique directory.
+ *
+ * @param folderPath - Absolute directory path of the source file being parsed.
+ * @returns A configured {@link TSDocConfiguration} instance.
+ * @internal
+ */
+export function loadTSDocConfiguration(folderPath: string): TSDocConfiguration {
+	const cached = tsdocConfigCache.get(folderPath);
+	if (cached) return cached;
+
+	const configuration = new TSDocConfiguration();
+
+	try {
+		const configFile = TSDocConfigFile.loadForFolder(folderPath);
+		if (!configFile.fileNotFound && !configFile.hasErrors) {
+			configFile.configureParser(configuration);
+		}
+	} catch {
+		// If loading fails for any reason, fall back to the default configuration.
+	}
+
+	tsdocConfigCache.set(folderPath, configuration);
+	return configuration;
+}
 
 // ---------------------------------------------------------------------------
 // Public API surface
@@ -121,8 +173,13 @@ function extractExamples(
 }
 
 /** Parse a raw JSDoc/TSDoc comment string into a structured documentation object. @internal */
-function parseTSDoc(rawComment: string, startLine: number): ForgeSymbol["documentation"] {
-	const configuration = new TSDocConfiguration();
+function parseTSDoc(
+	rawComment: string,
+	startLine: number,
+	folderPath?: string,
+): ForgeSymbol["documentation"] {
+	const configuration =
+		folderPath !== undefined ? loadTSDocConfiguration(folderPath) : new TSDocConfiguration();
 	const parser = new TSDocParser(configuration);
 	const result = parser.parseString(rawComment);
 	const comment = result.docComment;
@@ -212,6 +269,16 @@ function parseTSDoc(rawComment: string, startLine: number): ForgeSymbol["documen
 	}
 	walkForLinks(comment);
 
+	// Collect TSDoc parser messages (syntax warnings/errors)
+	const parseMessages: Array<{ messageId: string; text: string; line: number }> = [];
+	for (const msg of result.log.messages) {
+		parseMessages.push({
+			messageId: msg.messageId,
+			text: msg.unformattedText,
+			line: startLine,
+		});
+	}
+
 	const summary = renderDocSection(comment.summarySection);
 
 	return {
@@ -223,6 +290,7 @@ function parseTSDoc(rawComment: string, startLine: number): ForgeSymbol["documen
 		tags: Object.keys(tags).length > 0 ? tags : undefined,
 		deprecated,
 		links: links.length > 0 ? links : undefined,
+		parseMessages: parseMessages.length > 0 ? parseMessages : undefined,
 	};
 }
 
@@ -295,13 +363,10 @@ function buildSignature(node: ts.Declaration, checker: ts.TypeChecker): string |
 // ---------------------------------------------------------------------------
 
 /** @internal */
-function extractSymbolsFromFile(
-	sourceFile: ts.SourceFile,
-	checker: ts.TypeChecker,
-	_tsdocParser: TSDocParser,
-): ForgeSymbol[] {
+function extractSymbolsFromFile(sourceFile: ts.SourceFile, checker: ts.TypeChecker): ForgeSymbol[] {
 	const symbols: ForgeSymbol[] = [];
 	const filePath = sourceFile.fileName;
+	const fileDir = dirname(filePath);
 
 	function visit(node: ts.Node, parentExported: boolean): void {
 		const isExported =
@@ -326,7 +391,9 @@ function extractSymbolsFromFile(
 				const name = decl.name.getText(sourceFile);
 				const pos = sourceFile.getLineAndCharacterOfPosition(decl.getStart());
 				const rawComment = getLeadingComment(node, sourceFile);
-				const documentation = rawComment ? parseTSDoc(rawComment, pos.line + 1) : undefined;
+				const documentation = rawComment
+					? parseTSDoc(rawComment, pos.line + 1, fileDir)
+					: undefined;
 				const tags = documentation?.tags;
 				const visibility = resolveVisibility(tags);
 
@@ -360,7 +427,7 @@ function extractSymbolsFromFile(
 		const name = nameNode.getText(sourceFile);
 		const pos = sourceFile.getLineAndCharacterOfPosition(node.getStart());
 		const rawComment = getLeadingComment(node, sourceFile);
-		const documentation = rawComment ? parseTSDoc(rawComment, pos.line + 1) : undefined;
+		const documentation = rawComment ? parseTSDoc(rawComment, pos.line + 1, fileDir) : undefined;
 		const tags = documentation?.tags;
 		const visibility = resolveVisibility(tags);
 
@@ -378,7 +445,9 @@ function extractSymbolsFromFile(
 				const memberName = (member as ts.NamedDeclaration).name?.getText(sourceFile) ?? "";
 				const memberPos = sourceFile.getLineAndCharacterOfPosition(member.getStart());
 				const memberComment = getLeadingComment(member, sourceFile);
-				const memberDoc = memberComment ? parseTSDoc(memberComment, memberPos.line + 1) : undefined;
+				const memberDoc = memberComment
+					? parseTSDoc(memberComment, memberPos.line + 1, fileDir)
+					: undefined;
 				const memberTags = memberDoc?.tags;
 				const memberVisibility = resolveVisibility(memberTags);
 
@@ -460,9 +529,6 @@ export function createWalker(config: ForgeConfig): ASTWalker {
 
 			const checker = program.getTypeChecker();
 
-			const tsdocConfiguration = new TSDocConfiguration();
-			const tsdocParser = new TSDocParser(tsdocConfiguration);
-
 			const allSymbols: ForgeSymbol[] = [];
 
 			for (const sourceFile of program.getSourceFiles()) {
@@ -471,7 +537,7 @@ export function createWalker(config: ForgeConfig): ASTWalker {
 					continue;
 				}
 
-				const fileSymbols = extractSymbolsFromFile(sourceFile, checker, tsdocParser);
+				const fileSymbols = extractSymbolsFromFile(sourceFile, checker);
 				allSymbols.push(...fileSymbols);
 			}
 

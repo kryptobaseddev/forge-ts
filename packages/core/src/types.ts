@@ -38,6 +38,8 @@ export interface ForgeSymbol {
 		deprecated?: string;
 		/** {@link} cross-references found in this symbol's TSDoc. */
 		links?: Array<{ target: string; line: number }>;
+		/** TSDoc parser messages (syntax warnings/errors) from @microsoft/tsdoc. */
+		parseMessages?: Array<{ messageId: string; text: string; line: number }>;
 	};
 	/** Human-readable type signature of the symbol. */
 	signature?: string;
@@ -76,6 +78,8 @@ export interface EnforceRules {
 	"require-class-member-doc": RuleSeverity;
 	/** E007: Interface/type member missing documentation. */
 	"require-interface-member-doc": RuleSeverity;
+	/** W006: TSDoc syntax parse error (invalid tag, malformed block, etc.). */
+	"require-tsdoc-syntax": RuleSeverity;
 }
 
 /**
@@ -154,6 +158,48 @@ export interface ForgeConfig {
 		 * Each string becomes a `- ` bullet point.
 		 */
 		extraGotchas?: string[];
+	};
+	/** TSDoc ecosystem configuration. */
+	tsdoc: {
+		/** Write tsdoc.json to project root during init. Default: true */
+		writeConfig: boolean;
+		/** Custom tag definitions beyond the forge-ts preset. */
+		customTags: Array<{
+			tagName: string;
+			syntaxKind: "block" | "inline" | "modifier";
+		}>;
+		/** Enforcement level per standardization group. */
+		enforce: {
+			/** Core tags (e.g. @param, @returns, @remarks). Default: "error" */
+			core: "error" | "warn" | "off";
+			/** Extended tags (e.g. @example, @throws, @see). Default: "warn" */
+			extended: "error" | "warn" | "off";
+			/** Discretionary tags (@alpha, @beta, @public, @internal). Default: "off" */
+			discretionary: "error" | "warn" | "off";
+		};
+	};
+	/** Downstream config drift guards. */
+	guards: {
+		/** tsconfig.json strictness validation. */
+		tsconfig: {
+			enabled: boolean;
+			/** Required strict-mode flags. Default: ["strict", "strictNullChecks", "noImplicitAny"] */
+			requiredFlags: string[];
+		};
+		/** Biome config drift detection. */
+		biome: {
+			enabled: boolean;
+			/** Biome rules that must stay at error level. Auto-detected on lock. */
+			lockedRules: string[];
+		};
+		/** package.json guards. */
+		packageJson: {
+			enabled: boolean;
+			/** Minimum Node.js version in engines field. */
+			minNodeVersion: string;
+			/** Required fields in package.json. */
+			requiredFields: string[];
+		};
 	};
 	/**
 	 * Warnings generated during config loading (e.g., unknown keys).

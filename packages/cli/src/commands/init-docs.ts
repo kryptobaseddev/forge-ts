@@ -1,3 +1,4 @@
+import { existsSync } from "node:fs";
 import { mkdir, writeFile } from "node:fs/promises";
 import { join, resolve } from "node:path";
 import { loadConfig } from "@forge-ts/core";
@@ -181,6 +182,29 @@ export async function runInitDocs(args: InitDocsArgs): Promise<CommandOutput<Ini
 		await mkdir(fileDir, { recursive: true });
 		await writeFile(filePath, file.content, "utf8");
 		writtenFiles.push(file.path);
+	}
+
+	// 8. Write tsdoc.json to project root (extends @forge-ts/tsdoc-config preset)
+	if (config.tsdoc.writeConfig) {
+		const tsdocPath = join(config.rootDir, "tsdoc.json");
+		if (existsSync(tsdocPath)) {
+			warnings.push({
+				code: "INIT_TSDOC_EXISTS",
+				message: "tsdoc.json already exists — skipping. Remove it and re-run to regenerate.",
+			});
+		} else {
+			const tsdocContent = JSON.stringify(
+				{
+					$schema: "https://developer.microsoft.com/json-schemas/tsdoc/v0/tsdoc.schema.json",
+					extends: ["@forge-ts/tsdoc-config/tsdoc.json"],
+				},
+				null,
+				"\t",
+			);
+			await mkdir(config.rootDir, { recursive: true });
+			await writeFile(tsdocPath, `${tsdocContent}\n`, "utf8");
+			writtenFiles.push("tsdoc.json");
+		}
 	}
 
 	const depCount =

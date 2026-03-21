@@ -17,6 +17,14 @@ vi.mock("@forge-ts/core", async (importOriginal) => {
 	};
 });
 
+vi.mock("node:fs", async (importOriginal) => {
+	const actual = await importOriginal<typeof import("node:fs")>();
+	return {
+		...actual,
+		existsSync: vi.fn().mockReturnValue(false),
+	};
+});
+
 vi.mock("node:fs/promises", async (importOriginal) => {
 	const actual = await importOriginal<typeof import("node:fs/promises")>();
 	return {
@@ -102,11 +110,24 @@ function makeConfig(overrides: Partial<ForgeConfig> = {}): ForgeConfig {
 				"require-package-doc": "warn",
 				"require-class-member-doc": "warn",
 				"require-interface-member-doc": "warn",
+				"require-tsdoc-syntax": "warn",
 			},
 		},
 		doctest: { enabled: false, cacheDir: "/fake/.cache" },
 		api: { enabled: false, openapi: false, openapiPath: "/fake/docs/openapi.json" },
 		gen: { enabled: false, formats: [], llmsTxt: false, readmeSync: false },
+		skill: {},
+		tsdoc: {
+			writeConfig: true,
+			customTags: [],
+			enforce: { core: "error", extended: "warn", discretionary: "off" },
+		},
+		guards: {
+			tsconfig: { enabled: false, requiredFlags: [] },
+			biome: { enabled: false, lockedRules: [] },
+			packageJson: { enabled: false, minNodeVersion: "22.0.0", requiredFields: [] },
+		},
+		project: {},
 		...overrides,
 	};
 }
@@ -180,7 +201,8 @@ describe("runInitDocs", () => {
 		const output = await runInitDocs({ target: "mintlify" });
 		expect(output.data.files).toContain("mint.json");
 		expect(output.data.files).toContain("index.mdx");
-		expect(output.data.summary.filesCreated).toBe(3);
+		expect(output.data.files).toContain("tsdoc.json");
+		expect(output.data.summary.filesCreated).toBe(4);
 	});
 
 	it("returns instructions in result", async () => {
@@ -366,5 +388,131 @@ describe("runInitDocs", () => {
 		expect(adapter.scaffold).toHaveBeenCalledOnce();
 		const ctx = vi.mocked(adapter.scaffold).mock.calls[0]?.[0];
 		expect(ctx?.outDir).toBe("/custom/out");
+	});
+
+	// -----------------------------------------------------------------------
+	// tsdoc.json writing
+	// -----------------------------------------------------------------------
+
+	it("writes tsdoc.json to project root with correct content", async () => {
+		const { loadConfig } = await import("@forge-ts/core");
+		const { getAdapter, getAvailableTargets } = await import("@forge-ts/gen");
+		const { writeFile } = await import("node:fs/promises");
+		const { existsSync } = await import("node:fs");
+
+		vi.mocked(existsSync).mockReturnValue(false);
+		vi.mocked(loadConfig).mockResolvedValue(makeConfig());
+		vi.mocked(getAvailableTargets).mockReturnValue([
+			"mintlify",
+			"docusaurus",
+			"nextra",
+			"vitepress",
+		]);
+		vi.mocked(getAdapter).mockReturnValue(makeMockAdapter("mintlify"));
+
+		const output = await runInitDocs({ target: "mintlify" });
+
+		expect(output.success).toBe(true);
+		expect(output.data.files).toContain("tsdoc.json");
+
+		// Verify writeFile was called with the correct tsdoc.json content
+		const writeFileCalls = vi.mocked(writeFile).mock.calls;
+		const tsdocCall = writeFileCalls.find(
+			(call) => typeof call[0] === "string" && call[0].endsWith("tsdoc.json"),
+		);
+		expect(tsdocCall).toBeDefined();
+
+		const writtenContent = JSON.parse(tsdocCall?.[1] as string);
+		expect(writtenContent.$schema).toBe(
+			"https://developer.microsoft.com/json-schemas/tsdoc/v0/tsdoc.schema.json",
+		);
+		expect(writtenContent.extends).toEqual(["@forge-ts/tsdoc-config/tsdoc.json"]);
+	});
+
+	it("skips tsdoc.json when file already exists", async () => {
+		const { loadConfig } = await import("@forge-ts/core");
+		const { getAdapter, getAvailableTargets } = await import("@forge-ts/gen");
+		const { existsSync } = await import("node:fs");
+
+		vi.mocked(existsSync).mockReturnValue(true);
+		vi.mocked(loadConfig).mockResolvedValue(makeConfig());
+		vi.mocked(getAvailableTargets).mockReturnValue([
+			"mintlify",
+			"docusaurus",
+			"nextra",
+			"vitepress",
+		]);
+		vi.mocked(getAdapter).mockReturnValue(makeMockAdapter("mintlify"));
+
+		const output = await runInitDocs({ target: "mintlify" });
+
+		expect(output.success).toBe(true);
+		expect(output.data.files).not.toContain("tsdoc.json");
+		const tsdocWarning = output.warnings?.find((w) => w.code === "INIT_TSDOC_EXISTS");
+		expect(tsdocWarning).toBeDefined();
+		expect(tsdocWarning?.message).toMatch(/already exists/i);
+	});
+
+	it("skips tsdoc.json when tsdoc.writeConfig is false", async () => {
+		const { loadConfig } = await import("@forge-ts/core");
+		const { getAdapter, getAvailableTargets } = await import("@forge-ts/gen");
+		const { writeFile } = await import("node:fs/promises");
+		const { existsSync } = await import("node:fs");
+
+		vi.mocked(existsSync).mockReturnValue(false);
+		vi.mocked(loadConfig).mockResolvedValue(
+			makeConfig({
+				tsdoc: {
+					writeConfig: false,
+					customTags: [],
+					enforce: { core: "error", extended: "warn", discretionary: "off" },
+				},
+			}),
+		);
+		vi.mocked(getAvailableTargets).mockReturnValue([
+			"mintlify",
+			"docusaurus",
+			"nextra",
+			"vitepress",
+		]);
+		vi.mocked(getAdapter).mockReturnValue(makeMockAdapter("mintlify"));
+
+		const output = await runInitDocs({ target: "mintlify" });
+
+		expect(output.success).toBe(true);
+		expect(output.data.files).not.toContain("tsdoc.json");
+		const writeFileCalls = vi.mocked(writeFile).mock.calls;
+		const tsdocCall = writeFileCalls.find(
+			(call) => typeof call[0] === "string" && call[0].endsWith("tsdoc.json"),
+		);
+		expect(tsdocCall).toBeUndefined();
+	});
+
+	it("includes tsdoc.json in filesCreated count", async () => {
+		const { loadConfig } = await import("@forge-ts/core");
+		const { getAdapter, getAvailableTargets } = await import("@forge-ts/gen");
+		const { existsSync } = await import("node:fs");
+
+		vi.mocked(existsSync).mockReturnValue(false);
+		vi.mocked(loadConfig).mockResolvedValue(makeConfig());
+		vi.mocked(getAvailableTargets).mockReturnValue([
+			"mintlify",
+			"docusaurus",
+			"nextra",
+			"vitepress",
+		]);
+		vi.mocked(getAdapter).mockReturnValue(
+			makeMockAdapter("mintlify", {
+				scaffoldManifest: {
+					files: [{ path: "index.mdx", content: "# Hello" }],
+				},
+			}),
+		);
+
+		const output = await runInitDocs({ target: "mintlify" });
+
+		expect(output.data.summary.filesCreated).toBe(2);
+		expect(output.data.files).toContain("index.mdx");
+		expect(output.data.files).toContain("tsdoc.json");
 	});
 });

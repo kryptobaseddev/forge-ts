@@ -1,6 +1,6 @@
 {
 	"name": "@forge-ts/tsdoc-config",
-	"version": "0.10.0",
+	"version": "0.11.0",
 	"type": "module",
 	"description": "Opinionated TSDoc preset for forge-ts with custom tag definitions",
 	"license": "MIT",

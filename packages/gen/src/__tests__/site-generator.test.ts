@@ -428,8 +428,24 @@ describe("concepts page", () => {
 // ---------------------------------------------------------------------------
 
 describe("guides/index page", () => {
-	it("contains a stub notice blockquote", () => {
+	it("shows Available Guides listing when guides are discovered", () => {
+		// fnAdd is at /project/src/index.ts so the entry-point heuristic fires
 		const map = makeSymbolsByPackage([fnAdd]);
+		const pages = generateDocSite(map, makeConfig(), baseOptions);
+		const guides = pages.find((p) => p.path === "guides/index.md");
+		expect(guides?.content).toContain("Available Guides");
+		expect(guides?.content).toContain("FORGE:AUTO-START guide-listing");
+	});
+
+	it("contains a stub notice blockquote when no guides are discovered", () => {
+		// Use a symbol that does NOT trigger any heuristic
+		const plainFn = sym({
+			name: "helper",
+			kind: "function",
+			filePath: "/project/src/utils.ts",
+			documentation: { summary: "A helper." },
+		});
+		const map = makeSymbolsByPackage([plainFn]);
 		const pages = generateDocSite(map, makeConfig(), baseOptions);
 		const guides = pages.find((p) => p.path === "guides/index.md");
 		expect(guides?.content).toContain("> Add your guides");

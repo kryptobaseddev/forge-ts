@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import {
 	createWalker,
@@ -213,6 +213,8 @@ const RULE_MAP: Record<string, keyof EnforceRules> = {
 	E014: "require-default-value",
 	E015: "require-type-param",
 	W005: "require-see",
+	W007: "require-fresh-guides",
+	W008: "require-guide-coverage",
 };
 
 // ---------------------------------------------------------------------------
@@ -246,6 +248,8 @@ const RULE_MAP: Record<string, keyof EnforceRules> = {
  * | E014 | warn     | Optional property of interface/type is missing `@defaultValue`. |
  * | E015 | error    | Generic symbol is missing `@typeParam` for a type parameter. |
  * | W005 | warn     | Symbol references other symbols via `{@link}` but has no `@see` tags. |
+ * | W007 | warn     | Guide FORGE:AUTO section references a symbol that no longer exists. |
+ * | W008 | warn     | Exported public symbol is not mentioned in any guide page. |
  *
  * When `config.enforce.strict` is `true` all warnings are promoted to errors.
  *
@@ -725,6 +729,104 @@ export async function enforce(config: ForgeConfig): Promise<ForgeResult> {
 					line: 1,
 					column: 0,
 				});
+			}
+		}
+	}
+
+	// W007 — Stale guide FORGE:AUTO sections (references to removed/renamed symbols)
+	// W008 — Undocumented public symbol in guides (exported but not mentioned)
+	const guidesDir = join(config.outDir, "guides");
+	let guideFiles: string[] = [];
+	let guideContents: Map<string, string> | undefined;
+
+	// Only attempt guide checks if the guides directory exists
+	if (existsSync(guidesDir)) {
+		try {
+			const entries = readdirSync(guidesDir);
+			guideFiles = entries.filter((f) => f.endsWith(".md") || f.endsWith(".mdx"));
+		} catch {
+			// If we cannot read the directory, skip guide rules
+		}
+	}
+
+	if (guideFiles.length > 0) {
+		guideContents = new Map<string, string>();
+		for (const file of guideFiles) {
+			try {
+				const content = readFileSync(join(guidesDir, file), "utf-8");
+				guideContents.set(file, content);
+			} catch {
+				// Skip unreadable files
+			}
+		}
+
+		// W007 — Check FORGE:AUTO sections for references to symbols that no longer exist
+		const autoStartRe = /<!--\s*FORGE:AUTO-START\s+(\S+)\s*-->/g;
+		const autoEndRe = /<!--\s*FORGE:AUTO-END\s+(\S+)\s*-->/;
+		// Match symbol references inside auto sections: `symbolName` in backticks or bare names
+		// after typical markdown patterns (links, bold, code).
+		// Simplified heuristic: extract all backtick-quoted identifiers inside FORGE:AUTO blocks.
+		const symbolRefRe = /`([A-Za-z_$][A-Za-z0-9_$]*)`/g;
+
+		for (const [file, content] of guideContents) {
+			const filePath = join(guidesDir, file);
+			// Find each FORGE:AUTO block
+			autoStartRe.lastIndex = 0;
+			for (
+				let match = autoStartRe.exec(content);
+				match !== null;
+				match = autoStartRe.exec(content)
+			) {
+				const startIdx = match.index + match[0].length;
+				// Find the matching end marker
+				const restContent = content.slice(startIdx);
+				const endMatch = autoEndRe.exec(restContent);
+				if (!endMatch) continue;
+				const autoBlock = restContent.slice(0, endMatch.index);
+
+				// Extract all backtick-quoted identifiers from the auto block
+				symbolRefRe.lastIndex = 0;
+				for (
+					let refMatch = symbolRefRe.exec(autoBlock);
+					refMatch !== null;
+					refMatch = symbolRefRe.exec(autoBlock)
+				) {
+					const refName = refMatch[1];
+					// Check if this name exists in the known symbols set
+					if (!knownSymbols.has(refName)) {
+						emit(
+							"W007",
+							`Guide "${file}" FORGE:AUTO section references symbol "${refName}" which no longer exists in the symbol graph.`,
+							filePath,
+							1,
+							0,
+							{
+								symbolName: refName,
+							},
+						);
+					}
+				}
+			}
+		}
+
+		// W008 — Check that all exported symbols from index.ts are mentioned in at least one guide
+		const allGuideText = [...guideContents.values()].join("\n");
+		const indexExportedSymbols = allSymbols.filter(
+			(s) => s.exported && /[/\\]index\.ts$/.test(s.filePath),
+		);
+		for (const sym of indexExportedSymbols) {
+			if (!allGuideText.includes(sym.name)) {
+				emit(
+					"W008",
+					`Exported symbol "${sym.name}" from "${sym.filePath}" is not mentioned in any guide page.`,
+					sym.filePath,
+					sym.line,
+					sym.column,
+					{
+						symbolName: sym.name,
+						symbolKind: sym.kind,
+					},
+				);
 			}
 		}
 	}

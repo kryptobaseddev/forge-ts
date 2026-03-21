@@ -5,6 +5,7 @@
  * - Frontmatter parsing and serialization (gray-matter)
  * - AST-aware MDX sanitization (remark-parse + position-based transforms)
  * - AST-aware FORGE:AUTO section updates (remark-parse + position-based splicing)
+ * - AST-aware FORGE:STUB section updates (generated once, preserved after user edits)
  *
  * @internal
  */
@@ -51,6 +52,19 @@ interface AutoSection {
 	id: string;
 	/** The full text from START marker through END marker (inclusive). */
 	fullText: string;
+	start: number;
+	end: number;
+}
+
+/** A matched FORGE:STUB section with its content, position, and hash. */
+interface StubSection {
+	id: string;
+	/** The full text from STUB-START marker through STUB-END marker (inclusive). */
+	fullText: string;
+	/** The inner content between the START marker line and END marker line (excludes hash comment). */
+	innerContent: string;
+	/** The embedded hash from the FORGE:STUB-HASH comment, if present. */
+	hash: string | undefined;
 	start: number;
 	end: number;
 }
@@ -433,4 +447,251 @@ export function updateAutoSections(existing: string, generated: string): string 
 	}
 
 	return changed ? result : null;
+}
+
+// ---------------------------------------------------------------------------
+// FORGE:STUB section updates (AST-aware, hash-based change detection)
+// ---------------------------------------------------------------------------
+
+/**
+ * Compute a short fingerprint hash for content change detection.
+ *
+ * Uses a simple DJB2-style hash converted to base-36 and truncated to
+ * 8 characters. This is NOT cryptographic — just a quick fingerprint
+ * to detect whether generated content has been manually edited.
+ *
+ * @param content - The content to hash.
+ * @returns An 8-character alphanumeric hash string.
+ * @internal
+ */
+export function stubHash(content: string): string {
+	let hash = 5381;
+	for (let i = 0; i < content.length; i++) {
+		// hash * 33 + charCode (DJB2)
+		hash = ((hash << 5) + hash + content.charCodeAt(i)) | 0;
+	}
+	// Convert to unsigned 32-bit, then base-36 for compact representation
+	return (hash >>> 0).toString(36).padStart(8, "0").slice(0, 8);
+}
+
+/**
+ * Find all FORGE:STUB marker pairs in content.
+ *
+ * Searches for both HTML comment and MDX comment formats:
+ * - HTML: `<!-- FORGE:STUB-START id -->` ... `<!-- FORGE:STUB-END id -->`
+ * - MDX: `{/* FORGE:STUB-START id *\/}` ... `{/* FORGE:STUB-END id *\/}`
+ *
+ * Uses the remark AST to identify protected ranges (code blocks) so that
+ * markers appearing inside code are never matched.
+ */
+function findStubSections(content: string): Map<string, StubSection> {
+	const protectedRanges = getProtectedRangesSafe(content);
+
+	// Collect all marker positions (both HTML and MDX comment formats)
+	const markers: Array<{
+		type: "start" | "end";
+		id: string;
+		offset: number;
+		length: number;
+	}> = [];
+
+	const patterns: Array<{ regex: RegExp; type: "start" | "end" }> = [
+		{ regex: /<!--\s*FORGE:STUB-START\s+(\S+)\s*-->/g, type: "start" },
+		{ regex: /<!--\s*FORGE:STUB-END\s+(\S+)\s*-->/g, type: "end" },
+		{ regex: /\{\/\*\s*FORGE:STUB-START\s+(\S+)\s*\*\/\}/g, type: "start" },
+		{ regex: /\{\/\*\s*FORGE:STUB-END\s+(\S+)\s*\*\/\}/g, type: "end" },
+	];
+
+	for (const { regex, type } of patterns) {
+		let match: RegExpExecArray | null;
+		// biome-ignore lint: manual exec loop is clearest for regex iteration
+		while ((match = regex.exec(content)) !== null) {
+			if (!isProtected(match.index, protectedRanges)) {
+				markers.push({
+					type,
+					id: match[1],
+					offset: match.index,
+					length: match[0].length,
+				});
+			}
+		}
+	}
+
+	// Sort by position in document
+	markers.sort((a, b) => a.offset - b.offset);
+
+	// Match START/END pairs
+	const sections = new Map<string, StubSection>();
+	for (let i = 0; i < markers.length; i++) {
+		const m = markers[i];
+		if (m.type !== "start") continue;
+
+		// Find the first matching END after this START
+		for (let j = i + 1; j < markers.length; j++) {
+			if (markers[j].type === "end" && markers[j].id === m.id) {
+				const sectionEnd = markers[j].offset + markers[j].length;
+				const fullText = content.slice(m.offset, sectionEnd);
+
+				// Extract inner content: everything between the start marker line
+				// and the end marker line, excluding the FORGE:STUB-HASH comment
+				const startMarkerEnd = m.offset + m.length;
+				const endMarkerStart = markers[j].offset;
+				let inner = content.slice(startMarkerEnd, endMarkerStart);
+
+				// Strip leading/trailing newline that wraps the inner content
+				if (inner.startsWith("\n")) inner = inner.slice(1);
+				if (inner.endsWith("\n")) inner = inner.slice(0, -1);
+
+				// Extract hash from the inner content if present
+				const hashPatterns = [
+					/<!--\s*FORGE:STUB-HASH\s+(\S+)\s*-->/,
+					/\{\/\*\s*FORGE:STUB-HASH\s+(\S+)\s*\*\/\}/,
+				];
+				let hash: string | undefined;
+				for (const hp of hashPatterns) {
+					const hm = hp.exec(inner);
+					if (hm) {
+						hash = hm[1];
+						// Remove the hash line from inner content for comparison
+						inner = inner.replace(hp, "").replace(/^\n/, "").replace(/\n$/, "");
+						break;
+					}
+				}
+
+				sections.set(m.id, {
+					id: m.id,
+					fullText,
+					innerContent: inner,
+					hash,
+					start: m.offset,
+					end: sectionEnd,
+				});
+				break;
+			}
+		}
+	}
+
+	return sections;
+}
+
+/**
+ * Checks if a FORGE:STUB section has been modified by the user.
+ *
+ * Compares the embedded hash (from the FORGE:STUB-HASH comment) against
+ * a freshly computed hash of the current inner content (with the hash
+ * comment itself stripped out). If the hashes diverge — meaning the user
+ * edited the content — or the hash comment was removed, the section is
+ * considered modified and should be preserved.
+ *
+ * @param existingContent - The full document content on disk.
+ * @param stubId - The identifier of the FORGE:STUB section.
+ * @param _generatedContent - Unused; kept for API symmetry. Detection is purely hash-based.
+ * @returns `true` if the user has modified the stub (preserve it), `false` if unmodified (safe to regenerate).
+ * @public
+ */
+export function isStubModified(
+	existingContent: string,
+	stubId: string,
+	_generatedContent: string,
+): boolean {
+	const sections = findStubSections(existingContent);
+	const section = sections.get(stubId);
+	if (!section) return false; // Section not found — not modified (doesn't exist yet)
+
+	// If there's no hash embedded, treat as modified (user may have removed it)
+	if (!section.hash) return true;
+
+	// Compare the embedded hash against the hash of the current inner content.
+	// If they match, the user hasn't edited the content since generation.
+	const currentHash = stubHash(section.innerContent);
+	return section.hash !== currentHash;
+}
+
+/**
+ * Updates FORGE:STUB sections in existing content.
+ *
+ * Behavior for each stub:
+ * - If the stub doesn't exist yet, appends it at the end of the content.
+ * - If the stub exists but is unmodified (hash matches generated content), regenerates it.
+ * - If the stub exists and was modified by user (hash mismatch), PRESERVES user content.
+ *
+ * Each generated stub includes a `FORGE:STUB-HASH` comment containing a
+ * fingerprint of the generated content. On subsequent builds, this hash is
+ * compared to determine whether the user has made edits.
+ *
+ * @param existingContent - The current file content on disk.
+ * @param stubs - Array of stub definitions with their IDs and generated content.
+ * @returns The updated content with stubs inserted or refreshed as needed.
+ * @public
+ */
+export function updateStubSections(
+	existingContent: string,
+	stubs: Array<{ id: string; content: string }>,
+): string {
+	const existingSections = findStubSections(existingContent);
+
+	// Build a list of replacements (descending position) and appends
+	const replacements: Array<{ start: number; end: number; replacement: string }> = [];
+	const appends: string[] = [];
+
+	for (const stub of stubs) {
+		const hash = stubHash(stub.content);
+		const wrapped = formatStubSection(stub.id, stub.content, hash);
+
+		const existing = existingSections.get(stub.id);
+		if (!existing) {
+			// Stub doesn't exist — append to end
+			appends.push(wrapped);
+			continue;
+		}
+
+		// Stub exists — check if user has modified it.
+		// Compare embedded hash against hash of CURRENT inner content.
+		// If they match, content is untouched since generation — safe to regenerate.
+		const currentContentHash = stubHash(existing.innerContent);
+		if (existing.hash && existing.hash === currentContentHash) {
+			replacements.push({
+				start: existing.start,
+				end: existing.end,
+				replacement: wrapped,
+			});
+		}
+		// Otherwise: user has modified — leave it alone (no replacement)
+	}
+
+	// Apply replacements in reverse position order to preserve offsets
+	let result = existingContent;
+	for (const r of replacements.sort((a, b) => b.start - a.start)) {
+		result = result.slice(0, r.start) + r.replacement + result.slice(r.end);
+	}
+
+	// Append new stubs at the end
+	if (appends.length > 0) {
+		const suffix = result.endsWith("\n") ? "" : "\n";
+		result = `${result}${suffix}${appends.join("\n\n")}\n`;
+	}
+
+	return result;
+}
+
+/**
+ * Format a FORGE:STUB section with markers and hash comment.
+ *
+ * Produces:
+ * ```
+ * <!-- FORGE:STUB-START id -->
+ * <!-- FORGE:STUB-HASH abc12345 -->
+ * content here
+ * <!-- FORGE:STUB-END id -->
+ * ```
+ *
+ * @internal
+ */
+function formatStubSection(id: string, content: string, hash: string): string {
+	return [
+		`<!-- FORGE:STUB-START ${id} -->`,
+		`<!-- FORGE:STUB-HASH ${hash} -->`,
+		content,
+		`<!-- FORGE:STUB-END ${id} -->`,
+	].join("\n");
 }

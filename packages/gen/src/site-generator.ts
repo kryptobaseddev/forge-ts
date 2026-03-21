@@ -1,5 +1,6 @@
 import { basename, relative } from "node:path";
 import type { ForgeConfig, ForgeSymbol } from "@forge-ts/core";
+import { type DiscoveredGuide, discoverGuides } from "./guide-discovery.js";
 import { parseInline, stringifyWithFrontmatter } from "./markdown-utils.js";
 import {
 	type MdBlock,
@@ -507,28 +508,234 @@ function renderConceptsPage(
 // ---------------------------------------------------------------------------
 
 /**
- * Render the guides index stub page.
+ * Render the guides index page.
+ *
+ * When discovered guides are available, renders a listing with links.
+ * Falls back to a stub when no guides are discovered.
+ *
  * @internal
  */
-function renderGuidesIndexPage(): string {
+function renderGuidesIndexPage(guides: DiscoveredGuide[]): string {
 	const nodes: MdBlock[] = [];
 
 	nodes.push(textP("Practical how-to guides for common tasks."));
+
+	if (guides.length === 0) {
+		nodes.push(
+			md.blockquote(
+				textP(
+					"Add your guides to the `guides/` directory. Each `.md` or `.mdx` file will appear here automatically.",
+				),
+			),
+		);
+		nodes.push(md.heading(2, md.text("Getting Things Done")));
+		nodes.push(
+			textP(
+				"Guides will appear here as you add them. Start by creating a file like `guides/my-guide.md`.",
+			),
+		);
+	} else {
+		nodes.push(md.html("<!-- FORGE:AUTO-START guide-listing -->"));
+		nodes.push(md.heading(2, md.text("Available Guides")));
+
+		const items: MdListItem[] = [];
+		for (const guide of guides) {
+			items.push(
+				md.listItem(
+					md.paragraph(
+						md.link(slugLink(`guides/${guide.slug}`), md.strong(md.text(guide.title))),
+						md.text(` — ${guide.description}`),
+					),
+				),
+			);
+		}
+		nodes.push(md.list(items));
+		nodes.push(md.html("<!-- FORGE:AUTO-END guide-listing -->"));
+	}
+
+	return serializeMarkdown(md.root(...nodes));
+}
+
+/**
+ * Render a single discovered guide page with auto-generated content.
+ *
+ * Each guide page contains:
+ * - A FORGE:AUTO section with code-derived content (signatures, examples, property tables)
+ * - A TODO placeholder where user content should go
+ *
+ * @internal
+ */
+function renderGuidePage(guide: DiscoveredGuide): string {
+	const nodes: MdBlock[] = [];
+
+	nodes.push(md.paragraph(md.text(guide.description)));
+
+	// TODO placeholder for user content
 	nodes.push(
 		md.blockquote(
 			textP(
-				"Add your guides to the `guides/` directory. Each `.md` or `.mdx` file will appear here automatically.",
+				"TODO: Add your own content to this guide. The sections below are auto-generated from code.",
 			),
 		),
 	);
-	nodes.push(md.heading(2, md.text("Getting Things Done")));
-	nodes.push(
-		textP(
-			"Guides will appear here as you add them. Start by creating a file like `guides/my-guide.md`.",
-		),
-	);
+
+	// FORGE:AUTO section with code-derived content
+	nodes.push(md.html(`<!-- FORGE:AUTO-START guide-${guide.slug} -->`));
+
+	if (guide.source === "config-interface") {
+		renderConfigGuideContent(nodes, guide.symbols);
+	} else if (guide.source === "error-types") {
+		renderErrorGuideContent(nodes, guide.symbols);
+	} else if (guide.source === "entry-point") {
+		renderEntryPointGuideContent(nodes, guide.symbols);
+	} else {
+		// guide-tag and category: generic symbol listing
+		renderGenericGuideContent(nodes, guide.symbols);
+	}
+
+	nodes.push(md.html(`<!-- FORGE:AUTO-END guide-${guide.slug} -->`));
 
 	return serializeMarkdown(md.root(...nodes));
+}
+
+/**
+ * Render config guide content: property tables for each config interface.
+ */
+function renderConfigGuideContent(nodes: MdBlock[], symbols: ForgeSymbol[]): void {
+	nodes.push(md.heading(2, md.text("Configuration Interfaces")));
+
+	for (const s of symbols) {
+		nodes.push(md.heading(3, md.inlineCode(s.name)));
+
+		if (s.documentation?.summary) {
+			nodes.push(md.paragraph(...parseInline(s.documentation.summary)));
+		}
+
+		const children = (s.children ?? []).filter((c) => c.kind === "property" || c.kind === "method");
+
+		if (children.length > 0) {
+			const headerRow = md.tableRow(
+				md.tableCell(md.text("Property")),
+				md.tableCell(md.text("Type")),
+				md.tableCell(md.text("Description")),
+			);
+			const dataRows: MdTableRow[] = [];
+			for (const child of children) {
+				const typePhrasing: MdPhrasing = child.signature
+					? md.inlineCode(child.signature)
+					: md.text("\u2014");
+				const description = child.documentation?.summary || child.name;
+				dataRows.push(
+					md.tableRow(
+						md.tableCell(md.inlineCode(child.name)),
+						md.tableCell(typePhrasing),
+						md.tableCell(...parseInline(description)),
+					),
+				);
+			}
+			nodes.push(md.table(null, headerRow, ...dataRows));
+		}
+
+		// Show example if available
+		const examples = s.documentation?.examples ?? [];
+		if (examples.length > 0) {
+			nodes.push(md.paragraph(md.strong(md.text("Example"))));
+			nodes.push(md.code(examples[0].language || "typescript", examples[0].code.trim()));
+		}
+	}
+}
+
+/**
+ * Render error guide content: error classes and @throws documentation.
+ */
+function renderErrorGuideContent(nodes: MdBlock[], symbols: ForgeSymbol[]): void {
+	nodes.push(md.heading(2, md.text("Error Types")));
+
+	for (const s of symbols) {
+		const ext = s.kind === "function" ? "()" : "";
+		nodes.push(md.heading(3, md.inlineCode(`${s.name}${ext}`)));
+
+		if (s.documentation?.summary) {
+			nodes.push(md.paragraph(...parseInline(s.documentation.summary)));
+		}
+
+		if (s.signature) {
+			nodes.push(md.code("typescript", s.signature));
+		}
+
+		const throws = s.documentation?.throws ?? [];
+		if (throws.length > 0) {
+			nodes.push(md.paragraph(md.strong(md.text("Throws"))));
+			const throwItems: MdListItem[] = [];
+			for (const t of throws) {
+				const parts: MdPhrasing[] = [];
+				if (t.type) {
+					parts.push(md.inlineCode(t.type));
+					parts.push(md.text(" — "), ...parseInline(t.description));
+				} else {
+					parts.push(...parseInline(t.description));
+				}
+				throwItems.push(md.listItem(md.paragraph(...parts)));
+			}
+			nodes.push(md.list(throwItems));
+		}
+	}
+}
+
+/**
+ * Render entry point guide content: function signatures and examples.
+ */
+function renderEntryPointGuideContent(nodes: MdBlock[], symbols: ForgeSymbol[]): void {
+	nodes.push(md.heading(2, md.text("Key Functions")));
+
+	for (const s of symbols) {
+		const paramSig = s.documentation?.params
+			? s.documentation.params.map((p) => p.name).join(", ")
+			: "";
+		const heading = `${s.name}(${paramSig})`;
+		nodes.push(md.heading(3, md.text(heading)));
+
+		if (s.documentation?.summary) {
+			nodes.push(md.paragraph(...parseInline(s.documentation.summary)));
+		}
+
+		if (s.signature) {
+			nodes.push(md.code("typescript", s.signature));
+		}
+
+		const examples = s.documentation?.examples ?? [];
+		if (examples.length > 0) {
+			nodes.push(md.paragraph(md.strong(md.text("Example"))));
+			nodes.push(md.code(examples[0].language || "typescript", examples[0].code.trim()));
+		}
+	}
+}
+
+/**
+ * Render generic guide content for @guide-tag and @category guides.
+ * Lists symbols with their signatures and examples.
+ */
+function renderGenericGuideContent(nodes: MdBlock[], symbols: ForgeSymbol[]): void {
+	nodes.push(md.heading(2, md.text("Related Symbols")));
+
+	for (const s of symbols) {
+		const ext = s.kind === "function" ? "()" : "";
+		nodes.push(md.heading(3, md.inlineCode(`${s.name}${ext}`)));
+
+		if (s.documentation?.summary) {
+			nodes.push(md.paragraph(...parseInline(s.documentation.summary)));
+		}
+
+		if (s.signature) {
+			nodes.push(md.code("typescript", s.signature));
+		}
+
+		const examples = s.documentation?.examples ?? [];
+		if (examples.length > 0) {
+			nodes.push(md.paragraph(md.strong(md.text("Example"))));
+			nodes.push(md.code(examples[0].language || "typescript", examples[0].code.trim()));
+		}
+	}
 }
 
 // ---------------------------------------------------------------------------
@@ -1252,10 +1459,12 @@ export function generateDocSite(
 	});
 
 	// -------------------------------------------------------------------------
-	// BUILD
+	// BUILD — Guide discovery and generation
 	// -------------------------------------------------------------------------
 
-	const guidesContent = renderGuidesIndexPage();
+	const discoveredGuides = discoverGuides(symbolsByPackage, config);
+
+	const guidesContent = renderGuidesIndexPage(discoveredGuides);
 	const guidesFrontmatter = buildFrontmatterFields(
 		"Guides",
 		`How-to guides for ${options.projectName}`,
@@ -1268,6 +1477,18 @@ export function generateDocSite(
 		frontmatter: guidesFrontmatter,
 		stub: true,
 	});
+
+	// Individual discovered guide pages
+	for (const guide of discoveredGuides) {
+		const guideContent = renderGuidePage(guide);
+		const guideFm = buildFrontmatterFields(guide.title, guide.description, options.ssgTarget);
+		pages.push({
+			path: `guides/${guide.slug}.${ext}`,
+			content: `${serializeFrontmatter(guideFm)}${guideContent.trimEnd()}\n`,
+			frontmatter: guideFm,
+			stub: true,
+		});
+	}
 
 	// -------------------------------------------------------------------------
 	// REFERENCE — per-package pages

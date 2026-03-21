@@ -39,6 +39,8 @@ export function defaultConfig(rootDir: string): ForgeConfig {
 				"require-default-value": "warn",
 				"require-type-param": "error",
 				"require-see": "warn",
+				"require-fresh-guides": "warn",
+				"require-guide-coverage": "warn",
 			},
 		},
 		doctest: {
@@ -69,6 +71,11 @@ export function defaultConfig(rootDir: string): ForgeConfig {
 				extended: "warn",
 				discretionary: "off",
 			},
+		},
+		guides: {
+			enabled: true,
+			autoDiscover: true,
+			custom: [],
 		},
 		guards: {
 			tsconfig: {
@@ -105,6 +112,7 @@ const KNOWN_TOP_KEYS = new Set([
 	"skill",
 	"bypass",
 	"tsdoc",
+	"guides",
 	"guards",
 	"project",
 ]);
@@ -126,6 +134,8 @@ const KNOWN_RULE_KEYS = new Set([
 	"require-default-value",
 	"require-type-param",
 	"require-see",
+	"require-fresh-guides",
+	"require-guide-coverage",
 ]);
 
 /**
@@ -139,6 +149,12 @@ const KNOWN_TSDOC_KEYS = new Set(["writeConfig", "customTags", "enforce"]);
  * @internal
  */
 const KNOWN_TSDOC_ENFORCE_KEYS = new Set(["core", "extended", "discretionary"]);
+
+/**
+ * Known keys within `guides`.
+ * @internal
+ */
+const KNOWN_GUIDES_KEYS = new Set(["enabled", "autoDiscover", "custom"]);
 
 /**
  * Known keys within `guards`.
@@ -220,6 +236,14 @@ function collectUnknownKeyWarnings(partial: Partial<ForgeConfig>): string[] {
 			);
 		}
 	}
+	if (partial.guides) {
+		validateKnownKeys(
+			partial.guides as unknown as Record<string, unknown>,
+			KNOWN_GUIDES_KEYS,
+			"guides",
+			warnings,
+		);
+	}
 	if (partial.guards) {
 		validateKnownKeys(
 			partial.guards as unknown as Record<string, unknown>,
@@ -282,6 +306,7 @@ function mergeWithDefaults(rootDir: string, partial: Partial<ForgeConfig>): Forg
 		gen: { ...defaults.gen, ...partial.gen },
 		skill: { ...defaults.skill, ...partial.skill },
 		bypass: { ...defaults.bypass, ...partial.bypass },
+		guides: { ...defaults.guides, ...partial.guides },
 		tsdoc: {
 			...defaults.tsdoc,
 			...partial.tsdoc,

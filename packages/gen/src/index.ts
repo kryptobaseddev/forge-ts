@@ -9,6 +9,7 @@
  */
 
 export * from "./adapters/index.js";
+export { type DiscoveredGuide, discoverGuides, type GuideSource } from "./guide-discovery.js";
 export { generateLlmsFullTxt, generateLlmsTxt } from "./llms.js";
 export {
 	generateMarkdown,
@@ -16,12 +17,15 @@ export {
 } from "./markdown.js";
 export {
 	type FrontmatterResult,
+	isStubModified,
 	parseBlocks,
 	parseFrontmatter,
 	parseInline,
 	sanitizeForMdx,
 	stringifyWithFrontmatter,
 	stripFrontmatter,
+	stubHash,
+	updateStubSections,
 } from "./markdown-utils.js";
 export { md, serializeMarkdown, slugLink, toAnchor, truncate } from "./mdast-builders.js";
 export { type ReadmeSyncOptions, syncReadme } from "./readme-sync.js";

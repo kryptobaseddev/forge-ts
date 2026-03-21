@@ -48,6 +48,11 @@ function makeConfig(overrides?: Partial<ForgeConfig>): ForgeConfig {
 			customTags: [],
 			enforce: { core: "error", extended: "warn", discretionary: "off" },
 		},
+		guides: {
+			enabled: true,
+			autoDiscover: true,
+			custom: [],
+		},
 		guards: {
 			tsconfig: { enabled: true, requiredFlags: ["strict", "strictNullChecks", "noImplicitAny"] },
 			biome: { enabled: false, lockedRules: [] },

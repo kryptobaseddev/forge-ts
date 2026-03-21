@@ -1,4 +1,4 @@
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
 import {
 	type EnforceRules,
 	type ForgeConfig,
@@ -28,6 +28,8 @@ const DEFAULT_RULES: EnforceRules = {
 	"require-default-value": "warn",
 	"require-type-param": "error",
 	"require-see": "warn",
+	"require-fresh-guides": "warn",
+	"require-guide-coverage": "warn",
 };
 
 /**
@@ -56,6 +58,11 @@ function makeConfig(overrides?: Partial<ForgeConfig["enforce"]>): ForgeConfig {
 			writeConfig: true,
 			customTags: [],
 			enforce: { core: "error", extended: "warn", discretionary: "off" },
+		},
+		guides: {
+			enabled: true,
+			autoDiscover: true,
+			custom: [],
 		},
 		guards: {
 			tsconfig: { enabled: false, requiredFlags: [] },
@@ -139,6 +146,7 @@ vi.mock("node:fs", async (importOriginal) => {
 		...actual,
 		readFileSync: vi.fn(actual.readFileSync),
 		existsSync: vi.fn(actual.existsSync),
+		readdirSync: vi.fn(actual.readdirSync),
 	};
 });
 
@@ -947,6 +955,8 @@ describe("enforce — per-rule configuration", () => {
 		expect(DEFAULT_RULES["require-default-value"]).toBe("warn");
 		expect(DEFAULT_RULES["require-type-param"]).toBe("error");
 		expect(DEFAULT_RULES["require-see"]).toBe("warn");
+		expect(DEFAULT_RULES["require-fresh-guides"]).toBe("warn");
+		expect(DEFAULT_RULES["require-guide-coverage"]).toBe("warn");
 	});
 
 	it("custom rules override defaults while keeping other defaults intact", async () => {
@@ -2580,5 +2590,335 @@ describe("enforce — E010 config drift detection", () => {
 		const e010Warnings = result.warnings.filter((w) => w.code === "E010");
 		expect(e010Errors).toHaveLength(1);
 		expect(e010Warnings).toHaveLength(0);
+	});
+});
+
+// ---------------------------------------------------------------------------
+// W007 — Stale guide FORGE:AUTO detection
+// ---------------------------------------------------------------------------
+
+describe("enforce — W007 stale guide FORGE:AUTO detection", () => {
+	afterEach(() => {
+		vi.mocked(readFileSync).mockRestore();
+		vi.mocked(existsSync).mockRestore();
+		vi.mocked(readdirSync).mockRestore();
+	});
+
+	/** Set up fs mocks so guide files are found and read. */
+	function mockGuideFiles(files: Record<string, string>): void {
+		vi.mocked(existsSync).mockImplementation((filePath: unknown) => {
+			const p = String(filePath);
+			// The guides directory exists
+			if (p.endsWith("/guides") || p.endsWith("\\guides")) return true;
+			return false;
+		});
+		vi.mocked(readdirSync).mockImplementation(() => {
+			return Object.keys(files) as unknown as ReturnType<typeof readdirSync>;
+		});
+		vi.mocked(readFileSync).mockImplementation((filePath: unknown) => {
+			const p = String(filePath);
+			for (const [name, content] of Object.entries(files)) {
+				if (p.endsWith(name)) return content;
+			}
+			throw Object.assign(new Error("ENOENT"), { code: "ENOENT" });
+		});
+	}
+
+	it("emits W007 when FORGE:AUTO section references a symbol that no longer exists", async () => {
+		const sym = makeSymbol({
+			name: "bar",
+			filePath: "/fake/src/index.ts",
+			documentation: {
+				summary: "A function.",
+				examples: [{ code: "bar();", language: "typescript", line: 5 }],
+				tags: { remarks: ["Details."] },
+			},
+		});
+		mockGuideFiles({
+			"getting-started.md": [
+				"# Getting Started",
+				"",
+				"<!-- FORGE:AUTO-START guide-getting-started -->",
+				"Use `foo` to get started.",
+				"Also use `bar` for more features.",
+				"<!-- FORGE:AUTO-END guide-getting-started -->",
+			].join("\n"),
+		});
+		const result = await runEnforce([sym]);
+		const w007 = result.warnings.filter((w) => w.code === "W007");
+		// "foo" does not exist in the symbol graph, so W007 fires for it
+		expect(w007).toHaveLength(1);
+		expect(w007[0].message).toContain("foo");
+		expect(w007[0].message).toContain("getting-started.md");
+	});
+
+	it("does not emit W007 when FORGE:AUTO section references existing symbols", async () => {
+		const sym = makeSymbol({
+			name: "bar",
+			filePath: "/fake/src/index.ts",
+			documentation: {
+				summary: "A function.",
+				examples: [{ code: "bar();", language: "typescript", line: 5 }],
+				tags: { remarks: ["Details."] },
+			},
+		});
+		mockGuideFiles({
+			"getting-started.md": [
+				"# Getting Started",
+				"",
+				"<!-- FORGE:AUTO-START guide-getting-started -->",
+				"Use `bar` to get started.",
+				"<!-- FORGE:AUTO-END guide-getting-started -->",
+			].join("\n"),
+		});
+		const result = await runEnforce([sym]);
+		const w007 = result.warnings.filter((w) => w.code === "W007");
+		expect(w007).toHaveLength(0);
+	});
+
+	it("does not emit W007 when no guide files exist", async () => {
+		vi.mocked(existsSync).mockReturnValue(false);
+		const sym = makeSymbol({
+			name: "bar",
+			filePath: "/fake/src/index.ts",
+			documentation: {
+				summary: "A function.",
+				examples: [{ code: "bar();", language: "typescript", line: 5 }],
+				tags: { remarks: ["Details."] },
+			},
+		});
+		const result = await runEnforce([sym]);
+		const w007 = result.warnings.filter((w) => w.code === "W007");
+		expect(w007).toHaveLength(0);
+	});
+
+	it("does not emit W007 when guide has no FORGE:AUTO sections", async () => {
+		const sym = makeSymbol({
+			name: "bar",
+			filePath: "/fake/src/index.ts",
+			documentation: {
+				summary: "A function.",
+				examples: [{ code: "bar();", language: "typescript", line: 5 }],
+				tags: { remarks: ["Details."] },
+			},
+		});
+		mockGuideFiles({
+			"manual-guide.md": [
+				"# Manual Guide",
+				"",
+				"This guide is entirely hand-written.",
+				"It mentions `nonexistent` but has no FORGE:AUTO markers.",
+			].join("\n"),
+		});
+		const result = await runEnforce([sym]);
+		const w007 = result.warnings.filter((w) => w.code === "W007");
+		expect(w007).toHaveLength(0);
+	});
+
+	it('suppresses W007 when require-fresh-guides is "off"', async () => {
+		const sym = makeSymbol({
+			name: "bar",
+			filePath: "/fake/src/index.ts",
+			documentation: {
+				summary: "A function.",
+				examples: [{ code: "bar();", language: "typescript", line: 5 }],
+				tags: { remarks: ["Details."] },
+			},
+		});
+		mockGuideFiles({
+			"getting-started.md": [
+				"# Getting Started",
+				"<!-- FORGE:AUTO-START guide-getting-started -->",
+				"Use `nonexistent` to get started.",
+				"<!-- FORGE:AUTO-END guide-getting-started -->",
+			].join("\n"),
+		});
+		const result = await runEnforce([sym], {
+			rules: { "require-fresh-guides": "off" },
+		});
+		const w007 = result.warnings.filter((w) => w.code === "W007");
+		const e007 = result.errors.filter((e) => e.code === "W007");
+		expect(w007).toHaveLength(0);
+		expect(e007).toHaveLength(0);
+	});
+});
+
+// ---------------------------------------------------------------------------
+// W008 — Undocumented public symbol in guides
+// ---------------------------------------------------------------------------
+
+describe("enforce — W008 undocumented public symbol in guides", () => {
+	afterEach(() => {
+		vi.mocked(readFileSync).mockRestore();
+		vi.mocked(existsSync).mockRestore();
+		vi.mocked(readdirSync).mockRestore();
+	});
+
+	/** Set up fs mocks so guide files are found and read. */
+	function mockGuideFiles(files: Record<string, string>): void {
+		vi.mocked(existsSync).mockImplementation((filePath: unknown) => {
+			const p = String(filePath);
+			if (p.endsWith("/guides") || p.endsWith("\\guides")) return true;
+			return false;
+		});
+		vi.mocked(readdirSync).mockImplementation(() => {
+			return Object.keys(files) as unknown as ReturnType<typeof readdirSync>;
+		});
+		vi.mocked(readFileSync).mockImplementation((filePath: unknown) => {
+			const p = String(filePath);
+			for (const [name, content] of Object.entries(files)) {
+				if (p.endsWith(name)) return content;
+			}
+			throw Object.assign(new Error("ENOENT"), { code: "ENOENT" });
+		});
+	}
+
+	it("emits W008 when an exported symbol is not mentioned in any guide", async () => {
+		const sym = makeSymbol({
+			name: "myFunc",
+			filePath: "/fake/src/index.ts",
+			documentation: {
+				summary: "A function.",
+				examples: [{ code: "myFunc();", language: "typescript", line: 5 }],
+				tags: { remarks: ["Details."] },
+			},
+		});
+		mockGuideFiles({
+			"getting-started.md": [
+				"# Getting Started",
+				"",
+				"This guide does not mention the function at all.",
+			].join("\n"),
+		});
+		const result = await runEnforce([sym]);
+		const w008 = result.warnings.filter((w) => w.code === "W008");
+		expect(w008).toHaveLength(1);
+		expect(w008[0].message).toContain("myFunc");
+	});
+
+	it("does not emit W008 when an exported symbol is mentioned in a guide", async () => {
+		const sym = makeSymbol({
+			name: "myFunc",
+			filePath: "/fake/src/index.ts",
+			documentation: {
+				summary: "A function.",
+				examples: [{ code: "myFunc();", language: "typescript", line: 5 }],
+				tags: { remarks: ["Details."] },
+			},
+		});
+		mockGuideFiles({
+			"getting-started.md": [
+				"# Getting Started",
+				"",
+				"Call `myFunc` to initialize the system.",
+			].join("\n"),
+		});
+		const result = await runEnforce([sym]);
+		const w008 = result.warnings.filter((w) => w.code === "W008");
+		expect(w008).toHaveLength(0);
+	});
+
+	it("does not emit W008 when no guide files exist", async () => {
+		vi.mocked(existsSync).mockReturnValue(false);
+		const sym = makeSymbol({
+			name: "myFunc",
+			filePath: "/fake/src/index.ts",
+			documentation: {
+				summary: "A function.",
+				examples: [{ code: "myFunc();", language: "typescript", line: 5 }],
+				tags: { remarks: ["Details."] },
+			},
+		});
+		const result = await runEnforce([sym]);
+		const w008 = result.warnings.filter((w) => w.code === "W008");
+		expect(w008).toHaveLength(0);
+	});
+
+	it("does not emit W008 for symbols not exported from index.ts", async () => {
+		const sym = makeSymbol({
+			name: "internalHelper",
+			filePath: "/fake/src/utils.ts",
+			documentation: {
+				summary: "An internal helper.",
+				examples: [{ code: "internalHelper();", language: "typescript", line: 5 }],
+				tags: { remarks: ["Details."] },
+			},
+		});
+		mockGuideFiles({
+			"getting-started.md": [
+				"# Getting Started",
+				"",
+				"This guide does not mention the internal helper.",
+			].join("\n"),
+		});
+		const result = await runEnforce([sym]);
+		const w008 = result.warnings.filter((w) => w.code === "W008");
+		expect(w008).toHaveLength(0);
+	});
+
+	it('suppresses W008 when require-guide-coverage is "off"', async () => {
+		const sym = makeSymbol({
+			name: "myFunc",
+			filePath: "/fake/src/index.ts",
+			documentation: {
+				summary: "A function.",
+				examples: [{ code: "myFunc();", language: "typescript", line: 5 }],
+				tags: { remarks: ["Details."] },
+			},
+		});
+		mockGuideFiles({
+			"getting-started.md": [
+				"# Getting Started",
+				"",
+				"This guide does not mention the function.",
+			].join("\n"),
+		});
+		const result = await runEnforce([sym], {
+			rules: { "require-guide-coverage": "off" },
+		});
+		const w008 = result.warnings.filter((w) => w.code === "W008");
+		const e008 = result.errors.filter((e) => e.code === "W008");
+		expect(w008).toHaveLength(0);
+		expect(e008).toHaveLength(0);
+	});
+
+	it("emits W008 for multiple uncovered symbols", async () => {
+		const sym1 = makeSymbol({
+			name: "funcA",
+			filePath: "/fake/src/index.ts",
+			documentation: {
+				summary: "Function A.",
+				examples: [{ code: "funcA();", language: "typescript", line: 5 }],
+				tags: { remarks: ["Details."] },
+			},
+		});
+		const sym2 = makeSymbol({
+			name: "funcB",
+			filePath: "/fake/src/index.ts",
+			documentation: {
+				summary: "Function B.",
+				examples: [{ code: "funcB();", language: "typescript", line: 5 }],
+				tags: { remarks: ["Details."] },
+			},
+		});
+		const sym3 = makeSymbol({
+			name: "funcC",
+			filePath: "/fake/src/index.ts",
+			documentation: {
+				summary: "Function C.",
+				examples: [{ code: "funcC();", language: "typescript", line: 5 }],
+				tags: { remarks: ["Details."] },
+			},
+		});
+		mockGuideFiles({
+			"getting-started.md": ["# Getting Started", "", "Only funcA is mentioned here."].join("\n"),
+		});
+		const result = await runEnforce([sym1, sym2, sym3]);
+		const w008 = result.warnings.filter((w) => w.code === "W008");
+		// funcB and funcC are not mentioned
+		expect(w008).toHaveLength(2);
+		const names = w008.map((w) => w.message);
+		expect(names.some((m) => m.includes("funcB"))).toBe(true);
+		expect(names.some((m) => m.includes("funcC"))).toBe(true);
 	});
 });

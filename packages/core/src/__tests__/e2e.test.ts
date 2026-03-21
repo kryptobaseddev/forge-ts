@@ -66,6 +66,11 @@ function makeFixtureConfig(overrides: Partial<ForgeConfig> = {}): ForgeConfig {
 			customTags: [],
 			enforce: { core: "error", extended: "warn", discretionary: "off" },
 		},
+		guides: {
+			enabled: true,
+			autoDiscover: true,
+			custom: [],
+		},
 		guards: {
 			tsconfig: { enabled: false, requiredFlags: [] },
 			biome: { enabled: false, lockedRules: [] },
@@ -587,6 +592,14 @@ describe("E2E — v0.9.0 ForgeConfig tsdoc and guards sections", () => {
 		});
 	});
 
+	it("defaultConfig includes guides section with correct defaults", () => {
+		const config = defaultConfig("/fake");
+		expect(config.guides).toBeDefined();
+		expect(config.guides.enabled).toBe(true);
+		expect(config.guides.autoDiscover).toBe(true);
+		expect(config.guides.custom).toEqual([]);
+	});
+
 	it("defaultConfig includes guards section with correct defaults", () => {
 		const config = defaultConfig("/fake");
 		expect(config.guards).toBeDefined();
@@ -616,6 +629,15 @@ describe("E2E — v0.9.0 ForgeConfig tsdoc and guards sections", () => {
 		expect(config.tsdoc).toBeDefined();
 		expect(config.tsdoc.writeConfig).toBe(true);
 		expect(config.tsdoc.enforce.core).toBe("error");
+	});
+
+	it("loadConfig merges guides overrides with defaults", async () => {
+		const config = await loadConfig(FIXTURE_DIR);
+		// Fixture has no forge-ts config, so defaults should apply
+		expect(config.guides).toBeDefined();
+		expect(config.guides.enabled).toBe(true);
+		expect(config.guides.autoDiscover).toBe(true);
+		expect(config.guides.custom).toEqual([]);
 	});
 
 	it("loadConfig merges guards overrides with defaults", async () => {

@@ -88,6 +88,10 @@ export interface EnforceRules {
 	"require-type-param": RuleSeverity;
 	/** W005: Symbol references other symbols via {@link} but has no @see tags. */
 	"require-see": RuleSeverity;
+	/** W007: Guide FORGE:AUTO section references a symbol that no longer exists or has changed. */
+	"require-fresh-guides": RuleSeverity;
+	/** W008: Exported public symbol is not mentioned in any guide page. */
+	"require-guide-coverage": RuleSeverity;
 }
 
 /**
@@ -192,6 +196,22 @@ export interface ForgeConfig {
 		dailyBudget: number;
 		/** Duration in hours before a bypass automatically expires. Default: 24 */
 		durationHours: number;
+	};
+	/** Guide generation configuration. */
+	guides: {
+		/** Enable intelligent guide generation. Default: true */
+		enabled: boolean;
+		/** Auto-discover guide topics from code analysis. Default: true */
+		autoDiscover: boolean;
+		/** Explicit guide definitions (supplement auto-discovered guides). */
+		custom: Array<{
+			/** URL slug for the guide (e.g., "authentication") */
+			slug: string;
+			/** Human-readable title */
+			title: string;
+			/** Glob patterns for source files to analyze */
+			sources: string[];
+		}>;
 	};
 	/** Downstream config drift guards. */
 	guards: {

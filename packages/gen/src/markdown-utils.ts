@@ -16,6 +16,7 @@ import remarkMdx from "remark-mdx";
 import remarkParse from "remark-parse";
 import { unified } from "unified";
 import { SKIP, visit } from "unist-util-visit";
+import type { MdBlock, MdPhrasing, MdText } from "./mdast-builders.js";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -142,6 +143,55 @@ export function stringifyWithFrontmatter(
  */
 export function stripFrontmatter(content: string): string {
 	return matter(content).content;
+}
+
+// ---------------------------------------------------------------------------
+// TSDoc content parsing
+// ---------------------------------------------------------------------------
+
+/** Cached parser for TSDoc content that may contain markdown formatting. */
+const inlineParser = unified().use(remarkParse).use(remarkGfm);
+
+/**
+ * Parse a markdown string and extract inline (phrasing) content.
+ *
+ * Use for TSDoc text that may contain backtick code, bold, links, etc.
+ * The returned nodes can be spread into paragraphs, table cells, or
+ * any other context that accepts inline content.
+ *
+ * This prevents double-escaping: backticks become proper `inlineCode`
+ * nodes instead of text that gets escaped by the serializer.
+ *
+ * @param markdown - The TSDoc content string (may contain markdown).
+ * @returns Array of inline mdast nodes.
+ * @public
+ */
+export function parseInline(markdown: string): MdPhrasing[] {
+	if (!markdown) return [];
+	const tree = inlineParser.parse(markdown);
+	const first = tree.children[0];
+	if (first?.type === "paragraph") {
+		// biome-ignore lint: mdast children are compatible with our MdPhrasing
+		return (first as any).children as MdPhrasing[];
+	}
+	return [{ type: "text", value: markdown } as MdText];
+}
+
+/**
+ * Parse a markdown string and extract block-level content.
+ *
+ * Use for multi-line TSDoc content that may contain headings,
+ * lists, blockquotes, code blocks, etc.
+ *
+ * @param markdown - The markdown string to parse.
+ * @returns Array of block-level mdast nodes.
+ * @public
+ */
+export function parseBlocks(markdown: string): MdBlock[] {
+	if (!markdown) return [];
+	const tree = inlineParser.parse(markdown);
+	// biome-ignore lint: mdast children are compatible with our MdBlock
+	return tree.children as unknown as MdBlock[];
 }
 
 // ---------------------------------------------------------------------------

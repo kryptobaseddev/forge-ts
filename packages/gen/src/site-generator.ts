@@ -1,6 +1,6 @@
 import { basename, relative } from "node:path";
 import type { ForgeConfig, ForgeSymbol } from "@forge-ts/core";
-import { stringifyWithFrontmatter } from "./markdown-utils.js";
+import { parseInline, stringifyWithFrontmatter } from "./markdown-utils.js";
 import {
 	type MdBlock,
 	type MdListItem,
@@ -359,7 +359,7 @@ function renderGettingStartedPage(
 	);
 
 	if (options.projectDescription) {
-		nodes.push(textP(options.projectDescription));
+		nodes.push(md.paragraph(...parseInline(options.projectDescription)));
 	}
 
 	nodes.push(md.heading(2, md.text("Step 1: Install")));
@@ -468,7 +468,7 @@ function renderConceptsPage(
 	nodes.push(md.html("<!-- FORGE:AUTO-START how-it-works -->"));
 	nodes.push(md.heading(2, md.text("How It Works")));
 	if (pkgDoc) {
-		nodes.push(textP(pkgDoc));
+		nodes.push(md.paragraph(...parseInline(pkgDoc)));
 	} else {
 		nodes.push(
 			textP(
@@ -490,7 +490,9 @@ function renderConceptsPage(
 		for (const s of allTypeSymbols) {
 			const desc = s.documentation?.summary ?? `The \`${s.name}\` ${s.kind}.`;
 			items.push(
-				md.listItem(md.paragraph(md.strong(md.inlineCode(s.name)), md.text(` — ${desc}`))),
+				md.listItem(
+					md.paragraph(md.strong(md.inlineCode(s.name)), md.text(" — "), ...parseInline(desc)),
+				),
 			);
 		}
 		nodes.push(md.list(items));
@@ -551,7 +553,7 @@ function renderApiIndexPage(pkgName: string, symbols: ForgeSymbol[]): string {
 	// Find @packageDocumentation summary
 	const pkgDoc = symbols.map((s) => s.documentation?.tags?.packageDocumentation?.[0]).find(Boolean);
 	if (pkgDoc) {
-		nodes.push(textP(pkgDoc));
+		nodes.push(md.paragraph(...parseInline(pkgDoc)));
 	} else {
 		nodes.push(
 			md.paragraph(md.text("API reference for the "), md.inlineCode(pkgName), md.text(" package.")),
@@ -582,7 +584,7 @@ function renderApiIndexPage(pkgName: string, symbols: ForgeSymbol[]): string {
 						),
 					),
 					md.tableCell(md.text(s.kind)),
-					md.tableCell(md.text(summary)),
+					md.tableCell(...parseInline(summary)),
 				),
 			);
 		}
@@ -621,7 +623,7 @@ function renderPackageOverviewPage(
 	// No h1 — frontmatter title handles the heading in Mintlify and other SSGs
 
 	if (pkgDoc) {
-		nodes.push(textP(pkgDoc));
+		nodes.push(md.paragraph(...parseInline(pkgDoc)));
 	}
 
 	if (exported.length > 0) {
@@ -654,7 +656,7 @@ function renderPackageOverviewPage(
 							),
 						),
 						md.tableCell(md.text(s.kind)),
-						md.tableCell(md.text(summary)),
+						md.tableCell(...parseInline(summary)),
 					),
 				);
 			}
@@ -698,14 +700,15 @@ function renderTypesPage(
 				md.blockquote(
 					md.paragraph(
 						md.strong(md.text("Deprecated")),
-						md.text(`: ${s.documentation.deprecated}`),
+						md.text(": "),
+						...parseInline(s.documentation.deprecated),
 					),
 				),
 			);
 		}
 
 		if (s.documentation?.summary) {
-			nodes.push(textP(s.documentation.summary));
+			nodes.push(md.paragraph(...parseInline(s.documentation.summary)));
 		}
 
 		if (s.signature && s.kind !== "interface") {
@@ -734,7 +737,7 @@ function renderTypesPage(
 						md.tableCell(md.inlineCode(child.name)),
 						md.tableCell(typePhrasing),
 						md.tableCell(md.text(optional)),
-						md.tableCell(md.text(description)),
+						md.tableCell(...parseInline(description)),
 					),
 				);
 			}
@@ -781,14 +784,15 @@ function renderFunctionsPage(
 				md.blockquote(
 					md.paragraph(
 						md.strong(md.text("Deprecated")),
-						md.text(`: ${s.documentation.deprecated}`),
+						md.text(": "),
+						...parseInline(s.documentation.deprecated),
 					),
 				),
 			);
 		}
 
 		if (s.documentation?.summary) {
-			nodes.push(textP(s.documentation.summary));
+			nodes.push(md.paragraph(...parseInline(s.documentation.summary)));
 		}
 
 		if (s.signature) {
@@ -823,7 +827,7 @@ function renderFunctionsPage(
 					md.tableRow(
 						md.tableCell(md.inlineCode(p.name)),
 						md.tableCell(typePhrasing),
-						md.tableCell(md.text(p.description)),
+						md.tableCell(...parseInline(p.description)),
 					),
 				);
 			}
@@ -836,7 +840,7 @@ function renderFunctionsPage(
 				retParts.push(md.text(" "));
 				retParts.push(md.inlineCode(s.documentation.returns.type));
 			}
-			retParts.push(md.text(` — ${s.documentation.returns.description}`));
+			retParts.push(md.text(" — "), ...parseInline(s.documentation.returns.description));
 			nodes.push(md.paragraph(...retParts));
 		}
 
@@ -848,9 +852,9 @@ function renderFunctionsPage(
 				const throwParts: MdPhrasing[] = [];
 				if (t.type) {
 					throwParts.push(md.inlineCode(t.type));
-					throwParts.push(md.text(` — ${t.description}`));
+					throwParts.push(md.text(" — "), ...parseInline(t.description));
 				} else {
-					throwParts.push(md.text(t.description));
+					throwParts.push(...parseInline(t.description));
 				}
 				throwItems.push(md.listItem(md.paragraph(...throwParts)));
 			}
@@ -871,7 +875,7 @@ function renderFunctionsPage(
 			for (const method of methods) {
 				nodes.push(md.heading(3, md.text(`${method.name}()`)));
 				if (method.documentation?.summary) {
-					nodes.push(textP(method.documentation.summary));
+					nodes.push(md.paragraph(...parseInline(method.documentation.summary)));
 				}
 				if (method.signature) {
 					nodes.push(md.code("typescript", method.signature));
@@ -918,7 +922,7 @@ function renderExamplesPage(
 		nodes.push(md.heading(2, md.inlineCode(`${s.name}${ext}`)));
 
 		if (s.documentation?.summary) {
-			nodes.push(md.paragraph(md.emphasis(md.text(s.documentation.summary))));
+			nodes.push(md.paragraph(md.emphasis(...parseInline(s.documentation.summary))));
 		}
 
 		nodes.push(
@@ -995,7 +999,7 @@ function renderConfigurationPage(
 		nodes.push(md.heading(2, md.inlineCode(configSymbol.name)));
 
 		if (configSymbol.documentation?.summary) {
-			nodes.push(textP(configSymbol.documentation.summary));
+			nodes.push(md.paragraph(...parseInline(configSymbol.documentation.summary)));
 		}
 
 		const children = (configSymbol.children ?? []).filter(
@@ -1021,7 +1025,7 @@ function renderConfigurationPage(
 						md.tableCell(md.inlineCode(child.name)),
 						md.tableCell(typePhrasing),
 						md.tableCell(md.text(optional)),
-						md.tableCell(md.text(description)),
+						md.tableCell(...parseInline(description)),
 					),
 				);
 			}

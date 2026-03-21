@@ -16,7 +16,9 @@ export {
 } from "./markdown.js";
 export {
 	type FrontmatterResult,
+	parseBlocks,
 	parseFrontmatter,
+	parseInline,
 	sanitizeForMdx,
 	stringifyWithFrontmatter,
 	stripFrontmatter,

@@ -1,11 +1,11 @@
 import { relative } from "node:path";
 import type { ForgeConfig, ForgeSymbol } from "@forge-ts/core";
-import { stringifyWithFrontmatter } from "./markdown-utils.js";
+import { parseInline, stringifyWithFrontmatter } from "./markdown-utils.js";
 import {
 	type MdBlock,
 	type MdListItem,
+	type MdPhrasing,
 	md,
-	rawBlock,
 	serializeMarkdown,
 	toAnchor,
 } from "./mdast-builders.js";
@@ -90,56 +90,74 @@ function renderSymbolBlocks(symbol: ForgeSymbol, rootDir: string, depth: number)
 	nodes.push(md.heading(headingDepth, md.inlineCode(`${symbol.name}${ext}`)));
 
 	if (symbol.documentation?.deprecated) {
-		// Deprecation text may contain markdown formatting from TSDoc
-		nodes.push(rawBlock(`> **Deprecated**: ${symbol.documentation.deprecated}`));
+		nodes.push(
+			md.blockquote(
+				md.paragraph(
+					md.strong(md.text("Deprecated")),
+					md.text(": "),
+					...parseInline(symbol.documentation.deprecated),
+				),
+			),
+		);
 	}
 
 	// Source location
 	const rel = relative(rootDir, symbol.filePath);
-	nodes.push(rawBlock(`_Defined in \`${rel}:${symbol.line}\`_`));
+	nodes.push(
+		md.paragraph(md.emphasis(md.text("Defined in "), md.inlineCode(`${rel}:${symbol.line}`))),
+	);
 
 	if (symbol.signature) {
 		nodes.push(md.code("typescript", symbol.signature));
 	}
 
 	if (symbol.documentation?.summary) {
-		// Summary may contain markdown formatting from TSDoc
-		nodes.push(rawBlock(symbol.documentation.summary));
+		nodes.push(md.paragraph(...parseInline(symbol.documentation.summary)));
 	}
 
 	const params = symbol.documentation?.params ?? [];
 	if (params.length > 0) {
-		nodes.push(rawBlock("**Parameters**"));
+		nodes.push(md.paragraph(md.strong(md.text("Parameters"))));
 		const paramItems: MdListItem[] = [];
 		for (const p of params) {
-			const typeStr = p.type ? ` (\`${p.type}\`)` : "";
-			// Description may contain markdown from TSDoc
-			paramItems.push(md.listItem(rawBlock(`\`${p.name}\`${typeStr} — ${p.description}`)));
+			const parts = [md.inlineCode(p.name)] as MdPhrasing[];
+			if (p.type) {
+				parts.push(md.text(" ("), md.inlineCode(p.type), md.text(")"));
+			}
+			parts.push(md.text(" — "), ...parseInline(p.description));
+			paramItems.push(md.listItem(md.paragraph(...parts)));
 		}
 		nodes.push(md.list(paramItems));
 	}
 
 	if (symbol.documentation?.returns) {
-		const retType = symbol.documentation.returns.type
-			? ` (\`${symbol.documentation.returns.type}\`)`
-			: "";
-		nodes.push(rawBlock(`**Returns**${retType}: ${symbol.documentation.returns.description}`));
+		const retParts = [md.strong(md.text("Returns"))] as MdPhrasing[];
+		if (symbol.documentation.returns.type) {
+			retParts.push(md.text(" ("), md.inlineCode(symbol.documentation.returns.type), md.text(")"));
+		}
+		retParts.push(md.text(": "), ...parseInline(symbol.documentation.returns.description));
+		nodes.push(md.paragraph(...retParts));
 	}
 
 	const throws = symbol.documentation?.throws ?? [];
 	if (throws.length > 0) {
-		nodes.push(rawBlock("**Throws**"));
+		nodes.push(md.paragraph(md.strong(md.text("Throws"))));
 		const throwItems: MdListItem[] = [];
 		for (const t of throws) {
-			const typeStr = t.type ? `\`${t.type}\` — ` : "";
-			throwItems.push(md.listItem(rawBlock(`${typeStr}${t.description}`)));
+			const parts = [] as MdPhrasing[];
+			if (t.type) {
+				parts.push(md.inlineCode(t.type), md.text(" — "), ...parseInline(t.description));
+			} else {
+				parts.push(...parseInline(t.description));
+			}
+			throwItems.push(md.listItem(md.paragraph(...parts)));
 		}
 		nodes.push(md.list(throwItems));
 	}
 
 	const examples = symbol.documentation?.examples ?? [];
 	if (examples.length > 0) {
-		nodes.push(rawBlock("**Examples**"));
+		nodes.push(md.paragraph(md.strong(md.text("Examples"))));
 		for (const ex of examples) {
 			nodes.push(md.code(ex.language, ex.code.trim()));
 		}

@@ -262,10 +262,25 @@ export function rawBlock(markdown: string): MdHtml {
 	return md.html(markdown);
 }
 
-/** Truncate a string to at most maxLen chars. */
+/**
+ * Truncate a string to at most maxLen chars.
+ * Avoids cutting inside backtick-delimited code spans to prevent
+ * broken inline code that would cause escaping issues.
+ */
 export function truncate(text: string, maxLen = 80): string {
 	if (text.length <= maxLen) return text;
-	return `${text.slice(0, maxLen - 3)}...`;
+	let cutPoint = maxLen - 3;
+	// Count backticks before the cut point — if odd, we're inside a code span
+	const prefix = text.slice(0, cutPoint);
+	const backtickCount = (prefix.match(/`/g) || []).length;
+	if (backtickCount % 2 !== 0) {
+		// Inside a code span — back up to before the opening backtick
+		const lastBacktick = prefix.lastIndexOf("`");
+		if (lastBacktick > 0) {
+			cutPoint = lastBacktick;
+		}
+	}
+	return `${text.slice(0, cutPoint).trimEnd()}...`;
 }
 
 /** Convert a label to a GitHub-compatible anchor slug. */

@@ -1,6 +1,7 @@
 import { existsSync } from "node:fs";
 import { readFile, writeFile } from "node:fs/promises";
 import type { ForgeSymbol } from "@forge-ts/core";
+import { parseInline } from "./markdown-utils.js";
 import {
 	type MdBlock,
 	type MdTableRow,
@@ -50,7 +51,7 @@ function buildApiBlocks(symbols: ForgeSymbol[], includeExamples: boolean): MdBlo
 			md.tableRow(
 				md.tableCell(md.inlineCode(sigText)),
 				md.tableCell(md.text(s.kind)),
-				md.tableCell(md.text(summary)),
+				md.tableCell(...(summary ? parseInline(summary) : [md.text("")])),
 			),
 		);
 	}

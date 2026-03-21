@@ -9,7 +9,13 @@
  * @internal
  */
 
-import { appendAuditEvent, getCurrentUser, loadConfig, readLockFile, removeLockFile } from "@forge-ts/core";
+import {
+	appendAuditEvent,
+	getCurrentUser,
+	loadConfig,
+	readLockFile,
+	removeLockFile,
+} from "@forge-ts/core";
 import { defineCommand } from "citty";
 import { type CommandOutput, emitResult, type OutputFlags, resolveExitCode } from "../output.js";
 

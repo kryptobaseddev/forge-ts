@@ -135,6 +135,63 @@ function deprecatedWithoutReason(symbol: ForgeSymbol): boolean {
 	return deprecated === "true" || deprecated.trim().length === 0;
 }
 
+/**
+ * Extracts generic type parameter names from a symbol's signature.
+ * Handles patterns like `<T>`, `<T, U>`, `<T extends Record<string, unknown>>`, etc.
+ * Respects nested angle brackets so constraints are not prematurely closed.
+ * @internal
+ */
+function extractGenericTypeParams(signature: string | undefined): string[] {
+	if (!signature || !signature.startsWith("<")) return [];
+	// Find the matching closing '>' respecting nesting
+	let depth = 0;
+	let endIdx = -1;
+	for (let i = 0; i < signature.length; i++) {
+		if (signature[i] === "<") depth++;
+		else if (signature[i] === ">") {
+			depth--;
+			if (depth === 0) {
+				endIdx = i;
+				break;
+			}
+		}
+	}
+	if (endIdx === -1) return [];
+	const inner = signature.slice(1, endIdx);
+	// Split on top-level commas (depth 0)
+	const params: string[] = [];
+	let paramDepth = 0;
+	let current = "";
+	for (const ch of inner) {
+		if (ch === "<" || ch === "(") {
+			paramDepth++;
+			current += ch;
+		} else if (ch === ">" || ch === ")") {
+			paramDepth--;
+			current += ch;
+		} else if (ch === "," && paramDepth === 0) {
+			params.push(current);
+			current = "";
+		} else {
+			current += ch;
+		}
+	}
+	if (current.trim()) params.push(current);
+	return params.map((p) => p.trim().split(/\s+/)[0].trim()).filter((p) => p.length > 0);
+}
+
+/**
+ * Returns `true` when a property signature looks optional —
+ * i.e. includes `| undefined` in the type.
+ * @internal
+ */
+function isOptionalProperty(child: ForgeSymbol): boolean {
+	const sig = child.signature;
+	if (!sig) return false;
+	if (sig.includes("| undefined") || sig.includes("undefined |")) return true;
+	return false;
+}
+
 // ---------------------------------------------------------------------------
 // Rule map
 // ---------------------------------------------------------------------------
@@ -152,6 +209,10 @@ const RULE_MAP: Record<string, keyof EnforceRules> = {
 	E006: "require-class-member-doc",
 	E007: "require-interface-member-doc",
 	W006: "require-tsdoc-syntax",
+	E013: "require-remarks",
+	E014: "require-default-value",
+	E015: "require-type-param",
+	W005: "require-see",
 };
 
 // ---------------------------------------------------------------------------
@@ -181,6 +242,10 @@ const RULE_MAP: Record<string, keyof EnforceRules> = {
  * | W006 | warning  | TSDoc parser-level syntax error (invalid tag, malformed block, etc.). |
  * | E009 | error    | tsconfig.json required strict-mode flag is missing or disabled (guard). |
  * | E010 | error    | Config drift: a rule severity is weaker than the locked value. |
+ * | E013 | error    | Exported function/class is missing a `@remarks` block. |
+ * | E014 | warn     | Optional property of interface/type is missing `@defaultValue`. |
+ * | E015 | error    | Generic symbol is missing `@typeParam` for a type parameter. |
+ * | W005 | warn     | Symbol references other symbols via `{@link}` but has no `@see` tags. |
  *
  * When `config.enforce.strict` is `true` all warnings are promoted to errors.
  *
@@ -343,6 +408,96 @@ export async function enforce(config: ForgeConfig): Promise<ForgeResult> {
 						);
 					}
 				}
+			}
+		}
+
+		// E013 — Missing @remarks on exported functions/classes
+		if (symbol.kind === "function" || symbol.kind === "class") {
+			const hasRemarks = symbol.documentation?.tags?.remarks !== undefined;
+			if (!hasRemarks) {
+				emit(
+					"E013",
+					`Exported ${symbol.kind} "${symbol.name}" is missing a @remarks block.`,
+					symbol.filePath,
+					symbol.line,
+					symbol.column,
+					{
+						suggestedFix: `@remarks [Detailed description of ${symbol.name}]`,
+						symbolName: symbol.name,
+						symbolKind: symbol.kind,
+					},
+				);
+			}
+		}
+
+		// E014 — Missing @defaultValue on optional properties of interfaces/types
+		if (symbol.kind === "interface" || symbol.kind === "type") {
+			for (const child of symbol.children ?? []) {
+				if (child.kind !== "property") continue;
+				if (!isOptionalProperty(child)) continue;
+				const hasDefaultValue = child.documentation?.tags?.defaultValue !== undefined;
+				if (!hasDefaultValue) {
+					emit(
+						"E014",
+						`Optional property "${child.name}" of ${symbol.kind} "${symbol.name}" is missing @defaultValue.`,
+						child.filePath,
+						child.line,
+						child.column,
+						{
+							suggestedFix: `@defaultValue [Default value of ${child.name}]`,
+							symbolName: child.name,
+							symbolKind: child.kind,
+						},
+					);
+				}
+			}
+		}
+
+		// E015 — Missing @typeParam on generic symbols
+		if (symbol.kind === "function" || symbol.kind === "class" || symbol.kind === "interface") {
+			const typeParamNames = extractGenericTypeParams(symbol.signature);
+			if (typeParamNames.length > 0) {
+				const documentedTypeParams = new Set(
+					(symbol.documentation?.tags?.typeParam ?? []).map((tp) =>
+						tp.split(/\s/)[0].replace(/-$/, "").trim(),
+					),
+				);
+				for (const typeParamName of typeParamNames) {
+					if (!documentedTypeParams.has(typeParamName)) {
+						emit(
+							"E015",
+							`Type parameter "${typeParamName}" of "${symbol.name}" is not documented with @typeParam.`,
+							symbol.filePath,
+							symbol.line,
+							symbol.column,
+							{
+								suggestedFix: `@typeParam ${typeParamName} - [Description of ${typeParamName}]`,
+								symbolName: symbol.name,
+								symbolKind: symbol.kind,
+							},
+						);
+					}
+				}
+			}
+		}
+
+		// W005 — {@link} references present but no @see tags
+		if (symbol.documentation?.links && symbol.documentation.links.length > 0) {
+			const hasSee =
+				symbol.documentation.tags?.see !== undefined && symbol.documentation.tags.see.length > 0;
+			if (!hasSee) {
+				emit(
+					"W005",
+					`"${symbol.name}" references other symbols via {@link} but has no @see tags.`,
+					symbol.filePath,
+					symbol.line,
+					symbol.column,
+					{
+						suggestedFix: "@see [Related symbol name]",
+						symbolName: symbol.name,
+						symbolKind: symbol.kind,
+					},
+				);
 			}
 		}
 

@@ -245,6 +245,55 @@ function parseTSDoc(
 		}
 	}
 
+	// @remarks block
+	if (comment.remarksBlock) {
+		const remarksText = renderBlock(comment.remarksBlock).trim();
+		tags.remarks = remarksText ? [remarksText] : [];
+	}
+
+	// @see blocks
+	if (comment.seeBlocks.length > 0) {
+		tags.see = comment.seeBlocks.map((block) => renderBlock(block).trim()).filter(Boolean);
+	}
+
+	// @typeParam blocks
+	if (comment.typeParams.count > 0) {
+		tags.typeParam = comment.typeParams.blocks.map(
+			(block) => `${block.parameterName} - ${renderBlock(block).trim()}`,
+		);
+	}
+
+	// @defaultValue blocks
+	for (const block of comment.customBlocks) {
+		if (block.blockTag.tagName.toLowerCase() === "@defaultvalue") {
+			const dvText = renderBlock(block).trim();
+			if (!tags.defaultValue) tags.defaultValue = [];
+			tags.defaultValue.push(dvText);
+		}
+	}
+
+	// @concept blocks — free-text concept labels for grouping/navigation
+	for (const block of comment.customBlocks) {
+		if (block.blockTag.tagName.toLowerCase() === "@concept") {
+			const conceptText = renderBlock(block).trim();
+			if (conceptText) {
+				if (!tags.concept) tags.concept = [];
+				tags.concept.push(conceptText);
+			}
+		}
+	}
+
+	// @guide blocks — guide slugs/labels for cross-referencing documentation
+	for (const block of comment.customBlocks) {
+		if (block.blockTag.tagName.toLowerCase() === "@guide") {
+			const guideText = renderBlock(block).trim();
+			if (guideText) {
+				if (!tags.guide) tags.guide = [];
+				tags.guide.push(guideText);
+			}
+		}
+	}
+
 	// @example blocks
 	const examples = extractExamples(comment, startLine);
 

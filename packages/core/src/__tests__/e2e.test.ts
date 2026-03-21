@@ -647,3 +647,169 @@ describe("E2E — v0.9.0 ForgeConfig tsdoc and guards sections", () => {
 		}
 	});
 });
+
+// ---------------------------------------------------------------------------
+// @concept and @guide custom tag parsing
+// ---------------------------------------------------------------------------
+
+describe("E2E — @concept and @guide tag parsing", () => {
+	const tempDir = join(tmpdir(), `forge-ts-concept-guide-test-${Date.now()}`);
+
+	afterEach(() => {
+		clearTSDocConfigCache();
+		try {
+			rmSync(tempDir, { recursive: true, force: true });
+		} catch {
+			// Ignore cleanup failures
+		}
+	});
+
+	/**
+	 * Helper: scaffold a temp project with tsdoc.json that defines @concept and @guide,
+	 * write the given source into src/example.ts, and return extracted symbols.
+	 */
+	function scaffoldAndWalk(sourceCode: string) {
+		mkdirSync(join(tempDir, "src"), { recursive: true });
+
+		writeFileSync(join(tempDir, "package.json"), JSON.stringify({ name: "test-pkg" }));
+
+		writeFileSync(
+			join(tempDir, "tsconfig.json"),
+			JSON.stringify({
+				compilerOptions: {
+					target: "ESNext",
+					module: "NodeNext",
+					moduleResolution: "NodeNext",
+					strict: true,
+					outDir: "dist",
+					rootDir: "src",
+				},
+				include: ["src/**/*"],
+			}),
+		);
+
+		// tsdoc.json with @concept and @guide defined
+		writeFileSync(
+			join(tempDir, "tsdoc.json"),
+			JSON.stringify({
+				$schema: "https://developer.microsoft.com/json-schemas/tsdoc/v0/tsdoc.schema.json",
+				noStandardTags: false,
+				tagDefinitions: [
+					{ tagName: "@concept", syntaxKind: "block" },
+					{ tagName: "@guide", syntaxKind: "block" },
+				],
+				supportForTags: {
+					"@concept": true,
+					"@guide": true,
+				},
+			}),
+		);
+
+		writeFileSync(join(tempDir, "src", "example.ts"), sourceCode);
+
+		const config = makeFixtureConfig({
+			rootDir: tempDir,
+			tsconfig: join(tempDir, "tsconfig.json"),
+			outDir: join(tempDir, "docs"),
+		});
+
+		const walker = createWalker(config);
+		return walker.walk();
+	}
+
+	it("parses @concept tag and stores value in tags.concept", () => {
+		const symbols = scaffoldAndWalk(`/**
+ * An architectural component.
+ *
+ * @concept Architecture
+ * @public
+ */
+export function buildArch(): void {}
+`);
+
+		const sym = symbols.find((s) => s.name === "buildArch");
+		expect(sym).toBeDefined();
+		expect(sym?.documentation?.tags?.concept).toEqual(["Architecture"]);
+	});
+
+	it("parses @guide tag and stores value in tags.guide", () => {
+		const symbols = scaffoldAndWalk(`/**
+ * Start here.
+ *
+ * @guide getting-started
+ * @public
+ */
+export function start(): void {}
+`);
+
+		const sym = symbols.find((s) => s.name === "start");
+		expect(sym).toBeDefined();
+		expect(sym?.documentation?.tags?.guide).toEqual(["getting-started"]);
+	});
+
+	it("stores multiple @concept tags on one symbol", () => {
+		const symbols = scaffoldAndWalk(`/**
+ * Multi-concept symbol.
+ *
+ * @concept Architecture
+ * @concept Patterns
+ * @concept Security
+ * @public
+ */
+export function multiConcept(): void {}
+`);
+
+		const sym = symbols.find((s) => s.name === "multiConcept");
+		expect(sym).toBeDefined();
+		expect(sym?.documentation?.tags?.concept).toEqual(["Architecture", "Patterns", "Security"]);
+	});
+
+	it("stores multiple @guide tags on one symbol", () => {
+		const symbols = scaffoldAndWalk(`/**
+ * Multi-guide symbol.
+ *
+ * @guide getting-started
+ * @guide advanced-usage
+ * @public
+ */
+export function multiGuide(): void {}
+`);
+
+		const sym = symbols.find((s) => s.name === "multiGuide");
+		expect(sym).toBeDefined();
+		expect(sym?.documentation?.tags?.guide).toEqual(["getting-started", "advanced-usage"]);
+	});
+
+	it("symbols without @concept or @guide have no concept/guide entries in tags", () => {
+		const symbols = scaffoldAndWalk(`/**
+ * Plain symbol with no concept or guide tags.
+ *
+ * @public
+ */
+export function plain(): void {}
+`);
+
+		const sym = symbols.find((s) => s.name === "plain");
+		expect(sym).toBeDefined();
+		expect(sym?.documentation?.tags?.concept).toBeUndefined();
+		expect(sym?.documentation?.tags?.guide).toBeUndefined();
+	});
+
+	it("@concept and @guide coexist with @route and other tags", () => {
+		const symbols = scaffoldAndWalk(`/**
+ * An API endpoint with cross-cutting concerns.
+ *
+ * @concept Architecture
+ * @guide api-design
+ * @public
+ */
+export function apiHandler(): void {}
+`);
+
+		const sym = symbols.find((s) => s.name === "apiHandler");
+		expect(sym).toBeDefined();
+		expect(sym?.documentation?.tags?.concept).toEqual(["Architecture"]);
+		expect(sym?.documentation?.tags?.guide).toEqual(["api-design"]);
+		expect(sym?.documentation?.tags?.public).toEqual([]);
+	});
+});

@@ -35,6 +35,10 @@ export function defaultConfig(rootDir: string): ForgeConfig {
 				"require-class-member-doc": "error",
 				"require-interface-member-doc": "error",
 				"require-tsdoc-syntax": "warn",
+				"require-remarks": "error",
+				"require-default-value": "warn",
+				"require-type-param": "error",
+				"require-see": "warn",
 			},
 		},
 		doctest: {
@@ -118,6 +122,10 @@ const KNOWN_RULE_KEYS = new Set([
 	"require-class-member-doc",
 	"require-interface-member-doc",
 	"require-tsdoc-syntax",
+	"require-remarks",
+	"require-default-value",
+	"require-type-param",
+	"require-see",
 ]);
 
 /**

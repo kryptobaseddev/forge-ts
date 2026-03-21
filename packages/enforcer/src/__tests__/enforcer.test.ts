@@ -24,6 +24,10 @@ const DEFAULT_RULES: EnforceRules = {
 	"require-class-member-doc": "error",
 	"require-interface-member-doc": "error",
 	"require-tsdoc-syntax": "warn",
+	"require-remarks": "error",
+	"require-default-value": "warn",
+	"require-type-param": "error",
+	"require-see": "warn",
 };
 
 /**
@@ -149,6 +153,7 @@ describe("enforce — E001 missing summary", () => {
 			documentation: {
 				summary: "Does a thing.",
 				examples: [{ code: "doThing();", language: "typescript", line: 5 }],
+				tags: { remarks: ["Detailed description."] },
 			},
 		});
 		const result = await runEnforce([sym]);
@@ -348,6 +353,7 @@ describe("enforce — strict mode", () => {
 				summary: "An old API.",
 				deprecated: "true",
 				examples: [{ code: "oldApi();", language: "typescript", line: 5 }],
+				tags: { remarks: ["Details."] },
 			},
 		});
 		const result = await runEnforce([sym], { strict: false });
@@ -382,7 +388,8 @@ describe("enforce — multi-file grouping", () => {
 			documentation: undefined,
 		});
 		const result = await runEnforce([symA, symB]);
-		expect(result.errors).toHaveLength(2);
+		// E001 + E013 fire per symbol (both missing summary and @remarks)
+		expect(result.errors.length).toBeGreaterThanOrEqual(2);
 		const paths = result.errors.map((e) => e.filePath);
 		expect(paths).toContain("/fake/src/a.ts");
 		expect(paths).toContain("/fake/src/b.ts");
@@ -936,6 +943,10 @@ describe("enforce — per-rule configuration", () => {
 		expect(DEFAULT_RULES["require-package-doc"]).toBe("warn");
 		expect(DEFAULT_RULES["require-class-member-doc"]).toBe("error");
 		expect(DEFAULT_RULES["require-interface-member-doc"]).toBe("error");
+		expect(DEFAULT_RULES["require-remarks"]).toBe("error");
+		expect(DEFAULT_RULES["require-default-value"]).toBe("warn");
+		expect(DEFAULT_RULES["require-type-param"]).toBe("error");
+		expect(DEFAULT_RULES["require-see"]).toBe("warn");
 	});
 
 	it("custom rules override defaults while keeping other defaults intact", async () => {
@@ -964,6 +975,7 @@ describe("enforce — per-rule configuration", () => {
 			documentation: {
 				summary: "Does a thing.",
 				examples: [{ code: "doThing();", language: "typescript", line: 5 }],
+				tags: { remarks: ["Details."] },
 			},
 		});
 		const result = await runEnforce([sym]);
@@ -1141,6 +1153,7 @@ describe("enforce — W006 TSDoc parser syntax messages", () => {
 			documentation: {
 				summary: "Has parse errors.",
 				examples: [{ code: "badDoc();", language: "typescript", line: 5 }],
+				tags: { remarks: ["Details."] },
 				parseMessages: [
 					{
 						messageId: "tsdoc-param-tag-missing-hyphen",
@@ -1207,6 +1220,740 @@ describe("enforce — W006 TSDoc parser syntax messages", () => {
 		expect(w006).toHaveLength(1);
 		expect(w006[0].message).toContain("tsdoc-inline-tag-missing-braces");
 		expect(w006[0].symbolName).toBe("badMethod");
+	});
+});
+
+// ---------------------------------------------------------------------------
+// E013 — @remarks required on public functions/classes
+// ---------------------------------------------------------------------------
+
+describe("enforce — E013 missing @remarks", () => {
+	it("emits E013 for an exported function missing @remarks", async () => {
+		const sym = makeSymbol({
+			name: "doThing",
+			kind: "function",
+			documentation: {
+				summary: "Does a thing.",
+				examples: [{ code: "doThing();", language: "typescript", line: 5 }],
+			},
+		});
+		const result = await runEnforce([sym]);
+		const e013 = result.errors.filter((e) => e.code === "E013");
+		expect(e013).toHaveLength(1);
+		expect(e013[0].message).toContain("doThing");
+		expect(e013[0].message).toContain("function");
+		expect(e013[0].message).toContain("@remarks");
+	});
+
+	it("emits E013 for an exported class missing @remarks", async () => {
+		const sym = makeSymbol({
+			name: "MyService",
+			kind: "class",
+			documentation: {
+				summary: "A service.",
+			},
+		});
+		const result = await runEnforce([sym]);
+		const e013 = result.errors.filter((e) => e.code === "E013");
+		expect(e013).toHaveLength(1);
+		expect(e013[0].message).toContain("MyService");
+		expect(e013[0].message).toContain("class");
+	});
+
+	it("passes when an exported function has @remarks", async () => {
+		const sym = makeSymbol({
+			name: "doThing",
+			kind: "function",
+			documentation: {
+				summary: "Does a thing.",
+				examples: [{ code: "doThing();", language: "typescript", line: 5 }],
+				tags: { remarks: ["Detailed description of doThing."] },
+			},
+		});
+		const result = await runEnforce([sym]);
+		const e013 = result.errors.filter((e) => e.code === "E013");
+		expect(e013).toHaveLength(0);
+	});
+
+	it("does not emit E013 for interfaces", async () => {
+		const sym = makeSymbol({
+			name: "MyInterface",
+			kind: "interface",
+			documentation: { summary: "An interface." },
+		});
+		const result = await runEnforce([sym]);
+		const e013 = result.errors.filter((e) => e.code === "E013");
+		expect(e013).toHaveLength(0);
+	});
+
+	it("does not emit E013 for variables", async () => {
+		const sym = makeSymbol({
+			name: "MY_CONST",
+			kind: "variable",
+			documentation: { summary: "A constant." },
+		});
+		const result = await runEnforce([sym]);
+		const e013 = result.errors.filter((e) => e.code === "E013");
+		expect(e013).toHaveLength(0);
+	});
+
+	it("respects require-remarks set to 'off'", async () => {
+		const sym = makeSymbol({
+			name: "doThing",
+			kind: "function",
+			documentation: {
+				summary: "Does a thing.",
+				examples: [{ code: "doThing();", language: "typescript", line: 5 }],
+			},
+		});
+		const result = await runEnforce([sym], {
+			rules: { "require-remarks": "off" },
+		});
+		const e013 = result.errors.filter((e) => e.code === "E013");
+		expect(e013).toHaveLength(0);
+	});
+
+	it("respects require-remarks set to 'warn'", async () => {
+		const sym = makeSymbol({
+			name: "doThing",
+			kind: "function",
+			documentation: {
+				summary: "Does a thing.",
+				examples: [{ code: "doThing();", language: "typescript", line: 5 }],
+			},
+		});
+		const result = await runEnforce([sym], {
+			rules: { "require-remarks": "warn" },
+		});
+		const e013Warnings = result.warnings.filter((w) => w.code === "E013");
+		const e013Errors = result.errors.filter((e) => e.code === "E013");
+		expect(e013Warnings).toHaveLength(1);
+		expect(e013Errors).toHaveLength(0);
+	});
+
+	it("strict mode promotes E013 'warn' to error", async () => {
+		const sym = makeSymbol({
+			name: "doThing",
+			kind: "function",
+			documentation: {
+				summary: "Does a thing.",
+				examples: [{ code: "doThing();", language: "typescript", line: 5 }],
+			},
+		});
+		const result = await runEnforce([sym], {
+			strict: true,
+			rules: { "require-remarks": "warn" },
+		});
+		const e013Errors = result.errors.filter((e) => e.code === "E013");
+		expect(e013Errors).toHaveLength(1);
+		expect(result.warnings.filter((w) => w.code === "E013")).toHaveLength(0);
+	});
+
+	it("populates suggestedFix on E013 errors", async () => {
+		const sym = makeSymbol({
+			name: "doThing",
+			kind: "function",
+			documentation: {
+				summary: "Does a thing.",
+				examples: [{ code: "doThing();", language: "typescript", line: 5 }],
+			},
+		});
+		const result = await runEnforce([sym]);
+		const e013 = result.errors.find((e) => e.code === "E013");
+		expect(e013?.suggestedFix).toBeDefined();
+		expect(e013?.suggestedFix).toContain("@remarks");
+		expect(e013?.suggestedFix).toContain("doThing");
+		expect(e013?.symbolName).toBe("doThing");
+		expect(e013?.symbolKind).toBe("function");
+	});
+});
+
+// ---------------------------------------------------------------------------
+// E014 — @defaultValue on optional properties with defaults
+// ---------------------------------------------------------------------------
+
+describe("enforce — E014 missing @defaultValue on optional properties", () => {
+	it("emits E014 for an optional property missing @defaultValue", async () => {
+		const sym = makeSymbol({
+			name: "MyConfig",
+			kind: "interface",
+			documentation: { summary: "A config.", tags: { remarks: ["Details."] } },
+			children: [
+				makeSymbol({
+					name: "timeout",
+					kind: "property",
+					signature: "number | undefined",
+					documentation: { summary: "The timeout." },
+				}),
+			],
+		});
+		const result = await runEnforce([sym]);
+		const e014 = result.warnings.filter((w) => w.code === "E014");
+		expect(e014).toHaveLength(1);
+		expect(e014[0].message).toContain("timeout");
+		expect(e014[0].message).toContain("MyConfig");
+		expect(e014[0].message).toContain("@defaultValue");
+	});
+
+	it("passes when an optional property has @defaultValue", async () => {
+		const sym = makeSymbol({
+			name: "MyConfig",
+			kind: "interface",
+			documentation: { summary: "A config.", tags: { remarks: ["Details."] } },
+			children: [
+				makeSymbol({
+					name: "timeout",
+					kind: "property",
+					signature: "number | undefined",
+					documentation: {
+						summary: "The timeout.",
+						tags: { defaultValue: ["3000"] },
+					},
+				}),
+			],
+		});
+		const result = await runEnforce([sym]);
+		const e014Errors = result.errors.filter((e) => e.code === "E014");
+		const e014Warns = result.warnings.filter((w) => w.code === "E014");
+		expect(e014Errors).toHaveLength(0);
+		expect(e014Warns).toHaveLength(0);
+	});
+
+	it("does not emit E014 for required (non-optional) properties", async () => {
+		const sym = makeSymbol({
+			name: "MyConfig",
+			kind: "interface",
+			documentation: { summary: "A config.", tags: { remarks: ["Details."] } },
+			children: [
+				makeSymbol({
+					name: "name",
+					kind: "property",
+					signature: "string",
+					documentation: { summary: "The name." },
+				}),
+			],
+		});
+		const result = await runEnforce([sym]);
+		const e014 = [...result.errors, ...result.warnings].filter((d) => d.code === "E014");
+		expect(e014).toHaveLength(0);
+	});
+
+	it("does not emit E014 for function parameters (only interface/type children)", async () => {
+		const sym = makeSymbol({
+			name: "greet",
+			kind: "function",
+			signature: "(name?: string) => void",
+			documentation: {
+				summary: "Greets someone.",
+				params: [{ name: "name", description: "Name." }],
+				tags: { remarks: ["Details."] },
+				examples: [{ code: "greet();", language: "typescript", line: 5 }],
+			},
+		});
+		const result = await runEnforce([sym]);
+		const e014 = [...result.errors, ...result.warnings].filter((d) => d.code === "E014");
+		expect(e014).toHaveLength(0);
+	});
+
+	it("emits E014 for type alias children with optional properties", async () => {
+		const sym = makeSymbol({
+			name: "Options",
+			kind: "type",
+			documentation: { summary: "Options type." },
+			children: [
+				makeSymbol({
+					name: "verbose",
+					kind: "property",
+					signature: "boolean | undefined",
+					documentation: { summary: "Enable verbose mode." },
+				}),
+			],
+		});
+		const result = await runEnforce([sym]);
+		const e014 = result.warnings.filter((w) => w.code === "E014");
+		expect(e014).toHaveLength(1);
+		expect(e014[0].message).toContain("verbose");
+		expect(e014[0].message).toContain("Options");
+	});
+
+	it("respects require-default-value set to 'off'", async () => {
+		const sym = makeSymbol({
+			name: "MyConfig",
+			kind: "interface",
+			documentation: { summary: "A config.", tags: { remarks: ["Details."] } },
+			children: [
+				makeSymbol({
+					name: "timeout",
+					kind: "property",
+					signature: "number | undefined",
+					documentation: { summary: "The timeout." },
+				}),
+			],
+		});
+		const result = await runEnforce([sym], {
+			rules: { "require-default-value": "off" },
+		});
+		const e014 = [...result.errors, ...result.warnings].filter((d) => d.code === "E014");
+		expect(e014).toHaveLength(0);
+	});
+
+	it("respects require-default-value set to 'error'", async () => {
+		const sym = makeSymbol({
+			name: "MyConfig",
+			kind: "interface",
+			documentation: { summary: "A config.", tags: { remarks: ["Details."] } },
+			children: [
+				makeSymbol({
+					name: "timeout",
+					kind: "property",
+					signature: "number | undefined",
+					documentation: { summary: "The timeout." },
+				}),
+			],
+		});
+		const result = await runEnforce([sym], {
+			rules: { "require-default-value": "error" },
+		});
+		const e014Errors = result.errors.filter((e) => e.code === "E014");
+		expect(e014Errors).toHaveLength(1);
+		expect(result.warnings.filter((w) => w.code === "E014")).toHaveLength(0);
+	});
+
+	it("strict mode promotes E014 'warn' to error", async () => {
+		const sym = makeSymbol({
+			name: "MyConfig",
+			kind: "interface",
+			documentation: { summary: "A config.", tags: { remarks: ["Details."] } },
+			children: [
+				makeSymbol({
+					name: "timeout",
+					kind: "property",
+					signature: "number | undefined",
+					documentation: { summary: "The timeout." },
+				}),
+			],
+		});
+		const result = await runEnforce([sym], { strict: true });
+		const e014Errors = result.errors.filter((e) => e.code === "E014");
+		expect(e014Errors).toHaveLength(1);
+		expect(result.warnings.filter((w) => w.code === "E014")).toHaveLength(0);
+	});
+
+	it("populates suggestedFix on E014 diagnostics", async () => {
+		const sym = makeSymbol({
+			name: "MyConfig",
+			kind: "interface",
+			documentation: { summary: "A config.", tags: { remarks: ["Details."] } },
+			children: [
+				makeSymbol({
+					name: "timeout",
+					kind: "property",
+					signature: "number | undefined",
+					documentation: { summary: "The timeout." },
+				}),
+			],
+		});
+		const result = await runEnforce([sym]);
+		const e014 = result.warnings.find((w) => w.code === "E014");
+		expect(e014?.suggestedFix).toBeDefined();
+		expect(e014?.suggestedFix).toContain("@defaultValue");
+		expect(e014?.suggestedFix).toContain("timeout");
+		expect(e014?.symbolName).toBe("timeout");
+	});
+});
+
+// ---------------------------------------------------------------------------
+// E015 — @typeParam on generic symbols
+// ---------------------------------------------------------------------------
+
+describe("enforce — E015 missing @typeParam on generic symbols", () => {
+	it("emits E015 for a generic function missing @typeParam", async () => {
+		const sym = makeSymbol({
+			name: "identity",
+			kind: "function",
+			signature: "<T>(value: T) => T",
+			documentation: {
+				summary: "Returns the value.",
+				params: [{ name: "value", description: "The value." }],
+				returns: { description: "The same value." },
+				examples: [{ code: "identity(42);", language: "typescript", line: 5 }],
+				tags: { remarks: ["A detailed identity fn."] },
+			},
+		});
+		const result = await runEnforce([sym]);
+		const e015 = result.errors.filter((e) => e.code === "E015");
+		expect(e015).toHaveLength(1);
+		expect(e015[0].message).toContain("T");
+		expect(e015[0].message).toContain("identity");
+		expect(e015[0].message).toContain("@typeParam");
+	});
+
+	it("passes when all type params are documented", async () => {
+		const sym = makeSymbol({
+			name: "identity",
+			kind: "function",
+			signature: "<T>(value: T) => T",
+			documentation: {
+				summary: "Returns the value.",
+				params: [{ name: "value", description: "The value." }],
+				returns: { description: "The same value." },
+				examples: [{ code: "identity(42);", language: "typescript", line: 5 }],
+				tags: {
+					remarks: ["A detailed identity fn."],
+					typeParam: ["T - The type of value."],
+				},
+			},
+		});
+		const result = await runEnforce([sym]);
+		const e015 = result.errors.filter((e) => e.code === "E015");
+		expect(e015).toHaveLength(0);
+	});
+
+	it("emits E015 for each undocumented type param in multi-param generics", async () => {
+		const sym = makeSymbol({
+			name: "mapValues",
+			kind: "function",
+			signature: "<K, V>(map: Map<K, V>) => V[]",
+			documentation: {
+				summary: "Extracts values from a map.",
+				params: [{ name: "map", description: "The map." }],
+				returns: { description: "The values." },
+				examples: [{ code: "mapValues(new Map());", language: "typescript", line: 5 }],
+				tags: { remarks: ["Details."] },
+			},
+		});
+		const result = await runEnforce([sym]);
+		const e015 = result.errors.filter((e) => e.code === "E015");
+		expect(e015).toHaveLength(2);
+		const messages = e015.map((e) => e.message);
+		expect(messages.some((m) => m.includes('"K"'))).toBe(true);
+		expect(messages.some((m) => m.includes('"V"'))).toBe(true);
+	});
+
+	it("handles constrained type params like <T extends Foo>", async () => {
+		const sym = makeSymbol({
+			name: "process",
+			kind: "function",
+			signature: "<T extends Record<string, unknown>>(input: T) => T",
+			documentation: {
+				summary: "Processes input.",
+				params: [{ name: "input", description: "The input." }],
+				returns: { description: "Processed input." },
+				examples: [{ code: "process({});", language: "typescript", line: 5 }],
+				tags: { remarks: ["Details."] },
+			},
+		});
+		const result = await runEnforce([sym]);
+		const e015 = result.errors.filter((e) => e.code === "E015");
+		expect(e015).toHaveLength(1);
+		expect(e015[0].message).toContain('"T"');
+	});
+
+	it("does not emit E015 for non-generic functions", async () => {
+		const sym = makeSymbol({
+			name: "doThing",
+			kind: "function",
+			signature: "(name: string) => void",
+			documentation: {
+				summary: "Does a thing.",
+				params: [{ name: "name", description: "Name." }],
+				examples: [{ code: "doThing('hi');", language: "typescript", line: 5 }],
+				tags: { remarks: ["Details."] },
+			},
+		});
+		const result = await runEnforce([sym]);
+		const e015 = result.errors.filter((e) => e.code === "E015");
+		expect(e015).toHaveLength(0);
+	});
+
+	it("emits E015 for generic interfaces", async () => {
+		const sym = makeSymbol({
+			name: "Container",
+			kind: "interface",
+			signature: "<T>",
+			documentation: {
+				summary: "A container.",
+				tags: { remarks: ["Details."] },
+			},
+		});
+		const result = await runEnforce([sym]);
+		const e015 = result.errors.filter((e) => e.code === "E015");
+		expect(e015).toHaveLength(1);
+		expect(e015[0].message).toContain('"T"');
+		expect(e015[0].message).toContain("Container");
+	});
+
+	it("emits E015 for generic classes", async () => {
+		const sym = makeSymbol({
+			name: "Stack",
+			kind: "class",
+			signature: "<T>",
+			documentation: {
+				summary: "A stack.",
+				tags: { remarks: ["Details."] },
+			},
+		});
+		const result = await runEnforce([sym]);
+		const e015 = result.errors.filter((e) => e.code === "E015");
+		expect(e015).toHaveLength(1);
+		expect(e015[0].message).toContain('"T"');
+		expect(e015[0].message).toContain("Stack");
+	});
+
+	it("respects require-type-param set to 'off'", async () => {
+		const sym = makeSymbol({
+			name: "identity",
+			kind: "function",
+			signature: "<T>(value: T) => T",
+			documentation: {
+				summary: "Returns the value.",
+				params: [{ name: "value", description: "The value." }],
+				returns: { description: "The same value." },
+				examples: [{ code: "identity(42);", language: "typescript", line: 5 }],
+				tags: { remarks: ["Details."] },
+			},
+		});
+		const result = await runEnforce([sym], {
+			rules: { "require-type-param": "off" },
+		});
+		const e015 = result.errors.filter((e) => e.code === "E015");
+		expect(e015).toHaveLength(0);
+	});
+
+	it("respects require-type-param set to 'warn'", async () => {
+		const sym = makeSymbol({
+			name: "identity",
+			kind: "function",
+			signature: "<T>(value: T) => T",
+			documentation: {
+				summary: "Returns the value.",
+				params: [{ name: "value", description: "The value." }],
+				returns: { description: "The same value." },
+				examples: [{ code: "identity(42);", language: "typescript", line: 5 }],
+				tags: { remarks: ["Details."] },
+			},
+		});
+		const result = await runEnforce([sym], {
+			rules: { "require-type-param": "warn" },
+		});
+		const e015Warnings = result.warnings.filter((w) => w.code === "E015");
+		const e015Errors = result.errors.filter((e) => e.code === "E015");
+		expect(e015Warnings).toHaveLength(1);
+		expect(e015Errors).toHaveLength(0);
+	});
+
+	it("strict mode promotes E015 'warn' to error", async () => {
+		const sym = makeSymbol({
+			name: "identity",
+			kind: "function",
+			signature: "<T>(value: T) => T",
+			documentation: {
+				summary: "Returns the value.",
+				params: [{ name: "value", description: "The value." }],
+				returns: { description: "The same value." },
+				examples: [{ code: "identity(42);", language: "typescript", line: 5 }],
+				tags: { remarks: ["Details."] },
+			},
+		});
+		const result = await runEnforce([sym], {
+			strict: true,
+			rules: { "require-type-param": "warn" },
+		});
+		const e015Errors = result.errors.filter((e) => e.code === "E015");
+		expect(e015Errors).toHaveLength(1);
+		expect(result.warnings.filter((w) => w.code === "E015")).toHaveLength(0);
+	});
+
+	it("populates suggestedFix on E015 errors", async () => {
+		const sym = makeSymbol({
+			name: "identity",
+			kind: "function",
+			signature: "<T>(value: T) => T",
+			documentation: {
+				summary: "Returns the value.",
+				params: [{ name: "value", description: "The value." }],
+				returns: { description: "The same value." },
+				examples: [{ code: "identity(42);", language: "typescript", line: 5 }],
+				tags: { remarks: ["Details."] },
+			},
+		});
+		const result = await runEnforce([sym]);
+		const e015 = result.errors.find((e) => e.code === "E015");
+		expect(e015?.suggestedFix).toBeDefined();
+		expect(e015?.suggestedFix).toContain("@typeParam");
+		expect(e015?.suggestedFix).toContain("T");
+		expect(e015?.symbolName).toBe("identity");
+		expect(e015?.symbolKind).toBe("function");
+	});
+});
+
+// ---------------------------------------------------------------------------
+// W005 — @see for referenced symbols
+// ---------------------------------------------------------------------------
+
+describe("enforce — W005 missing @see for {@link} references", () => {
+	it("emits W005 when a symbol has {@link} references but no @see tags", async () => {
+		const sym = makeSymbol({
+			name: "doThing",
+			kind: "function",
+			documentation: {
+				summary: "Does a thing.",
+				examples: [{ code: "doThing();", language: "typescript", line: 5 }],
+				tags: { remarks: ["Details."] },
+				links: [{ target: "otherThing", line: 3 }],
+			},
+		});
+		const result = await runEnforce([sym]);
+		const w005 = result.warnings.filter((w) => w.code === "W005");
+		expect(w005).toHaveLength(1);
+		expect(w005[0].message).toContain("doThing");
+		expect(w005[0].message).toContain("{@link}");
+		expect(w005[0].message).toContain("@see");
+	});
+
+	it("does not emit W005 when the symbol has both {@link} and @see", async () => {
+		const sym = makeSymbol({
+			name: "doThing",
+			kind: "function",
+			documentation: {
+				summary: "Does a thing.",
+				examples: [{ code: "doThing();", language: "typescript", line: 5 }],
+				tags: { remarks: ["Details."], see: ["otherThing"] },
+				links: [{ target: "otherThing", line: 3 }],
+			},
+		});
+		const result = await runEnforce([sym]);
+		const w005 = result.warnings.filter((w) => w.code === "W005");
+		expect(w005).toHaveLength(0);
+	});
+
+	it("does not emit W005 when the symbol has no {@link} references", async () => {
+		const sym = makeSymbol({
+			name: "standalone",
+			kind: "function",
+			documentation: {
+				summary: "A standalone function.",
+				examples: [{ code: "standalone();", language: "typescript", line: 5 }],
+				tags: { remarks: ["Details."] },
+			},
+		});
+		const result = await runEnforce([sym]);
+		const w005 = result.warnings.filter((w) => w.code === "W005");
+		expect(w005).toHaveLength(0);
+	});
+
+	it("does not emit W005 when links is an empty array", async () => {
+		const sym = makeSymbol({
+			name: "standalone",
+			kind: "function",
+			documentation: {
+				summary: "A standalone function.",
+				examples: [{ code: "standalone();", language: "typescript", line: 5 }],
+				tags: { remarks: ["Details."] },
+				links: [],
+			},
+		});
+		const result = await runEnforce([sym]);
+		const w005 = result.warnings.filter((w) => w.code === "W005");
+		expect(w005).toHaveLength(0);
+	});
+
+	it("respects require-see set to 'off'", async () => {
+		const sym = makeSymbol({
+			name: "doThing",
+			kind: "function",
+			documentation: {
+				summary: "Does a thing.",
+				examples: [{ code: "doThing();", language: "typescript", line: 5 }],
+				tags: { remarks: ["Details."] },
+				links: [{ target: "otherThing", line: 3 }],
+			},
+		});
+		const result = await runEnforce([sym], {
+			rules: { "require-see": "off" },
+		});
+		const w005 = [...result.errors, ...result.warnings].filter((d) => d.code === "W005");
+		expect(w005).toHaveLength(0);
+	});
+
+	it("respects require-see set to 'error'", async () => {
+		const sym = makeSymbol({
+			name: "doThing",
+			kind: "function",
+			documentation: {
+				summary: "Does a thing.",
+				examples: [{ code: "doThing();", language: "typescript", line: 5 }],
+				tags: { remarks: ["Details."] },
+				links: [{ target: "otherThing", line: 3 }],
+			},
+		});
+		const result = await runEnforce([sym], {
+			rules: { "require-see": "error" },
+		});
+		const w005Errors = result.errors.filter((e) => e.code === "W005");
+		const w005Warnings = result.warnings.filter((w) => w.code === "W005");
+		expect(w005Errors).toHaveLength(1);
+		expect(w005Warnings).toHaveLength(0);
+		expect(result.success).toBe(false);
+	});
+
+	it("strict mode promotes W005 'warn' to error", async () => {
+		const sym = makeSymbol({
+			name: "doThing",
+			kind: "function",
+			documentation: {
+				summary: "Does a thing.",
+				examples: [{ code: "doThing();", language: "typescript", line: 5 }],
+				tags: { remarks: ["Details."] },
+				links: [{ target: "otherThing", line: 3 }],
+			},
+		});
+		const result = await runEnforce([sym], { strict: true });
+		const w005Errors = result.errors.filter((e) => e.code === "W005");
+		expect(w005Errors).toHaveLength(1);
+		expect(result.warnings.filter((w) => w.code === "W005")).toHaveLength(0);
+	});
+
+	it("W005 default severity is warn (success remains true)", async () => {
+		const sym = makeSymbol({
+			name: "doThing",
+			kind: "function",
+			documentation: {
+				summary: "Does a thing.",
+				examples: [{ code: "doThing();", language: "typescript", line: 5 }],
+				tags: { remarks: ["Details."] },
+				links: [{ target: "otherThing", line: 3 }],
+			},
+		});
+		// Add target symbol so E008 does not fire
+		const target = makeSymbol({
+			name: "otherThing",
+			kind: "variable",
+			documentation: { summary: "Another thing." },
+		});
+		const result = await runEnforce([sym, target]);
+		expect(result.success).toBe(true);
+		const w005 = result.warnings.filter((w) => w.code === "W005");
+		expect(w005).toHaveLength(1);
+	});
+
+	it("populates suggestedFix on W005 warnings", async () => {
+		const sym = makeSymbol({
+			name: "doThing",
+			kind: "function",
+			documentation: {
+				summary: "Does a thing.",
+				examples: [{ code: "doThing();", language: "typescript", line: 5 }],
+				tags: { remarks: ["Details."] },
+				links: [{ target: "otherThing", line: 3 }],
+			},
+		});
+		const result = await runEnforce([sym]);
+		const w005 = result.warnings.find((w) => w.code === "W005");
+		expect(w005?.suggestedFix).toBeDefined();
+		expect(w005?.suggestedFix).toContain("@see");
+		expect(w005?.symbolName).toBe("doThing");
+		expect(w005?.symbolKind).toBe("function");
 	});
 });
 
@@ -1432,6 +2179,7 @@ describe("enforce — W004 cross-package deprecated symbol usage", () => {
 				summary: "Old API.",
 				deprecated: "Use newApi instead.",
 				examples: [{ code: "oldApi();", language: "typescript", line: 5 }],
+				tags: { remarks: ["Details."] },
 			},
 		});
 		const consumingSymbol = makeSymbol({
@@ -1441,6 +2189,7 @@ describe("enforce — W004 cross-package deprecated symbol usage", () => {
 				summary: "Uses the old API.",
 				examples: [{ code: "consumer();", language: "typescript", line: 5 }],
 				links: [{ target: "oldApi", line: 5 }],
+				tags: { remarks: ["Details."], see: ["oldApi"] },
 			},
 		});
 		const result = await runEnforce([deprecatedSymbol, consumingSymbol]);

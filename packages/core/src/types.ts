@@ -80,6 +80,14 @@ export interface EnforceRules {
 	"require-interface-member-doc": RuleSeverity;
 	/** W006: TSDoc syntax parse error (invalid tag, malformed block, etc.). */
 	"require-tsdoc-syntax": RuleSeverity;
+	/** E013: Exported function/class is missing a @remarks block. */
+	"require-remarks": RuleSeverity;
+	/** E014: Optional property with default is missing @defaultValue. */
+	"require-default-value": RuleSeverity;
+	/** E015: Generic symbol is missing @typeParam for its type parameters. */
+	"require-type-param": RuleSeverity;
+	/** W005: Symbol references other symbols via {@link} but has no @see tags. */
+	"require-see": RuleSeverity;
 }
 
 /**

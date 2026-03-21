@@ -88,6 +88,8 @@ export interface EnforceRules {
 	"require-type-param": RuleSeverity;
 	/** W005: Symbol references other symbols via {@link} but has no @see tags. */
 	"require-see": RuleSeverity;
+	/** E016: Exported symbol is missing a release tag (@public, @beta, @internal). */
+	"require-release-tag": RuleSeverity;
 	/** W007: Guide FORGE:AUTO section references a symbol that no longer exists or has changed. */
 	"require-fresh-guides": RuleSeverity;
 	/** W008: Exported public symbol is not mentioned in any guide page. */

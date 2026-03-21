@@ -39,6 +39,7 @@ export function defaultConfig(rootDir: string): ForgeConfig {
 				"require-default-value": "warn",
 				"require-type-param": "error",
 				"require-see": "warn",
+				"require-release-tag": "error",
 				"require-fresh-guides": "warn",
 				"require-guide-coverage": "warn",
 			},
@@ -134,6 +135,7 @@ const KNOWN_RULE_KEYS = new Set([
 	"require-default-value",
 	"require-type-param",
 	"require-see",
+	"require-release-tag",
 	"require-fresh-guides",
 	"require-guide-coverage",
 ]);

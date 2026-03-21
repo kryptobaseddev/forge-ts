@@ -192,6 +192,72 @@ function isOptionalProperty(child: ForgeSymbol): boolean {
 	return false;
 }
 
+/**
+ * Extracts a flat map of biome rule names to their configured level
+ * from a parsed biome.json structure.
+ * Walks `linter.rules.<group>.<ruleName>` and normalises both string
+ * and object (`{ level: "error" }`) forms.
+ * @internal
+ */
+function extractBiomeRules(biome: Record<string, unknown>): Record<string, string> {
+	const result: Record<string, string> = {};
+	const linter = biome.linter as Record<string, unknown> | undefined;
+	if (!linter) return result;
+	const rules = linter.rules as Record<string, unknown> | undefined;
+	if (!rules) return result;
+	for (const [group, groupRules] of Object.entries(rules)) {
+		if (
+			group === "recommended" ||
+			group === "all" ||
+			typeof groupRules !== "object" ||
+			groupRules === null
+		)
+			continue;
+		for (const [ruleName, ruleValue] of Object.entries(groupRules as Record<string, unknown>)) {
+			const fullName = `${group}/${ruleName}`;
+			if (typeof ruleValue === "string") {
+				result[fullName] = ruleValue;
+			} else if (typeof ruleValue === "object" && ruleValue !== null && "level" in ruleValue) {
+				result[fullName] = String((ruleValue as Record<string, unknown>).level);
+			}
+		}
+	}
+	return result;
+}
+
+/**
+ * Returns `true` when `current` is a weaker biome level than `locked`.
+ * Ranking: error > warn > off.
+ * @internal
+ */
+function isWeakerBiomeLevel(current: string, locked: string): boolean {
+	const rank: Record<string, number> = { off: 0, warn: 1, error: 2 };
+	const currentRank = rank[current] ?? 0;
+	const lockedRank = rank[locked] ?? 0;
+	return currentRank < lockedRank;
+}
+
+/**
+ * Extracts major.minor from a semver-like string.
+ * Handles patterns like ">=22.0.0", "^22.0.0", "~22.0.0", "22.0.0", "22.0".
+ * @internal
+ */
+function parseSemverMajorMinor(version: string): [number, number] | null {
+	const match = version.match(/(\d+)\.(\d+)/);
+	if (!match) return null;
+	return [Number(match[1]), Number(match[2])];
+}
+
+/**
+ * Compares two [major, minor] tuples.
+ * Returns negative if a < b, 0 if equal, positive if a > b.
+ * @internal
+ */
+function compareMajorMinor(a: [number, number], b: [number, number]): number {
+	if (a[0] !== b[0]) return a[0] - b[0];
+	return a[1] - b[1];
+}
+
 // ---------------------------------------------------------------------------
 // Rule map
 // ---------------------------------------------------------------------------
@@ -213,6 +279,7 @@ const RULE_MAP: Record<string, keyof EnforceRules> = {
 	E014: "require-default-value",
 	E015: "require-type-param",
 	W005: "require-see",
+	E016: "require-release-tag",
 	W007: "require-fresh-guides",
 	W008: "require-guide-coverage",
 };
@@ -505,6 +572,28 @@ export async function enforce(config: ForgeConfig): Promise<ForgeResult> {
 			}
 		}
 
+		// E016 — Missing release tag on exported symbols
+		{
+			const releaseTags = ["public", "beta", "internal", "alpha"];
+			const hasReleaseTag = releaseTags.some(
+				(tag) => symbol.documentation?.tags?.[tag] !== undefined,
+			);
+			if (!hasReleaseTag) {
+				emit(
+					"E016",
+					`Exported symbol "${symbol.name}" is missing a release tag (@public, @beta, or @internal).`,
+					symbol.filePath,
+					symbol.line,
+					symbol.column,
+					{
+						suggestedFix: "@public",
+						symbolName: symbol.name,
+						symbolKind: symbol.kind,
+					},
+				);
+			}
+		}
+
 		// W003 — @deprecated without reason
 		if (deprecatedWithoutReason(symbol)) {
 			emit(
@@ -729,6 +818,158 @@ export async function enforce(config: ForgeConfig): Promise<ForgeResult> {
 					line: 1,
 					column: 0,
 				});
+			}
+		}
+	}
+
+	// E011 — Biome config weakening detection
+	const e011Bypassed = isRuleBypassed(config.rootDir, "E011");
+	if (config.guards.biome.enabled && lockManifest?.config.biome) {
+		const biomePath = join(config.rootDir, "biome.json");
+		const biomePathC = join(config.rootDir, "biome.jsonc");
+		const actualBiomePath = existsSync(biomePath)
+			? biomePath
+			: existsSync(biomePathC)
+				? biomePathC
+				: null;
+		if (actualBiomePath) {
+			try {
+				const biomeRaw = readFileSync(actualBiomePath, "utf-8");
+				let biomeParsed: Record<string, unknown>;
+				try {
+					biomeParsed = JSON.parse(biomeRaw) as Record<string, unknown>;
+				} catch {
+					// Biome file exists but is invalid JSON/JSONC — emit one E011
+					const diag = {
+						code: "E011",
+						message: `Biome config "${actualBiomePath}": failed to parse — file may contain invalid JSON.`,
+						filePath: actualBiomePath,
+						line: 1,
+						column: 0,
+					};
+					if (e011Bypassed) {
+						warnings.push({ ...diag, message: `[BYPASSED] ${diag.message}` });
+					} else {
+						errors.push(diag);
+					}
+					biomeParsed = undefined as unknown as Record<string, unknown>;
+				}
+				if (biomeParsed) {
+					// Extract current biome rules from linter.rules
+					const currentBiomeRules = extractBiomeRules(biomeParsed);
+					// Compare against locked biome rules snapshot
+					const lockedBiomeRules =
+						(lockManifest.config.biome as { rules?: Record<string, string> }).rules ?? {};
+					for (const [ruleName, lockedLevel] of Object.entries(lockedBiomeRules)) {
+						const currentLevel = currentBiomeRules[ruleName] ?? "off";
+						if (isWeakerBiomeLevel(currentLevel, lockedLevel)) {
+							const diag = {
+								code: "E011",
+								message: `Biome rule "${ruleName}" was weakened from "${lockedLevel}" to "${currentLevel}".`,
+								filePath: actualBiomePath,
+								line: 1,
+								column: 0,
+							};
+							if (e011Bypassed) {
+								warnings.push({ ...diag, message: `[BYPASSED] ${diag.message}` });
+							} else {
+								errors.push(diag);
+							}
+						}
+					}
+				}
+			} catch (readErr) {
+				// biome.json not found after existsSync — skip
+				if (
+					readErr instanceof Error &&
+					"code" in readErr &&
+					(readErr as NodeJS.ErrnoException).code === "ENOENT"
+				) {
+					// Intentionally ignored
+				} else {
+					throw readErr;
+				}
+			}
+		}
+	}
+
+	// E012 — package.json engine field tampering
+	const e012Bypassed = isRuleBypassed(config.rootDir, "E012");
+	if (config.guards.packageJson.enabled) {
+		const pkgJsonPath = join(config.rootDir, "package.json");
+		try {
+			const pkgRaw = readFileSync(pkgJsonPath, "utf-8");
+			const pkg = JSON.parse(pkgRaw) as Record<string, unknown>;
+
+			// Check required fields
+			for (const field of config.guards.packageJson.requiredFields) {
+				if (pkg[field] === undefined) {
+					const diag = {
+						code: "E012",
+						message: `package.json: required field "${field}" is missing.`,
+						filePath: pkgJsonPath,
+						line: 1,
+						column: 0,
+					};
+					if (e012Bypassed) {
+						warnings.push({ ...diag, message: `[BYPASSED] ${diag.message}` });
+					} else {
+						errors.push(diag);
+					}
+				}
+			}
+
+			// Check engines.node against minNodeVersion
+			const engines = pkg.engines as Record<string, string> | undefined;
+			const nodeEngine = engines?.node;
+			if (!nodeEngine) {
+				// Only emit if "engines" is in requiredFields (missing engines already caught above)
+				// But also check specifically for missing engines.node
+				if (engines !== undefined) {
+					const diag = {
+						code: "E012",
+						message: `package.json: "engines.node" field is missing.`,
+						filePath: pkgJsonPath,
+						line: 1,
+						column: 0,
+					};
+					if (e012Bypassed) {
+						warnings.push({ ...diag, message: `[BYPASSED] ${diag.message}` });
+					} else {
+						errors.push(diag);
+					}
+				}
+			} else {
+				// Simple semver comparison: extract major.minor from the engines string
+				const minVersion = parseSemverMajorMinor(config.guards.packageJson.minNodeVersion);
+				const engineVersion = parseSemverMajorMinor(nodeEngine);
+				if (minVersion && engineVersion && compareMajorMinor(engineVersion, minVersion) < 0) {
+					const diag = {
+						code: "E012",
+						message: `package.json: "engines.node" specifies "${nodeEngine}" which is lower than the minimum required "${config.guards.packageJson.minNodeVersion}".`,
+						filePath: pkgJsonPath,
+						line: 1,
+						column: 0,
+					};
+					if (e012Bypassed) {
+						warnings.push({ ...diag, message: `[BYPASSED] ${diag.message}` });
+					} else {
+						errors.push(diag);
+					}
+				}
+			}
+		} catch (readErr) {
+			// package.json not found — skip
+			if (
+				readErr instanceof Error &&
+				"code" in readErr &&
+				(readErr as NodeJS.ErrnoException).code === "ENOENT"
+			) {
+				// Intentionally ignored
+			} else if (readErr instanceof SyntaxError) {
+				// Invalid JSON — skip gracefully
+			} else {
+				throw readErr;
 			}
 		}
 	}

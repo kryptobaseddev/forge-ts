@@ -12,6 +12,8 @@
  *   forge-ts bypass --reason="..." [--rule E009]
  *   forge-ts bypass --status
  *   forge-ts audit [--limit N] [--type <eventType>]
+ *   forge-ts init hooks [--cwd <dir>] [--force]
+ *   forge-ts prepublish [--cwd <dir>] [--strict]
  *
  * @packageDocumentation
  * @public
@@ -25,7 +27,9 @@ import { bypassCommand } from "./commands/bypass.js";
 import { checkCommand } from "./commands/check.js";
 import { docsDevCommand } from "./commands/docs-dev.js";
 import { initDocsCommand } from "./commands/init-docs.js";
+import { initHooksCommand } from "./commands/init-hooks.js";
 import { lockCommand } from "./commands/lock.js";
+import { prepublishCommand } from "./commands/prepublish.js";
 import { testCommand } from "./commands/test.js";
 import { unlockCommand } from "./commands/unlock.js";
 
@@ -56,7 +60,18 @@ export {
 	type InitDocsResult,
 	initDocsCommand,
 } from "./commands/init-docs.js";
+export {
+	type HookManager,
+	type InitHooksResult,
+	initHooksCommand,
+	runInitHooks,
+} from "./commands/init-hooks.js";
 export { type LockResult, lockCommand, runLock } from "./commands/lock.js";
+export {
+	type PrepublishResult,
+	prepublishCommand,
+	runPrepublish,
+} from "./commands/prepublish.js";
 export { type TestFailure, type TestResult, testCommand } from "./commands/test.js";
 export { runUnlock, type UnlockResult, unlockCommand } from "./commands/unlock.js";
 export { createLogger, type Logger } from "./logger.js";
@@ -90,6 +105,27 @@ const docsCommand = defineCommand({
 	},
 });
 
+/**
+ * The `init` parent command with `docs` and `hooks` subcommands.
+ *
+ * @example
+ * ```typescript
+ * // forge-ts init docs --target mintlify
+ * // forge-ts init hooks
+ * ```
+ * @public
+ */
+const initCommand = defineCommand({
+	meta: {
+		name: "init",
+		description: "Scaffold project artefacts",
+	},
+	subCommands: {
+		docs: initDocsCommand,
+		hooks: initHooksCommand,
+	},
+});
+
 const main = defineCommand({
 	meta: {
 		name: "forge-ts",
@@ -101,10 +137,12 @@ const main = defineCommand({
 		test: testCommand,
 		build: buildCommand,
 		docs: docsCommand,
+		init: initCommand,
 		lock: lockCommand,
 		unlock: unlockCommand,
 		bypass: bypassCommand,
 		audit: auditCommand,
+		prepublish: prepublishCommand,
 	},
 });
 

@@ -28,6 +28,7 @@ const DEFAULT_RULES: EnforceRules = {
 	"require-default-value": "warn",
 	"require-type-param": "error",
 	"require-see": "warn",
+	"require-release-tag": "error",
 	"require-fresh-guides": "warn",
 	"require-guide-coverage": "warn",
 };
@@ -39,6 +40,13 @@ const DEFAULT_RULES: EnforceRules = {
  */
 function makeConfig(overrides?: Partial<ForgeConfig["enforce"]>): ForgeConfig {
 	const { rules: ruleOverrides, ...restOverrides } = overrides ?? {};
+	// Default require-release-tag to "off" in tests so E016 does not interfere
+	// with unrelated test suites.  E016-specific tests explicitly enable it.
+	const testRules: EnforceRules = {
+		...DEFAULT_RULES,
+		"require-release-tag": "off",
+		...ruleOverrides,
+	};
 	return {
 		rootDir: "/fake",
 		tsconfig: "/fake/tsconfig.json",
@@ -47,7 +55,7 @@ function makeConfig(overrides?: Partial<ForgeConfig["enforce"]>): ForgeConfig {
 			enabled: true,
 			minVisibility: Visibility.Public,
 			strict: false,
-			rules: { ...DEFAULT_RULES, ...ruleOverrides },
+			rules: testRules,
 			...restOverrides,
 		},
 		doctest: { enabled: false, cacheDir: "/fake/.cache" },
@@ -955,6 +963,7 @@ describe("enforce — per-rule configuration", () => {
 		expect(DEFAULT_RULES["require-default-value"]).toBe("warn");
 		expect(DEFAULT_RULES["require-type-param"]).toBe("error");
 		expect(DEFAULT_RULES["require-see"]).toBe("warn");
+		expect(DEFAULT_RULES["require-release-tag"]).toBe("error");
 		expect(DEFAULT_RULES["require-fresh-guides"]).toBe("warn");
 		expect(DEFAULT_RULES["require-guide-coverage"]).toBe("warn");
 	});
@@ -2920,5 +2929,710 @@ describe("enforce — W008 undocumented public symbol in guides", () => {
 		const names = w008.map((w) => w.message);
 		expect(names.some((m) => m.includes("funcB"))).toBe(true);
 		expect(names.some((m) => m.includes("funcC"))).toBe(true);
+	});
+});
+
+// ---------------------------------------------------------------------------
+// E011 — Biome config weakening detection
+// ---------------------------------------------------------------------------
+
+describe("enforce — E011 Biome config weakening detection", () => {
+	afterEach(() => {
+		vi.mocked(readFileSync).mockRestore();
+		vi.mocked(existsSync).mockRestore();
+	});
+
+	/** Helper to build a valid ForgeLockManifest JSON string with biome rules. */
+	function makeLockJsonWithBiome(biomeRules: Record<string, string>): string {
+		return JSON.stringify({
+			version: "1.0.0",
+			lockedAt: "2026-03-20T00:00:00.000Z",
+			lockedBy: "test",
+			config: {
+				rules: {},
+				biome: {
+					enabled: true,
+					lockedRules: Object.keys(biomeRules),
+					rules: biomeRules,
+				},
+			},
+		});
+	}
+
+	/** Helper to build a biome.json string. */
+	function makeBiomeJson(rules: Record<string, Record<string, string>>): string {
+		return JSON.stringify({
+			linter: {
+				rules: Object.fromEntries(
+					Object.entries(rules).map(([group, groupRules]) => [group, groupRules]),
+				),
+			},
+		});
+	}
+
+	/** Set up fs mocks for lock file + biome.json. */
+	function mockBiomeAndLock(lockJson: string, biomeJson: string): void {
+		vi.mocked(existsSync).mockImplementation((filePath: unknown) => {
+			const p = String(filePath);
+			if (p.endsWith(".forge-lock.json")) return true;
+			if (p.endsWith("biome.json")) return true;
+			return false;
+		});
+		vi.mocked(readFileSync).mockImplementation((filePath: unknown) => {
+			const p = String(filePath);
+			if (p.endsWith(".forge-lock.json")) return lockJson;
+			if (p.endsWith("biome.json")) return biomeJson;
+			throw Object.assign(new Error("ENOENT"), { code: "ENOENT" });
+		});
+	}
+
+	it("emits E011 when a biome rule is weakened from error to warn", async () => {
+		const lockJson = makeLockJsonWithBiome({ "style/noVar": "error" });
+		const biomeJson = makeBiomeJson({ style: { noVar: "warn" } });
+		mockBiomeAndLock(lockJson, biomeJson);
+		const result = await runEnforceWithConfig([], {
+			guards: { biome: { enabled: true, lockedRules: ["style/noVar"] } },
+		});
+		const e011 = result.errors.filter((e) => e.code === "E011");
+		expect(e011).toHaveLength(1);
+		expect(e011[0].message).toContain("style/noVar");
+		expect(e011[0].message).toContain('"error"');
+		expect(e011[0].message).toContain('"warn"');
+	});
+
+	it("emits E011 when a biome rule is weakened from error to off", async () => {
+		const lockJson = makeLockJsonWithBiome({ "style/noVar": "error" });
+		const biomeJson = makeBiomeJson({ style: { noVar: "off" } });
+		mockBiomeAndLock(lockJson, biomeJson);
+		const result = await runEnforceWithConfig([], {
+			guards: { biome: { enabled: true, lockedRules: ["style/noVar"] } },
+		});
+		const e011 = result.errors.filter((e) => e.code === "E011");
+		expect(e011).toHaveLength(1);
+		expect(e011[0].message).toContain('"error"');
+		expect(e011[0].message).toContain('"off"');
+	});
+
+	it("emits E011 when a biome rule is weakened from warn to off", async () => {
+		const lockJson = makeLockJsonWithBiome({ "correctness/noUnusedVariables": "warn" });
+		const biomeJson = makeBiomeJson({ correctness: { noUnusedVariables: "off" } });
+		mockBiomeAndLock(lockJson, biomeJson);
+		const result = await runEnforceWithConfig([], {
+			guards: { biome: { enabled: true, lockedRules: ["correctness/noUnusedVariables"] } },
+		});
+		const e011 = result.errors.filter((e) => e.code === "E011");
+		expect(e011).toHaveLength(1);
+		expect(e011[0].message).toContain('"warn"');
+		expect(e011[0].message).toContain('"off"');
+	});
+
+	it("does NOT emit E011 when biome rule stays the same", async () => {
+		const lockJson = makeLockJsonWithBiome({ "style/noVar": "error" });
+		const biomeJson = makeBiomeJson({ style: { noVar: "error" } });
+		mockBiomeAndLock(lockJson, biomeJson);
+		const result = await runEnforceWithConfig([], {
+			guards: { biome: { enabled: true, lockedRules: ["style/noVar"] } },
+		});
+		const e011 = result.errors.filter((e) => e.code === "E011");
+		expect(e011).toHaveLength(0);
+	});
+
+	it("does NOT emit E011 when biome rule is strengthened", async () => {
+		const lockJson = makeLockJsonWithBiome({ "style/noVar": "warn" });
+		const biomeJson = makeBiomeJson({ style: { noVar: "error" } });
+		mockBiomeAndLock(lockJson, biomeJson);
+		const result = await runEnforceWithConfig([], {
+			guards: { biome: { enabled: true, lockedRules: ["style/noVar"] } },
+		});
+		const e011 = result.errors.filter((e) => e.code === "E011");
+		expect(e011).toHaveLength(0);
+	});
+
+	it("emits E011 when a locked rule is missing from current biome.json (treated as off)", async () => {
+		const lockJson = makeLockJsonWithBiome({ "style/noVar": "error" });
+		// biome.json has no style rules at all
+		const biomeJson = makeBiomeJson({});
+		mockBiomeAndLock(lockJson, biomeJson);
+		const result = await runEnforceWithConfig([], {
+			guards: { biome: { enabled: true, lockedRules: ["style/noVar"] } },
+		});
+		const e011 = result.errors.filter((e) => e.code === "E011");
+		expect(e011).toHaveLength(1);
+		expect(e011[0].message).toContain('"off"');
+	});
+
+	it("emits E011 for multiple weakened rules", async () => {
+		const lockJson = makeLockJsonWithBiome({
+			"style/noVar": "error",
+			"correctness/noUnusedVariables": "error",
+		});
+		const biomeJson = makeBiomeJson({
+			style: { noVar: "warn" },
+			correctness: { noUnusedVariables: "off" },
+		});
+		mockBiomeAndLock(lockJson, biomeJson);
+		const result = await runEnforceWithConfig([], {
+			guards: {
+				biome: { enabled: true, lockedRules: ["style/noVar", "correctness/noUnusedVariables"] },
+			},
+		});
+		const e011 = result.errors.filter((e) => e.code === "E011");
+		expect(e011).toHaveLength(2);
+	});
+
+	it("skips E011 when guards.biome.enabled is false", async () => {
+		const lockJson = makeLockJsonWithBiome({ "style/noVar": "error" });
+		const biomeJson = makeBiomeJson({ style: { noVar: "off" } });
+		mockBiomeAndLock(lockJson, biomeJson);
+		const result = await runEnforceWithConfig([], {
+			guards: { biome: { enabled: false, lockedRules: [] } },
+		});
+		const e011 = result.errors.filter((e) => e.code === "E011");
+		expect(e011).toHaveLength(0);
+	});
+
+	it("skips E011 when no lock file exists", async () => {
+		vi.mocked(existsSync).mockImplementation((filePath: unknown) => {
+			const p = String(filePath);
+			if (p.endsWith("biome.json")) return true;
+			return false;
+		});
+		vi.mocked(readFileSync).mockImplementation((filePath: unknown) => {
+			const p = String(filePath);
+			if (p.endsWith("biome.json")) return makeBiomeJson({ style: { noVar: "off" } });
+			throw Object.assign(new Error("ENOENT"), { code: "ENOENT" });
+		});
+		const result = await runEnforceWithConfig([], {
+			guards: { biome: { enabled: true, lockedRules: ["style/noVar"] } },
+		});
+		const e011 = result.errors.filter((e) => e.code === "E011");
+		expect(e011).toHaveLength(0);
+	});
+
+	it("skips E011 when biome.json does not exist", async () => {
+		const lockJson = makeLockJsonWithBiome({ "style/noVar": "error" });
+		vi.mocked(existsSync).mockImplementation((filePath: unknown) => {
+			const p = String(filePath);
+			if (p.endsWith(".forge-lock.json")) return true;
+			return false;
+		});
+		vi.mocked(readFileSync).mockImplementation((filePath: unknown) => {
+			const p = String(filePath);
+			if (p.endsWith(".forge-lock.json")) return lockJson;
+			throw Object.assign(new Error("ENOENT"), { code: "ENOENT" });
+		});
+		const result = await runEnforceWithConfig([], {
+			guards: { biome: { enabled: true, lockedRules: ["style/noVar"] } },
+		});
+		const e011 = result.errors.filter((e) => e.code === "E011");
+		expect(e011).toHaveLength(0);
+	});
+
+	it("emits E011 when biome.json contains invalid JSON", async () => {
+		const lockJson = makeLockJsonWithBiome({ "style/noVar": "error" });
+		vi.mocked(existsSync).mockImplementation((filePath: unknown) => {
+			const p = String(filePath);
+			if (p.endsWith(".forge-lock.json")) return true;
+			if (p.endsWith("biome.json")) return true;
+			return false;
+		});
+		vi.mocked(readFileSync).mockImplementation((filePath: unknown) => {
+			const p = String(filePath);
+			if (p.endsWith(".forge-lock.json")) return lockJson;
+			if (p.endsWith("biome.json")) return "{ not valid json";
+			throw Object.assign(new Error("ENOENT"), { code: "ENOENT" });
+		});
+		const result = await runEnforceWithConfig([], {
+			guards: { biome: { enabled: true, lockedRules: ["style/noVar"] } },
+		});
+		const e011 = result.errors.filter((e) => e.code === "E011");
+		expect(e011).toHaveLength(1);
+		expect(e011[0].message).toContain("failed to parse");
+	});
+
+	it("E011 is always an error (not in RULE_MAP)", async () => {
+		const lockJson = makeLockJsonWithBiome({ "style/noVar": "error" });
+		const biomeJson = makeBiomeJson({ style: { noVar: "off" } });
+		mockBiomeAndLock(lockJson, biomeJson);
+		const result = await runEnforceWithConfig([], {
+			guards: { biome: { enabled: true, lockedRules: ["style/noVar"] } },
+		});
+		expect(result.success).toBe(false);
+		const e011Errors = result.errors.filter((e) => e.code === "E011");
+		const e011Warnings = result.warnings.filter((w) => w.code === "E011");
+		expect(e011Errors).toHaveLength(1);
+		expect(e011Warnings).toHaveLength(0);
+	});
+});
+
+// ---------------------------------------------------------------------------
+// E012 — package.json engine field tampering
+// ---------------------------------------------------------------------------
+
+describe("enforce — E012 package.json engine field tampering", () => {
+	afterEach(() => {
+		vi.mocked(readFileSync).mockRestore();
+		vi.mocked(existsSync).mockRestore();
+	});
+
+	/** Set up fs mocks for package.json. */
+	function mockPackageJson(pkg: Record<string, unknown>): void {
+		vi.mocked(existsSync).mockReturnValue(false);
+		vi.mocked(readFileSync).mockImplementation((filePath: unknown) => {
+			const p = String(filePath);
+			if (p.endsWith("package.json")) return JSON.stringify(pkg);
+			throw Object.assign(new Error("ENOENT"), { code: "ENOENT" });
+		});
+	}
+
+	it("passes when package.json has all required fields and correct engine version", async () => {
+		mockPackageJson({
+			type: "module",
+			engines: { node: ">=22.0.0" },
+		});
+		const result = await runEnforceWithConfig([], {
+			guards: {
+				packageJson: {
+					enabled: true,
+					minNodeVersion: "22.0.0",
+					requiredFields: ["type", "engines"],
+				},
+			},
+		});
+		const e012 = result.errors.filter((e) => e.code === "E012");
+		expect(e012).toHaveLength(0);
+	});
+
+	it("emits E012 when a required field is missing from package.json", async () => {
+		mockPackageJson({
+			engines: { node: ">=22.0.0" },
+		});
+		const result = await runEnforceWithConfig([], {
+			guards: {
+				packageJson: {
+					enabled: true,
+					minNodeVersion: "22.0.0",
+					requiredFields: ["type", "engines"],
+				},
+			},
+		});
+		const e012 = result.errors.filter((e) => e.code === "E012");
+		expect(e012).toHaveLength(1);
+		expect(e012[0].message).toContain('"type"');
+		expect(e012[0].message).toContain("missing");
+	});
+
+	it("emits E012 for multiple missing required fields", async () => {
+		mockPackageJson({});
+		const result = await runEnforceWithConfig([], {
+			guards: {
+				packageJson: {
+					enabled: true,
+					minNodeVersion: "22.0.0",
+					requiredFields: ["type", "engines"],
+				},
+			},
+		});
+		const e012 = result.errors.filter((e) => e.code === "E012");
+		// "type" missing + "engines" missing
+		expect(e012).toHaveLength(2);
+	});
+
+	it("emits E012 when engines.node specifies a version lower than minNodeVersion", async () => {
+		mockPackageJson({
+			type: "module",
+			engines: { node: ">=18.0.0" },
+		});
+		const result = await runEnforceWithConfig([], {
+			guards: {
+				packageJson: {
+					enabled: true,
+					minNodeVersion: "22.0.0",
+					requiredFields: ["type", "engines"],
+				},
+			},
+		});
+		const e012 = result.errors.filter((e) => e.code === "E012");
+		expect(e012).toHaveLength(1);
+		expect(e012[0].message).toContain('"engines.node"');
+		expect(e012[0].message).toContain(">=18.0.0");
+		expect(e012[0].message).toContain("22.0.0");
+	});
+
+	it("passes when engines.node version equals minNodeVersion", async () => {
+		mockPackageJson({
+			type: "module",
+			engines: { node: ">=22.0.0" },
+		});
+		const result = await runEnforceWithConfig([], {
+			guards: {
+				packageJson: {
+					enabled: true,
+					minNodeVersion: "22.0.0",
+					requiredFields: ["type", "engines"],
+				},
+			},
+		});
+		const e012 = result.errors.filter((e) => e.code === "E012");
+		expect(e012).toHaveLength(0);
+	});
+
+	it("passes when engines.node version is higher than minNodeVersion", async () => {
+		mockPackageJson({
+			type: "module",
+			engines: { node: ">=24.0.0" },
+		});
+		const result = await runEnforceWithConfig([], {
+			guards: {
+				packageJson: {
+					enabled: true,
+					minNodeVersion: "22.0.0",
+					requiredFields: ["type", "engines"],
+				},
+			},
+		});
+		const e012 = result.errors.filter((e) => e.code === "E012");
+		expect(e012).toHaveLength(0);
+	});
+
+	it("emits E012 when engines exists but engines.node is missing", async () => {
+		mockPackageJson({
+			type: "module",
+			engines: { pnpm: ">=9.0.0" },
+		});
+		const result = await runEnforceWithConfig([], {
+			guards: {
+				packageJson: {
+					enabled: true,
+					minNodeVersion: "22.0.0",
+					requiredFields: ["type", "engines"],
+				},
+			},
+		});
+		const e012 = result.errors.filter((e) => e.code === "E012");
+		expect(e012).toHaveLength(1);
+		expect(e012[0].message).toContain('"engines.node"');
+		expect(e012[0].message).toContain("missing");
+	});
+
+	it("skips E012 when guards.packageJson.enabled is false", async () => {
+		mockPackageJson({});
+		const result = await runEnforceWithConfig([], {
+			guards: {
+				packageJson: {
+					enabled: false,
+					minNodeVersion: "22.0.0",
+					requiredFields: ["type", "engines"],
+				},
+			},
+		});
+		const e012 = result.errors.filter((e) => e.code === "E012");
+		expect(e012).toHaveLength(0);
+	});
+
+	it("skips E012 gracefully when package.json does not exist", async () => {
+		vi.mocked(existsSync).mockReturnValue(false);
+		vi.mocked(readFileSync).mockImplementation(() => {
+			throw Object.assign(new Error("ENOENT"), { code: "ENOENT" });
+		});
+		const result = await runEnforceWithConfig([], {
+			guards: {
+				packageJson: {
+					enabled: true,
+					minNodeVersion: "22.0.0",
+					requiredFields: ["type", "engines"],
+				},
+			},
+		});
+		const e012 = result.errors.filter((e) => e.code === "E012");
+		expect(e012).toHaveLength(0);
+	});
+
+	it("E012 is always an error (not in RULE_MAP)", async () => {
+		mockPackageJson({});
+		const result = await runEnforceWithConfig([], {
+			guards: {
+				packageJson: {
+					enabled: true,
+					minNodeVersion: "22.0.0",
+					requiredFields: ["type"],
+				},
+			},
+		});
+		expect(result.success).toBe(false);
+		const e012Errors = result.errors.filter((e) => e.code === "E012");
+		const e012Warnings = result.warnings.filter((w) => w.code === "E012");
+		expect(e012Errors).toHaveLength(1);
+		expect(e012Warnings).toHaveLength(0);
+	});
+
+	it("handles caret version ranges like ^22.0.0", async () => {
+		mockPackageJson({
+			type: "module",
+			engines: { node: "^18.0.0" },
+		});
+		const result = await runEnforceWithConfig([], {
+			guards: {
+				packageJson: {
+					enabled: true,
+					minNodeVersion: "22.0.0",
+					requiredFields: ["type", "engines"],
+				},
+			},
+		});
+		const e012 = result.errors.filter((e) => e.code === "E012");
+		expect(e012).toHaveLength(1);
+		expect(e012[0].message).toContain("lower than");
+	});
+
+	it("handles tilde version ranges like ~22.0.0", async () => {
+		mockPackageJson({
+			type: "module",
+			engines: { node: "~22.0.0" },
+		});
+		const result = await runEnforceWithConfig([], {
+			guards: {
+				packageJson: {
+					enabled: true,
+					minNodeVersion: "22.0.0",
+					requiredFields: ["type", "engines"],
+				},
+			},
+		});
+		const e012 = result.errors.filter((e) => e.code === "E012");
+		expect(e012).toHaveLength(0);
+	});
+});
+
+// ---------------------------------------------------------------------------
+// E016 — Release tag required on public symbols
+// ---------------------------------------------------------------------------
+
+describe("enforce — E016 release tag required on public symbols", () => {
+	it("emits E016 for an exported symbol with no release tag", async () => {
+		const sym = makeSymbol({
+			name: "doThing",
+			kind: "function",
+			documentation: {
+				summary: "Does a thing.",
+				examples: [{ code: "doThing();", language: "typescript", line: 5 }],
+				tags: { remarks: ["Details."] },
+			},
+		});
+		const result = await runEnforce([sym], {
+			rules: { "require-release-tag": "error" },
+		});
+		const e016 = result.errors.filter((e) => e.code === "E016");
+		expect(e016).toHaveLength(1);
+		expect(e016[0].message).toContain("doThing");
+		expect(e016[0].message).toContain("release tag");
+		expect(e016[0].message).toContain("@public");
+	});
+
+	it("passes when an exported symbol has @public", async () => {
+		const sym = makeSymbol({
+			name: "doThing",
+			kind: "function",
+			documentation: {
+				summary: "Does a thing.",
+				examples: [{ code: "doThing();", language: "typescript", line: 5 }],
+				tags: { remarks: ["Details."], public: [""] },
+			},
+		});
+		const result = await runEnforce([sym], {
+			rules: { "require-release-tag": "error" },
+		});
+		const e016 = result.errors.filter((e) => e.code === "E016");
+		expect(e016).toHaveLength(0);
+	});
+
+	it("passes when an exported symbol has @beta", async () => {
+		const sym = makeSymbol({
+			name: "doThing",
+			kind: "function",
+			documentation: {
+				summary: "Does a thing.",
+				examples: [{ code: "doThing();", language: "typescript", line: 5 }],
+				tags: { remarks: ["Details."], beta: [""] },
+			},
+		});
+		const result = await runEnforce([sym], {
+			rules: { "require-release-tag": "error" },
+		});
+		const e016 = result.errors.filter((e) => e.code === "E016");
+		expect(e016).toHaveLength(0);
+	});
+
+	it("passes when an exported symbol has @internal", async () => {
+		const sym = makeSymbol({
+			name: "doThing",
+			kind: "function",
+			documentation: {
+				summary: "Does a thing.",
+				examples: [{ code: "doThing();", language: "typescript", line: 5 }],
+				tags: { remarks: ["Details."], internal: [""] },
+			},
+		});
+		const result = await runEnforce([sym], {
+			rules: { "require-release-tag": "error" },
+		});
+		const e016 = result.errors.filter((e) => e.code === "E016");
+		expect(e016).toHaveLength(0);
+	});
+
+	it("passes when an exported symbol has @alpha", async () => {
+		const sym = makeSymbol({
+			name: "doThing",
+			kind: "function",
+			documentation: {
+				summary: "Does a thing.",
+				examples: [{ code: "doThing();", language: "typescript", line: 5 }],
+				tags: { remarks: ["Details."], alpha: [""] },
+			},
+		});
+		const result = await runEnforce([sym], {
+			rules: { "require-release-tag": "error" },
+		});
+		const e016 = result.errors.filter((e) => e.code === "E016");
+		expect(e016).toHaveLength(0);
+	});
+
+	it("emits E016 for a symbol with no documentation at all", async () => {
+		const sym = makeSymbol({
+			name: "naked",
+			kind: "variable",
+			documentation: undefined,
+		});
+		const result = await runEnforce([sym], {
+			rules: { "require-release-tag": "error" },
+		});
+		const e016 = result.errors.filter((e) => e.code === "E016");
+		expect(e016).toHaveLength(1);
+		expect(e016[0].message).toContain("naked");
+	});
+
+	it("emits E016 for a symbol with documentation but no tags at all", async () => {
+		const sym = makeSymbol({
+			name: "partialDoc",
+			kind: "function",
+			documentation: {
+				summary: "Has a summary but no tags.",
+			},
+		});
+		const result = await runEnforce([sym], {
+			rules: { "require-release-tag": "error" },
+		});
+		const e016 = result.errors.filter((e) => e.code === "E016");
+		expect(e016).toHaveLength(1);
+	});
+
+	it("does not emit E016 for non-exported symbols", async () => {
+		const sym = makeSymbol({
+			name: "internalHelper",
+			kind: "function",
+			exported: false,
+			documentation: {
+				summary: "Not exported.",
+			},
+		});
+		const result = await runEnforce([sym], {
+			rules: { "require-release-tag": "error" },
+		});
+		const e016 = result.errors.filter((e) => e.code === "E016");
+		expect(e016).toHaveLength(0);
+	});
+
+	it('respects require-release-tag set to "off"', async () => {
+		const sym = makeSymbol({
+			name: "noTag",
+			kind: "function",
+			documentation: {
+				summary: "No release tag.",
+				examples: [{ code: "noTag();", language: "typescript", line: 5 }],
+				tags: { remarks: ["Details."] },
+			},
+		});
+		const result = await runEnforce([sym], {
+			rules: { "require-release-tag": "off" },
+		});
+		const e016 = [...result.errors, ...result.warnings].filter((d) => d.code === "E016");
+		expect(e016).toHaveLength(0);
+	});
+
+	it('respects require-release-tag set to "warn"', async () => {
+		const sym = makeSymbol({
+			name: "noTag",
+			kind: "function",
+			documentation: {
+				summary: "No release tag.",
+				examples: [{ code: "noTag();", language: "typescript", line: 5 }],
+				tags: { remarks: ["Details."] },
+			},
+		});
+		const result = await runEnforce([sym], {
+			rules: { "require-release-tag": "warn" },
+		});
+		const e016Warnings = result.warnings.filter((w) => w.code === "E016");
+		const e016Errors = result.errors.filter((e) => e.code === "E016");
+		expect(e016Warnings).toHaveLength(1);
+		expect(e016Errors).toHaveLength(0);
+	});
+
+	it("strict mode promotes E016 'warn' to error", async () => {
+		const sym = makeSymbol({
+			name: "noTag",
+			kind: "function",
+			documentation: {
+				summary: "No release tag.",
+				examples: [{ code: "noTag();", language: "typescript", line: 5 }],
+				tags: { remarks: ["Details."] },
+			},
+		});
+		const result = await runEnforce([sym], {
+			strict: true,
+			rules: { "require-release-tag": "warn" },
+		});
+		const e016Errors = result.errors.filter((e) => e.code === "E016");
+		expect(e016Errors).toHaveLength(1);
+		expect(result.warnings.filter((w) => w.code === "E016")).toHaveLength(0);
+	});
+
+	it("populates suggestedFix on E016 errors", async () => {
+		const sym = makeSymbol({
+			name: "doThing",
+			kind: "function",
+			documentation: {
+				summary: "Does a thing.",
+				examples: [{ code: "doThing();", language: "typescript", line: 5 }],
+				tags: { remarks: ["Details."] },
+			},
+		});
+		const result = await runEnforce([sym], {
+			rules: { "require-release-tag": "error" },
+		});
+		const e016 = result.errors.find((e) => e.code === "E016");
+		expect(e016?.suggestedFix).toBe("@public");
+		expect(e016?.symbolName).toBe("doThing");
+		expect(e016?.symbolKind).toBe("function");
+	});
+
+	it("works for all symbol kinds (class, interface, type, enum, variable)", async () => {
+		const kinds = ["class", "interface", "type", "enum", "variable"] as const;
+		for (const kind of kinds) {
+			const sym = makeSymbol({
+				name: `My${kind}`,
+				kind,
+				documentation: {
+					summary: `A ${kind}.`,
+					tags: { remarks: ["Details."] },
+				},
+			});
+			const result = await runEnforce([sym], {
+				rules: { "require-release-tag": "error" },
+			});
+			const e016 = result.errors.filter((e) => e.code === "E016");
+			expect(e016.length).toBeGreaterThanOrEqual(1);
+			expect(e016.some((e) => e.message.includes(`My${kind}`))).toBe(true);
+		}
 	});
 });

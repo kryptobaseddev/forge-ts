@@ -12,6 +12,7 @@
 import matter from "gray-matter";
 import remarkFrontmatter from "remark-frontmatter";
 import remarkGfm from "remark-gfm";
+import remarkMdx from "remark-mdx";
 import remarkParse from "remark-parse";
 import { unified } from "unified";
 import { SKIP, visit } from "unist-util-visit";
@@ -63,6 +64,27 @@ interface AutoSection {
  */
 function createParser() {
 	return unified().use(remarkParse).use(remarkGfm).use(remarkFrontmatter, ["yaml"]);
+}
+
+/**
+ * Create an MDX-aware parser for processing existing MDX files.
+ * Falls back to the standard parser if MDX parsing fails (e.g., malformed content).
+ */
+function createMdxParser() {
+	return unified().use(remarkParse).use(remarkMdx).use(remarkGfm).use(remarkFrontmatter, ["yaml"]);
+}
+
+/**
+ * Get protected ranges, trying MDX-aware parsing first for robustness
+ * with existing MDX files that may contain JSX expressions.
+ */
+function getProtectedRangesSafe(content: string): SourceRange[] {
+	try {
+		return getProtectedRangesFromTree(createMdxParser().parse(content));
+	} catch {
+		// Fallback to standard parser if MDX parsing fails
+		return getProtectedRangesFromTree(createParser().parse(content));
+	}
 }
 
 // ---------------------------------------------------------------------------
@@ -127,14 +149,14 @@ export function stripFrontmatter(content: string): string {
 // ---------------------------------------------------------------------------
 
 /**
- * Get all source ranges that are "protected" — content inside these ranges
- * must not be transformed during sanitization or marker detection.
- *
+ * Extract protected ranges from a parsed tree.
  * Protected ranges include: fenced code blocks, indented code blocks,
- * inline code spans, and YAML frontmatter.
+ * inline code spans, and YAML frontmatter. Content inside these ranges
+ * must not be transformed during sanitization or marker detection.
  */
-function getProtectedRanges(content: string): SourceRange[] {
-	const tree = createParser().parse(content);
+function getProtectedRangesFromTree(
+	tree: ReturnType<ReturnType<typeof createParser>["parse"]>,
+): SourceRange[] {
 	const ranges: SourceRange[] = [];
 
 	visit(tree, (node) => {
@@ -267,7 +289,7 @@ export function sanitizeForMdx(content: string): string {
  * markers appearing inside code are never matched.
  */
 function findAutoSections(content: string): Map<string, AutoSection> {
-	const protectedRanges = getProtectedRanges(content);
+	const protectedRanges = getProtectedRangesSafe(content);
 
 	// Collect all marker positions (both HTML and MDX comment formats)
 	const markers: Array<{ type: "start" | "end"; id: string; offset: number; length: number }> = [];

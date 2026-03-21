@@ -1,6 +1,19 @@
 import { basename, relative } from "node:path";
 import type { ForgeConfig, ForgeSymbol } from "@forge-ts/core";
 import { stringifyWithFrontmatter } from "./markdown-utils.js";
+import {
+	type MdBlock,
+	type MdListItem,
+	type MdPhrasing,
+	type MdTableRow,
+	md,
+	serializeMarkdown,
+	slugLink,
+	textListItem,
+	textP,
+	toAnchor,
+	truncate,
+} from "./mdast-builders.js";
 
 /**
  * A single generated documentation page.
@@ -44,20 +57,6 @@ export interface SiteGeneratorOptions {
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
-
-/** Convert a label to a GitHub-compatible anchor slug. */
-function toAnchor(text: string): string {
-	return text
-		.toLowerCase()
-		.replace(/[^a-z0-9\s-]/g, "")
-		.trim()
-		.replace(/\s+/g, "-");
-}
-
-/** Escape pipe characters for use inside Markdown table cells. */
-function escapePipe(text: string): string {
-	return text.replace(/\|/g, "\\|");
-}
 
 /**
  * Escape MDX-unsafe characters in text that appears outside code fences.
@@ -139,25 +138,6 @@ function buildFrontmatterFields(
 	}
 }
 
-/**
- * Strip `.md` or `.mdx` extension from a link path and normalise leading `./`.
- * Produces bare slug links compatible with Mintlify and most other SSGs.
- * @internal
- */
-function slugLink(path: string): string {
-	// Remove leading ./ if present
-	let slug = path.startsWith("./") ? path.slice(2) : path;
-	// Remove .md / .mdx extension
-	slug = slug.replace(/\.(mdx?)$/, "");
-	return `/${slug}`;
-}
-
-/** Truncate a description to at most maxLen chars. */
-function truncate(text: string, maxLen = 80): string {
-	if (text.length <= maxLen) return text;
-	return `${text.slice(0, maxLen - 3)}...`;
-}
-
 // ---------------------------------------------------------------------------
 // Package grouping
 // ---------------------------------------------------------------------------
@@ -222,40 +202,53 @@ function renderProjectIndexPage(
 	symbolsByPackage: Map<string, ForgeSymbol[]>,
 	options: SiteGeneratorOptions,
 ): string {
-	const lines: string[] = [];
+	const nodes: MdBlock[] = [];
 
 	// Intro — no h1, frontmatter title handles the heading
 	if (options.projectDescription) {
-		lines.push(`**${options.projectName}** — ${options.projectDescription}`);
+		nodes.push(
+			md.paragraph(
+				md.strong(md.text(options.projectName)),
+				md.text(` — ${options.projectDescription}`),
+			),
+		);
 	} else {
-		lines.push(
-			`**${options.projectName}** is a TypeScript documentation toolkit that performs a single AST traversal of your project and produces API docs, OpenAPI specs, executable doctests, and AI context files in one pass.`,
+		nodes.push(
+			md.paragraph(
+				md.strong(md.text(options.projectName)),
+				md.text(
+					" is a TypeScript documentation toolkit that performs a single AST traversal of your project and produces API docs, OpenAPI specs, executable doctests, and AI context files in one pass.",
+				),
+			),
 		);
 	}
-	lines.push("");
 
 	// Features section
-	lines.push("## Features");
-	lines.push("");
+	nodes.push(md.heading(2, md.text("Features")));
 
 	const pkgCount = symbolsByPackage.size;
+	const featureItems: MdListItem[] = [];
 	if (pkgCount > 1) {
-		lines.push(`- ${pkgCount} packages with full TypeScript support`);
+		featureItems.push(textListItem(`${pkgCount} packages with full TypeScript support`));
 	} else {
-		lines.push("- Full TypeScript support with TSDoc extraction");
+		featureItems.push(textListItem("Full TypeScript support with TSDoc extraction"));
 	}
-	lines.push("- Auto-generated API reference from source code");
-	lines.push("- Executable `@example` blocks as doctests");
-	lines.push("- AI-ready context files from a single build pass");
-	lines.push("");
+	featureItems.push(textListItem("Auto-generated API reference from source code"));
+	featureItems.push(
+		md.listItem(
+			md.paragraph(
+				md.text("Executable "),
+				md.inlineCode("@example"),
+				md.text(" blocks as doctests"),
+			),
+		),
+	);
+	featureItems.push(textListItem("AI-ready context files from a single build pass"));
+	nodes.push(md.list(featureItems));
 
 	// Installation section
-	lines.push("## Installation");
-	lines.push("");
-	lines.push("```bash");
-	lines.push(`npm install -D ${options.packageName ?? "@forge-ts/cli"}`);
-	lines.push("```");
-	lines.push("");
+	nodes.push(md.heading(2, md.text("Installation")));
+	nodes.push(md.code("bash", `npm install -D ${options.packageName ?? "@forge-ts/cli"}`));
 
 	// Quick Example — first @example from any exported function
 	let firstExample: { code: string; language: string } | undefined;
@@ -271,20 +264,19 @@ function renderProjectIndexPage(
 	}
 
 	if (firstExample) {
-		lines.push("## Quick Example");
-		lines.push("");
-		lines.push(`\`\`\`${firstExample.language || "typescript"}`);
-		lines.push(firstExample.code.trim());
-		lines.push("```");
-		lines.push("");
+		nodes.push(md.heading(2, md.text("Quick Example")));
+		nodes.push(md.code(firstExample.language || "typescript", firstExample.code.trim()));
 	}
 
 	// Packages table
 	if (symbolsByPackage.size > 0) {
-		lines.push("## Packages");
-		lines.push("");
-		lines.push("| Package | Description |");
-		lines.push("|---------|-------------|");
+		nodes.push(md.heading(2, md.text("Packages")));
+
+		const headerRow = md.tableRow(
+			md.tableCell(md.text("Package")),
+			md.tableCell(md.text("Description")),
+		);
+		const dataRows: MdTableRow[] = [];
 		for (const [pkgName, symbols] of symbolsByPackage) {
 			const pkgDoc = symbols
 				.map((s) => s.documentation?.tags?.packageDocumentation?.[0])
@@ -293,21 +285,40 @@ function renderProjectIndexPage(
 				(s) => s.exported && s.kind !== "method" && s.kind !== "property",
 			);
 			const rawDesc = pkgDoc ?? `${exported.length} exported symbol(s).`;
-			const desc = escapePipe(truncate(rawDesc));
-			const link = `[\`${pkgName}\`](${slugLink(`packages/${pkgName}/index`)})`;
-			lines.push(`| ${link} | ${desc} |`);
+			const desc = truncate(rawDesc);
+			dataRows.push(
+				md.tableRow(
+					md.tableCell(md.link(slugLink(`packages/${pkgName}/index`), md.inlineCode(pkgName))),
+					md.tableCell(md.text(desc)),
+				),
+			);
 		}
-		lines.push("");
+		nodes.push(md.table(null, headerRow, ...dataRows));
 	}
 
 	// Next Steps
-	lines.push("## Next Steps");
-	lines.push("");
-	lines.push(`- [Getting Started](/getting-started) — Step-by-step guide`);
-	lines.push(`- [API Reference](/packages) — Full API documentation`);
-	lines.push(`- [Concepts](/concepts) — How it works`);
+	nodes.push(md.heading(2, md.text("Next Steps")));
+	nodes.push(
+		md.list([
+			md.listItem(
+				md.paragraph(
+					md.link("/getting-started", md.text("Getting Started")),
+					md.text(" — Step-by-step guide"),
+				),
+			),
+			md.listItem(
+				md.paragraph(
+					md.link("/packages", md.text("API Reference")),
+					md.text(" — Full API documentation"),
+				),
+			),
+			md.listItem(
+				md.paragraph(md.link("/concepts", md.text("Concepts")), md.text(" — How it works")),
+			),
+		]),
+	);
 
-	return lines.join("\n");
+	return serializeMarkdown(md.root(...nodes));
 }
 
 // ---------------------------------------------------------------------------
@@ -336,86 +347,89 @@ function renderGettingStartedPage(
 		}
 	}
 
-	const lines: string[] = [];
+	const nodes: MdBlock[] = [];
 
 	// No h1 — frontmatter title handles the heading
-	lines.push(`Get up and running with **${options.projectName}** in minutes.`);
+	nodes.push(
+		md.paragraph(
+			md.text("Get up and running with "),
+			md.strong(md.text(options.projectName)),
+			md.text(" in minutes."),
+		),
+	);
 
 	if (options.projectDescription) {
-		lines.push("");
-		lines.push(options.projectDescription);
+		nodes.push(textP(options.projectDescription));
 	}
 
-	lines.push("");
-	lines.push("## Step 1: Install");
-	lines.push("");
-	lines.push("```bash");
-	lines.push(`npm install -D ${options.packageName ?? "@forge-ts/cli"}`);
-	lines.push("```");
-	lines.push("");
+	nodes.push(md.heading(2, md.text("Step 1: Install")));
+	nodes.push(md.code("bash", `npm install -D ${options.packageName ?? "@forge-ts/cli"}`));
 
-	lines.push("## Step 2: Add TSDoc to your code");
-	lines.push("");
-	lines.push("Add TSDoc comments to your exported functions and types:");
-	lines.push("");
-	lines.push("```typescript");
-	lines.push("/**");
-	lines.push(" * Adds two numbers together.");
-	lines.push(" * @param a - First number");
-	lines.push(" * @param b - Second number");
-	lines.push(" * @returns The sum of a and b");
-	lines.push(" * @example");
-	lines.push(" * ```typescript");
-	lines.push(" * const result = add(1, 2); // => 3");
-	lines.push(" * ```");
-	lines.push(" */");
-	lines.push("export function add(a: number, b: number): number {");
-	lines.push("  return a + b;");
-	lines.push("}");
-	lines.push("```");
-	lines.push("");
+	nodes.push(md.heading(2, md.text("Step 2: Add TSDoc to your code")));
+	nodes.push(textP("Add TSDoc comments to your exported functions and types:"));
+	nodes.push(
+		md.code(
+			"typescript",
+			[
+				"/**",
+				" * Adds two numbers together.",
+				" * @param a - First number",
+				" * @param b - Second number",
+				" * @returns The sum of a and b",
+				" * @example",
+				" * ```typescript",
+				" * const result = add(1, 2); // => 3",
+				" * ```",
+				" */",
+				"export function add(a: number, b: number): number {",
+				"  return a + b;",
+				"}",
+			].join("\n"),
+		),
+	);
 
-	lines.push("## Step 3: Run forge-ts check");
-	lines.push("");
-	lines.push("Lint your TSDoc coverage before generating docs:");
-	lines.push("");
-	lines.push("```bash");
-	lines.push("npx forge-ts check");
-	lines.push("```");
-	lines.push("");
-	lines.push("Expected output:");
-	lines.push("");
-	lines.push("```");
-	lines.push("forge-ts: checking TSDoc coverage...");
-	lines.push("  ✓ All public symbols documented");
-	lines.push("```");
-	lines.push("");
+	nodes.push(md.heading(2, md.text("Step 3: Run forge-ts check")));
+	nodes.push(textP("Lint your TSDoc coverage before generating docs:"));
+	nodes.push(md.code("bash", "npx forge-ts check"));
+	nodes.push(textP("Expected output:"));
+	nodes.push(
+		md.code(
+			"",
+			["forge-ts: checking TSDoc coverage...", "  \u2713 All public symbols documented"].join("\n"),
+		),
+	);
 
-	lines.push("## Step 4: Generate docs");
-	lines.push("");
-	lines.push("Build your documentation site:");
-	lines.push("");
-	lines.push("```bash");
-	lines.push("npx forge-ts build");
-	lines.push("```");
-	lines.push("");
+	nodes.push(md.heading(2, md.text("Step 4: Generate docs")));
+	nodes.push(textP("Build your documentation site:"));
+	nodes.push(md.code("bash", "npx forge-ts build"));
 
 	if (firstExample) {
-		lines.push("Your code examples become live documentation:");
-		lines.push("");
-		lines.push(`\`\`\`${firstExample.language || "typescript"}`);
-		lines.push(firstExample.code.trim());
-		lines.push("```");
-		lines.push("");
+		nodes.push(textP("Your code examples become live documentation:"));
+		nodes.push(md.code(firstExample.language || "typescript", firstExample.code.trim()));
 	}
 
-	lines.push("## What's Next?");
-	lines.push("");
-	lines.push("- [Concepts](/concepts) — Understand how forge-ts works");
-	lines.push("- [API Reference](/packages) — Full API documentation");
-	lines.push("- [Guides](/guides) — Practical how-to guides");
+	nodes.push(md.heading(2, md.text("What's Next?")));
+	nodes.push(
+		md.list([
+			md.listItem(
+				md.paragraph(
+					md.link("/concepts", md.text("Concepts")),
+					md.text(" — Understand how forge-ts works"),
+				),
+			),
+			md.listItem(
+				md.paragraph(
+					md.link("/packages", md.text("API Reference")),
+					md.text(" — Full API documentation"),
+				),
+			),
+			md.listItem(
+				md.paragraph(md.link("/guides", md.text("Guides")), md.text(" — Practical how-to guides")),
+			),
+		]),
+	);
 
-	return lines.join("\n");
+	return serializeMarkdown(md.root(...nodes));
 }
 
 // ---------------------------------------------------------------------------
@@ -430,34 +444,39 @@ function renderConceptsPage(
 	symbolsByPackage: Map<string, ForgeSymbol[]>,
 	options: SiteGeneratorOptions,
 ): string {
-	const lines: string[] = [];
+	const nodes: MdBlock[] = [];
 
-	lines.push(`This page explains the core concepts behind **${options.projectName}**.`);
-	lines.push("");
-	lines.push(
-		"> This is a stub page. Edit this file to add your project's conceptual documentation.",
+	nodes.push(
+		md.paragraph(
+			md.text("This page explains the core concepts behind "),
+			md.strong(md.text(options.projectName)),
+			md.text("."),
+		),
 	);
-	lines.push("> Auto-generated sections below (inside FORGE:AUTO markers) update on every build.");
-	lines.push("");
+	nodes.push(
+		md.blockquote(
+			textP("This is a stub page. Edit this file to add your project's conceptual documentation."),
+			textP("Auto-generated sections below (inside FORGE:AUTO markers) update on every build."),
+		),
+	);
 
 	// Auto-enriched section: How It Works — regenerated even in existing stubs
 	const pkgDoc = [...symbolsByPackage.values()]
 		.flatMap((syms) => syms.map((s) => s.documentation?.tags?.packageDocumentation?.[0]))
 		.find(Boolean);
 
-	lines.push("<!-- FORGE:AUTO-START how-it-works -->");
-	lines.push("## How It Works");
-	lines.push("");
+	nodes.push(md.html("<!-- FORGE:AUTO-START how-it-works -->"));
+	nodes.push(md.heading(2, md.text("How It Works")));
 	if (pkgDoc) {
-		lines.push(pkgDoc);
+		nodes.push(textP(pkgDoc));
 	} else {
-		lines.push(
-			`${options.projectName} processes your TypeScript source with a single AST traversal, extracting TSDoc comments and type information to generate documentation.`,
+		nodes.push(
+			textP(
+				`${options.projectName} processes your TypeScript source with a single AST traversal, extracting TSDoc comments and type information to generate documentation.`,
+			),
 		);
 	}
-	lines.push("");
-	lines.push("<!-- FORGE:AUTO-END how-it-works -->");
-	lines.push("");
+	nodes.push(md.html("<!-- FORGE:AUTO-END how-it-works -->"));
 
 	// Auto-enriched section: Key Abstractions — regenerated even in existing stubs
 	const allTypeSymbols = [...symbolsByPackage.values()]
@@ -465,19 +484,20 @@ function renderConceptsPage(
 		.filter((s) => s.exported && TYPE_KINDS.has(s.kind));
 
 	if (allTypeSymbols.length > 0) {
-		lines.push("<!-- FORGE:AUTO-START key-abstractions -->");
-		lines.push("## Key Abstractions");
-		lines.push("");
+		nodes.push(md.html("<!-- FORGE:AUTO-START key-abstractions -->"));
+		nodes.push(md.heading(2, md.text("Key Abstractions")));
+		const items: MdListItem[] = [];
 		for (const s of allTypeSymbols) {
 			const desc = s.documentation?.summary ?? `The \`${s.name}\` ${s.kind}.`;
-			lines.push(`- **\`${s.name}\`** — ${desc}`);
+			items.push(
+				md.listItem(md.paragraph(md.strong(md.inlineCode(s.name)), md.text(` — ${desc}`))),
+			);
 		}
-		lines.push("");
-		lines.push("<!-- FORGE:AUTO-END key-abstractions -->");
-		lines.push("");
+		nodes.push(md.list(items));
+		nodes.push(md.html("<!-- FORGE:AUTO-END key-abstractions -->"));
 	}
 
-	return lines.join("\n");
+	return serializeMarkdown(md.root(...nodes));
 }
 
 // ---------------------------------------------------------------------------
@@ -489,16 +509,24 @@ function renderConceptsPage(
  * @internal
  */
 function renderGuidesIndexPage(): string {
-	return [
-		"Practical how-to guides for common tasks.",
-		"",
-		"> Add your guides to the `guides/` directory. Each `.md` or `.mdx` file will appear here automatically.",
-		"",
-		"## Getting Things Done",
-		"",
-		"Guides will appear here as you add them. Start by creating a file like `guides/my-guide.md`.",
-		"",
-	].join("\n");
+	const nodes: MdBlock[] = [];
+
+	nodes.push(textP("Practical how-to guides for common tasks."));
+	nodes.push(
+		md.blockquote(
+			textP(
+				"Add your guides to the `guides/` directory. Each `.md` or `.mdx` file will appear here automatically.",
+			),
+		),
+	);
+	nodes.push(md.heading(2, md.text("Getting Things Done")));
+	nodes.push(
+		textP(
+			"Guides will appear here as you add them. Start by creating a file like `guides/my-guide.md`.",
+		),
+	);
+
+	return serializeMarkdown(md.root(...nodes));
 }
 
 // ---------------------------------------------------------------------------
@@ -518,40 +546,54 @@ function renderApiIndexPage(pkgName: string, symbols: ForgeSymbol[]): string {
 	const types = exported.filter((s) => TYPE_KINDS.has(s.kind));
 	const others = exported.filter((s) => !FUNCTION_KINDS.has(s.kind) && !TYPE_KINDS.has(s.kind));
 
-	const lines: string[] = [];
+	const nodes: MdBlock[] = [];
 
 	// Find @packageDocumentation summary
 	const pkgDoc = symbols.map((s) => s.documentation?.tags?.packageDocumentation?.[0]).find(Boolean);
 	if (pkgDoc) {
-		lines.push(pkgDoc);
-		lines.push("");
+		nodes.push(textP(pkgDoc));
 	} else {
-		lines.push(`API reference for the \`${pkgName}\` package.`);
-		lines.push("");
+		nodes.push(
+			md.paragraph(md.text("API reference for the "), md.inlineCode(pkgName), md.text(" package.")),
+		);
 	}
 
 	const renderGroup = (group: ForgeSymbol[], heading: string, pathSuffix: string) => {
 		if (group.length === 0) return;
-		lines.push(`## ${heading}`);
-		lines.push("");
-		lines.push("| Symbol | Kind | Description |");
-		lines.push("|--------|------|-------------|");
+		nodes.push(md.heading(2, md.text(heading)));
+
+		const headerRow = md.tableRow(
+			md.tableCell(md.text("Symbol")),
+			md.tableCell(md.text("Kind")),
+			md.tableCell(md.text("Description")),
+		);
+		const dataRows: MdTableRow[] = [];
 		for (const s of group) {
 			const ext = s.kind === "function" ? "()" : "";
 			const anchor = toAnchor(`${s.name}${ext}`);
-			const link = `[\`${s.name}${ext}\`](${slugLink(`packages/${pkgName}/${pathSuffix}`)}#${anchor})`;
 			const rawSummary = s.documentation?.summary ?? "";
-			const summary = escapePipe(truncate(rawSummary));
-			lines.push(`| ${link} | ${s.kind} | ${summary} |`);
+			const summary = truncate(rawSummary);
+			dataRows.push(
+				md.tableRow(
+					md.tableCell(
+						md.link(
+							`${slugLink(`packages/${pkgName}/${pathSuffix}`)}#${anchor}`,
+							md.inlineCode(`${s.name}${ext}`),
+						),
+					),
+					md.tableCell(md.text(s.kind)),
+					md.tableCell(md.text(summary)),
+				),
+			);
 		}
-		lines.push("");
+		nodes.push(md.table(null, headerRow, ...dataRows));
 	};
 
 	renderGroup(functions, "Functions & Classes", "api/functions");
 	renderGroup(types, "Types & Interfaces", "api/types");
 	renderGroup(others, "Other Exports", "api/functions");
 
-	return lines.join("\n");
+	return serializeMarkdown(md.root(...nodes));
 }
 
 // ---------------------------------------------------------------------------
@@ -574,13 +616,12 @@ function renderPackageOverviewPage(
 	// Find @packageDocumentation summary from tags
 	const pkgDoc = symbols.map((s) => s.documentation?.tags?.packageDocumentation?.[0]).find(Boolean);
 
-	const lines: string[] = [];
+	const nodes: MdBlock[] = [];
 
 	// No h1 — frontmatter title handles the heading in Mintlify and other SSGs
 
 	if (pkgDoc) {
-		lines.push(pkgDoc);
-		lines.push("");
+		nodes.push(textP(pkgDoc));
 	}
 
 	if (exported.length > 0) {
@@ -591,18 +632,33 @@ function renderPackageOverviewPage(
 
 		const renderGroup = (group: ForgeSymbol[], heading: string) => {
 			if (group.length === 0) return;
-			lines.push(`## ${heading}`);
-			lines.push("");
-			lines.push("| Symbol | Kind | Description |");
-			lines.push("|--------|------|-------------|");
+			nodes.push(md.heading(2, md.text(heading)));
+
+			const headerRow = md.tableRow(
+				md.tableCell(md.text("Symbol")),
+				md.tableCell(md.text("Kind")),
+				md.tableCell(md.text("Description")),
+			);
+			const dataRows: MdTableRow[] = [];
 			for (const s of group) {
 				const ext = s.kind === "function" ? "()" : "";
-				const name = `[\`${s.name}${ext}\`](${slugLink(`packages/${packageName}/api/index`)}#${toAnchor(`${s.name}${ext}`)})`;
+				const anchor = toAnchor(`${s.name}${ext}`);
 				const rawSummary = s.documentation?.summary ?? "";
-				const summary = escapePipe(truncate(rawSummary));
-				lines.push(`| ${name} | ${s.kind} | ${summary} |`);
+				const summary = truncate(rawSummary);
+				dataRows.push(
+					md.tableRow(
+						md.tableCell(
+							md.link(
+								`${slugLink(`packages/${packageName}/api/index`)}#${anchor}`,
+								md.inlineCode(`${s.name}${ext}`),
+							),
+						),
+						md.tableCell(md.text(s.kind)),
+						md.tableCell(md.text(summary)),
+					),
+				);
 			}
-			lines.push("");
+			nodes.push(md.table(null, headerRow, ...dataRows));
 		};
 
 		renderGroup(functions, "Functions & Classes");
@@ -610,7 +666,7 @@ function renderPackageOverviewPage(
 		renderGroup(others, "Other Exports");
 	}
 
-	return lines.join("\n");
+	return serializeMarkdown(md.root(...nodes));
 }
 
 // ---------------------------------------------------------------------------
@@ -628,53 +684,68 @@ function renderTypesPage(
 ): string {
 	const typeSymbols = symbols.filter((s) => s.exported && TYPE_KINDS.has(s.kind));
 
-	const lines: string[] = [];
+	const nodes: MdBlock[] = [];
 	// No h1 — frontmatter title handles the heading
-	lines.push("Type contracts exported by this package: interfaces, type aliases, and enums.");
-	lines.push("");
+	nodes.push(
+		textP("Type contracts exported by this package: interfaces, type aliases, and enums."),
+	);
 
 	for (const s of typeSymbols) {
-		lines.push(`## ${s.name}`);
-		lines.push("");
+		nodes.push(md.heading(2, md.text(s.name)));
 
 		if (s.documentation?.deprecated) {
-			lines.push(`> **Deprecated**: ${s.documentation.deprecated}`);
-			lines.push("");
+			nodes.push(
+				md.blockquote(
+					md.paragraph(
+						md.strong(md.text("Deprecated")),
+						md.text(`: ${s.documentation.deprecated}`),
+					),
+				),
+			);
 		}
 
 		if (s.documentation?.summary) {
-			lines.push(s.documentation.summary);
-			lines.push("");
+			nodes.push(textP(s.documentation.summary));
 		}
 
 		if (s.signature && s.kind !== "interface") {
-			lines.push("```typescript");
-			lines.push(s.signature);
-			lines.push("```");
-			lines.push("");
+			nodes.push(md.code("typescript", s.signature));
 		}
 
 		const children = (s.children ?? []).filter((c) => c.kind === "property" || c.kind === "method");
 
 		if (children.length > 0) {
-			lines.push("| Property | Type | Required | Description |");
-			lines.push("|----------|------|----------|-------------|");
+			const headerRow = md.tableRow(
+				md.tableCell(md.text("Property")),
+				md.tableCell(md.text("Type")),
+				md.tableCell(md.text("Required")),
+				md.tableCell(md.text("Description")),
+			);
+			const dataRows: MdTableRow[] = [];
 			for (const child of children) {
-				const name = `\`${child.name}\``;
-				const type = child.signature ? `\`${escapePipe(child.signature)}\`` : "—";
+				const typePhrasing: MdPhrasing = child.signature
+					? md.inlineCode(child.signature)
+					: md.text("\u2014");
 				const optional =
 					child.signature?.includes("?") || child.signature?.includes("undefined") ? "No" : "Yes";
-				const description = escapePipe(child.documentation?.summary || child.name);
-				lines.push(`| ${name} | ${type} | ${optional} | ${description} |`);
+				const description = child.documentation?.summary || child.name;
+				dataRows.push(
+					md.tableRow(
+						md.tableCell(md.inlineCode(child.name)),
+						md.tableCell(typePhrasing),
+						md.tableCell(md.text(optional)),
+						md.tableCell(md.text(description)),
+					),
+				);
 			}
-			lines.push("");
+			nodes.push(md.table(null, headerRow, ...dataRows));
 		}
 	}
 
 	// Suppress unused variable warning
 	void packageName;
 
-	return lines.join("\n");
+	return serializeMarkdown(md.root(...nodes));
 }
 
 // ---------------------------------------------------------------------------
@@ -692,10 +763,9 @@ function renderFunctionsPage(
 ): string {
 	const fnSymbols = symbols.filter((s) => s.exported && FUNCTION_KINDS.has(s.kind));
 
-	const lines: string[] = [];
+	const nodes: MdBlock[] = [];
 	// No h1 — frontmatter title handles the heading
-	lines.push("Functions and classes exported by this package.");
-	lines.push("");
+	nodes.push(textP("Functions and classes exported by this package."));
 
 	for (const s of fnSymbols) {
 		const paramSig =
@@ -704,34 +774,38 @@ function renderFunctionsPage(
 				: "";
 		const heading = s.kind === "function" ? `${s.name}(${paramSig})` : s.name;
 
-		lines.push(`## ${heading}`);
-		lines.push("");
+		nodes.push(md.heading(2, md.text(heading)));
 
 		if (s.documentation?.deprecated) {
-			lines.push(`> **Deprecated**: ${s.documentation.deprecated}`);
-			lines.push("");
+			nodes.push(
+				md.blockquote(
+					md.paragraph(
+						md.strong(md.text("Deprecated")),
+						md.text(`: ${s.documentation.deprecated}`),
+					),
+				),
+			);
 		}
 
 		if (s.documentation?.summary) {
-			lines.push(s.documentation.summary);
-			lines.push("");
+			nodes.push(textP(s.documentation.summary));
 		}
 
 		if (s.signature) {
-			lines.push("**Signature**");
-			lines.push("");
-			lines.push("```typescript");
-			lines.push(s.signature);
-			lines.push("```");
-			lines.push("");
+			nodes.push(md.paragraph(md.strong(md.text("Signature"))));
+			nodes.push(md.code("typescript", s.signature));
 		}
 
 		const params = s.documentation?.params ?? [];
 		if (params.length > 0) {
-			lines.push("**Parameters**");
-			lines.push("");
-			lines.push("| Name | Type | Description |");
-			lines.push("|------|------|-------------|");
+			nodes.push(md.paragraph(md.strong(md.text("Parameters"))));
+
+			const headerRow = md.tableRow(
+				md.tableCell(md.text("Name")),
+				md.tableCell(md.text("Type")),
+				md.tableCell(md.text("Description")),
+			);
+			const dataRows: MdTableRow[] = [];
 			for (const p of params) {
 				// Fall back to extracting type from signature when param.type is absent
 				let resolvedType = p.type;
@@ -742,57 +816,65 @@ function renderFunctionsPage(
 						resolvedType = typeMatch[1].trim();
 					}
 				}
-				const type = resolvedType ? `\`${escapePipe(resolvedType)}\`` : "—";
-				lines.push(`| \`${p.name}\` | ${type} | ${escapePipe(p.description)} |`);
+				const typePhrasing: MdPhrasing = resolvedType
+					? md.inlineCode(resolvedType)
+					: md.text("\u2014");
+				dataRows.push(
+					md.tableRow(
+						md.tableCell(md.inlineCode(p.name)),
+						md.tableCell(typePhrasing),
+						md.tableCell(md.text(p.description)),
+					),
+				);
 			}
-			lines.push("");
+			nodes.push(md.table(null, headerRow, ...dataRows));
 		}
 
 		if (s.documentation?.returns) {
-			const retType = s.documentation.returns.type ? ` \`${s.documentation.returns.type}\`` : "";
-			lines.push(`**Returns**${retType} — ${s.documentation.returns.description}`);
-			lines.push("");
+			const retParts: MdPhrasing[] = [md.strong(md.text("Returns"))];
+			if (s.documentation.returns.type) {
+				retParts.push(md.text(" "));
+				retParts.push(md.inlineCode(s.documentation.returns.type));
+			}
+			retParts.push(md.text(` — ${s.documentation.returns.description}`));
+			nodes.push(md.paragraph(...retParts));
 		}
 
 		const throws = s.documentation?.throws ?? [];
 		if (throws.length > 0) {
-			lines.push("**Throws**");
-			lines.push("");
+			nodes.push(md.paragraph(md.strong(md.text("Throws"))));
+			const throwItems: MdListItem[] = [];
 			for (const t of throws) {
-				const typeStr = t.type ? `\`${t.type}\` — ` : "";
-				lines.push(`- ${typeStr}${t.description}`);
+				const throwParts: MdPhrasing[] = [];
+				if (t.type) {
+					throwParts.push(md.inlineCode(t.type));
+					throwParts.push(md.text(` — ${t.description}`));
+				} else {
+					throwParts.push(md.text(t.description));
+				}
+				throwItems.push(md.listItem(md.paragraph(...throwParts)));
 			}
-			lines.push("");
+			nodes.push(md.list(throwItems));
 		}
 
 		const examples = s.documentation?.examples ?? [];
 		if (examples.length > 0) {
 			const ex = examples[0];
-			lines.push("**Example**");
-			lines.push("");
-			lines.push(`\`\`\`${ex.language || "typescript"}`);
-			lines.push(ex.code.trim());
-			lines.push("```");
-			lines.push("");
+			nodes.push(md.paragraph(md.strong(md.text("Example"))));
+			nodes.push(md.code(ex.language || "typescript", ex.code.trim()));
 		}
 
 		// Render class methods
 		const methods = (s.children ?? []).filter((c) => c.kind === "method");
 		if (methods.length > 0) {
-			lines.push("**Methods**");
-			lines.push("");
+			nodes.push(md.paragraph(md.strong(md.text("Methods"))));
 			for (const method of methods) {
-				lines.push(`### ${method.name}()`);
-				lines.push("");
+				nodes.push(md.heading(3, md.text(`${method.name}()`)));
 				if (method.documentation?.summary) {
-					lines.push(method.documentation.summary);
-					lines.push("");
+					nodes.push(textP(method.documentation.summary));
 				}
 				if (method.signature) {
-					lines.push("```typescript");
-					lines.push(method.signature);
-					lines.push("```");
-					lines.push("");
+					nodes.push(md.code("typescript", method.signature));
 				}
 			}
 		}
@@ -801,7 +883,7 @@ function renderFunctionsPage(
 	// Suppress unused variable warning
 	void packageName;
 
-	return lines.join("\n");
+	return serializeMarkdown(md.root(...nodes));
 }
 
 // ---------------------------------------------------------------------------
@@ -821,10 +903,9 @@ function renderExamplesPage(
 		(s) => s.exported && s.kind !== "method" && s.kind !== "property",
 	);
 
-	const lines: string[] = [];
+	const nodes: MdBlock[] = [];
 	// No h1 — frontmatter title handles the heading
-	lines.push("All usage examples from the package, aggregated for quick reference.");
-	lines.push("");
+	nodes.push(textP("All usage examples from the package, aggregated for quick reference."));
 
 	let hasExamples = false;
 
@@ -834,33 +915,31 @@ function renderExamplesPage(
 
 		hasExamples = true;
 		const ext = s.kind === "function" ? "()" : "";
-		lines.push(`## \`${s.name}${ext}\``);
-		lines.push("");
+		nodes.push(md.heading(2, md.inlineCode(`${s.name}${ext}`)));
 
 		if (s.documentation?.summary) {
-			lines.push(`_${s.documentation.summary}_`);
-			lines.push("");
+			nodes.push(md.paragraph(md.emphasis(md.text(s.documentation.summary))));
 		}
 
-		lines.push(
-			`[View in API reference](${slugLink(`packages/${packageName}/api/functions`)}#${toAnchor(s.name)})`,
+		nodes.push(
+			md.paragraph(
+				md.link(
+					`${slugLink(`packages/${packageName}/api/functions`)}#${toAnchor(s.name)}`,
+					md.text("View in API reference"),
+				),
+			),
 		);
-		lines.push("");
 
 		for (const ex of examples) {
-			lines.push(`\`\`\`${ex.language || "typescript"}`);
-			lines.push(ex.code.trim());
-			lines.push("```");
-			lines.push("");
+			nodes.push(md.code(ex.language || "typescript", ex.code.trim()));
 		}
 	}
 
 	if (!hasExamples) {
-		lines.push("_No examples documented yet._");
-		lines.push("");
+		nodes.push(md.paragraph(md.emphasis(md.text("No examples documented yet."))));
 	}
 
-	return lines.join("\n");
+	return serializeMarkdown(md.root(...nodes));
 }
 
 // ---------------------------------------------------------------------------
@@ -880,50 +959,77 @@ function renderConfigurationPage(
 		.flat()
 		.find((s) => s.exported && TYPE_KINDS.has(s.kind) && /config/i.test(s.name));
 
-	const lines: string[] = [];
+	const nodes: MdBlock[] = [];
 
-	lines.push(`Configuration reference for **${options.projectName}**.`);
-	lines.push("");
-	lines.push("## forge-ts.config.ts");
-	lines.push("");
-	lines.push("Create a `forge-ts.config.ts` file in your project root:");
-	lines.push("");
-	lines.push("```typescript");
-	lines.push('import { defineConfig } from "@forge-ts/core";');
-	lines.push("");
-	lines.push("export default defineConfig({");
-	lines.push('  rootDir: ".",');
-	lines.push('  outDir: "docs/generated",');
-	lines.push("});");
-	lines.push("```");
-	lines.push("");
+	nodes.push(
+		md.paragraph(
+			md.text("Configuration reference for "),
+			md.strong(md.text(options.projectName)),
+			md.text("."),
+		),
+	);
+
+	nodes.push(md.heading(2, md.text("forge-ts.config.ts")));
+	nodes.push(
+		md.paragraph(
+			md.text("Create a "),
+			md.inlineCode("forge-ts.config.ts"),
+			md.text(" file in your project root:"),
+		),
+	);
+	nodes.push(
+		md.code(
+			"typescript",
+			[
+				'import { defineConfig } from "@forge-ts/core";',
+				"",
+				"export default defineConfig({",
+				'  rootDir: ".",',
+				'  outDir: "docs/generated",',
+				"});",
+			].join("\n"),
+		),
+	);
 
 	if (configSymbol) {
-		lines.push(`## \`${configSymbol.name}\``);
-		lines.push("");
+		nodes.push(md.heading(2, md.inlineCode(configSymbol.name)));
+
 		if (configSymbol.documentation?.summary) {
-			lines.push(configSymbol.documentation.summary);
-			lines.push("");
+			nodes.push(textP(configSymbol.documentation.summary));
 		}
+
 		const children = (configSymbol.children ?? []).filter(
 			(c) => c.kind === "property" || c.kind === "method",
 		);
 		if (children.length > 0) {
-			lines.push("| Property | Type | Required | Description |");
-			lines.push("|----------|------|----------|-------------|");
+			const headerRow = md.tableRow(
+				md.tableCell(md.text("Property")),
+				md.tableCell(md.text("Type")),
+				md.tableCell(md.text("Required")),
+				md.tableCell(md.text("Description")),
+			);
+			const dataRows: MdTableRow[] = [];
 			for (const child of children) {
-				const name = `\`${child.name}\``;
-				const type = child.signature ? `\`${escapePipe(child.signature)}\`` : "—";
+				const typePhrasing: MdPhrasing = child.signature
+					? md.inlineCode(child.signature)
+					: md.text("\u2014");
 				const optional =
 					child.signature?.includes("?") || child.signature?.includes("undefined") ? "No" : "Yes";
-				const description = escapePipe(child.documentation?.summary || child.name);
-				lines.push(`| ${name} | ${type} | ${optional} | ${description} |`);
+				const description = child.documentation?.summary || child.name;
+				dataRows.push(
+					md.tableRow(
+						md.tableCell(md.inlineCode(child.name)),
+						md.tableCell(typePhrasing),
+						md.tableCell(md.text(optional)),
+						md.tableCell(md.text(description)),
+					),
+				);
 			}
-			lines.push("");
+			nodes.push(md.table(null, headerRow, ...dataRows));
 		}
 	}
 
-	return lines.join("\n");
+	return serializeMarkdown(md.root(...nodes));
 }
 
 // ---------------------------------------------------------------------------
@@ -936,17 +1042,38 @@ function renderConfigurationPage(
  */
 function renderChangelogPage(options: SiteGeneratorOptions): string {
 	const repoUrl = options.repositoryUrl ?? "";
-	const changelogLink = repoUrl
-		? `See [CHANGELOG.md](${repoUrl}/blob/main/CHANGELOG.md) for the full release history.`
-		: "See your project's `CHANGELOG.md` for the full release history.";
-	return [
-		`Release history for **${options.projectName}**.`,
-		"",
-		"> This is a stub page. Link to or embed your `CHANGELOG.md` here.",
-		"",
-		changelogLink,
-		"",
-	].join("\n");
+	const nodes: MdBlock[] = [];
+
+	nodes.push(
+		md.paragraph(
+			md.text("Release history for "),
+			md.strong(md.text(options.projectName)),
+			md.text("."),
+		),
+	);
+	nodes.push(
+		md.blockquote(textP("This is a stub page. Link to or embed your `CHANGELOG.md` here.")),
+	);
+
+	if (repoUrl) {
+		nodes.push(
+			md.paragraph(
+				md.text("See "),
+				md.link(`${repoUrl}/blob/main/CHANGELOG.md`, md.text("CHANGELOG.md")),
+				md.text(" for the full release history."),
+			),
+		);
+	} else {
+		nodes.push(
+			md.paragraph(
+				md.text("See your project's "),
+				md.inlineCode("CHANGELOG.md"),
+				md.text(" for the full release history."),
+			),
+		);
+	}
+
+	return serializeMarkdown(md.root(...nodes));
 }
 
 // ---------------------------------------------------------------------------
@@ -958,26 +1085,37 @@ function renderChangelogPage(options: SiteGeneratorOptions): string {
  * @internal
  */
 function renderFaqPage(options: SiteGeneratorOptions): string {
-	return [
-		`Frequently asked questions about **${options.projectName}**.`,
-		"",
-		"> This is a stub page. Common questions will be added here as they arise.",
-		"",
-		"## How do I configure forge-ts?",
-		"",
-		"Create a `forge-ts.config.ts` file in your project root. See [Configuration](/configuration).",
-		"",
-		"## What TypeScript version is required?",
-		"",
-		"forge-ts requires TypeScript 5.0 or later.",
-		"",
-		"## How do I run @example blocks as tests?",
-		"",
-		"```bash",
-		"npx forge-ts test",
-		"```",
-		"",
-	].join("\n");
+	const nodes: MdBlock[] = [];
+
+	nodes.push(
+		md.paragraph(
+			md.text("Frequently asked questions about "),
+			md.strong(md.text(options.projectName)),
+			md.text("."),
+		),
+	);
+	nodes.push(
+		md.blockquote(textP("This is a stub page. Common questions will be added here as they arise.")),
+	);
+
+	nodes.push(md.heading(2, md.text("How do I configure forge-ts?")));
+	nodes.push(
+		md.paragraph(
+			md.text("Create a "),
+			md.inlineCode("forge-ts.config.ts"),
+			md.text(" file in your project root. See "),
+			md.link("/configuration", md.text("Configuration")),
+			md.text("."),
+		),
+	);
+
+	nodes.push(md.heading(2, md.text("What TypeScript version is required?")));
+	nodes.push(textP("forge-ts requires TypeScript 5.0 or later."));
+
+	nodes.push(md.heading(2, md.text("How do I run @example blocks as tests?")));
+	nodes.push(md.code("bash", "npx forge-ts test"));
+
+	return serializeMarkdown(md.root(...nodes));
 }
 
 // ---------------------------------------------------------------------------
@@ -990,17 +1128,38 @@ function renderFaqPage(options: SiteGeneratorOptions): string {
  */
 function renderContributingPage(options: SiteGeneratorOptions): string {
 	const repoUrl = options.repositoryUrl ?? "";
-	const contribLink = repoUrl
-		? `See [CONTRIBUTING.md](${repoUrl}/blob/main/CONTRIBUTING.md) for contribution guidelines.`
-		: "See your project's `CONTRIBUTING.md` for contribution guidelines.";
-	return [
-		`Contributing to **${options.projectName}**.`,
-		"",
-		"> This is a stub page. Link to or embed your `CONTRIBUTING.md` here.",
-		"",
-		contribLink,
-		"",
-	].join("\n");
+	const nodes: MdBlock[] = [];
+
+	nodes.push(
+		md.paragraph(
+			md.text("Contributing to "),
+			md.strong(md.text(options.projectName)),
+			md.text("."),
+		),
+	);
+	nodes.push(
+		md.blockquote(textP("This is a stub page. Link to or embed your `CONTRIBUTING.md` here.")),
+	);
+
+	if (repoUrl) {
+		nodes.push(
+			md.paragraph(
+				md.text("See "),
+				md.link(`${repoUrl}/blob/main/CONTRIBUTING.md`, md.text("CONTRIBUTING.md")),
+				md.text(" for contribution guidelines."),
+			),
+		);
+	} else {
+		nodes.push(
+			md.paragraph(
+				md.text("See your project's "),
+				md.inlineCode("CONTRIBUTING.md"),
+				md.text(" for contribution guidelines."),
+			),
+		);
+	}
+
+	return serializeMarkdown(md.root(...nodes));
 }
 
 // ---------------------------------------------------------------------------

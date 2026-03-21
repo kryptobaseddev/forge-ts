@@ -459,7 +459,7 @@ describe("package overview page", () => {
 		const map = makeSymbolsByPackage([fnAdd, ifaceConfig]);
 		const pages = generateDocSite(map, makeConfig(), baseOptions);
 		const overview = pages.find((p) => p.path === "packages/core/index.md");
-		expect(overview?.content).toContain("| Symbol | Kind | Description |");
+		expect(overview?.content).toMatch(/\| Symbol\s+\| Kind\s+\| Description\s+\|/);
 		expect(overview?.content).toContain("add");
 		expect(overview?.content).toContain("CalculatorConfig");
 	});
@@ -504,7 +504,7 @@ describe("api/index page", () => {
 		const map = makeSymbolsByPackage([fnAdd]);
 		const pages = generateDocSite(map, makeConfig(), baseOptions);
 		const api = pages.find((p) => p.path === "packages/core/api/index.md");
-		expect(api?.content).toContain("| Symbol | Kind | Description |");
+		expect(api?.content).toMatch(/\| Symbol\s+\| Kind\s+\| Description\s+\|/);
 	});
 });
 
@@ -525,7 +525,7 @@ describe("api/types page", () => {
 		const pages = generateDocSite(map, makeConfig(), baseOptions);
 		const typesPage = pages.find((p) => p.path === "packages/core/api/types.md");
 		expect(typesPage?.content).toContain("CalculatorConfig");
-		expect(typesPage?.content).toContain("| Property | Type | Required | Description |");
+		expect(typesPage?.content).toMatch(/\| Property\s+\| Type\s+\| Required\s+\| Description\s+\|/);
 		expect(typesPage?.content).toContain("`precision`");
 		expect(typesPage?.content).toContain("`mode`");
 		expect(typesPage?.content).toContain("`label`");
@@ -551,7 +551,7 @@ describe("api/types page", () => {
 		const pages = generateDocSite(map, makeConfig(), baseOptions);
 		const typesPage = pages.find((p) => p.path === "packages/core/api/types.md");
 		// label? is optional, so Required = No
-		expect(typesPage?.content).toMatch(/`label`[^|]*\|[^|]*\| No \|/);
+		expect(typesPage?.content).toMatch(/`label`[^|]*\|[^|]*\| No\s+\|/);
 	});
 });
 
@@ -578,7 +578,7 @@ describe("api/functions page", () => {
 		const map = makeSymbolsByPackage([fnAdd]);
 		const pages = generateDocSite(map, makeConfig(), baseOptions);
 		const fnPage = pages.find((p) => p.path === "packages/core/api/functions.md");
-		expect(fnPage?.content).toContain("| Name | Type | Description |");
+		expect(fnPage?.content).toMatch(/\| Name\s+\| Type\s+\| Description\s+\|/);
 		expect(fnPage?.content).toContain("`a`");
 		expect(fnPage?.content).toContain("`b`");
 	});

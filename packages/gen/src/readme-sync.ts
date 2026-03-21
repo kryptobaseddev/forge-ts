@@ -1,6 +1,13 @@
 import { existsSync } from "node:fs";
 import { readFile, writeFile } from "node:fs/promises";
 import type { ForgeSymbol } from "@forge-ts/core";
+import {
+	type MdBlock,
+	type MdTableRow,
+	md,
+	rawBlock,
+	serializeMarkdown,
+} from "./mdast-builders.js";
 
 const SECTION_START = "<!-- forge-ts:start -->";
 const SECTION_END = "<!-- forge-ts:end -->";
@@ -14,59 +21,59 @@ export interface ReadmeSyncOptions {
 }
 
 /**
- * Derives a compact type signature string for the table.
+ * Builds the API overview content as mdast blocks.
  * @internal
  */
-function tableSignature(symbol: ForgeSymbol): string {
-	if (!symbol.signature) {
-		const ext = symbol.kind === "function" ? "()" : "";
-		return `\`${symbol.name}${ext}\``;
-	}
-	// Keep it short: show at most 60 characters of the signature
-	const sig =
-		symbol.signature.length > 60 ? `${symbol.signature.slice(0, 57)}...` : symbol.signature;
-	return `\`${sig}\``;
-}
+function buildApiBlocks(symbols: ForgeSymbol[], includeExamples: boolean): MdBlock[] {
+	const nodes: MdBlock[] = [];
 
-/**
- * Renders the first @example block as a fenced code snippet.
- * @internal
- */
-function renderFirstExample(symbol: ForgeSymbol): string {
-	const examples = symbol.documentation?.examples ?? [];
-	if (examples.length === 0) return "";
-	const ex = examples[0];
-	return ["", `\`\`\`${ex.language}`, ex.code.trim(), "```"].join("\n");
-}
-
-/**
- * Builds the markdown table rows for the API overview.
- * @internal
- */
-function buildApiTable(symbols: ForgeSymbol[], includeExamples: boolean): string[] {
-	const lines: string[] = ["| Symbol | Kind | Description |", "|--------|------|-------------|"];
+	// API table
+	const headerRow = md.tableRow(
+		md.tableCell(md.text("Symbol")),
+		md.tableCell(md.text("Kind")),
+		md.tableCell(md.text("Description")),
+	);
+	const dataRows: MdTableRow[] = [];
 
 	for (const s of symbols) {
-		const sig = tableSignature(s);
+		// Derive compact signature for display
+		let sigText: string;
+		if (!s.signature) {
+			const ext = s.kind === "function" ? "()" : "";
+			sigText = `${s.name}${ext}`;
+		} else {
+			sigText = s.signature.length > 60 ? `${s.signature.slice(0, 57)}...` : s.signature;
+		}
+
 		const summary = s.documentation?.summary ?? "";
-		lines.push(`| ${sig} | ${s.kind} | ${summary} |`);
+		dataRows.push(
+			md.tableRow(
+				md.tableCell(md.inlineCode(sigText)),
+				md.tableCell(md.text(s.kind)),
+				md.tableCell(md.text(summary)),
+			),
+		);
 	}
 
+	nodes.push(md.table(null, headerRow, ...dataRows));
+
+	// Optional examples section
 	if (includeExamples) {
 		const withExamples = symbols.filter((s) => (s.documentation?.examples ?? []).length > 0);
 		if (withExamples.length > 0) {
-			lines.push("");
-			lines.push("### Examples");
+			nodes.push(md.heading(3, md.text("Examples")));
+
 			for (const s of withExamples) {
-				lines.push("");
 				const ext = s.kind === "function" ? "()" : "";
-				lines.push(`#### \`${s.name}${ext}\``);
-				lines.push(renderFirstExample(s));
+				nodes.push(md.heading(4, md.inlineCode(`${s.name}${ext}`)));
+				const examples = s.documentation?.examples ?? [];
+				const ex = examples[0];
+				nodes.push(md.code(ex.language, ex.code.trim()));
 			}
 		}
 	}
 
-	return lines;
+	return nodes;
 }
 
 /**
@@ -99,21 +106,27 @@ export async function syncReadme(
 	const badge = options.badge ?? false;
 	const includeExamples = options.includeExamples ?? false;
 
-	const innerLines: string[] = [];
-	innerLines.push("## API Overview");
-	innerLines.push("");
+	// Build inner content as mdast
+	const innerNodes: MdBlock[] = [];
+
+	innerNodes.push(md.heading(2, md.text("API Overview")));
 
 	if (badge) {
-		innerLines.push(
-			"[![Documented with forge-ts](https://img.shields.io/badge/docs-forge--ts-blue)](https://github.com/forge-ts/forge-ts)",
+		// Badge uses shields.io image markdown — pass through as raw
+		innerNodes.push(
+			rawBlock(
+				"[![Documented with forge-ts](https://img.shields.io/badge/docs-forge--ts-blue)](https://github.com/forge-ts/forge-ts)",
+			),
 		);
-		innerLines.push("");
 	}
 
-	innerLines.push(...buildApiTable(exported, includeExamples));
+	innerNodes.push(...buildApiBlocks(exported, includeExamples));
 
-	const summaryLines = [SECTION_START, "", ...innerLines, "", SECTION_END];
-	const injection = summaryLines.join("\n");
+	// Serialize to markdown string
+	const innerMd = serializeMarkdown(md.root(...innerNodes));
+
+	// Wrap with markers
+	const injection = `${SECTION_START}\n\n${innerMd}\n${SECTION_END}`;
 
 	let existing = existsSync(readmePath) ? await readFile(readmePath, "utf8") : "";
 

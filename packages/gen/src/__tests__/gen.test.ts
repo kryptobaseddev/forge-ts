@@ -292,7 +292,7 @@ describe("syncReadme", () => {
 		const path = await tmpReadme(initial);
 		await syncReadme(path, [fnAdd]);
 		const result = await readFile(path, "utf8");
-		expect(result).toContain("| Symbol | Kind | Description |");
+		expect(result).toMatch(/\|\s*Symbol\s*\|\s*Kind\s*\|\s*Description\s*\|/);
 		expect(result).toContain("add");
 		expect(result).toContain("function");
 	});
@@ -324,8 +324,9 @@ describe("syncReadme", () => {
 		const path = await tmpReadme();
 		await syncReadme(path, [fnAdd, ifaceConfig]);
 		const result = await readFile(path, "utf8");
-		expect(result).toContain("| Symbol | Kind | Description |");
-		expect(result).toContain("|--------|------|-------------|");
+		// remark-gfm table serializer uses column-aligned padding
+		expect(result).toMatch(/\|\s*Symbol\s*\|\s*Kind\s*\|\s*Description\s*\|/);
+		expect(result).toMatch(/\|\s*-+\s*\|\s*-+\s*\|\s*-+\s*\|/);
 		// signatures should appear in cells
 		expect(result).toMatch(/`[^`]+add[^`]*`/);
 	});

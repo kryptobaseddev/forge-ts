@@ -21,6 +21,7 @@ export {
 	stringifyWithFrontmatter,
 	stripFrontmatter,
 } from "./markdown-utils.js";
+export { md, serializeMarkdown, slugLink, toAnchor, truncate } from "./mdast-builders.js";
 export { type ReadmeSyncOptions, syncReadme } from "./readme-sync.js";
 export {
 	type DocPage,

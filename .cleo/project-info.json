@@ -1,0 +1,28 @@
+{
+  "$schema": "./schemas/project-info.schema.json",
+  "schemaVersion": "1.0.0",
+  "projectId": "a6574c35-d704-4cba-b330-981898db209f",
+  "projectHash": "8a3c179007f6",
+  "cleoVersion": "0.0.0",
+  "lastUpdated": "2026-03-20T21:28:05.968Z",
+  "schemas": {
+    "config": "2.10.0",
+    "sqlite": "2.0.0",
+    "projectContext": "1.0.0"
+  },
+  "injection": {
+    "CLAUDE.md": null,
+    "AGENTS.md": null,
+    "GEMINI.md": null
+  },
+  "health": {
+    "status": "unknown",
+    "lastCheck": null,
+    "issues": []
+  },
+  "features": {
+    "multiSession": false,
+    "verification": false,
+    "contextAlerts": false
+  }
+}

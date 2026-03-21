@@ -5,6 +5,26 @@ description: Type contracts for the gen package
 
 Type contracts exported by this package: interfaces, type aliases, and enums.
 
+## GuideSource
+
+The source heuristic that discovered a guide.
+
+```typescript
+any
+```
+
+## DiscoveredGuide
+
+A guide discovered from the symbol graph by code analysis heuristics.
+
+| Property      | Type            | Required | Description                                             |
+| ------------- | --------------- | -------- | ------------------------------------------------------- |
+| `slug`        | `string`        | Yes      | URL-safe slug (e.g. "configuration", "error-handling"). |
+| `title`       | `string`        | Yes      | Human-readable title (e.g. "Configuration Guide").      |
+| `description` | `string`        | Yes      | Short description of the guide's content.               |
+| `source`      | `GuideSource`   | Yes      | Which heuristic discovered this guide.                  |
+| `symbols`     | `ForgeSymbol[]` | Yes      | The symbols that contribute content to this guide.      |
+
 ## MdText
 
 Inline leaf node: literal text.

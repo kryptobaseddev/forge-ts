@@ -1,9 +1,167 @@
 # . - Full Context
 
 Root: .
-Generated: 2026-03-21T04:02:36.198Z
+Generated: 2026-03-21T22:07:47.693Z
 
 ## Functions
+
+### getCurrentUser()
+
+() => string
+
+Returns the current OS username, or "unknown" if unavailable.
+
+Returns: The OS username string.
+
+Example:
+  import { getCurrentUser } from "@forge-ts/core/audit";
+  const user = getCurrentUser(); // e.g. "alice"
+
+### appendAuditEvent()
+
+(rootDir: string, event: AuditEvent) => void
+
+Appends a single audit event to the `.forge-audit.jsonl` file.  Creates the file if it does not exist. The file is strictly append-only — existing content is never modified or truncated.
+
+Parameters:
+- rootDir: Absolute path to the project root directory.
+- event: The audit event to record.
+
+Example:
+  import { appendAuditEvent } from "@forge-ts/core";
+  appendAuditEvent("/path/to/project", {
+    timestamp: new Date().toISOString(),
+    event: "config.lock",
+    user: "alice",
+    reason: "Stabilize v2 config",
+    details: { hash: "abc123" },
+  });
+
+### readAuditLog()
+
+(rootDir: string, options?: ReadAuditOptions | undefined) => AuditEvent[]
+
+Reads the `.forge-audit.jsonl` file and returns parsed audit events.  Returns newest events first. If the file does not exist, returns an empty array.
+
+Parameters:
+- rootDir: Absolute path to the project root directory.
+- options: Optional limit and event type filter.
+
+Returns: Array of audit events, newest first.
+
+Example:
+  import { readAuditLog } from "@forge-ts/core";
+  const events = readAuditLog("/path/to/project", { limit: 10 });
+  console.log(events.length); // up to 10
+
+### formatAuditEvent()
+
+(event: AuditEvent) => string
+
+Formats a single audit event as a human-readable string.
+
+Parameters:
+- event: The audit event to format.
+
+Returns: A single-line human-readable representation.
+
+Example:
+  import { formatAuditEvent } from "@forge-ts/core";
+  const line = formatAuditEvent({
+    timestamp: "2026-03-21T12:00:00.000Z",
+    event: "config.lock",
+    user: "alice",
+    reason: "Stabilize v2 config",
+    details: { hash: "abc123" },
+  });
+  console.log(line);
+  // "[2026-03-21T12:00:00.000Z] config.lock by alice — Stabilize v2 config  {hash: abc123}"
+
+### createBypass()
+
+(rootDir: string, reason: string, rule?: string | undefined, config?: Partial<BypassConfig> | undefined) => BypassRecord
+
+Creates a new bypass record, writes it to `.forge-bypass.json`, and appends an audit event.  Throws an error if the daily budget is exhausted.
+
+Parameters:
+- rootDir: Absolute path to the project root directory.
+- reason: Mandatory justification for the bypass.
+- rule: Specific rule code to bypass (e.g., "E009"), or "all". Defaults to "all".
+- config: Optional bypass budget configuration overrides.
+
+Returns: The created bypass record.
+
+Example:
+  import { createBypass } from "@forge-ts/core";
+  const bypass = createBypass("/path/to/project", "hotfix for release", "E009");
+  console.log(bypass.id); // unique bypass ID
+
+### getActiveBypasses()
+
+(rootDir: string) => BypassRecord[]
+
+Returns all currently active (non-expired) bypass records.
+
+Parameters:
+- rootDir: Absolute path to the project root directory.
+
+Returns: Array of active bypass records.
+
+Example:
+  import { getActiveBypasses } from "@forge-ts/core";
+  const active = getActiveBypasses("/path/to/project");
+  console.log(`${active.length} active bypass(es)`);
+
+### isRuleBypassed()
+
+(rootDir: string, ruleCode: string) => boolean
+
+Checks whether a specific rule has an active bypass.  A rule is considered bypassed if there is an active bypass with the exact rule code or an "all" bypass.
+
+Parameters:
+- rootDir: Absolute path to the project root directory.
+- ruleCode: The rule code to check (e.g., "E009", "E010").
+
+Returns: `true` if the rule is currently bypassed.
+
+Example:
+  import { isRuleBypassed } from "@forge-ts/core";
+  if (isRuleBypassed("/path/to/project", "E009")) {
+    console.log("E009 is currently bypassed");
+  }
+
+### getRemainingBudget()
+
+(rootDir: string, config?: Partial<BypassConfig> | undefined) => number
+
+Returns the number of bypass budget slots remaining for today.  Counts bypasses created today (UTC) against the configured daily budget.
+
+Parameters:
+- rootDir: Absolute path to the project root directory.
+- config: Optional bypass budget configuration overrides.
+
+Returns: Number of remaining bypass slots for today.
+
+Example:
+  import { getRemainingBudget } from "@forge-ts/core";
+  const remaining = getRemainingBudget("/path/to/project");
+  console.log(`${remaining} bypass(es) remaining today`);
+
+### expireOldBypasses()
+
+(rootDir: string) => number
+
+Removes expired bypass records from `.forge-bypass.json`.  Also appends a `bypass.expire` audit event for each expired record removed.
+
+Parameters:
+- rootDir: Absolute path to the project root directory.
+
+Returns: The number of expired records removed.
+
+Example:
+  import { expireOldBypasses } from "@forge-ts/core";
+  const removed = expireOldBypasses("/path/to/project");
+  console.log(`${removed} expired bypass(es) removed`);
 
 ### defaultConfig()
 
@@ -36,6 +194,97 @@ Example:
   import { loadConfig } from "@forge-ts/core";
   const config = await loadConfig("/path/to/project");
   // config is fully resolved with defaults
+
+### readLockFile()
+
+(rootDir: string) => ForgeLockManifest | null
+
+Reads the `.forge-lock.json` file from the given project root.
+
+Parameters:
+- rootDir: Absolute path to the project root.
+
+Returns: The parsed lock manifest, or `null` if no lock file exists or is invalid.
+
+Example:
+  import { readLockFile } from "@forge-ts/core";
+  const lock = readLockFile("/path/to/project");
+  if (lock) {
+    console.log(`Locked at ${lock.lockedAt} by ${lock.lockedBy}`);
+  }
+
+### writeLockFile()
+
+(rootDir: string, manifest: ForgeLockManifest) => void
+
+Writes a `ForgeLockManifest` to `.forge-lock.json` in the project root.
+
+Parameters:
+- rootDir: Absolute path to the project root.
+- manifest: The lock manifest to write.
+
+Example:
+  import { writeLockFile, createLockManifest, loadConfig } from "@forge-ts/core";
+  const config = await loadConfig("/path/to/project");
+  const manifest = createLockManifest(config);
+  writeLockFile("/path/to/project", manifest);
+
+### removeLockFile()
+
+(rootDir: string) => boolean
+
+Removes the `.forge-lock.json` file from the project root.
+
+Parameters:
+- rootDir: Absolute path to the project root.
+
+Returns: `true` if the file existed and was removed, `false` otherwise.
+
+Example:
+  import { removeLockFile } from "@forge-ts/core";
+  const removed = removeLockFile("/path/to/project");
+  console.log(removed ? "Lock removed" : "No lock file found");
+
+### createLockManifest()
+
+(config: ForgeConfig, lockedBy?: string) => ForgeLockManifest
+
+Creates a `ForgeLockManifest` from the current project config.  Snapshots the enforce rule severities and guard settings so they can be compared on future runs to detect weakening.
+
+Parameters:
+- config: The fully-resolved `ForgeConfig` to snapshot.
+- lockedBy: Identifier of the user or agent creating the lock. Defaults to `"forge-ts lock"`.
+
+Returns: A new lock manifest ready to be written with `writeLockFile`.
+
+Example:
+  import { createLockManifest, loadConfig } from "@forge-ts/core";
+  const config = await loadConfig();
+  const manifest = createLockManifest(config);
+  console.log(manifest.config.rules); // { "require-summary": "error", ... }
+
+### validateAgainstLock()
+
+(config: ForgeConfig, lock: ForgeLockManifest) => LockViolation[]
+
+Validates the current config against a locked manifest.  Returns an array of violations where the current config has weakened settings relative to the locked state. Weakening means: - A rule severity changed from `"error"` to `"warn"` or `"off"` - A rule severity changed from `"warn"` to `"off"` - A tsconfig guard was disabled - A required tsconfig flag was removed - A biome guard was disabled - A locked biome rule was removed
+
+Parameters:
+- config: The current fully-resolved `ForgeConfig`.
+- lock: The lock manifest to validate against.
+
+Returns: An array of `LockViolation` entries. Empty means no weakening detected.
+
+Example:
+  import { validateAgainstLock, readLockFile, loadConfig } from "@forge-ts/core";
+  const config = await loadConfig();
+  const lock = readLockFile(config.rootDir);
+  if (lock) {
+    const violations = validateAgainstLock(config, lock);
+    for (const v of violations) {
+      console.error(`LOCK VIOLATION: ${v.message}`);
+    }
+  }
 
 ### resolveVisibility()
 
@@ -85,6 +334,23 @@ Returns: A new array containing only symbols that pass the visibility check.
 Example:
   import { filterByVisibility, Visibility } from "@forge-ts/core";
   const publicOnly = filterByVisibility(symbols, Visibility.Public);
+
+### clearTSDocConfigCache()
+
+() => void
+
+Clears the TSDoc configuration cache. Intended for use in tests only.
+
+### loadTSDocConfiguration()
+
+(folderPath: string) => TSDocConfiguration
+
+Resolve the `TSDocConfiguration` to use when parsing comments in files under `folderPath`.  If a `tsdoc.json` file exists in or above the folder and can be loaded without errors, its settings are applied to a fresh configuration via `TSDocConfigFile.configureParser`. Otherwise the default `TSDocConfiguration` is returned (backward-compatible behaviour).  Results are cached per folder path so the file system is only consulted once per unique directory.
+
+Parameters:
+- folderPath: Absolute directory path of the source file being parsed.
+
+Returns: A configured `TSDocConfiguration` instance.
 
 ### createWalker()
 
@@ -186,6 +452,60 @@ Example:
   import { generateApi } from "@forge-ts/api";
   const result = await generateApi(config);
   console.log(result.success); // true if spec was written successfully
+
+### emitResult()
+
+<T>(output: CommandOutput<T>, flags: OutputFlags, humanFormatter: (data: T, output: CommandOutput<T>) => string) => void
+
+Wraps a command result in a LAFS envelope and emits it.  Output format is determined by LAFS flag resolution: - TTY terminals default to human-readable output. - Non-TTY (piped, CI, agents) defaults to JSON. - Explicit `--json` or `--human` flags always take precedence.  On failure, the full result is included alongside the error so agents get actionable data (e.g., suggestedFix) in a single response.
+
+Parameters:
+- output: Typed result from the command.
+- flags: Output format flags from citty args.
+- humanFormatter: Produces a human-readable string for TTY consumers.
+
+Example:
+  import { emitResult } from "@forge-ts/cli/output";
+  emitResult(output, { human: true }, (data) => `Done: ${data.summary.duration}ms`);
+
+### resolveExitCode()
+
+(output: CommandOutput<unknown>) => number
+
+Returns the LAFS-compliant exit code for a command output.
+
+Parameters:
+- output: Typed result from the command.
+
+Returns: `0` on success, `1` on validation/check failure.
+
+### runAudit()
+
+(args: AuditArgs) => CommandOutput<AuditResult>
+
+Reads the audit log and returns a typed command output.
+
+Parameters:
+- args: CLI arguments for the audit command.
+
+Returns: A typed `CommandOutput<AuditResult>`.
+
+Example:
+  import { runAudit } from "@forge-ts/cli/commands/audit";
+  const output = await runAudit({ cwd: process.cwd(), limit: 10 });
+  console.log(output.data.count); // number of events returned
+
+### discoverGuides()
+
+(symbolsByPackage: Map<string, ForgeSymbol[]>, config: ForgeConfig) => DiscoveredGuide[]
+
+Analyze the symbol graph and discover guides using multiple heuristics.  Each heuristic produces zero or more `DiscoveredGuide` entries. When multiple heuristics produce a guide with the same slug, the first one wins (priority order: guide-tag, config-interface, error-types, category, entry-point).
+
+Parameters:
+- symbolsByPackage: Symbols grouped by package name.
+- config: The resolved forge-ts configuration.
+
+Returns: An array of discovered guides, deduplicated by slug.
 
 ### serializeMarkdown()
 
@@ -318,6 +638,42 @@ Parameters:
 - generated: The freshly generated content with updated markers.
 
 Returns: The merged content, or null if no markers were found to update.
+
+### stubHash()
+
+(content: string) => string
+
+Compute a short fingerprint hash for content change detection.  Uses a simple DJB2-style hash converted to base-36 and truncated to 8 characters. This is NOT cryptographic — just a quick fingerprint to detect whether generated content has been manually edited.
+
+Parameters:
+- content: The content to hash.
+
+Returns: An 8-character alphanumeric hash string.
+
+### isStubModified()
+
+(existingContent: string, stubId: string, _generatedContent: string) => boolean
+
+Checks if a FORGE:STUB section has been modified by the user.  Compares the embedded hash (from the FORGE:STUB-HASH comment) against a freshly computed hash of the current inner content (with the hash comment itself stripped out). If the hashes diverge — meaning the user edited the content — or the hash comment was removed, the section is considered modified and should be preserved.
+
+Parameters:
+- existingContent: The full document content on disk.
+- stubId: The identifier of the FORGE:STUB section.
+- _generatedContent: Unused; kept for API symmetry. Detection is purely hash-based.
+
+Returns: `true` if the user has modified the stub (preserve it), `false` if unmodified (safe to regenerate).
+
+### updateStubSections()
+
+(existingContent: string, stubs: { id: string; content: string; }[]) => string
+
+Updates FORGE:STUB sections in existing content.  Behavior for each stub: - If the stub doesn't exist yet, appends it at the end of the content. - If the stub exists but is unmodified (hash matches generated content), regenerates it. - If the stub exists and was modified by user (hash mismatch), PRESERVES user content.  Each generated stub includes a `FORGE:STUB-HASH` comment containing a fingerprint of the generated content. On subsequent builds, this hash is compared to determine whether the user has made edits.
+
+Parameters:
+- existingContent: The current file content on disk.
+- stubs: Array of stub definitions with their IDs and generated content.
+
+Returns: The updated content with stubs inserted or refreshed as needed.
 
 ### escapeMdx()
 
@@ -553,32 +909,6 @@ Parameters:
 
 Returns: A configured logger.
 
-### emitResult()
-
-<T>(output: CommandOutput<T>, flags: OutputFlags, humanFormatter: (data: T, output: CommandOutput<T>) => string) => void
-
-Wraps a command result in a LAFS envelope and emits it.  Output format is determined by LAFS flag resolution: - TTY terminals default to human-readable output. - Non-TTY (piped, CI, agents) defaults to JSON. - Explicit `--json` or `--human` flags always take precedence.  On failure, the full result is included alongside the error so agents get actionable data (e.g., suggestedFix) in a single response.
-
-Parameters:
-- output: Typed result from the command.
-- flags: Output format flags from citty args.
-- humanFormatter: Produces a human-readable string for TTY consumers.
-
-Example:
-  import { emitResult } from "@forge-ts/cli/output";
-  emitResult(output, { human: true }, (data) => `Done: ${data.summary.duration}ms`);
-
-### resolveExitCode()
-
-(output: CommandOutput<unknown>) => number
-
-Returns the LAFS-compliant exit code for a command output.
-
-Parameters:
-- output: Typed result from the command.
-
-Returns: `0` on success, `1` on validation/check failure.
-
 ### runBuild()
 
 (args: BuildArgs) => Promise<CommandOutput<BuildResult>>
@@ -595,6 +925,42 @@ Example:
   const output = await runBuild({ cwd: process.cwd() });
   console.log(output.success); // true if all steps succeeded
 
+### runBypassCreate()
+
+(args: { cwd?: string | undefined; reason: string; rule?: string | undefined; }) => Promise<CommandOutput<BypassCreateResult>>
+
+Runs the bypass creation: creates a new bypass record with budget enforcement.
+
+Parameters:
+- args: CLI arguments for the bypass command.
+
+Returns: A typed `CommandOutput<BypassCreateResult>`.
+
+Example:
+  import { runBypassCreate } from "@forge-ts/cli/commands/bypass";
+  const output = await runBypassCreate({
+    cwd: process.cwd(),
+    reason: "hotfix for release",
+    rule: "E009",
+  });
+  console.log(output.data.remainingBudget);
+
+### runBypassStatus()
+
+(args: { cwd?: string | undefined; }) => Promise<CommandOutput<BypassStatusResult>>
+
+Runs the bypass status query: shows active bypasses and remaining budget.
+
+Parameters:
+- args: CLI arguments for the bypass status command.
+
+Returns: A typed `CommandOutput<BypassStatusResult>`.
+
+Example:
+  import { runBypassStatus } from "@forge-ts/cli/commands/bypass";
+  const output = await runBypassStatus({ cwd: process.cwd() });
+  console.log(output.data.activeBypasses.length);
+
 ### findDeprecatedUsages()
 
 (symbols: ForgeSymbol[]) => DeprecatedUsage[]
@@ -610,7 +976,7 @@ Returns: Array of deprecated usages found.
 
 (config: ForgeConfig) => Promise<ForgeResult>
 
-Runs the TSDoc enforcement pass against a project.  The enforcer walks all exported symbols that meet the configured minimum visibility threshold and emits diagnostics for any documentation deficiencies it finds.  ### Error codes | Code | Severity | Condition | |------|----------|-----------| | E001 | error    | Exported symbol is missing a TSDoc summary. | | E002 | error    | Function/method parameter lacks a `@param` tag. | | E003 | error    | Non-void function/method lacks a `@returns` tag. | | E004 | error    | Exported function/method is missing an `@example` block. | | E005 | error    | Package entry point (index.ts) is missing `@packageDocumentation`. | | E006 | error    | Public/protected class member is missing a TSDoc comment. | | E007 | error    | Interface/type alias property is missing a TSDoc comment. | | W001 | warning  | TSDoc comment contains parse errors. | | W002 | warning  | Function body throws but has no `@throws` tag. | | W003 | warning  | `@deprecated` tag is present without explanation. |  When `config.enforce.strict` is `true` all warnings are promoted to errors.
+Runs the TSDoc enforcement pass against a project.  The enforcer walks all exported symbols that meet the configured minimum visibility threshold and emits diagnostics for any documentation deficiencies it finds.  ### Error codes | Code | Severity | Condition | |------|----------|-----------| | E001 | error    | Exported symbol is missing a TSDoc summary. | | E002 | error    | Function/method parameter lacks a `@param` tag. | | E003 | error    | Non-void function/method lacks a `@returns` tag. | | E004 | error    | Exported function/method is missing an `@example` block. | | E005 | error    | Package entry point (index.ts) is missing `@packageDocumentation`. | | E006 | error    | Public/protected class member is missing a TSDoc comment. | | E007 | error    | Interface/type alias property is missing a TSDoc comment. | | W001 | warning  | TSDoc comment contains parse errors. | | W002 | warning  | Function body throws but has no `@throws` tag. | | W003 | warning  | `@deprecated` tag is present without explanation. | | W006 | warning  | TSDoc parser-level syntax error (invalid tag, malformed block, etc.). | | E009 | error    | tsconfig.json required strict-mode flag is missing or disabled (guard). | | E010 | error    | Config drift: a rule severity is weaker than the locked value. | | E013 | error    | Exported function/class is missing a `@remarks` block. | | E014 | warn     | Optional property of interface/type is missing `@defaultValue`. | | E015 | error    | Generic symbol is missing `@typeParam` for a type parameter. | | W005 | warn     | Symbol references other symbols via `{@link}` but has no `@see` tags. | | W007 | warn     | Guide FORGE:AUTO section references a symbol that no longer exists. | | W008 | warn     | Exported public symbol is not mentioned in any guide page. |  When `config.enforce.strict` is `true` all warnings are promoted to errors.
 
 Parameters:
 - config: The resolved `ForgeConfig` for the project.
@@ -692,6 +1058,22 @@ Example:
   import { runInitDocs } from "@forge-ts/cli/commands/init-docs";
   const output = await runInitDocs({ target: "mintlify", cwd: process.cwd() });
   console.log(output.data.files); // list of created file paths
+
+### runLock()
+
+(args: { cwd?: string | undefined; }) => Promise<CommandOutput<LockResult>>
+
+Runs the lock command: reads current config and creates `.forge-lock.json`.
+
+Parameters:
+- args: CLI arguments for the lock command.
+
+Returns: A typed `CommandOutput<LockResult>`.
+
+Example:
+  import { runLock } from "@forge-ts/cli/commands/lock";
+  const output = await runLock({ cwd: process.cwd() });
+  console.log(output.data.locked.rules); // number of rules locked
 
 ### extractExamples()
 
@@ -783,7 +1165,145 @@ Example:
   const output = await runTest({ cwd: process.cwd() });
   console.log(output.data.summary.passed); // number of passing doctests
 
+### runUnlock()
+
+(args: { cwd?: string | undefined; reason: string; }) => Promise<CommandOutput<UnlockResult>>
+
+Runs the unlock command: removes `.forge-lock.json` with a mandatory reason.
+
+Parameters:
+- args: CLI arguments for the unlock command.
+
+Returns: A typed `CommandOutput<UnlockResult>`.
+
+Example:
+  import { runUnlock } from "@forge-ts/cli/commands/unlock";
+  const output = await runUnlock({ cwd: process.cwd(), reason: "Relaxing rules for migration" });
+  console.log(output.data.success); // true
+
 ## Interfaces
+
+### AuditEvent
+
+any
+
+A single audit event recorded in the forge-ts audit trail.
+
+Members:
+
+#### timestamp
+
+string
+
+ISO 8601 timestamp of when the event occurred.
+
+#### event
+
+AuditEventType
+
+Discriminated event type.
+
+#### user
+
+string
+
+OS username of the actor (falls back to "unknown").
+
+#### reason
+
+string | undefined
+
+Mandatory for lock/unlock/bypass events; optional otherwise.
+
+#### details
+
+Record<string, unknown>
+
+Event-specific payload.
+
+### ReadAuditOptions
+
+any
+
+Options for reading the audit log.
+
+Members:
+
+#### limit
+
+number | undefined
+
+Maximum number of events to return.
+
+#### eventType
+
+AuditEventType | undefined
+
+Filter to a single event type.
+
+### BypassConfig
+
+any
+
+Configuration for the bypass budget system.
+
+Members:
+
+#### dailyBudget
+
+number
+
+Maximum number of bypasses allowed per calendar day. Default: 3
+
+#### durationHours
+
+number
+
+Duration in hours before a bypass automatically expires. Default: 24
+
+### BypassRecord
+
+any
+
+A single bypass record stored in `.forge-bypass.json`.
+
+Members:
+
+#### id
+
+string
+
+Unique identifier for this bypass.
+
+#### createdAt
+
+string
+
+ISO 8601 timestamp when the bypass was created.
+
+#### expiresAt
+
+string
+
+ISO 8601 timestamp when the bypass expires.
+
+#### reason
+
+string
+
+Mandatory justification for why the bypass was created.
+
+#### rule
+
+string
+
+Specific rule code bypassed (e.g., "E009"), or "all" for a blanket bypass.
+
+#### user
+
+string
+
+OS username of the actor who created the bypass.
 
 ### ForgeSymbol
 
@@ -831,7 +1351,7 @@ number
 
 #### documentation
 
-{ summary?: string | undefined; params?: { name: string; description: string; type?: string | undefined; }[] | undefined; returns?: { description: string; type?: string | undefined; } | undefined; ... 4 more ...; links?: { ...; }[] | undefined; } | undefined
+{ summary?: string | undefined; params?: { name: string; description: string; type?: string | undefined; }[] | undefined; returns?: { description: string; type?: string | undefined; } | undefined; ... 5 more ...; parseMessages?: { ...; }[] | undefined; } | undefined
 
 Parsed TSDoc documentation, if present.
 
@@ -908,6 +1428,48 @@ RuleSeverity
 
 E007: Interface/type member missing documentation.
 
+#### "require-tsdoc-syntax"
+
+RuleSeverity
+
+W006: TSDoc syntax parse error (invalid tag, malformed block, etc.).
+
+#### "require-remarks"
+
+RuleSeverity
+
+E013: Exported function/class is missing a
+
+#### "require-default-value"
+
+RuleSeverity
+
+E014: Optional property with default is missing defaultValue.
+
+#### "require-type-param"
+
+RuleSeverity
+
+E015: Generic symbol is missing
+
+#### "require-see"
+
+RuleSeverity
+
+W005: Symbol references other symbols via  but has no
+
+#### "require-fresh-guides"
+
+RuleSeverity
+
+W007: Guide FORGE:AUTO section references a symbol that no longer exists or has changed.
+
+#### "require-guide-coverage"
+
+RuleSeverity
+
+W008: Exported public symbol is not mentioned in any guide page.
+
 ### ForgeConfig
 
 any
@@ -963,6 +1525,30 @@ Output generation configuration.
 { enabled?: boolean | undefined; customSections?: { heading: string; content: string; }[] | undefined; extraGotchas?: string[] | undefined; }
 
 Skill package generation settings. Custom sections here are merged into the generated SKILL.md, allowing projects to inject workflow knowledge, domain gotchas, and other context that cannot be derived from symbols alone.
+
+#### tsdoc
+
+{ writeConfig: boolean; customTags: { tagName: string; syntaxKind: "block" | "inline" | "modifier"; }[]; enforce: { core: "error" | "warn" | "off"; extended: "error" | "warn" | "off"; discretionary: "error" | ... 1 more ... | "off"; }; }
+
+TSDoc ecosystem configuration.
+
+#### bypass
+
+{ dailyBudget: number; durationHours: number; }
+
+Bypass budget configuration for temporary rule overrides.
+
+#### guides
+
+{ enabled: boolean; autoDiscover: boolean; custom: { slug: string; title: string; sources: string[]; }[]; }
+
+Guide generation configuration.
+
+#### guards
+
+{ tsconfig: { enabled: boolean; requiredFlags: string[]; }; biome: { enabled: boolean; lockedRules: string[]; }; packageJson: { enabled: boolean; minNodeVersion: string; requiredFields: string[]; }; }
+
+Downstream config drift guards.
 
 #### _configWarnings
 
@@ -1113,6 +1699,70 @@ number
 number
 
 0-based column.
+
+### ForgeLockManifest
+
+any
+
+Manifest stored in `.forge-lock.json`. Captures a point-in-time snapshot of the project's forge-ts configuration so that future runs can detect when settings have been weakened.
+
+Members:
+
+#### version
+
+string
+
+Schema version of the lock manifest.
+
+#### lockedAt
+
+string
+
+ISO-8601 timestamp when the lock was created.
+
+#### lockedBy
+
+string
+
+Identifier of the user or agent that created the lock.
+
+#### config
+
+{ rules: Record<string, string>; tsconfig?: Record<string, unknown> | undefined; biome?: Record<string, unknown> | undefined; }
+
+Snapshot of locked configuration values.
+
+### LockViolation
+
+any
+
+A single violation found when comparing current config against the lock.
+
+Members:
+
+#### field
+
+string
+
+Dot-path of the config field that changed (e.g., "rules.require-summary").
+
+#### locked
+
+string
+
+The value stored in the lock file.
+
+#### current
+
+string
+
+The current value in the live config.
+
+#### message
+
+string
+
+Human-readable explanation of the violation.
 
 ### OpenAPISchemaObject
 
@@ -1753,6 +2403,248 @@ Nested child symbols (class methods, interface properties, enum members).
 { filePath: string; line: number; }
 
 Source file location.
+
+### CommandOutput
+
+any
+
+Typed result from a forge-ts command.
+
+Members:
+
+#### operation
+
+string
+
+Name of the command that produced this output (e.g., "check", "build").
+
+#### success
+
+boolean
+
+Whether the command completed successfully.
+
+#### data
+
+T
+
+Strongly-typed command-specific result payload.
+
+#### errors
+
+ForgeCliError[] | undefined
+
+Structured errors produced by the command, if any.
+
+#### warnings
+
+ForgeCliWarning[] | undefined
+
+Structured warnings produced by the command, if any.
+
+#### duration
+
+number | undefined
+
+Wall-clock duration of the command in milliseconds.
+
+### ForgeCliError
+
+any
+
+Structured error for CLI commands.
+
+Members:
+
+#### code
+
+string
+
+Machine-readable error code (e.g., "E004").
+
+#### message
+
+string
+
+Human-readable error description.
+
+#### filePath
+
+string | undefined
+
+Absolute path to the source file containing the error, if applicable.
+
+#### line
+
+number | undefined
+
+1-based line number of the error, if applicable.
+
+#### column
+
+number | undefined
+
+0-based column number of the error, if applicable.
+
+### ForgeCliWarning
+
+any
+
+Structured warning for CLI commands.
+
+Members:
+
+#### code
+
+string
+
+Machine-readable warning code.
+
+#### message
+
+string
+
+Human-readable warning description.
+
+#### filePath
+
+string | undefined
+
+Absolute path to the source file containing the warning, if applicable.
+
+#### line
+
+number | undefined
+
+1-based line number of the warning, if applicable.
+
+#### column
+
+number | undefined
+
+0-based column number of the warning, if applicable.
+
+### OutputFlags
+
+any
+
+Output format flags passed through from citty args.
+
+Members:
+
+#### json
+
+boolean | undefined
+
+Emit output as a LAFS JSON envelope instead of human-readable text.
+
+#### human
+
+boolean | undefined
+
+Emit output as formatted human-readable text.
+
+#### quiet
+
+boolean | undefined
+
+Suppress all output regardless of format.
+
+#### mvi
+
+string | undefined
+
+MVI verbosity level: "minimal", "standard", or "full".
+
+### AuditArgs
+
+any
+
+Arguments for the `audit` command.
+
+Members:
+
+#### cwd
+
+string | undefined
+
+Project root directory (default: cwd).
+
+#### limit
+
+number | undefined
+
+Maximum number of events to display (default: 20).
+
+#### type
+
+AuditEventType | undefined
+
+Filter events by type.
+
+### AuditResult
+
+any
+
+Typed result for the `audit` command.
+
+Members:
+
+#### success
+
+boolean
+
+Whether the audit log was read successfully.
+
+#### count
+
+number
+
+Number of events returned.
+
+#### events
+
+AuditEvent[]
+
+The audit events, newest first.
+
+### DiscoveredGuide
+
+any
+
+A guide discovered from the symbol graph by code analysis heuristics.
+
+Members:
+
+#### slug
+
+string
+
+URL-safe slug (e.g. "configuration", "error-handling").
+
+#### title
+
+string
+
+Human-readable title (e.g. "Configuration Guide").
+
+#### description
+
+string
+
+Short description of the guide's content.
+
+#### source
+
+GuideSource
+
+Which heuristic discovered this guide.
+
+#### symbols
+
+ForgeSymbol[]
+
+The symbols that contribute content to this guide.
 
 ### MdText
 
@@ -2593,158 +3485,6 @@ Parameters:
 - detail: Description of what was produced.
 - duration: Optional wall-clock time in milliseconds.
 
-### CommandOutput
-
-any
-
-Typed result from a forge-ts command.
-
-Members:
-
-#### operation
-
-string
-
-Name of the command that produced this output (e.g., "check", "build").
-
-#### success
-
-boolean
-
-Whether the command completed successfully.
-
-#### data
-
-T
-
-Strongly-typed command-specific result payload.
-
-#### errors
-
-ForgeCliError[] | undefined
-
-Structured errors produced by the command, if any.
-
-#### warnings
-
-ForgeCliWarning[] | undefined
-
-Structured warnings produced by the command, if any.
-
-#### duration
-
-number | undefined
-
-Wall-clock duration of the command in milliseconds.
-
-### ForgeCliError
-
-any
-
-Structured error for CLI commands.
-
-Members:
-
-#### code
-
-string
-
-Machine-readable error code (e.g., "E004").
-
-#### message
-
-string
-
-Human-readable error description.
-
-#### filePath
-
-string | undefined
-
-Absolute path to the source file containing the error, if applicable.
-
-#### line
-
-number | undefined
-
-1-based line number of the error, if applicable.
-
-#### column
-
-number | undefined
-
-0-based column number of the error, if applicable.
-
-### ForgeCliWarning
-
-any
-
-Structured warning for CLI commands.
-
-Members:
-
-#### code
-
-string
-
-Machine-readable warning code.
-
-#### message
-
-string
-
-Human-readable warning description.
-
-#### filePath
-
-string | undefined
-
-Absolute path to the source file containing the warning, if applicable.
-
-#### line
-
-number | undefined
-
-1-based line number of the warning, if applicable.
-
-#### column
-
-number | undefined
-
-0-based column number of the warning, if applicable.
-
-### OutputFlags
-
-any
-
-Output format flags passed through from citty args.
-
-Members:
-
-#### json
-
-boolean | undefined
-
-Emit output as a LAFS JSON envelope instead of human-readable text.
-
-#### human
-
-boolean | undefined
-
-Emit output as formatted human-readable text.
-
-#### quiet
-
-boolean | undefined
-
-Suppress all output regardless of format.
-
-#### mvi
-
-string | undefined
-
-MVI verbosity level: "minimal", "standard", or "full".
-
 ### BuildArgs
 
 any
@@ -2852,6 +3592,76 @@ Per-step details.
 string[] | undefined
 
 Files written during the build — present at standard and full MVI levels.
+
+### BypassCreateResult
+
+any
+
+Typed result for the `bypass` command when creating a bypass.
+
+Members:
+
+#### success
+
+boolean
+
+Whether the bypass was successfully created.
+
+#### bypass
+
+BypassRecord
+
+The bypass record that was created.
+
+#### remainingBudget
+
+number
+
+Number of remaining bypass slots for today after creation.
+
+#### dailyBudget
+
+number
+
+The configured daily budget.
+
+### BypassStatusResult
+
+any
+
+Typed result for the `bypass --status` command.
+
+Members:
+
+#### success
+
+boolean
+
+Always true for status queries.
+
+#### activeBypasses
+
+BypassRecord[]
+
+Active (non-expired) bypass records.
+
+#### remainingBudget
+
+number
+
+Number of remaining bypass slots for today.
+
+#### dailyBudget
+
+number
+
+The configured daily budget.
+
+#### expiredRemoved
+
+number
+
+Number of expired bypasses that were cleaned up.
 
 ### DeprecatedUsage
 
@@ -3302,6 +4112,50 @@ string | undefined
 
 MVI verbosity level for structured output.
 
+### LockResult
+
+any
+
+Typed result for the `lock` command.
+
+Members:
+
+#### success
+
+boolean
+
+Whether the lock was successfully created.
+
+#### lockFile
+
+string
+
+Path to the lock file that was written.
+
+#### lockedAt
+
+string
+
+ISO-8601 timestamp when the lock was created.
+
+#### lockedBy
+
+string
+
+Identifier of who created the lock.
+
+#### locked
+
+{ rules: number; tsconfig: boolean; biome: boolean; }
+
+Summary of what was locked.
+
+#### overwrote
+
+boolean
+
+Whether a previous lock file was overwritten.
+
 ### ExtractedExample
 
 any
@@ -3522,13 +4376,57 @@ TestFailure[] | undefined
 
 Per-failure details — present at standard and full MVI levels.
 
+### UnlockResult
+
+any
+
+Typed result for the `unlock` command.
+
+Members:
+
+#### success
+
+boolean
+
+Whether the unlock was successful.
+
+#### reason
+
+string
+
+The reason provided for unlocking.
+
+#### previousLockedBy
+
+string | null
+
+Who originally locked the config, if known.
+
+#### previousLockedAt
+
+string | null
+
+When the config was originally locked, if known.
+
 ## Types
+
+### AuditEventType
+
+any
+
+Discriminated event types recorded in the audit trail.
 
 ### RuleSeverity
 
 any
 
 Severity level for an individual enforcement rule. - `"error"` — violation fails the build. - `"warn"`  — violation is reported but does not fail the build. - `"off"`   — rule is disabled entirely.
+
+### GuideSource
+
+any
+
+The source heuristic that discovered a guide.
 
 ### MdPhrasing
 
@@ -3575,6 +4473,12 @@ Visibility.Internal
 Visibility.Private
 
 ## Variables
+
+### auditCommand
+
+CommandDef<{ readonly cwd: { readonly type: "string"; readonly description: "Project root directory"; }; readonly limit: { readonly type: "string"; readonly description: "Maximum events to display (default: 20)"; }; readonly type: { ...; }; readonly json: { ...; }; readonly human: { ...; }; readonly quiet: { ...; };...
+
+Citty command definition for `forge-ts audit`.
 
 ### md
 
@@ -3642,6 +4546,12 @@ CommandDef<{ readonly cwd: { readonly type: "string"; readonly description: "Pro
 
 Citty command definition for `forge-ts build`.
 
+### bypassCommand
+
+CommandDef<{ readonly cwd: { readonly type: "string"; readonly description: "Project root directory"; }; readonly reason: { readonly type: "string"; readonly description: "Mandatory justification for bypassing rules"; }; ... 4 more ...; readonly quiet: { ...; }; }>
+
+Citty command definition for `forge-ts bypass`.
+
 ### checkCommand
 
 CommandDef<{ readonly cwd: { readonly type: "string"; readonly description: "Project root directory"; }; readonly strict: { readonly type: "boolean"; readonly description: "Treat warnings as errors"; readonly default: false; }; ... 8 more ...; readonly mvi: { ...; }; }>
@@ -3677,8 +4587,20 @@ Example:
   import { initCommand } from "@forge-ts/cli/commands/init-docs";
   // Registered automatically as a subcommand of `forge-ts`
 
+### lockCommand
+
+CommandDef<{ readonly cwd: { readonly type: "string"; readonly description: "Project root directory"; }; readonly json: { readonly type: "boolean"; readonly description: "Output as LAFS JSON envelope (agent-friendly)"; readonly default: false; }; readonly human: { ...; }; readonly quiet: { ...; }; }>
+
+Citty command definition for `forge-ts lock`.
+
 ### testCommand
 
 CommandDef<{ readonly cwd: { readonly type: "string"; readonly description: "Project root directory"; }; readonly json: { readonly type: "boolean"; readonly description: "Output as LAFS JSON envelope (agent-friendly)"; readonly default: false; }; readonly human: { ...; }; readonly quiet: { ...; }; readonly mvi: { .....
 
 Citty command definition for `forge-ts test`.
+
+### unlockCommand
+
+CommandDef<{ readonly cwd: { readonly type: "string"; readonly description: "Project root directory"; }; readonly reason: { readonly type: "string"; readonly description: "Mandatory reason for unlocking (audit trail)"; readonly required: true; }; readonly json: { ...; }; readonly human: { ...; }; readonly quiet: { ....
+
+Citty command definition for `forge-ts unlock`.

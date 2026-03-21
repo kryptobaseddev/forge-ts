@@ -57,9 +57,8 @@ npx forge-ts build
 Your code examples become live documentation:
 
 ```typescript
-import { defaultConfig } from "@forge-ts/core";
-const config = defaultConfig("/path/to/project");
-console.log(config.enforce.enabled); // true
+import { getCurrentUser } from "@forge-ts/core/audit";
+const user = getCurrentUser(); // e.g. "alice"
 ```
 
 ## What's Next?

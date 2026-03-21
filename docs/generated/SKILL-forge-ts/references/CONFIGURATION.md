@@ -1,5 +1,25 @@
 # forge-ts — Configuration Reference
 
+## `BypassConfig`
+
+Configuration for the bypass budget system.
+
+```typescript
+import type { BypassConfig } from "forge-ts";
+
+const config: Partial<BypassConfig> = {
+  // Maximum number of bypasses allowed per calendar day. Default: 3
+  dailyBudget: 0,
+  // Duration in hours before a bypass automatically expires. Default: 24
+  durationHours: 0,
+};
+```
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `dailyBudget` | `number` | Maximum number of bypasses allowed per calendar day. Default: 3 |
+| `durationHours` | `number` | Duration in hours before a bypass automatically expires. Default: 24 |
+
 ## `ForgeConfig`
 
 Full configuration for a forge-ts run. Loaded from forge-ts.config.ts or the "forge-ts" key in package.json.
@@ -24,6 +44,14 @@ const config: Partial<ForgeConfig> = {
   gen: [],
   // Skill package generation settings. Custom sections here are merged into the generated SKILL.md, allowing projects to inject workflow knowledge, domain gotchas, and other context that cannot be derived from symbols alone.
   skill: [],
+  // TSDoc ecosystem configuration.
+  tsdoc: [],
+  // Bypass budget configuration for temporary rule overrides.
+  bypass: { /* ... */ },
+  // Guide generation configuration.
+  guides: [],
+  // Downstream config drift guards.
+  guards: [],
   // Warnings generated during config loading (e.g., unknown keys). Populated by loadConfig(). Agents should surface these in output.
   _configWarnings: "...",
   // Project metadata — auto-detected from package.json if not provided.
@@ -41,6 +69,10 @@ const config: Partial<ForgeConfig> = {
 | `api` | `{ enabled: boolean; openapi: boolean; openapiPath: string; }` | API generation configuration. |
 | `gen` | `{ enabled: boolean; formats: ("markdown" | "mdx")[]; llmsTxt: boolean; readmeSync: boolean; ssgTarget?: "docusaurus" | "mintlify" | "nextra" | "vitepress" | undefined; }` | Output generation configuration. |
 | `skill` | `{ enabled?: boolean | undefined; customSections?: { heading: string; content: string; }[] | undefined; extraGotchas?: string[] | undefined; }` | Skill package generation settings. Custom sections here are merged into the generated SKILL.md, allowing projects to inject workflow knowledge, domain gotchas, and other context that cannot be derived from symbols alone. |
+| `tsdoc` | `{ writeConfig: boolean; customTags: { tagName: string; syntaxKind: "block" | "inline" | "modifier"; }[]; enforce: { core: "error" | "warn" | "off"; extended: "error" | "warn" | "off"; discretionary: "error" | ... 1 more ... | "off"; }; }` | TSDoc ecosystem configuration. |
+| `bypass` | `{ dailyBudget: number; durationHours: number; }` | Bypass budget configuration for temporary rule overrides. |
+| `guides` | `{ enabled: boolean; autoDiscover: boolean; custom: { slug: string; title: string; sources: string[]; }[]; }` | Guide generation configuration. |
+| `guards` | `{ tsconfig: { enabled: boolean; requiredFlags: string[]; }; biome: { enabled: boolean; lockedRules: string[]; }; packageJson: { enabled: boolean; minNodeVersion: string; requiredFields: string[]; }; }` | Downstream config drift guards. |
 | `_configWarnings` | `string[] | undefined` | Warnings generated during config loading (e.g., unknown keys). Populated by loadConfig(). Agents should surface these in output. |
 | `project` | `{ repository?: string | undefined; homepage?: string | undefined; packageName?: string | undefined; description?: string | undefined; version?: string | undefined; bin?: Record<string, string> | undefined; scripts?: Record<...> | undefined; keywords?: string[] | undefined; }` | Project metadata — auto-detected from package.json if not provided. |
 

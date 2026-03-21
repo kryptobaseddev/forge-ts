@@ -5,18 +5,6 @@ description: Type contracts for the cli package
 
 Type contracts exported by this package: interfaces, type aliases, and enums.
 
-## Logger
-
-A minimal structured logger used throughout the CLI commands.
-
-| Property  | Type                                                                      | Required | Description                                                   |
-| --------- | ------------------------------------------------------------------------- | -------- | ------------------------------------------------------------- |
-| `info`    | `(msg: string) => void`                                                   | Yes      | Print an informational message.                               |
-| `success` | `(msg: string) => void`                                                   | Yes      | Print a success message (green ✓ prefix when colours are on). |
-| `warn`    | `(msg: string) => void`                                                   | Yes      | Print a warning message (yellow prefix when colours are on).  |
-| `error`   | `(msg: string) => void`                                                   | Yes      | Print an error message (red ✗ prefix when colours are on).    |
-| `step`    | `(label: string, detail: string, duration?: number \| undefined) => void` | No       | Print a build-step line.                                      |
-
 ## CommandOutput
 
 Typed result from a forge-ts command.
@@ -65,6 +53,38 @@ Output format flags passed through from citty args.
 | `quiet`  | `boolean \| undefined` | No       | Suppress all output regardless of format.                           |
 | `mvi`    | `string \| undefined`  | No       | MVI verbosity level: "minimal", "standard", or "full".              |
 
+## AuditArgs
+
+Arguments for the `audit` command.
+
+| Property | Type                          | Required | Description                                        |
+| -------- | ----------------------------- | -------- | -------------------------------------------------- |
+| `cwd`    | `string \| undefined`         | No       | Project root directory (default: cwd).             |
+| `limit`  | `number \| undefined`         | No       | Maximum number of events to display (default: 20). |
+| `type`   | `AuditEventType \| undefined` | No       | Filter events by type.                             |
+
+## AuditResult
+
+Typed result for the `audit` command.
+
+| Property  | Type           | Required | Description                                  |
+| --------- | -------------- | -------- | -------------------------------------------- |
+| `success` | `boolean`      | Yes      | Whether the audit log was read successfully. |
+| `count`   | `number`       | Yes      | Number of events returned.                   |
+| `events`  | `AuditEvent[]` | Yes      | The audit events, newest first.              |
+
+## Logger
+
+A minimal structured logger used throughout the CLI commands.
+
+| Property  | Type                                                                      | Required | Description                                                   |
+| --------- | ------------------------------------------------------------------------- | -------- | ------------------------------------------------------------- |
+| `info`    | `(msg: string) => void`                                                   | Yes      | Print an informational message.                               |
+| `success` | `(msg: string) => void`                                                   | Yes      | Print a success message (green ✓ prefix when colours are on). |
+| `warn`    | `(msg: string) => void`                                                   | Yes      | Print a warning message (yellow prefix when colours are on).  |
+| `error`   | `(msg: string) => void`                                                   | Yes      | Print an error message (red ✗ prefix when colours are on).    |
+| `step`    | `(label: string, detail: string, duration?: number \| undefined) => void` | No       | Print a build-step line.                                      |
+
 ## BuildArgs
 
 Arguments for the `build` command.
@@ -99,6 +119,29 @@ Typed result for the `build` command.
 | `summary`        | `{ steps: number; succeeded: number; failed: number; duration: number; }` | Yes      | Aggregate pipeline counts — always present.                               |
 | `steps`          | `BuildStep[]`                                                             | Yes      | Per-step details.                                                         |
 | `generatedFiles` | `string[] \| undefined`                                                   | No       | Files written during the build — present at standard and full MVI levels. |
+
+## BypassCreateResult
+
+Typed result for the `bypass` command when creating a bypass.
+
+| Property          | Type           | Required | Description                                                |
+| ----------------- | -------------- | -------- | ---------------------------------------------------------- |
+| `success`         | `boolean`      | Yes      | Whether the bypass was successfully created.               |
+| `bypass`          | `BypassRecord` | Yes      | The bypass record that was created.                        |
+| `remainingBudget` | `number`       | Yes      | Number of remaining bypass slots for today after creation. |
+| `dailyBudget`     | `number`       | Yes      | The configured daily budget.                               |
+
+## BypassStatusResult
+
+Typed result for the `bypass --status` command.
+
+| Property          | Type             | Required | Description                                      |
+| ----------------- | ---------------- | -------- | ------------------------------------------------ |
+| `success`         | `boolean`        | Yes      | Always true for status queries.                  |
+| `activeBypasses`  | `BypassRecord[]` | Yes      | Active (non-expired) bypass records.             |
+| `remainingBudget` | `number`         | Yes      | Number of remaining bypass slots for today.      |
+| `dailyBudget`     | `number`         | Yes      | The configured daily budget.                     |
+| `expiredRemoved`  | `number`         | Yes      | Number of expired bypasses that were cleaned up. |
 
 ## CheckArgs
 
@@ -221,6 +264,19 @@ Arguments for the `init docs` command.
 | `force`  | `boolean \| undefined` | No       | Overwrite an existing scaffold without prompting.                          |
 | `mvi`    | `string \| undefined`  | No       | MVI verbosity level for structured output.                                 |
 
+## LockResult
+
+Typed result for the `lock` command.
+
+| Property    | Type                                                    | Required | Description                                   |
+| ----------- | ------------------------------------------------------- | -------- | --------------------------------------------- |
+| `success`   | `boolean`                                               | Yes      | Whether the lock was successfully created.    |
+| `lockFile`  | `string`                                                | Yes      | Path to the lock file that was written.       |
+| `lockedAt`  | `string`                                                | Yes      | ISO-8601 timestamp when the lock was created. |
+| `lockedBy`  | `string`                                                | Yes      | Identifier of who created the lock.           |
+| `locked`    | `{ rules: number; tsconfig: boolean; biome: boolean; }` | Yes      | Summary of what was locked.                   |
+| `overwrote` | `boolean`                                               | Yes      | Whether a previous lock file was overwritten. |
+
 ## TestArgs
 
 Arguments for the `test` command.
@@ -250,3 +306,14 @@ Typed result for the `test` command.
 | `success`  | `boolean`                                                              | Yes      | Whether all doctests passed.                                   |
 | `summary`  | `{ passed: number; failed: number; total: number; duration: number; }` | Yes      | Aggregate counts — always present regardless of MVI level.     |
 | `failures` | `TestFailure[] \| undefined`                                           | No       | Per-failure details — present at standard and full MVI levels. |
+
+## UnlockResult
+
+Typed result for the `unlock` command.
+
+| Property           | Type             | Required | Description                                      |
+| ------------------ | ---------------- | -------- | ------------------------------------------------ |
+| `success`          | `boolean`        | Yes      | Whether the unlock was successful.               |
+| `reason`           | `string`         | Yes      | The reason provided for unlocking.               |
+| `previousLockedBy` | `string \| null` | Yes      | Who originally locked the config, if known.      |
+| `previousLockedAt` | `string \| null` | Yes      | When the config was originally locked, if known. |

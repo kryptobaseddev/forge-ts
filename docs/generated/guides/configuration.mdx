@@ -1,0 +1,117 @@
+---
+title: Configuration Guide
+description: How to configure the project using its exported configuration interfaces.
+---
+
+How to configure the project using its exported configuration interfaces.
+
+> TODO: Add your own content to this guide. The sections below are auto-generated from code.
+
+{/* FORGE:AUTO-START guide-configuration */}
+
+## Configuration Interfaces
+
+### `ReadAuditOptions`
+
+Options for reading the audit log.
+
+| Property    | Type                          | Description                         |
+| ----------- | ----------------------------- | ----------------------------------- |
+| `limit`     | `number \| undefined`         | Maximum number of events to return. |
+| `eventType` | `AuditEventType \| undefined` | Filter to a single event type.      |
+
+### `BypassConfig`
+
+Configuration for the bypass budget system.
+
+| Property        | Type     | Description                                                          |
+| --------------- | -------- | -------------------------------------------------------------------- |
+| `dailyBudget`   | `number` | Maximum number of bypasses allowed per calendar day. Default: 3      |
+| `durationHours` | `number` | Duration in hours before a bypass automatically expires. Default: 24 |
+
+### `ForgeConfig`
+
+Full configuration for a forge-ts run. Loaded from forge-ts.config.ts or the "forge-ts" key in package.json.
+
+| Property          | Type                                                                                                                                                                                                                                                                                          | Description                                                                                                                                                                                                                  |
+| ----------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `rootDir`         | `string`                                                                                                                                                                                                                                                                                      | Root directory of the project.                                                                                                                                                                                               |
+| `tsconfig`        | `string`                                                                                                                                                                                                                                                                                      | Path to the tsconfig.json to compile against.                                                                                                                                                                                |
+| `outDir`          | `string`                                                                                                                                                                                                                                                                                      | Output directory for generated files.                                                                                                                                                                                        |
+| `enforce`         | `{ enabled: boolean; minVisibility: Visibility; strict: boolean; rules: EnforceRules; }`                                                                                                                                                                                                      | Enforce TSDoc on all public exports.                                                                                                                                                                                         |
+| `doctest`         | `{ enabled: boolean; cacheDir: string; }`                                                                                                                                                                                                                                                     | DocTest configuration.                                                                                                                                                                                                       |
+| `api`             | `{ enabled: boolean; openapi: boolean; openapiPath: string; }`                                                                                                                                                                                                                                | API generation configuration.                                                                                                                                                                                                |
+| `gen`             | `{ enabled: boolean; formats: ("markdown" \| "mdx")[]; llmsTxt: boolean; readmeSync: boolean; ssgTarget?: "docusaurus" \| "mintlify" \| "nextra" \| "vitepress" \| undefined; }`                                                                                                              | Output generation configuration.                                                                                                                                                                                             |
+| `skill`           | `{ enabled?: boolean \| undefined; customSections?: { heading: string; content: string; }[] \| undefined; extraGotchas?: string[] \| undefined; }`                                                                                                                                            | Skill package generation settings. Custom sections here are merged into the generated SKILL.md, allowing projects to inject workflow knowledge, domain gotchas, and other context that cannot be derived from symbols alone. |
+| `tsdoc`           | `{ writeConfig: boolean; customTags: { tagName: string; syntaxKind: "block" \| "inline" \| "modifier"; }[]; enforce: { core: "error" \| "warn" \| "off"; extended: "error" \| "warn" \| "off"; discretionary: "error" \| ... 1 more ... \| "off"; }; }`                                       | TSDoc ecosystem configuration.                                                                                                                                                                                               |
+| `bypass`          | `{ dailyBudget: number; durationHours: number; }`                                                                                                                                                                                                                                             | Bypass budget configuration for temporary rule overrides.                                                                                                                                                                    |
+| `guides`          | `{ enabled: boolean; autoDiscover: boolean; custom: { slug: string; title: string; sources: string[]; }[]; }`                                                                                                                                                                                 | Guide generation configuration.                                                                                                                                                                                              |
+| `guards`          | `{ tsconfig: { enabled: boolean; requiredFlags: string[]; }; biome: { enabled: boolean; lockedRules: string[]; }; packageJson: { enabled: boolean; minNodeVersion: string; requiredFields: string[]; }; }`                                                                                    | Downstream config drift guards.                                                                                                                                                                                              |
+| `_configWarnings` | `string[] \| undefined`                                                                                                                                                                                                                                                                       | Warnings generated during config loading (e.g., unknown keys). Populated by loadConfig(). Agents should surface these in output.                                                                                             |
+| `project`         | `{ repository?: string \| undefined; homepage?: string \| undefined; packageName?: string \| undefined; description?: string \| undefined; version?: string \| undefined; bin?: Record<string, string> \| undefined; scripts?: Record<...> \| undefined; keywords?: string[] \| undefined; }` | Project metadata — auto-detected from package.json if not provided.                                                                                                                                                          |
+
+### `SiteGeneratorOptions`
+
+Options controlling the doc site generator.
+
+| Property             | Type                                                                 | Description                                       |
+| -------------------- | -------------------------------------------------------------------- | ------------------------------------------------- |
+| `format`             | `"markdown" \| "mdx"`                                                | Output format                                     |
+| `ssgTarget`          | `"docusaurus" \| "mintlify" \| "nextra" \| "vitepress" \| undefined` | SSG target for frontmatter                        |
+| `projectName`        | `string`                                                             | Project name                                      |
+| `projectDescription` | `string \| undefined`                                                | Project description                               |
+| `repositoryUrl`      | `string \| undefined`                                                | Repository URL (auto-detected from package.json). |
+| `packageName`        | `string \| undefined`                                                | npm package name for install commands.            |
+
+### `MarkdownOptions`
+
+Options controlling Markdown output.
+
+| Property | Type                   | Description                                    |
+| -------- | ---------------------- | ---------------------------------------------- |
+| `mdx`    | `boolean \| undefined` | Whether to use MDX syntax (default: Markdown). |
+
+### `ReadmeSyncOptions`
+
+Options controlling README sync behaviour.
+
+| Property          | Type                   | Description                                                     |
+| ----------------- | ---------------------- | --------------------------------------------------------------- |
+| `badge`           | `boolean \| undefined` | Include a "Documented with forge-ts" badge above the API table. |
+| `includeExamples` | `boolean \| undefined` | Include first                                                   |
+
+### `SSGConfigFile`
+
+A single generated SSG configuration file.
+
+| Property  | Type     | Description                                                  |
+| --------- | -------- | ------------------------------------------------------------ |
+| `path`    | `string` | Relative path from outDir (e.g., "mint.json", "\_meta.json") |
+| `content` | `string` | File content                                                 |
+
+### `GenerateOptions`
+
+Options for the generation pipeline.
+
+| Property     | Type                   | Description                                                                                                                                                                                                                                                |
+| ------------ | ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `forceStubs` | `boolean \| undefined` | When true, overwrite stub pages even if they already exist on disk. Normally stub pages (concepts, guides, faq, contributing, changelog) are only created on the first build to preserve manual edits. Use this to reset stubs to their scaffolding state. |
+
+### `FormatOptions`
+
+Options that control how `formatResults` renders its output.
+
+| Property  | Type      | Description                                                                                                     |
+| --------- | --------- | --------------------------------------------------------------------------------------------------------------- |
+| `colors`  | `boolean` | Emit ANSI colour escape sequences when `true`.                                                                  |
+| `verbose` | `boolean` | When `true`, include the symbol's type signature alongside each diagnostic so the reader has immediate context. |
+
+### `GeneratorOptions`
+
+Options for virtual test file generation.
+
+| Property   | Type     | Description                                         |
+| ---------- | -------- | --------------------------------------------------- |
+| `cacheDir` | `string` | Directory where virtual test files will be written. |
+
+{/* FORGE:AUTO-END guide-configuration */}

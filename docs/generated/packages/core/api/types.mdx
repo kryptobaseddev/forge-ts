@@ -5,6 +5,57 @@ description: Type contracts for the core package
 
 Type contracts exported by this package: interfaces, type aliases, and enums.
 
+## AuditEventType
+
+Discriminated event types recorded in the audit trail.
+
+```typescript
+any
+```
+
+## AuditEvent
+
+A single audit event recorded in the forge-ts audit trail.
+
+| Property    | Type                      | Required | Description                                                  |
+| ----------- | ------------------------- | -------- | ------------------------------------------------------------ |
+| `timestamp` | `string`                  | Yes      | ISO 8601 timestamp of when the event occurred.               |
+| `event`     | `AuditEventType`          | Yes      | Discriminated event type.                                    |
+| `user`      | `string`                  | Yes      | OS username of the actor (falls back to "unknown").          |
+| `reason`    | `string \| undefined`     | No       | Mandatory for lock/unlock/bypass events; optional otherwise. |
+| `details`   | `Record<string, unknown>` | Yes      | Event-specific payload.                                      |
+
+## ReadAuditOptions
+
+Options for reading the audit log.
+
+| Property    | Type                          | Required | Description                         |
+| ----------- | ----------------------------- | -------- | ----------------------------------- |
+| `limit`     | `number \| undefined`         | No       | Maximum number of events to return. |
+| `eventType` | `AuditEventType \| undefined` | No       | Filter to a single event type.      |
+
+## BypassConfig
+
+Configuration for the bypass budget system.
+
+| Property        | Type     | Required | Description                                                          |
+| --------------- | -------- | -------- | -------------------------------------------------------------------- |
+| `dailyBudget`   | `number` | Yes      | Maximum number of bypasses allowed per calendar day. Default: 3      |
+| `durationHours` | `number` | Yes      | Duration in hours before a bypass automatically expires. Default: 24 |
+
+## BypassRecord
+
+A single bypass record stored in `.forge-bypass.json`.
+
+| Property    | Type     | Required | Description                                                                |
+| ----------- | -------- | -------- | -------------------------------------------------------------------------- |
+| `id`        | `string` | Yes      | Unique identifier for this bypass.                                         |
+| `createdAt` | `string` | Yes      | ISO 8601 timestamp when the bypass was created.                            |
+| `expiresAt` | `string` | Yes      | ISO 8601 timestamp when the bypass expires.                                |
+| `reason`    | `string` | Yes      | Mandatory justification for why the bypass was created.                    |
+| `rule`      | `string` | Yes      | Specific rule code bypassed (e.g., "E009"), or "all" for a blanket bypass. |
+| `user`      | `string` | Yes      | OS username of the actor who created the bypass.                           |
+
 ## Visibility
 
 Visibility levels for exported symbols. Derived from TSDoc release tags (public, beta, internal).
@@ -24,18 +75,18 @@ typeof Visibility
 
 A single extracted and annotated symbol from the TypeScript AST.
 
-| Property        | Type                                                                                                                                                                                                                                                                        | Required | Description                                               |
-| --------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- | --------------------------------------------------------- |
-| `name`          | `string`                                                                                                                                                                                                                                                                    | Yes      | The declared name of the symbol.                          |
-| `kind`          | `"function" \| "class" \| "interface" \| "type" \| "enum" \| "variable" \| "method" \| "property"`                                                                                                                                                                          | Yes      | The syntactic kind of the symbol.                         |
-| `visibility`    | `Visibility`                                                                                                                                                                                                                                                                | Yes      | Resolved visibility from TSDoc release tags.              |
-| `filePath`      | `string`                                                                                                                                                                                                                                                                    | Yes      | Absolute path to the source file.                         |
-| `line`          | `number`                                                                                                                                                                                                                                                                    | Yes      | 1-based line number of the declaration.                   |
-| `column`        | `number`                                                                                                                                                                                                                                                                    | Yes      | 0-based column of the declaration.                        |
-| `documentation` | `{ summary?: string \| undefined; params?: { name: string; description: string; type?: string \| undefined; }[] \| undefined; returns?: { description: string; type?: string \| undefined; } \| undefined; ... 4 more ...; links?: { ...; }[] \| undefined; } \| undefined` | No       | Parsed TSDoc documentation, if present.                   |
-| `signature`     | `string \| undefined`                                                                                                                                                                                                                                                       | No       | Human-readable type signature of the symbol.              |
-| `children`      | `ForgeSymbol[] \| undefined`                                                                                                                                                                                                                                                | No       | Child symbols (e.g., class members, enum values).         |
-| `exported`      | `boolean`                                                                                                                                                                                                                                                                   | Yes      | Whether this symbol is part of the public module exports. |
+| Property        | Type                                                                                                                                                                                                                                                                                | Required | Description                                               |
+| --------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- | --------------------------------------------------------- |
+| `name`          | `string`                                                                                                                                                                                                                                                                            | Yes      | The declared name of the symbol.                          |
+| `kind`          | `"function" \| "class" \| "interface" \| "type" \| "enum" \| "variable" \| "method" \| "property"`                                                                                                                                                                                  | Yes      | The syntactic kind of the symbol.                         |
+| `visibility`    | `Visibility`                                                                                                                                                                                                                                                                        | Yes      | Resolved visibility from TSDoc release tags.              |
+| `filePath`      | `string`                                                                                                                                                                                                                                                                            | Yes      | Absolute path to the source file.                         |
+| `line`          | `number`                                                                                                                                                                                                                                                                            | Yes      | 1-based line number of the declaration.                   |
+| `column`        | `number`                                                                                                                                                                                                                                                                            | Yes      | 0-based column of the declaration.                        |
+| `documentation` | `{ summary?: string \| undefined; params?: { name: string; description: string; type?: string \| undefined; }[] \| undefined; returns?: { description: string; type?: string \| undefined; } \| undefined; ... 5 more ...; parseMessages?: { ...; }[] \| undefined; } \| undefined` | No       | Parsed TSDoc documentation, if present.                   |
+| `signature`     | `string \| undefined`                                                                                                                                                                                                                                                               | No       | Human-readable type signature of the symbol.              |
+| `children`      | `ForgeSymbol[] \| undefined`                                                                                                                                                                                                                                                        | No       | Child symbols (e.g., class members, enum values).         |
+| `exported`      | `boolean`                                                                                                                                                                                                                                                                           | Yes      | Whether this symbol is part of the public module exports. |
 
 ## RuleSeverity
 
@@ -49,15 +100,22 @@ any
 
 Per-rule severity configuration for the TSDoc enforcer. Each key corresponds to one of the E001–E007 rule codes.
 
-| Property                         | Type           | Required | Description                                        |
-| -------------------------------- | -------------- | -------- | -------------------------------------------------- |
-| `"require-summary"`              | `RuleSeverity` | Yes      | E001: Exported symbol missing TSDoc summary.       |
-| `"require-param"`                | `RuleSeverity` | Yes      | E002: Function parameter missing                   |
-| `"require-returns"`              | `RuleSeverity` | Yes      | E003: Non-void function missing                    |
-| `"require-example"`              | `RuleSeverity` | Yes      | E004: Exported function missing                    |
-| `"require-package-doc"`          | `RuleSeverity` | Yes      | E005: Entry point missing packageDocumentation.    |
-| `"require-class-member-doc"`     | `RuleSeverity` | Yes      | E006: Class member missing documentation.          |
-| `"require-interface-member-doc"` | `RuleSeverity` | Yes      | E007: Interface/type member missing documentation. |
+| Property                         | Type           | Required | Description                                                                              |
+| -------------------------------- | -------------- | -------- | ---------------------------------------------------------------------------------------- |
+| `"require-summary"`              | `RuleSeverity` | Yes      | E001: Exported symbol missing TSDoc summary.                                             |
+| `"require-param"`                | `RuleSeverity` | Yes      | E002: Function parameter missing                                                         |
+| `"require-returns"`              | `RuleSeverity` | Yes      | E003: Non-void function missing                                                          |
+| `"require-example"`              | `RuleSeverity` | Yes      | E004: Exported function missing                                                          |
+| `"require-package-doc"`          | `RuleSeverity` | Yes      | E005: Entry point missing packageDocumentation.                                          |
+| `"require-class-member-doc"`     | `RuleSeverity` | Yes      | E006: Class member missing documentation.                                                |
+| `"require-interface-member-doc"` | `RuleSeverity` | Yes      | E007: Interface/type member missing documentation.                                       |
+| `"require-tsdoc-syntax"`         | `RuleSeverity` | Yes      | W006: TSDoc syntax parse error (invalid tag, malformed block, etc.).                     |
+| `"require-remarks"`              | `RuleSeverity` | Yes      | E013: Exported function/class is missing a                                               |
+| `"require-default-value"`        | `RuleSeverity` | Yes      | E014: Optional property with default is missing defaultValue.                            |
+| `"require-type-param"`           | `RuleSeverity` | Yes      | E015: Generic symbol is missing                                                          |
+| `"require-see"`                  | `RuleSeverity` | Yes      | W005: Symbol references other symbols via  but has no                                    |
+| `"require-fresh-guides"`         | `RuleSeverity` | Yes      | W007: Guide FORGE:AUTO section references a symbol that no longer exists or has changed. |
+| `"require-guide-coverage"`       | `RuleSeverity` | Yes      | W008: Exported public symbol is not mentioned in any guide page.                         |
 
 ## ForgeConfig
 
@@ -73,6 +131,10 @@ Full configuration for a forge-ts run. Loaded from forge-ts.config.ts or the "fo
 | `api`             | `{ enabled: boolean; openapi: boolean; openapiPath: string; }`                                                                                                                                                                                                                                | Yes      | API generation configuration.                                                                                                                                                                                                |
 | `gen`             | `{ enabled: boolean; formats: ("markdown" \| "mdx")[]; llmsTxt: boolean; readmeSync: boolean; ssgTarget?: "docusaurus" \| "mintlify" \| "nextra" \| "vitepress" \| undefined; }`                                                                                                              | No       | Output generation configuration.                                                                                                                                                                                             |
 | `skill`           | `{ enabled?: boolean \| undefined; customSections?: { heading: string; content: string; }[] \| undefined; extraGotchas?: string[] \| undefined; }`                                                                                                                                            | No       | Skill package generation settings. Custom sections here are merged into the generated SKILL.md, allowing projects to inject workflow knowledge, domain gotchas, and other context that cannot be derived from symbols alone. |
+| `tsdoc`           | `{ writeConfig: boolean; customTags: { tagName: string; syntaxKind: "block" \| "inline" \| "modifier"; }[]; enforce: { core: "error" \| "warn" \| "off"; extended: "error" \| "warn" \| "off"; discretionary: "error" \| ... 1 more ... \| "off"; }; }`                                       | Yes      | TSDoc ecosystem configuration.                                                                                                                                                                                               |
+| `bypass`          | `{ dailyBudget: number; durationHours: number; }`                                                                                                                                                                                                                                             | Yes      | Bypass budget configuration for temporary rule overrides.                                                                                                                                                                    |
+| `guides`          | `{ enabled: boolean; autoDiscover: boolean; custom: { slug: string; title: string; sources: string[]; }[]; }`                                                                                                                                                                                 | Yes      | Guide generation configuration.                                                                                                                                                                                              |
+| `guards`          | `{ tsconfig: { enabled: boolean; requiredFlags: string[]; }; biome: { enabled: boolean; lockedRules: string[]; }; packageJson: { enabled: boolean; minNodeVersion: string; requiredFields: string[]; }; }`                                                                                    | Yes      | Downstream config drift guards.                                                                                                                                                                                              |
 | `_configWarnings` | `string[] \| undefined`                                                                                                                                                                                                                                                                       | No       | Warnings generated during config loading (e.g., unknown keys). Populated by loadConfig(). Agents should surface these in output.                                                                                             |
 | `project`         | `{ repository?: string \| undefined; homepage?: string \| undefined; packageName?: string \| undefined; description?: string \| undefined; version?: string \| undefined; bin?: Record<string, string> \| undefined; scripts?: Record<...> \| undefined; keywords?: string[] \| undefined; }` | No       | Project metadata — auto-detected from package.json if not provided.                                                                                                                                                          |
 
@@ -115,6 +177,28 @@ A diagnostic warning produced during a forge-ts run.
 | `filePath` | `string` | Yes      | Absolute path of the file where the warning occurred. |
 | `line`     | `number` | Yes      | 1-based line number.                                  |
 | `column`   | `number` | Yes      | 0-based column.                                       |
+
+## ForgeLockManifest
+
+Manifest stored in `.forge-lock.json`. Captures a point-in-time snapshot of the project's forge-ts configuration so that future runs can detect when settings have been weakened.
+
+| Property   | Type                                                                                                                                | Required | Description                                            |
+| ---------- | ----------------------------------------------------------------------------------------------------------------------------------- | -------- | ------------------------------------------------------ |
+| `version`  | `string`                                                                                                                            | Yes      | Schema version of the lock manifest.                   |
+| `lockedAt` | `string`                                                                                                                            | Yes      | ISO-8601 timestamp when the lock was created.          |
+| `lockedBy` | `string`                                                                                                                            | Yes      | Identifier of the user or agent that created the lock. |
+| `config`   | `{ rules: Record<string, string>; tsconfig?: Record<string, unknown> \| undefined; biome?: Record<string, unknown> \| undefined; }` | No       | Snapshot of locked configuration values.               |
+
+## LockViolation
+
+A single violation found when comparing current config against the lock.
+
+| Property  | Type     | Required | Description                                                                |
+| --------- | -------- | -------- | -------------------------------------------------------------------------- |
+| `field`   | `string` | Yes      | Dot-path of the config field that changed (e.g., "rules.require-summary"). |
+| `locked`  | `string` | Yes      | The value stored in the lock file.                                         |
+| `current` | `string` | Yes      | The current value in the live config.                                      |
+| `message` | `string` | Yes      | Human-readable explanation of the violation.                               |
 
 ## OpenAPISchemaObject
 

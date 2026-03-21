@@ -7,6 +7,7 @@ description: gen package overview
 
 | Symbol                                                                           | Kind     | Description                                                                      |
 | -------------------------------------------------------------------------------- | -------- | -------------------------------------------------------------------------------- |
+| [`discoverGuides()`](/packages/gen/api/index#discoverguides)                     | function | Analyze the symbol graph and discover guides using multiple heuristics.  Each... |
 | [`serializeMarkdown()`](/packages/gen/api/index#serializemarkdown)               | function | Serialize an mdast tree to a well-formed markdown string.  Uses remark-string... |
 | [`textP()`](/packages/gen/api/index#textp)                                       | function | Shorthand: paragraph containing a single text node.                              |
 | [`boldIntroP()`](/packages/gen/api/index#boldintrop)                             | function | Shorthand: paragraph with bold intro text followed by regular text.              |
@@ -22,6 +23,9 @@ description: gen package overview
 | [`parseBlocks()`](/packages/gen/api/index#parseblocks)                           | function | Parse a markdown string and extract block-level content.  Use for multi-line...  |
 | [`sanitizeForMdx()`](/packages/gen/api/index#sanitizeformdx)                     | function | Sanitize markdown content for MDX compatibility using AST-aware processing....   |
 | [`updateAutoSections()`](/packages/gen/api/index#updateautosections)             | function | Updates auto-enriched sections in an existing stub file.  Uses AST-aware pars... |
+| [`stubHash()`](/packages/gen/api/index#stubhash)                                 | function | Compute a short fingerprint hash for content change detection.  Uses a simple... |
+| [`isStubModified()`](/packages/gen/api/index#isstubmodified)                     | function | Checks if a FORGE:STUB section has been modified by the user.  Compares the e... |
+| [`updateStubSections()`](/packages/gen/api/index#updatestubsections)             | function | Updates FORGE:STUB sections in existing content.  Behavior for each stub: - I... |
 | [`escapeMdx()`](/packages/gen/api/index#escapemdx)                               | function | Escape MDX-unsafe characters in text that appears outside code fences.  MDX p... |
 | [`groupSymbolsByPackage()`](/packages/gen/api/index#groupsymbolsbypackage)       | function | Groups symbols by their package based on file path.  For monorepos (symbols u... |
 | [`generateDocSite()`](/packages/gen/api/index#generatedocsite)                   | function | Generates a full multi-page documentation site from symbols grouped by packag... |
@@ -41,6 +45,8 @@ description: gen package overview
 
 | Symbol                                                                 | Kind      | Description                                                                      |
 | ---------------------------------------------------------------------- | --------- | -------------------------------------------------------------------------------- |
+| [`GuideSource`](/packages/gen/api/index#guidesource)                   | type      | The source heuristic that discovered a guide.                                    |
+| [`DiscoveredGuide`](/packages/gen/api/index#discoveredguide)           | interface | A guide discovered from the symbol graph by code analysis heuristics.            |
 | [`MdText`](/packages/gen/api/index#mdtext)                             | interface | Inline leaf node: literal text.                                                  |
 | [`MdInlineCode`](/packages/gen/api/index#mdinlinecode)                 | interface | Inline leaf node: code span.                                                     |
 | [`MdStrong`](/packages/gen/api/index#mdstrong)                         | interface | Inline container: strong emphasis (bold).                                        |

@@ -16,6 +16,18 @@ import { emitResult } from "@forge-ts/cli/output";
 emitResult(output, { human: true }, (data) => `Done: ${data.summary.duration}ms`);
 ```
 
+## `runAudit()`
+
+*Reads the audit log and returns a typed command output.*
+
+[View in API reference](/packages/cli/api/functions#runaudit)
+
+```typescript
+import { runAudit } from "@forge-ts/cli/commands/audit";
+const output = await runAudit({ cwd: process.cwd(), limit: 10 });
+console.log(output.data.count); // number of events returned
+```
+
 ## `runBuild()`
 
 *Runs the full build pipeline and returns a typed command output.*
@@ -26,6 +38,34 @@ emitResult(output, { human: true }, (data) => `Done: ${data.summary.duration}ms`
 import { runBuild } from "@forge-ts/cli/commands/build";
 const output = await runBuild({ cwd: process.cwd() });
 console.log(output.success); // true if all steps succeeded
+```
+
+## `runBypassCreate()`
+
+*Runs the bypass creation: creates a new bypass record with budget enforcement.*
+
+[View in API reference](/packages/cli/api/functions#runbypasscreate)
+
+```typescript
+import { runBypassCreate } from "@forge-ts/cli/commands/bypass";
+const output = await runBypassCreate({
+  cwd: process.cwd(),
+  reason: "hotfix for release",
+  rule: "E009",
+});
+console.log(output.data.remainingBudget);
+```
+
+## `runBypassStatus()`
+
+*Runs the bypass status query: shows active bypasses and remaining budget.*
+
+[View in API reference](/packages/cli/api/functions#runbypassstatus)
+
+```typescript
+import { runBypassStatus } from "@forge-ts/cli/commands/bypass";
+const output = await runBypassStatus({ cwd: process.cwd() });
+console.log(output.data.activeBypasses.length);
 ```
 
 ## `runCheck()`
@@ -107,6 +147,18 @@ import { initCommand } from "@forge-ts/cli/commands/init-docs";
 // Registered automatically as a subcommand of `forge-ts`
 ```
 
+## `runLock()`
+
+*Runs the lock command: reads current config and creates `.forge-lock.json`.*
+
+[View in API reference](/packages/cli/api/functions#runlock)
+
+```typescript
+import { runLock } from "@forge-ts/cli/commands/lock";
+const output = await runLock({ cwd: process.cwd() });
+console.log(output.data.locked.rules); // number of rules locked
+```
+
 ## `runTest()`
 
 *Runs the doctest pipeline and returns a typed command output.*
@@ -117,4 +169,16 @@ import { initCommand } from "@forge-ts/cli/commands/init-docs";
 import { runTest } from "@forge-ts/cli/commands/test";
 const output = await runTest({ cwd: process.cwd() });
 console.log(output.data.summary.passed); // number of passing doctests
+```
+
+## `runUnlock()`
+
+*Runs the unlock command: removes `.forge-lock.json` with a mandatory reason.*
+
+[View in API reference](/packages/cli/api/functions#rununlock)
+
+```typescript
+import { runUnlock } from "@forge-ts/cli/commands/unlock";
+const output = await runUnlock({ cwd: process.cwd(), reason: "Relaxing rules for migration" });
+console.log(output.data.success); // true
 ```

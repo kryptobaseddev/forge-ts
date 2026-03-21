@@ -20,19 +20,18 @@ npm install -D forge-ts
 ## Quick Example
 
 ```typescript
-import { defaultConfig } from "@forge-ts/core";
-const config = defaultConfig("/path/to/project");
-console.log(config.enforce.enabled); // true
+import { getCurrentUser } from "@forge-ts/core/audit";
+const user = getCurrentUser(); // e.g. "alice"
 ```
 
 ## Packages
 
 | Package                                | Description            |
 | -------------------------------------- | ---------------------- |
-| [`core`](/packages/core/index)         | 25 exported symbol(s). |
+| [`core`](/packages/core/index)         | 48 exported symbol(s). |
 | [`api`](/packages/api/index)           | 8 exported symbol(s).  |
-| [`gen`](/packages/gen/index)           | 69 exported symbol(s). |
-| [`cli`](/packages/cli/index)           | 35 exported symbol(s). |
+| [`cli`](/packages/cli/index)           | 50 exported symbol(s). |
+| [`gen`](/packages/gen/index)           | 75 exported symbol(s). |
 | [`enforcer`](/packages/enforcer/index) | 5 exported symbol(s).  |
 | [`doctest`](/packages/doctest/index)   | 9 exported symbol(s).  |
 

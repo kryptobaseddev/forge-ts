@@ -9,6 +9,7 @@ API reference for the `gen` package.
 
 | Symbol                                                                               | Kind     | Description                                                                      |
 | ------------------------------------------------------------------------------------ | -------- | -------------------------------------------------------------------------------- |
+| [`discoverGuides()`](/packages/gen/api/functions#discoverguides)                     | function | Analyze the symbol graph and discover guides using multiple heuristics.  Each... |
 | [`serializeMarkdown()`](/packages/gen/api/functions#serializemarkdown)               | function | Serialize an mdast tree to a well-formed markdown string.  Uses remark-string... |
 | [`textP()`](/packages/gen/api/functions#textp)                                       | function | Shorthand: paragraph containing a single text node.                              |
 | [`boldIntroP()`](/packages/gen/api/functions#boldintrop)                             | function | Shorthand: paragraph with bold intro text followed by regular text.              |
@@ -24,6 +25,9 @@ API reference for the `gen` package.
 | [`parseBlocks()`](/packages/gen/api/functions#parseblocks)                           | function | Parse a markdown string and extract block-level content.  Use for multi-line...  |
 | [`sanitizeForMdx()`](/packages/gen/api/functions#sanitizeformdx)                     | function | Sanitize markdown content for MDX compatibility using AST-aware processing....   |
 | [`updateAutoSections()`](/packages/gen/api/functions#updateautosections)             | function | Updates auto-enriched sections in an existing stub file.  Uses AST-aware pars... |
+| [`stubHash()`](/packages/gen/api/functions#stubhash)                                 | function | Compute a short fingerprint hash for content change detection.  Uses a simple... |
+| [`isStubModified()`](/packages/gen/api/functions#isstubmodified)                     | function | Checks if a FORGE:STUB section has been modified by the user.  Compares the e... |
+| [`updateStubSections()`](/packages/gen/api/functions#updatestubsections)             | function | Updates FORGE:STUB sections in existing content.  Behavior for each stub: - I... |
 | [`escapeMdx()`](/packages/gen/api/functions#escapemdx)                               | function | Escape MDX-unsafe characters in text that appears outside code fences.  MDX p... |
 | [`groupSymbolsByPackage()`](/packages/gen/api/functions#groupsymbolsbypackage)       | function | Groups symbols by their package based on file path.  For monorepos (symbols u... |
 | [`generateDocSite()`](/packages/gen/api/functions#generatedocsite)                   | function | Generates a full multi-page documentation site from symbols grouped by packag... |
@@ -43,6 +47,8 @@ API reference for the `gen` package.
 
 | Symbol                                                                 | Kind      | Description                                                                      |
 | ---------------------------------------------------------------------- | --------- | -------------------------------------------------------------------------------- |
+| [`GuideSource`](/packages/gen/api/types#guidesource)                   | type      | The source heuristic that discovered a guide.                                    |
+| [`DiscoveredGuide`](/packages/gen/api/types#discoveredguide)           | interface | A guide discovered from the symbol graph by code analysis heuristics.            |
 | [`MdText`](/packages/gen/api/types#mdtext)                             | interface | Inline leaf node: literal text.                                                  |
 | [`MdInlineCode`](/packages/gen/api/types#mdinlinecode)                 | interface | Inline leaf node: code span.                                                     |
 | [`MdStrong`](/packages/gen/api/types#mdstrong)                         | interface | Inline container: strong emphasis (bold).                                        |

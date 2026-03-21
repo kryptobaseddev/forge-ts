@@ -65,16 +65,6 @@
             ]
           },
           {
-            "group": "@forge-ts/gen",
-            "pages": [
-              "packages/gen/index",
-              "packages/gen/api/index",
-              "packages/gen/api/functions",
-              "packages/gen/api/types",
-              "packages/gen/api/examples"
-            ]
-          },
-          {
             "group": "@forge-ts/cli",
             "pages": [
               "packages/cli/index",
@@ -82,6 +72,16 @@
               "packages/cli/api/functions",
               "packages/cli/api/types",
               "packages/cli/api/examples"
+            ]
+          },
+          {
+            "group": "@forge-ts/gen",
+            "pages": [
+              "packages/gen/index",
+              "packages/gen/api/index",
+              "packages/gen/api/functions",
+              "packages/gen/api/types",
+              "packages/gen/api/examples"
             ]
           },
           {

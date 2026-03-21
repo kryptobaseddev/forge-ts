@@ -5,19 +5,40 @@ description: core package overview
 
 ## Functions & Classes
 
-| Symbol                                                                | Kind     | Description                                                                      |
-| --------------------------------------------------------------------- | -------- | -------------------------------------------------------------------------------- |
-| [`defaultConfig()`](/packages/core/api/index#defaultconfig)           | function | Constructs a sensible default `ForgeConfig` rooted at `rootDir`.                 |
-| [`loadConfig()`](/packages/core/api/index#loadconfig)                 | function | Loads the forge-ts configuration for a project.  Resolution order: 1....         |
-| [`resolveVisibility()`](/packages/core/api/index#resolvevisibility)   | function | Determines the visibility level of a symbol from its TSDoc release tags.  The... |
-| [`meetsVisibility()`](/packages/core/api/index#meetsvisibility)       | function | Returns whether `candidate` meets or exceeds the required minimum visibility.... |
-| [`filterByVisibility()`](/packages/core/api/index#filterbyvisibility) | function | Filters an array of `ForgeSymbol` objects to only include symbols whose visib... |
-| [`createWalker()`](/packages/core/api/index#createwalker)             | function | Creates an `ASTWalker` configured for the given forge config.  The walker use... |
+| Symbol                                                                        | Kind     | Description                                                                      |
+| ----------------------------------------------------------------------------- | -------- | -------------------------------------------------------------------------------- |
+| [`getCurrentUser()`](/packages/core/api/index#getcurrentuser)                 | function | Returns the current OS username, or "unknown" if unavailable.                    |
+| [`appendAuditEvent()`](/packages/core/api/index#appendauditevent)             | function | Appends a single audit event to the `.forge-audit.jsonl` file.  Creates the f... |
+| [`readAuditLog()`](/packages/core/api/index#readauditlog)                     | function | Reads the `.forge-audit.jsonl` file and returns parsed audit events.  Returns... |
+| [`formatAuditEvent()`](/packages/core/api/index#formatauditevent)             | function | Formats a single audit event as a human-readable string.                         |
+| [`createBypass()`](/packages/core/api/index#createbypass)                     | function | Creates a new bypass record, writes it to `.forge-bypass.json`, and appends a... |
+| [`getActiveBypasses()`](/packages/core/api/index#getactivebypasses)           | function | Returns all currently active (non-expired) bypass records.                       |
+| [`isRuleBypassed()`](/packages/core/api/index#isrulebypassed)                 | function | Checks whether a specific rule has an active bypass.  A rule is considered by... |
+| [`getRemainingBudget()`](/packages/core/api/index#getremainingbudget)         | function | Returns the number of bypass budget slots remaining for today.  Counts bypass... |
+| [`expireOldBypasses()`](/packages/core/api/index#expireoldbypasses)           | function | Removes expired bypass records from `.forge-bypass.json`.  Also appends a...     |
+| [`defaultConfig()`](/packages/core/api/index#defaultconfig)                   | function | Constructs a sensible default `ForgeConfig` rooted at `rootDir`.                 |
+| [`loadConfig()`](/packages/core/api/index#loadconfig)                         | function | Loads the forge-ts configuration for a project.  Resolution order: 1....         |
+| [`readLockFile()`](/packages/core/api/index#readlockfile)                     | function | Reads the `.forge-lock.json` file from the given project root.                   |
+| [`writeLockFile()`](/packages/core/api/index#writelockfile)                   | function | Writes a `ForgeLockManifest` to `.forge-lock.json` in the project root.          |
+| [`removeLockFile()`](/packages/core/api/index#removelockfile)                 | function | Removes the `.forge-lock.json` file from the project root.                       |
+| [`createLockManifest()`](/packages/core/api/index#createlockmanifest)         | function | Creates a `ForgeLockManifest` from the current project config.  Snapshots the... |
+| [`validateAgainstLock()`](/packages/core/api/index#validateagainstlock)       | function | Validates the current config against a locked manifest.  Returns an array of...  |
+| [`resolveVisibility()`](/packages/core/api/index#resolvevisibility)           | function | Determines the visibility level of a symbol from its TSDoc release tags.  The... |
+| [`meetsVisibility()`](/packages/core/api/index#meetsvisibility)               | function | Returns whether `candidate` meets or exceeds the required minimum visibility.... |
+| [`filterByVisibility()`](/packages/core/api/index#filterbyvisibility)         | function | Filters an array of `ForgeSymbol` objects to only include symbols whose visib... |
+| [`clearTSDocConfigCache()`](/packages/core/api/index#cleartsdocconfigcache)   | function | Clears the TSDoc configuration cache. Intended for use in tests only.            |
+| [`loadTSDocConfiguration()`](/packages/core/api/index#loadtsdocconfiguration) | function | Resolve the `TSDocConfiguration` to use when parsing comments in files under...  |
+| [`createWalker()`](/packages/core/api/index#createwalker)                     | function | Creates an `ASTWalker` configured for the given forge config.  The walker use... |
 
 ## Types & Interfaces
 
 | Symbol                                                                      | Kind      | Description                                                                      |
 | --------------------------------------------------------------------------- | --------- | -------------------------------------------------------------------------------- |
+| [`AuditEventType`](/packages/core/api/index#auditeventtype)                 | type      | Discriminated event types recorded in the audit trail.                           |
+| [`AuditEvent`](/packages/core/api/index#auditevent)                         | interface | A single audit event recorded in the forge-ts audit trail.                       |
+| [`ReadAuditOptions`](/packages/core/api/index#readauditoptions)             | interface | Options for reading the audit log.                                               |
+| [`BypassConfig`](/packages/core/api/index#bypassconfig)                     | interface | Configuration for the bypass budget system.                                      |
+| [`BypassRecord`](/packages/core/api/index#bypassrecord)                     | interface | A single bypass record stored in `.forge-bypass.json`.                           |
 | [`Visibility`](/packages/core/api/index#visibility)                         | enum      | Visibility levels for exported symbols. Derived from TSDoc release tags (publ... |
 | [`ForgeSymbol`](/packages/core/api/index#forgesymbol)                       | interface | A single extracted and annotated symbol from the TypeScript AST.                 |
 | [`RuleSeverity`](/packages/core/api/index#ruleseverity)                     | type      | Severity level for an individual enforcement rule. - `"error"` — violation fa... |
@@ -26,6 +47,8 @@ description: core package overview
 | [`ForgeResult`](/packages/core/api/index#forgeresult)                       | interface | The result of a forge-ts compilation pass.                                       |
 | [`ForgeError`](/packages/core/api/index#forgeerror)                         | interface | A diagnostic error produced during a forge-ts run.                               |
 | [`ForgeWarning`](/packages/core/api/index#forgewarning)                     | interface | A diagnostic warning produced during a forge-ts run.                             |
+| [`ForgeLockManifest`](/packages/core/api/index#forgelockmanifest)           | interface | Manifest stored in `.forge-lock.json`. Captures a point-in-time snapshot of t... |
+| [`LockViolation`](/packages/core/api/index#lockviolation)                   | interface | A single violation found when comparing current config against the lock.         |
 | [`OpenAPISchemaObject`](/packages/core/api/index#openapischemaobject)       | interface | OpenAPI 3.2 schema object.                                                       |
 | [`OpenAPIInfoObject`](/packages/core/api/index#openapiinfoobject)           | interface | OpenAPI 3.2 info object.                                                         |
 | [`OpenAPITagObject`](/packages/core/api/index#openapitagobject)             | interface | OpenAPI 3.2 tag object.                                                          |

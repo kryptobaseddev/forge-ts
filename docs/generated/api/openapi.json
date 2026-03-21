@@ -7,7 +7,13 @@
   },
   "tags": [
     {
+      "name": "audit"
+    },
+    {
       "name": "build"
+    },
+    {
+      "name": "bypass"
     },
     {
       "name": "check"
@@ -25,10 +31,16 @@
       "name": "generator"
     },
     {
+      "name": "guide-discovery"
+    },
+    {
       "name": "index"
     },
     {
       "name": "init-docs"
+    },
+    {
+      "name": "lock"
     },
     {
       "name": "markdown"
@@ -73,12 +85,126 @@
       "name": "types"
     },
     {
+      "name": "unlock"
+    },
+    {
       "name": "walker"
     }
   ],
   "paths": {},
   "components": {
     "schemas": {
+      "AuditEventType": {
+        "description": "Discriminated event types recorded in the audit trail."
+      },
+      "AuditEvent": {
+        "description": "A single audit event recorded in the forge-ts audit trail.",
+        "type": "object",
+        "properties": {
+          "timestamp": {
+            "type": "string",
+            "description": "ISO 8601 timestamp of when the event occurred."
+          },
+          "event": {
+            "type": "object",
+            "description": "Discriminated event type."
+          },
+          "user": {
+            "type": "string",
+            "description": "OS username of the actor (falls back to \"unknown\")."
+          },
+          "reason": {
+            "type": "string",
+            "description": "Mandatory for lock/unlock/bypass events; optional otherwise."
+          },
+          "details": {
+            "type": "object",
+            "additionalProperties": {},
+            "description": "Event-specific payload."
+          }
+        },
+        "required": [
+          "timestamp",
+          "event",
+          "user",
+          "reason",
+          "details"
+        ]
+      },
+      "ReadAuditOptions": {
+        "description": "Options for reading the audit log.",
+        "type": "object",
+        "properties": {
+          "limit": {
+            "type": "number",
+            "description": "Maximum number of events to return."
+          },
+          "eventType": {
+            "type": "object",
+            "description": "Filter to a single event type."
+          }
+        },
+        "required": [
+          "limit",
+          "eventType"
+        ]
+      },
+      "BypassConfig": {
+        "description": "Configuration for the bypass budget system.",
+        "type": "object",
+        "properties": {
+          "dailyBudget": {
+            "type": "number",
+            "description": "Maximum number of bypasses allowed per calendar day. Default: 3"
+          },
+          "durationHours": {
+            "type": "number",
+            "description": "Duration in hours before a bypass automatically expires. Default: 24"
+          }
+        },
+        "required": [
+          "dailyBudget",
+          "durationHours"
+        ]
+      },
+      "BypassRecord": {
+        "description": "A single bypass record stored in `.forge-bypass.json`.",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique identifier for this bypass."
+          },
+          "createdAt": {
+            "type": "string",
+            "description": "ISO 8601 timestamp when the bypass was created."
+          },
+          "expiresAt": {
+            "type": "string",
+            "description": "ISO 8601 timestamp when the bypass expires."
+          },
+          "reason": {
+            "type": "string",
+            "description": "Mandatory justification for why the bypass was created."
+          },
+          "rule": {
+            "type": "string",
+            "description": "Specific rule code bypassed (e.g., \"E009\"), or \"all\" for a blanket bypass."
+          },
+          "user": {
+            "type": "string",
+            "description": "OS username of the actor who created the bypass."
+          }
+        },
+        "required": [
+          "id",
+          "createdAt",
+          "expiresAt",
+          "reason",
+          "rule",
+          "user"
+        ]
+      },
       "Visibility": {
         "description": "Visibility levels for exported symbols. Derived from TSDoc release tags (public, beta, internal).",
         "type": "string",
@@ -208,6 +334,34 @@
           "\"require-interface-member-doc\"": {
             "type": "object",
             "description": "E007: Interface/type member missing documentation."
+          },
+          "\"require-tsdoc-syntax\"": {
+            "type": "object",
+            "description": "W006: TSDoc syntax parse error (invalid tag, malformed block, etc.)."
+          },
+          "\"require-remarks\"": {
+            "type": "object",
+            "description": "E013: Exported function/class is missing a"
+          },
+          "\"require-default-value\"": {
+            "type": "object",
+            "description": "E014: Optional property with default is missing defaultValue."
+          },
+          "\"require-type-param\"": {
+            "type": "object",
+            "description": "E015: Generic symbol is missing"
+          },
+          "\"require-see\"": {
+            "type": "object",
+            "description": "W005: Symbol references other symbols via  but has no"
+          },
+          "\"require-fresh-guides\"": {
+            "type": "object",
+            "description": "W007: Guide FORGE:AUTO section references a symbol that no longer exists or has changed."
+          },
+          "\"require-guide-coverage\"": {
+            "type": "object",
+            "description": "W008: Exported public symbol is not mentioned in any guide page."
           }
         },
         "required": [
@@ -217,7 +371,14 @@
           "\"require-example\"",
           "\"require-package-doc\"",
           "\"require-class-member-doc\"",
-          "\"require-interface-member-doc\""
+          "\"require-interface-member-doc\"",
+          "\"require-tsdoc-syntax\"",
+          "\"require-remarks\"",
+          "\"require-default-value\"",
+          "\"require-type-param\"",
+          "\"require-see\"",
+          "\"require-fresh-guides\"",
+          "\"require-guide-coverage\""
         ]
       },
       "ForgeConfig": {
@@ -269,6 +430,22 @@
             "type": "object",
             "description": "Skill package generation settings. Custom sections here are merged into the generated SKILL.md, allowing projects to inject workflow knowledge, domain gotchas, and other context that cannot be derived from symbols alone."
           },
+          "tsdoc": {
+            "type": "object",
+            "description": "TSDoc ecosystem configuration."
+          },
+          "bypass": {
+            "type": "object",
+            "description": "Bypass budget configuration for temporary rule overrides."
+          },
+          "guides": {
+            "type": "object",
+            "description": "Guide generation configuration."
+          },
+          "guards": {
+            "type": "object",
+            "description": "Downstream config drift guards."
+          },
           "project": {
             "type": "object",
             "description": "Project metadata — auto-detected from package.json if not provided."
@@ -280,7 +457,11 @@
           "outDir",
           "enforce",
           "doctest",
-          "api"
+          "api",
+          "tsdoc",
+          "bypass",
+          "guides",
+          "guards"
         ]
       },
       "ForgeResult": {
@@ -412,6 +593,61 @@
           "filePath",
           "line",
           "column"
+        ]
+      },
+      "ForgeLockManifest": {
+        "description": "Manifest stored in `.forge-lock.json`. Captures a point-in-time snapshot of the project's forge-ts configuration so that future runs can detect when settings have been weakened.",
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "string",
+            "description": "Schema version of the lock manifest."
+          },
+          "lockedAt": {
+            "type": "string",
+            "description": "ISO-8601 timestamp when the lock was created."
+          },
+          "lockedBy": {
+            "type": "string",
+            "description": "Identifier of the user or agent that created the lock."
+          },
+          "config": {
+            "type": "object",
+            "description": "Snapshot of locked configuration values."
+          }
+        },
+        "required": [
+          "version",
+          "lockedAt",
+          "lockedBy"
+        ]
+      },
+      "LockViolation": {
+        "description": "A single violation found when comparing current config against the lock.",
+        "type": "object",
+        "properties": {
+          "field": {
+            "type": "string",
+            "description": "Dot-path of the config field that changed (e.g., \"rules.require-summary\")."
+          },
+          "locked": {
+            "type": "string",
+            "description": "The value stored in the lock file."
+          },
+          "current": {
+            "type": "string",
+            "description": "The current value in the live config."
+          },
+          "message": {
+            "type": "string",
+            "description": "Human-readable explanation of the violation."
+          }
+        },
+        "required": [
+          "field",
+          "locked",
+          "current",
+          "message"
         ]
       },
       "OpenAPISchemaObject": {
@@ -1106,6 +1342,209 @@
           "examples",
           "children",
           "location"
+        ]
+      },
+      "CommandOutput": {
+        "description": "Typed result from a forge-ts command.",
+        "type": "object",
+        "properties": {
+          "operation": {
+            "type": "string",
+            "description": "Name of the command that produced this output (e.g., \"check\", \"build\")."
+          },
+          "success": {
+            "type": "boolean",
+            "description": "Whether the command completed successfully."
+          },
+          "data": {
+            "type": "object",
+            "description": "Strongly-typed command-specific result payload."
+          },
+          "errors": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            },
+            "description": "Structured errors produced by the command, if any."
+          },
+          "warnings": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            },
+            "description": "Structured warnings produced by the command, if any."
+          },
+          "duration": {
+            "type": "number",
+            "description": "Wall-clock duration of the command in milliseconds."
+          }
+        },
+        "required": [
+          "operation",
+          "success",
+          "data",
+          "errors",
+          "warnings",
+          "duration"
+        ]
+      },
+      "ForgeCliError": {
+        "description": "Structured error for CLI commands.",
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "description": "Machine-readable error code (e.g., \"E004\")."
+          },
+          "message": {
+            "type": "string",
+            "description": "Human-readable error description."
+          },
+          "filePath": {
+            "type": "string",
+            "description": "Absolute path to the source file containing the error, if applicable."
+          },
+          "line": {
+            "type": "number",
+            "description": "1-based line number of the error, if applicable."
+          },
+          "column": {
+            "type": "number",
+            "description": "0-based column number of the error, if applicable."
+          }
+        },
+        "required": [
+          "code",
+          "message",
+          "filePath",
+          "line",
+          "column"
+        ]
+      },
+      "ForgeCliWarning": {
+        "description": "Structured warning for CLI commands.",
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "description": "Machine-readable warning code."
+          },
+          "message": {
+            "type": "string",
+            "description": "Human-readable warning description."
+          },
+          "filePath": {
+            "type": "string",
+            "description": "Absolute path to the source file containing the warning, if applicable."
+          },
+          "line": {
+            "type": "number",
+            "description": "1-based line number of the warning, if applicable."
+          },
+          "column": {
+            "type": "number",
+            "description": "0-based column number of the warning, if applicable."
+          }
+        },
+        "required": [
+          "code",
+          "message",
+          "filePath",
+          "line",
+          "column"
+        ]
+      },
+      "OutputFlags": {
+        "description": "Output format flags passed through from citty args.",
+        "type": "object",
+        "properties": {
+          "json": {
+            "type": "boolean",
+            "description": "Emit output as a LAFS JSON envelope instead of human-readable text."
+          },
+          "human": {
+            "type": "boolean",
+            "description": "Emit output as formatted human-readable text."
+          },
+          "quiet": {
+            "type": "boolean",
+            "description": "Suppress all output regardless of format."
+          },
+          "mvi": {
+            "type": "string",
+            "description": "MVI verbosity level: \"minimal\", \"standard\", or \"full\"."
+          }
+        },
+        "required": [
+          "json",
+          "human",
+          "quiet",
+          "mvi"
+        ]
+      },
+      "AuditResult": {
+        "description": "Typed result for the `audit` command.",
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "Whether the audit log was read successfully."
+          },
+          "count": {
+            "type": "number",
+            "description": "Number of events returned."
+          },
+          "events": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            },
+            "description": "The audit events, newest first."
+          }
+        },
+        "required": [
+          "success",
+          "count",
+          "events"
+        ]
+      },
+      "GuideSource": {
+        "description": "The source heuristic that discovered a guide."
+      },
+      "DiscoveredGuide": {
+        "description": "A guide discovered from the symbol graph by code analysis heuristics.",
+        "type": "object",
+        "properties": {
+          "slug": {
+            "type": "string",
+            "description": "URL-safe slug (e.g. \"configuration\", \"error-handling\")."
+          },
+          "title": {
+            "type": "string",
+            "description": "Human-readable title (e.g. \"Configuration Guide\")."
+          },
+          "description": {
+            "type": "string",
+            "description": "Short description of the guide's content."
+          },
+          "source": {
+            "type": "object",
+            "description": "Which heuristic discovered this guide."
+          },
+          "symbols": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            },
+            "description": "The symbols that contribute content to this guide."
+          }
+        },
+        "required": [
+          "slug",
+          "title",
+          "description",
+          "source",
+          "symbols"
         ]
       },
       "MdText": {
@@ -1909,144 +2348,6 @@
           "forceStubs"
         ]
       },
-      "CommandOutput": {
-        "description": "Typed result from a forge-ts command.",
-        "type": "object",
-        "properties": {
-          "operation": {
-            "type": "string",
-            "description": "Name of the command that produced this output (e.g., \"check\", \"build\")."
-          },
-          "success": {
-            "type": "boolean",
-            "description": "Whether the command completed successfully."
-          },
-          "data": {
-            "type": "object",
-            "description": "Strongly-typed command-specific result payload."
-          },
-          "errors": {
-            "type": "array",
-            "items": {
-              "type": "object"
-            },
-            "description": "Structured errors produced by the command, if any."
-          },
-          "warnings": {
-            "type": "array",
-            "items": {
-              "type": "object"
-            },
-            "description": "Structured warnings produced by the command, if any."
-          },
-          "duration": {
-            "type": "number",
-            "description": "Wall-clock duration of the command in milliseconds."
-          }
-        },
-        "required": [
-          "operation",
-          "success",
-          "data",
-          "errors",
-          "warnings",
-          "duration"
-        ]
-      },
-      "ForgeCliError": {
-        "description": "Structured error for CLI commands.",
-        "type": "object",
-        "properties": {
-          "code": {
-            "type": "string",
-            "description": "Machine-readable error code (e.g., \"E004\")."
-          },
-          "message": {
-            "type": "string",
-            "description": "Human-readable error description."
-          },
-          "filePath": {
-            "type": "string",
-            "description": "Absolute path to the source file containing the error, if applicable."
-          },
-          "line": {
-            "type": "number",
-            "description": "1-based line number of the error, if applicable."
-          },
-          "column": {
-            "type": "number",
-            "description": "0-based column number of the error, if applicable."
-          }
-        },
-        "required": [
-          "code",
-          "message",
-          "filePath",
-          "line",
-          "column"
-        ]
-      },
-      "ForgeCliWarning": {
-        "description": "Structured warning for CLI commands.",
-        "type": "object",
-        "properties": {
-          "code": {
-            "type": "string",
-            "description": "Machine-readable warning code."
-          },
-          "message": {
-            "type": "string",
-            "description": "Human-readable warning description."
-          },
-          "filePath": {
-            "type": "string",
-            "description": "Absolute path to the source file containing the warning, if applicable."
-          },
-          "line": {
-            "type": "number",
-            "description": "1-based line number of the warning, if applicable."
-          },
-          "column": {
-            "type": "number",
-            "description": "0-based column number of the warning, if applicable."
-          }
-        },
-        "required": [
-          "code",
-          "message",
-          "filePath",
-          "line",
-          "column"
-        ]
-      },
-      "OutputFlags": {
-        "description": "Output format flags passed through from citty args.",
-        "type": "object",
-        "properties": {
-          "json": {
-            "type": "boolean",
-            "description": "Emit output as a LAFS JSON envelope instead of human-readable text."
-          },
-          "human": {
-            "type": "boolean",
-            "description": "Emit output as formatted human-readable text."
-          },
-          "quiet": {
-            "type": "boolean",
-            "description": "Suppress all output regardless of format."
-          },
-          "mvi": {
-            "type": "string",
-            "description": "MVI verbosity level: \"minimal\", \"standard\", or \"full\"."
-          }
-        },
-        "required": [
-          "json",
-          "human",
-          "quiet",
-          "mvi"
-        ]
-      },
       "BuildStep": {
         "description": "A single step in the build pipeline.",
         "type": "object",
@@ -2125,6 +2426,70 @@
           "summary",
           "steps",
           "generatedFiles"
+        ]
+      },
+      "BypassCreateResult": {
+        "description": "Typed result for the `bypass` command when creating a bypass.",
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "Whether the bypass was successfully created."
+          },
+          "bypass": {
+            "type": "object",
+            "description": "The bypass record that was created."
+          },
+          "remainingBudget": {
+            "type": "number",
+            "description": "Number of remaining bypass slots for today after creation."
+          },
+          "dailyBudget": {
+            "type": "number",
+            "description": "The configured daily budget."
+          }
+        },
+        "required": [
+          "success",
+          "bypass",
+          "remainingBudget",
+          "dailyBudget"
+        ]
+      },
+      "BypassStatusResult": {
+        "description": "Typed result for the `bypass --status` command.",
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "Always true for status queries."
+          },
+          "activeBypasses": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            },
+            "description": "Active (non-expired) bypass records."
+          },
+          "remainingBudget": {
+            "type": "number",
+            "description": "Number of remaining bypass slots for today."
+          },
+          "dailyBudget": {
+            "type": "number",
+            "description": "The configured daily budget."
+          },
+          "expiredRemoved": {
+            "type": "number",
+            "description": "Number of expired bypasses that were cleaned up."
+          }
+        },
+        "required": [
+          "success",
+          "activeBypasses",
+          "remainingBudget",
+          "dailyBudget",
+          "expiredRemoved"
         ]
       },
       "DeprecatedUsage": {
@@ -2455,6 +2820,44 @@
           "instructions"
         ]
       },
+      "LockResult": {
+        "description": "Typed result for the `lock` command.",
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "Whether the lock was successfully created."
+          },
+          "lockFile": {
+            "type": "string",
+            "description": "Path to the lock file that was written."
+          },
+          "lockedAt": {
+            "type": "string",
+            "description": "ISO-8601 timestamp when the lock was created."
+          },
+          "lockedBy": {
+            "type": "string",
+            "description": "Identifier of who created the lock."
+          },
+          "locked": {
+            "type": "object",
+            "description": "Summary of what was locked."
+          },
+          "overwrote": {
+            "type": "boolean",
+            "description": "Whether a previous lock file was overwritten."
+          }
+        },
+        "required": [
+          "success",
+          "lockFile",
+          "lockedAt",
+          "lockedBy",
+          "locked",
+          "overwrote"
+        ]
+      },
       "ExtractedExample": {
         "description": "A single extracted `@example` block ready for test generation.",
         "type": "object",
@@ -2635,6 +3038,34 @@
           "success",
           "summary",
           "failures"
+        ]
+      },
+      "UnlockResult": {
+        "description": "Typed result for the `unlock` command.",
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "Whether the unlock was successful."
+          },
+          "reason": {
+            "type": "string",
+            "description": "The reason provided for unlocking."
+          },
+          "previousLockedBy": {
+            "type": "string",
+            "description": "Who originally locked the config, if known."
+          },
+          "previousLockedAt": {
+            "type": "string",
+            "description": "When the config was originally locked, if known."
+          }
+        },
+        "required": [
+          "success",
+          "reason",
+          "previousLockedBy",
+          "previousLockedAt"
         ]
       }
     }

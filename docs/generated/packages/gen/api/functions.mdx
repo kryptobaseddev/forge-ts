@@ -5,6 +5,25 @@ description: Functions and classes for the gen package
 
 Functions and classes exported by this package.
 
+## discoverGuides(symbolsByPackage, config)
+
+Analyze the symbol graph and discover guides using multiple heuristics.  Each heuristic produces zero or more `DiscoveredGuide` entries. When multiple heuristics produce a guide with the same slug, the first one wins (priority order: guide-tag, config-interface, error-types, category, entry-point).
+
+**Signature**
+
+```typescript
+(symbolsByPackage: Map<string, ForgeSymbol[]>, config: ForgeConfig) => DiscoveredGuide[]
+```
+
+**Parameters**
+
+| Name               | Type          | Description                          |
+| ------------------ | ------------- | ------------------------------------ |
+| `symbolsByPackage` | `Map<string`  | Symbols grouped by package name.     |
+| `config`           | `ForgeConfig` | The resolved forge-ts configuration. |
+
+**Returns** — An array of discovered guides, deduplicated by slug.
+
 ## serializeMarkdown(tree)
 
 Serialize an mdast tree to a well-formed markdown string.  Uses remark-stringify with GFM table support. The serializer handles all escaping (pipes in table cells, special characters in text, etc.) so callers never need manual escape functions.
@@ -220,6 +239,63 @@ Updates auto-enriched sections in an existing stub file.  Uses AST-aware parsing
 | `generated` | `string` | The freshly generated content with updated markers. |
 
 **Returns** — The merged content, or null if no markers were found to update.
+
+## stubHash(content)
+
+Compute a short fingerprint hash for content change detection.  Uses a simple DJB2-style hash converted to base-36 and truncated to 8 characters. This is NOT cryptographic — just a quick fingerprint to detect whether generated content has been manually edited.
+
+**Signature**
+
+```typescript
+(content: string) => string
+```
+
+**Parameters**
+
+| Name      | Type     | Description          |
+| --------- | -------- | -------------------- |
+| `content` | `string` | The content to hash. |
+
+**Returns** — An 8-character alphanumeric hash string.
+
+## isStubModified(existingContent, stubId, \_generatedContent)
+
+Checks if a FORGE:STUB section has been modified by the user.  Compares the embedded hash (from the FORGE:STUB-HASH comment) against a freshly computed hash of the current inner content (with the hash comment itself stripped out). If the hashes diverge — meaning the user edited the content — or the hash comment was removed, the section is considered modified and should be preserved.
+
+**Signature**
+
+```typescript
+(existingContent: string, stubId: string, _generatedContent: string) => boolean
+```
+
+**Parameters**
+
+| Name                | Type     | Description                                                    |
+| ------------------- | -------- | -------------------------------------------------------------- |
+| `existingContent`   | `string` | The full document content on disk.                             |
+| `stubId`            | `string` | The identifier of the FORGE:STUB section.                      |
+| `_generatedContent` | `string` | Unused; kept for API symmetry. Detection is purely hash-based. |
+
+**Returns** — `true` if the user has modified the stub (preserve it), `false` if unmodified (safe to regenerate).
+
+## updateStubSections(existingContent, stubs)
+
+Updates FORGE:STUB sections in existing content.  Behavior for each stub: - If the stub doesn't exist yet, appends it at the end of the content. - If the stub exists but is unmodified (hash matches generated content), regenerates it. - If the stub exists and was modified by user (hash mismatch), PRESERVES user content.  Each generated stub includes a `FORGE:STUB-HASH` comment containing a fingerprint of the generated content. On subsequent builds, this hash is compared to determine whether the user has made edits.
+
+**Signature**
+
+```typescript
+(existingContent: string, stubs: { id: string; content: string; }[]) => string
+```
+
+**Parameters**
+
+| Name              | Type                                 | Description                                                     |
+| ----------------- | ------------------------------------ | --------------------------------------------------------------- |
+| `existingContent` | `string`                             | The current file content on disk.                               |
+| `stubs`           | `{ id: string; content: string; }[]` | Array of stub definitions with their IDs and generated content. |
+
+**Returns** — The updated content with stubs inserted or refreshed as needed.
 
 ## escapeMdx()
 

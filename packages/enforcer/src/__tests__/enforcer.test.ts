@@ -1,3 +1,4 @@
+import { existsSync, readFileSync } from "node:fs";
 import {
 	type EnforceRules,
 	type ForgeConfig,
@@ -5,7 +6,7 @@ import {
 	type ForgeSymbol,
 	Visibility,
 } from "@forge-ts/core";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { findDeprecatedUsages } from "../deprecation-tracker.js";
 import { enforce } from "../enforcer.js";
 
@@ -90,6 +91,32 @@ async function runEnforce(
 	return enforce(makeConfig(configOverrides));
 }
 
+/**
+ * Runs enforce with full {@link ForgeConfig} overrides (not just enforce section).
+ * Used for E009/E010 tests that need to control `guards` and `rootDir`.
+ */
+async function runEnforceWithConfig(
+	symbols: ForgeSymbol[],
+	configOverrides: Partial<ForgeConfig>,
+): Promise<ForgeResult> {
+	const { createWalker } = await import("@forge-ts/core");
+	vi.mocked(createWalker).mockReturnValue({ walk: () => symbols });
+	const base = makeConfig();
+	const merged: ForgeConfig = {
+		...base,
+		...configOverrides,
+		enforce: { ...base.enforce, ...configOverrides.enforce },
+		guards: {
+			...base.guards,
+			...configOverrides.guards,
+			tsconfig: { ...base.guards.tsconfig, ...configOverrides.guards?.tsconfig },
+			biome: { ...base.guards.biome, ...configOverrides.guards?.biome },
+			packageJson: { ...base.guards.packageJson, ...configOverrides.guards?.packageJson },
+		},
+	};
+	return enforce(merged);
+}
+
 // ---------------------------------------------------------------------------
 // Module mock — replaces the real walker with a controllable stub
 // ---------------------------------------------------------------------------
@@ -99,6 +126,15 @@ vi.mock("@forge-ts/core", async (importOriginal) => {
 	return {
 		...actual,
 		createWalker: vi.fn(),
+	};
+});
+
+vi.mock("node:fs", async (importOriginal) => {
+	const actual = await importOriginal<typeof import("node:fs")>();
+	return {
+		...actual,
+		readFileSync: vi.fn(actual.readFileSync),
+		existsSync: vi.fn(actual.existsSync),
 	};
 });
 
@@ -1462,5 +1498,338 @@ describe("enforce — W004 cross-package deprecated symbol usage", () => {
 		expect(w004?.suggestedFix).toBeDefined();
 		expect(w004?.suggestedFix).toContain("oldApi");
 		expect(w004?.symbolName).toBe("oldApi");
+	});
+});
+
+// ---------------------------------------------------------------------------
+// E009 — tsconfig strictness regression
+// ---------------------------------------------------------------------------
+
+describe("enforce — E009 tsconfig strictness regression", () => {
+	afterEach(() => {
+		vi.mocked(readFileSync).mockRestore();
+	});
+
+	it("passes when all required flags are true", async () => {
+		vi.mocked(readFileSync).mockImplementation((filePath: unknown) => {
+			if (String(filePath).endsWith("tsconfig.json")) {
+				return JSON.stringify({
+					compilerOptions: { strict: true, strictNullChecks: true, noImplicitAny: true },
+				});
+			}
+			throw Object.assign(new Error("ENOENT"), { code: "ENOENT" });
+		});
+		const result = await runEnforceWithConfig([], {
+			guards: {
+				tsconfig: { enabled: true, requiredFlags: ["strict", "strictNullChecks", "noImplicitAny"] },
+			},
+		});
+		const e009 = result.errors.filter((e) => e.code === "E009");
+		expect(e009).toHaveLength(0);
+	});
+
+	it("emits E009 when a required flag is set to false", async () => {
+		vi.mocked(readFileSync).mockImplementation((filePath: unknown) => {
+			if (String(filePath).endsWith("tsconfig.json")) {
+				return JSON.stringify({
+					compilerOptions: { strict: false, strictNullChecks: true, noImplicitAny: true },
+				});
+			}
+			throw Object.assign(new Error("ENOENT"), { code: "ENOENT" });
+		});
+		const result = await runEnforceWithConfig([], {
+			guards: {
+				tsconfig: { enabled: true, requiredFlags: ["strict", "strictNullChecks", "noImplicitAny"] },
+			},
+		});
+		const e009 = result.errors.filter((e) => e.code === "E009");
+		expect(e009).toHaveLength(1);
+		expect(e009[0].message).toContain('"strict"');
+		expect(e009[0].message).toContain("disabled");
+	});
+
+	it("emits E009 when a required flag is missing from compilerOptions", async () => {
+		vi.mocked(readFileSync).mockImplementation((filePath: unknown) => {
+			if (String(filePath).endsWith("tsconfig.json")) {
+				return JSON.stringify({
+					compilerOptions: { strict: true },
+				});
+			}
+			throw Object.assign(new Error("ENOENT"), { code: "ENOENT" });
+		});
+		const result = await runEnforceWithConfig([], {
+			guards: { tsconfig: { enabled: true, requiredFlags: ["strict", "strictNullChecks"] } },
+		});
+		const e009 = result.errors.filter((e) => e.code === "E009");
+		expect(e009).toHaveLength(1);
+		expect(e009[0].message).toContain('"strictNullChecks"');
+		expect(e009[0].message).toContain("missing");
+	});
+
+	it("emits multiple E009 for multiple failing flags", async () => {
+		vi.mocked(readFileSync).mockImplementation((filePath: unknown) => {
+			if (String(filePath).endsWith("tsconfig.json")) {
+				return JSON.stringify({ compilerOptions: {} });
+			}
+			throw Object.assign(new Error("ENOENT"), { code: "ENOENT" });
+		});
+		const result = await runEnforceWithConfig([], {
+			guards: {
+				tsconfig: { enabled: true, requiredFlags: ["strict", "strictNullChecks", "noImplicitAny"] },
+			},
+		});
+		const e009 = result.errors.filter((e) => e.code === "E009");
+		expect(e009).toHaveLength(3);
+	});
+
+	it("skips E009 when guards.tsconfig.enabled is false", async () => {
+		vi.mocked(readFileSync).mockImplementation((filePath: unknown) => {
+			if (String(filePath).endsWith("tsconfig.json")) {
+				return JSON.stringify({ compilerOptions: { strict: false } });
+			}
+			throw Object.assign(new Error("ENOENT"), { code: "ENOENT" });
+		});
+		const result = await runEnforceWithConfig([], {
+			guards: { tsconfig: { enabled: false, requiredFlags: ["strict"] } },
+		});
+		const e009 = result.errors.filter((e) => e.code === "E009");
+		expect(e009).toHaveLength(0);
+	});
+
+	it("skips E009 gracefully when tsconfig.json is not found", async () => {
+		vi.mocked(readFileSync).mockImplementation(() => {
+			throw Object.assign(new Error("ENOENT"), { code: "ENOENT" });
+		});
+		const result = await runEnforceWithConfig([], {
+			guards: { tsconfig: { enabled: true, requiredFlags: ["strict"] } },
+		});
+		const e009 = result.errors.filter((e) => e.code === "E009");
+		expect(e009).toHaveLength(0);
+	});
+
+	it("emits E009 with parse error when tsconfig.json is invalid JSON", async () => {
+		vi.mocked(readFileSync).mockImplementation((filePath: unknown) => {
+			if (String(filePath).endsWith("tsconfig.json")) {
+				return "{ not valid json";
+			}
+			throw Object.assign(new Error("ENOENT"), { code: "ENOENT" });
+		});
+		const result = await runEnforceWithConfig([], {
+			guards: { tsconfig: { enabled: true, requiredFlags: ["strict"] } },
+		});
+		const e009 = result.errors.filter((e) => e.code === "E009");
+		expect(e009).toHaveLength(1);
+		expect(e009[0].message).toContain("failed to parse");
+	});
+
+	it("handles tsconfig.json with no compilerOptions", async () => {
+		vi.mocked(readFileSync).mockImplementation((filePath: unknown) => {
+			if (String(filePath).endsWith("tsconfig.json")) {
+				return JSON.stringify({ extends: "./base.json" });
+			}
+			throw Object.assign(new Error("ENOENT"), { code: "ENOENT" });
+		});
+		const result = await runEnforceWithConfig([], {
+			guards: { tsconfig: { enabled: true, requiredFlags: ["strict"] } },
+		});
+		const e009 = result.errors.filter((e) => e.code === "E009");
+		expect(e009).toHaveLength(1);
+		expect(e009[0].message).toContain('"strict"');
+		expect(e009[0].message).toContain("missing");
+	});
+
+	it("E009 is always an error (not in RULE_MAP, not configurable)", async () => {
+		vi.mocked(readFileSync).mockImplementation((filePath: unknown) => {
+			if (String(filePath).endsWith("tsconfig.json")) {
+				return JSON.stringify({ compilerOptions: { strict: false } });
+			}
+			throw Object.assign(new Error("ENOENT"), { code: "ENOENT" });
+		});
+		const result = await runEnforceWithConfig([], {
+			guards: { tsconfig: { enabled: true, requiredFlags: ["strict"] } },
+		});
+		expect(result.success).toBe(false);
+		const e009Errors = result.errors.filter((e) => e.code === "E009");
+		const e009Warnings = result.warnings.filter((w) => w.code === "E009");
+		expect(e009Errors).toHaveLength(1);
+		expect(e009Warnings).toHaveLength(0);
+	});
+});
+
+// ---------------------------------------------------------------------------
+// E010 — forge-ts config drift detection
+// ---------------------------------------------------------------------------
+
+describe("enforce — E010 config drift detection", () => {
+	/** Helper to build a valid ForgeLockManifest JSON string. */
+	function makeLockJson(rules: Record<string, string>): string {
+		return JSON.stringify({
+			version: "1.0.0",
+			lockedAt: "2026-03-20T00:00:00.000Z",
+			lockedBy: "test",
+			config: { rules },
+		});
+	}
+
+	/** Set up fs mocks so readLockFile finds and reads the lock file. */
+	function mockLockFile(lockJson: string): void {
+		vi.mocked(existsSync).mockImplementation((filePath: unknown) => {
+			return String(filePath).endsWith(".forge-lock.json");
+		});
+		vi.mocked(readFileSync).mockImplementation((filePath: unknown) => {
+			if (String(filePath).endsWith(".forge-lock.json")) {
+				return lockJson;
+			}
+			throw Object.assign(new Error("ENOENT"), { code: "ENOENT" });
+		});
+	}
+
+	afterEach(() => {
+		vi.mocked(readFileSync).mockRestore();
+		vi.mocked(existsSync).mockRestore();
+	});
+
+	it("emits E010 when a rule is weakened from error to warn", async () => {
+		mockLockFile(makeLockJson({ "require-summary": "error" }));
+		const result = await runEnforceWithConfig([], {
+			enforce: {
+				enabled: true,
+				minVisibility: Visibility.Public,
+				strict: false,
+				rules: { ...DEFAULT_RULES, "require-summary": "warn" },
+			},
+		});
+		const e010 = result.errors.filter((e) => e.code === "E010");
+		expect(e010).toHaveLength(1);
+		expect(e010[0].message).toContain("require-summary");
+		expect(e010[0].message).toContain('"error"');
+		expect(e010[0].message).toContain('"warn"');
+	});
+
+	it("emits E010 when a rule is weakened from warn to off", async () => {
+		mockLockFile(makeLockJson({ "require-package-doc": "warn" }));
+		const result = await runEnforceWithConfig([], {
+			enforce: {
+				enabled: true,
+				minVisibility: Visibility.Public,
+				strict: false,
+				rules: { ...DEFAULT_RULES, "require-package-doc": "off" },
+			},
+		});
+		const e010 = result.errors.filter((e) => e.code === "E010");
+		expect(e010).toHaveLength(1);
+		expect(e010[0].message).toContain("require-package-doc");
+		expect(e010[0].message).toContain('"warn"');
+		expect(e010[0].message).toContain('"off"');
+	});
+
+	it("emits E010 when a rule is weakened from error to off", async () => {
+		mockLockFile(makeLockJson({ "require-summary": "error" }));
+		const result = await runEnforceWithConfig([], {
+			enforce: {
+				enabled: true,
+				minVisibility: Visibility.Public,
+				strict: false,
+				rules: { ...DEFAULT_RULES, "require-summary": "off" },
+			},
+		});
+		const e010 = result.errors.filter((e) => e.code === "E010");
+		expect(e010).toHaveLength(1);
+		expect(e010[0].message).toContain('"error"');
+		expect(e010[0].message).toContain('"off"');
+	});
+
+	it("does NOT emit E010 when a rule is strengthened from warn to error", async () => {
+		mockLockFile(makeLockJson({ "require-package-doc": "warn" }));
+		const result = await runEnforceWithConfig([], {
+			enforce: {
+				enabled: true,
+				minVisibility: Visibility.Public,
+				strict: false,
+				rules: { ...DEFAULT_RULES, "require-package-doc": "error" },
+			},
+		});
+		const e010 = result.errors.filter((e) => e.code === "E010");
+		expect(e010).toHaveLength(0);
+	});
+
+	it("does NOT emit E010 when a rule is strengthened from off to error", async () => {
+		mockLockFile(makeLockJson({ "require-summary": "off" }));
+		const result = await runEnforceWithConfig([], {
+			enforce: {
+				enabled: true,
+				minVisibility: Visibility.Public,
+				strict: false,
+				rules: { ...DEFAULT_RULES, "require-summary": "error" },
+			},
+		});
+		const e010 = result.errors.filter((e) => e.code === "E010");
+		expect(e010).toHaveLength(0);
+	});
+
+	it("does NOT emit E010 when rule severity matches the lock", async () => {
+		mockLockFile(makeLockJson({ "require-summary": "error" }));
+		const result = await runEnforceWithConfig([], {
+			enforce: {
+				enabled: true,
+				minVisibility: Visibility.Public,
+				strict: false,
+				rules: { ...DEFAULT_RULES, "require-summary": "error" },
+			},
+		});
+		const e010 = result.errors.filter((e) => e.code === "E010");
+		expect(e010).toHaveLength(0);
+	});
+
+	it("emits no E010 when .forge-lock.json does not exist", async () => {
+		vi.mocked(existsSync).mockReturnValue(false);
+		const result = await runEnforceWithConfig([], {});
+		const e010 = result.errors.filter((e) => e.code === "E010");
+		expect(e010).toHaveLength(0);
+	});
+
+	it("emits multiple E010 for multiple drifted rules", async () => {
+		mockLockFile(
+			makeLockJson({
+				"require-summary": "error",
+				"require-param": "error",
+				"require-returns": "warn",
+			}),
+		);
+		const result = await runEnforceWithConfig([], {
+			enforce: {
+				enabled: true,
+				minVisibility: Visibility.Public,
+				strict: false,
+				rules: {
+					...DEFAULT_RULES,
+					"require-summary": "warn",
+					"require-param": "off",
+					"require-returns": "warn", // same as lock, no drift
+				},
+			},
+		});
+		const e010 = result.errors.filter((e) => e.code === "E010");
+		expect(e010).toHaveLength(2);
+		const messages = e010.map((e) => e.message);
+		expect(messages.some((m) => m.includes("require-summary"))).toBe(true);
+		expect(messages.some((m) => m.includes("require-param"))).toBe(true);
+	});
+
+	it("E010 is always an error (not configurable via RULE_MAP)", async () => {
+		mockLockFile(makeLockJson({ "require-summary": "error" }));
+		const result = await runEnforceWithConfig([], {
+			enforce: {
+				enabled: true,
+				minVisibility: Visibility.Public,
+				strict: false,
+				rules: { ...DEFAULT_RULES, "require-summary": "off" },
+			},
+		});
+		expect(result.success).toBe(false);
+		const e010Errors = result.errors.filter((e) => e.code === "E010");
+		const e010Warnings = result.warnings.filter((w) => w.code === "E010");
+		expect(e010Errors).toHaveLength(1);
+		expect(e010Warnings).toHaveLength(0);
 	});
 });

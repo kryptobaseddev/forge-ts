@@ -178,6 +178,13 @@ export interface ForgeConfig {
 			discretionary: "error" | "warn" | "off";
 		};
 	};
+	/** Bypass budget configuration for temporary rule overrides. */
+	bypass: {
+		/** Maximum number of bypasses allowed per calendar day. Default: 3 */
+		dailyBudget: number;
+		/** Duration in hours before a bypass automatically expires. Default: 24 */
+		durationHours: number;
+	};
 	/** Downstream config drift guards. */
 	guards: {
 		/** tsconfig.json strictness validation. */

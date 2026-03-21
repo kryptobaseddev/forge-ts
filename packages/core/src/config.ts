@@ -53,6 +53,10 @@ export function defaultConfig(rootDir: string): ForgeConfig {
 			readmeSync: false,
 		},
 		skill: {},
+		bypass: {
+			dailyBudget: 3,
+			durationHours: 24,
+		},
 		tsdoc: {
 			writeConfig: true,
 			customTags: [],
@@ -95,6 +99,7 @@ const KNOWN_TOP_KEYS = new Set([
 	"api",
 	"gen",
 	"skill",
+	"bypass",
 	"tsdoc",
 	"guards",
 	"project",
@@ -268,6 +273,7 @@ function mergeWithDefaults(rootDir: string, partial: Partial<ForgeConfig>): Forg
 		api: { ...defaults.api, ...partial.api },
 		gen: { ...defaults.gen, ...partial.gen },
 		skill: { ...defaults.skill, ...partial.skill },
+		bypass: { ...defaults.bypass, ...partial.bypass },
 		tsdoc: {
 			...defaults.tsdoc,
 			...partial.tsdoc,

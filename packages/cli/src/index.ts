@@ -7,6 +7,11 @@
  *   forge-ts build [--cwd <dir>] [--skip-api] [--skip-gen]
  *   forge-ts docs init [--target <ssg>] [--out-dir <dir>] [--force]
  *   forge-ts docs dev [--target <ssg>] [--port <port>]
+ *   forge-ts lock  [--cwd <dir>]
+ *   forge-ts unlock --reason="..." [--cwd <dir>]
+ *   forge-ts bypass --reason="..." [--rule E009]
+ *   forge-ts bypass --status
+ *   forge-ts audit [--limit N] [--type <eventType>]
  *
  * @packageDocumentation
  * @public
@@ -14,16 +19,28 @@
 
 import { createRequire } from "node:module";
 import { defineCommand, runMain } from "citty";
+import { auditCommand } from "./commands/audit.js";
 import { buildCommand } from "./commands/build.js";
+import { bypassCommand } from "./commands/bypass.js";
 import { checkCommand } from "./commands/check.js";
 import { docsDevCommand } from "./commands/docs-dev.js";
 import { initDocsCommand } from "./commands/init-docs.js";
+import { lockCommand } from "./commands/lock.js";
 import { testCommand } from "./commands/test.js";
+import { unlockCommand } from "./commands/unlock.js";
 
 const require = createRequire(import.meta.url);
 const pkg = require("../package.json") as { version: string };
 
+export { type AuditResult, auditCommand } from "./commands/audit.js";
 export { type BuildResult, type BuildStep, buildCommand } from "./commands/build.js";
+export {
+	type BypassCreateResult,
+	type BypassStatusResult,
+	bypassCommand,
+	runBypassCreate,
+	runBypassStatus,
+} from "./commands/bypass.js";
 export {
 	type CheckFileError,
 	type CheckFileGroup,
@@ -39,7 +56,9 @@ export {
 	type InitDocsResult,
 	initDocsCommand,
 } from "./commands/init-docs.js";
+export { type LockResult, lockCommand, runLock } from "./commands/lock.js";
 export { type TestFailure, type TestResult, testCommand } from "./commands/test.js";
+export { runUnlock, type UnlockResult, unlockCommand } from "./commands/unlock.js";
 export { createLogger, type Logger } from "./logger.js";
 export {
 	type CommandOutput,
@@ -82,6 +101,10 @@ const main = defineCommand({
 		test: testCommand,
 		build: buildCommand,
 		docs: docsCommand,
+		lock: lockCommand,
+		unlock: unlockCommand,
+		bypass: bypassCommand,
+		audit: auditCommand,
 	},
 });
 

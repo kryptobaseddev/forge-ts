@@ -8,7 +8,10 @@
  * @public
  */
 
+export * from "./audit.js";
+export * from "./bypass.js";
 export * from "./config.js";
+export * from "./lock.js";
 export * from "./openapi-types.js";
 export * from "./types.js";
 export * from "./visibility.js";

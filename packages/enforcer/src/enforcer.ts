@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import {
 	createWalker,
 	type EnforceRules,
@@ -7,6 +9,9 @@ import {
 	type ForgeSymbol,
 	type ForgeWarning,
 	filterByVisibility,
+	isRuleBypassed,
+	readLockFile,
+	validateAgainstLock,
 } from "@forge-ts/core";
 import { findDeprecatedUsages } from "./deprecation-tracker.js";
 
@@ -174,6 +179,8 @@ const RULE_MAP: Record<string, keyof EnforceRules> = {
  * | W002 | warning  | Function body throws but has no `@throws` tag. |
  * | W003 | warning  | `@deprecated` tag is present without explanation. |
  * | W006 | warning  | TSDoc parser-level syntax error (invalid tag, malformed block, etc.). |
+ * | E009 | error    | tsconfig.json required strict-mode flag is missing or disabled (guard). |
+ * | E010 | error    | Config drift: a rule severity is weaker than the locked value. |
  *
  * When `config.enforce.strict` is `true` all warnings are promoted to errors.
  *
@@ -470,6 +477,101 @@ export async function enforce(config: ForgeConfig): Promise<ForgeResult> {
 				symbolKind: "variable",
 			},
 		);
+	}
+
+	// E009 — tsconfig strictness regression
+	const e009Bypassed = isRuleBypassed(config.rootDir, "E009");
+	if (config.guards.tsconfig.enabled) {
+		const tsconfigPath = join(config.rootDir, "tsconfig.json");
+		try {
+			const raw = readFileSync(tsconfigPath, "utf-8");
+			let parsed: { compilerOptions?: Record<string, unknown> } | undefined;
+			try {
+				parsed = JSON.parse(raw) as { compilerOptions?: Record<string, unknown> };
+			} catch (parseErr) {
+				if (e009Bypassed) {
+					warnings.push({
+						code: "E009",
+						message: `[BYPASSED] tsconfig.json: failed to parse — ${parseErr instanceof Error ? parseErr.message : String(parseErr)}`,
+						filePath: tsconfigPath,
+						line: 1,
+						column: 0,
+					});
+				} else {
+					errors.push({
+						code: "E009",
+						message: `tsconfig.json: failed to parse — ${parseErr instanceof Error ? parseErr.message : String(parseErr)}`,
+						filePath: tsconfigPath,
+						line: 1,
+						column: 0,
+					});
+				}
+			}
+			if (parsed) {
+				const compilerOptions = parsed.compilerOptions ?? {};
+				const requiredFlags = config.guards.tsconfig.requiredFlags;
+				for (const flag of requiredFlags) {
+					const value = compilerOptions[flag];
+					if (value !== true) {
+						if (e009Bypassed) {
+							warnings.push({
+								code: "E009",
+								message: `[BYPASSED] tsconfig.json: required flag "${flag}" is ${value === false ? "disabled" : "missing"} — expected true`,
+								filePath: tsconfigPath,
+								line: 1,
+								column: 0,
+							});
+						} else {
+							errors.push({
+								code: "E009",
+								message: `tsconfig.json: required flag "${flag}" is ${value === false ? "disabled" : "missing"} — expected true`,
+								filePath: tsconfigPath,
+								line: 1,
+								column: 0,
+							});
+						}
+					}
+				}
+			}
+		} catch (readErr) {
+			// tsconfig.json not found — skip E009 gracefully
+			if (
+				readErr instanceof Error &&
+				"code" in readErr &&
+				(readErr as NodeJS.ErrnoException).code === "ENOENT"
+			) {
+				// Intentionally ignored: missing tsconfig.json is not an E009 error
+			} else {
+				throw readErr;
+			}
+		}
+	}
+
+	// E010 — forge-ts config drift detection via lock file
+	const e010Bypassed = isRuleBypassed(config.rootDir, "E010");
+	const lockManifest = readLockFile(config.rootDir);
+	if (lockManifest) {
+		const lockViolations = validateAgainstLock(config, lockManifest);
+		const lockFilePath = join(config.rootDir, ".forge-lock.json");
+		for (const violation of lockViolations) {
+			if (e010Bypassed) {
+				warnings.push({
+					code: "E010",
+					message: `[BYPASSED] Config drift: ${violation.message}`,
+					filePath: lockFilePath,
+					line: 1,
+					column: 0,
+				});
+			} else {
+				errors.push({
+					code: "E010",
+					message: `Config drift: ${violation.message}`,
+					filePath: lockFilePath,
+					line: 1,
+					column: 0,
+				});
+			}
+		}
 	}
 
 	const success = errors.length === 0;

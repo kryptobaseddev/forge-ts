@@ -1,5 +1,27 @@
 # @forge-ts/gen
 
+## 0.8.0
+
+### Minor Changes
+
+- Migrate markdown/MDX pipeline to gray-matter + unified/remark AST
+
+  - **Frontmatter**: gray-matter for robust YAML parsing and serialization across all 4 SSG adapters, replacing fragile regex-based strip/rebuild
+  - **MDX sanitization**: AST-aware processing via remark-parse replaces line-by-line regex — code blocks, inline code, and frontmatter automatically preserved
+  - **FORGE:AUTO updates**: AST-derived protected ranges prevent matching markers inside code blocks
+  - **Markdown generation**: All render functions now build mdast trees serialized via remark-stringify with GFM table support — eliminates manual pipe escaping and ensures structurally valid output
+  - **TSDoc content**: New `parseInline()` helper properly parses markdown formatting in TSDoc summaries and descriptions, preventing double-escaping of backtick code spans and angle brackets
+  - **Smart truncation**: `truncate()` avoids cutting inside backtick code spans
+
+  New public exports: `parseFrontmatter`, `stringifyWithFrontmatter`, `stripFrontmatter`, `sanitizeForMdx`, `parseInline`, `parseBlocks`, `md`, `serializeMarkdown`, `toAnchor`, `slugLink`, `truncate`
+
+  New dependencies: gray-matter, unified, remark-parse, remark-stringify, remark-mdx, remark-gfm, remark-frontmatter, unist-util-visit
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @forge-ts/core@0.8.0
+
 ## 0.7.2
 
 ### Patch Changes

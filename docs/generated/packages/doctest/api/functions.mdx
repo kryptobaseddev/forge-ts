@@ -1,7 +1,8 @@
 ---
-title: "doctest — Functions"
-description: "Functions and classes for the doctest package"
+title: doctest — Functions
+description: Functions and classes for the doctest package
 ---
+
 Functions and classes exported by this package.
 
 ## extractExamples(symbols)
@@ -16,8 +17,8 @@ Extracts all `@example` blocks from a list of `ForgeSymbol` objects.
 
 **Parameters**
 
-| Name | Type | Description |
-|------|------|-------------|
+| Name      | Type            | Description                                  |
+| --------- | --------------- | -------------------------------------------- |
 | `symbols` | `ForgeSymbol[]` | The symbols produced by the core AST walker. |
 
 **Returns** — A flat array of `ExtractedExample` objects, one per code block.
@@ -45,10 +46,10 @@ Generates a virtual test file for a set of extracted examples.  Each example is 
 
 **Parameters**
 
-| Name | Type | Description |
-|------|------|-------------|
+| Name       | Type                 | Description                                |
+| ---------- | -------------------- | ------------------------------------------ |
 | `examples` | `ExtractedExample[]` | Examples to include in the generated file. |
-| `options` | `GeneratorOptions` | Output configuration. |
+| `options`  | `GeneratorOptions`   | Output configuration.                      |
 
 **Returns** — An array of `VirtualTestFile` objects (one per source file).
 
@@ -72,8 +73,8 @@ Writes virtual test files to disk and executes them with Node 24 native TypeScri
 
 **Parameters**
 
-| Name | Type | Description |
-|------|------|-------------|
+| Name    | Type                | Description                              |
+| ------- | ------------------- | ---------------------------------------- |
 | `files` | `VirtualTestFile[]` | The virtual test files to write and run. |
 
 **Returns** — A `RunResult` summarising the test outcome.
@@ -100,8 +101,8 @@ Runs the full doctest pipeline: extract → generate → run.
 
 **Parameters**
 
-| Name | Type | Description |
-|------|------|-------------|
+| Name     | Type          | Description                                 |
+| -------- | ------------- | ------------------------------------------- |
 | `config` | `ForgeConfig` | The resolved `ForgeConfig` for the project. |
 
 **Returns** — A `ForgeResult` with success/failure and any diagnostics.

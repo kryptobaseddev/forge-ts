@@ -1,12 +1,13 @@
 ---
-title: "core — Examples"
-description: "Usage examples for the core package"
+title: core — Examples
+description: Usage examples for the core package
 ---
+
 All usage examples from the package, aggregated for quick reference.
 
 ## `defaultConfig()`
 
-_Constructs a sensible default `ForgeConfig` rooted at `rootDir`._
+*Constructs a sensible default `ForgeConfig` rooted at `rootDir`.*
 
 [View in API reference](/packages/core/api/functions#defaultconfig)
 
@@ -18,7 +19,7 @@ console.log(config.enforce.enabled); // true
 
 ## `loadConfig()`
 
-_Loads the forge-ts configuration for a project.  Resolution order: 1. `<rootDir>/forge-ts.config.ts` 2. `<rootDir>/forge-ts.config.js` 3. `"forge-ts"` key inside `<rootDir>/package.json` 4. Built-in defaults (returned when none of the above is found)_
+*Loads the forge-ts configuration for a project.  Resolution order: 1. `<rootDir>/forge-ts.config.ts` 2. `<rootDir>/forge-ts.config.js` 3. `"forge-ts"` key inside `<rootDir>/package.json` 4. Built-in defaults (returned when none of the above is found)*
 
 [View in API reference](/packages/core/api/functions#loadconfig)
 
@@ -30,7 +31,7 @@ const config = await loadConfig("/path/to/project");
 
 ## `resolveVisibility()`
 
-_Determines the visibility level of a symbol from its TSDoc release tags.  The precedence order is: 1. `@internal`  → `Visibility.Internal` 2. `@beta`      → `Visibility.Beta` 3. `@public`    → `Visibility.Public` 4. (no tag)     → `Visibility.Public` (default for exports)_
+*Determines the visibility level of a symbol from its TSDoc release tags.  The precedence order is: 1. `@internal`  → `Visibility.Internal` 2. `@beta`      → `Visibility.Beta` 3. `@public`    → `Visibility.Public` 4. (no tag)     → `Visibility.Public` (default for exports)*
 
 [View in API reference](/packages/core/api/functions#resolvevisibility)
 
@@ -42,7 +43,7 @@ const vis = resolveVisibility({ internal: [] });
 
 ## `meetsVisibility()`
 
-_Returns whether `candidate` meets or exceeds the required minimum visibility.  "Meets" means the symbol is at least as visible as `minVisibility`. For example, `Public` meets a minimum of `Public`, but `Internal` does not._
+*Returns whether `candidate` meets or exceeds the required minimum visibility.  "Meets" means the symbol is at least as visible as `minVisibility`. For example, `Public` meets a minimum of `Public`, but `Internal` does not.*
 
 [View in API reference](/packages/core/api/functions#meetsvisibility)
 
@@ -54,7 +55,7 @@ meetsVisibility(Visibility.Internal, Visibility.Public); // false
 
 ## `filterByVisibility()`
 
-_Filters an array of `ForgeSymbol` objects to only include symbols whose visibility meets or exceeds `minVisibility`._
+*Filters an array of `ForgeSymbol` objects to only include symbols whose visibility meets or exceeds `minVisibility`.*
 
 [View in API reference](/packages/core/api/functions#filterbyvisibility)
 
@@ -65,7 +66,7 @@ const publicOnly = filterByVisibility(symbols, Visibility.Public);
 
 ## `createWalker()`
 
-_Creates an `ASTWalker` configured for the given forge config.  The walker uses the TypeScript Compiler API to create a `ts.Program` from the project's tsconfig, then visits every source file to extract exported declarations.  TSDoc comments are parsed with `@microsoft/tsdoc` to populate the `documentation` field on each `ForgeSymbol`._
+*Creates an `ASTWalker` configured for the given forge config.  The walker uses the TypeScript Compiler API to create a `ts.Program` from the project's tsconfig, then visits every source file to extract exported declarations.  TSDoc comments are parsed with `@microsoft/tsdoc` to populate the `documentation` field on each `ForgeSymbol`.*
 
 [View in API reference](/packages/core/api/functions#createwalker)
 

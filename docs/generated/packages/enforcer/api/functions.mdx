@@ -1,7 +1,8 @@
 ---
-title: "enforcer — Functions"
-description: "Functions and classes for the enforcer package"
+title: enforcer — Functions
+description: Functions and classes for the enforcer package
 ---
+
 Functions and classes exported by this package.
 
 ## findDeprecatedUsages(symbols)
@@ -16,8 +17,8 @@ Scans symbols for imports of deprecated exports from other packages.
 
 **Parameters**
 
-| Name | Type | Description |
-|------|------|-------------|
+| Name      | Type            | Description                                            |
+| --------- | --------------- | ------------------------------------------------------ |
 | `symbols` | `ForgeSymbol[]` | All symbols from the walker across the entire project. |
 
 **Returns** — Array of deprecated usages found.
@@ -34,8 +35,8 @@ Runs the TSDoc enforcement pass against a project.  The enforcer walks all expor
 
 **Parameters**
 
-| Name | Type | Description |
-|------|------|-------------|
+| Name     | Type          | Description                                 |
+| -------- | ------------- | ------------------------------------------- |
 | `config` | `ForgeConfig` | The resolved `ForgeConfig` for the project. |
 
 **Returns** — A `ForgeResult` describing which symbols passed or failed.
@@ -64,9 +65,9 @@ Formats a `ForgeResult` into a human-readable string suitable for printing to a 
 
 **Parameters**
 
-| Name | Type | Description |
-|------|------|-------------|
-| `result` | `ForgeResult` | The result produced by `enforce`. |
+| Name      | Type            | Description                             |
+| --------- | --------------- | --------------------------------------- |
+| `result`  | `ForgeResult`   | The result produced by `enforce`.       |
 | `options` | `FormatOptions` | Rendering options (colours, verbosity). |
 
 **Returns** — A formatted string ready to write to stdout or stderr.

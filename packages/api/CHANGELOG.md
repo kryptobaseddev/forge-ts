@@ -1,5 +1,12 @@
 # @forge-ts/api
 
+## 0.8.0
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @forge-ts/core@0.8.0
+
 ## 0.7.2
 
 ### Patch Changes

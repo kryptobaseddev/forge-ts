@@ -1,7 +1,8 @@
 ---
-title: "cli — Functions"
-description: "Functions and classes for the cli package"
+title: cli — Functions
+description: Functions and classes for the cli package
 ---
+
 Functions and classes exported by this package.
 
 ## createLogger(options, )
@@ -16,16 +17,16 @@ Creates a `Logger` instance.
 
 **Parameters**
 
-| Name | Type | Description |
-|------|------|-------------|
-| `options` | `: { colors?: boolean \| undefined; } \| undefined` | Optional configuration. |
-| `` | `: { colors?: boolean \| undefined; } \| undefined` | options.colors - Emit ANSI colour codes.  Defaults to `process.stdout.isTTY`. |
+| Name      | Type                                                | Description                                                                   |
+| --------- | --------------------------------------------------- | ----------------------------------------------------------------------------- |
+| `options` | `: { colors?: boolean \| undefined; } \| undefined` | Optional configuration.                                                       |
+| ``        | `: { colors?: boolean \| undefined; } \| undefined` | options.colors - Emit ANSI colour codes.  Defaults to `process.stdout.isTTY`. |
 
 **Returns** — A configured logger.
 
 ## emitResult(output, flags, humanFormatter)
 
-Wraps a command result in a LAFS envelope and emits it.  - JSON mode: writes the projected envelope to stdout as JSON. - Human mode: calls the provided formatter function. - Quiet mode: suppresses all output regardless of format.
+Wraps a command result in a LAFS envelope and emits it.  Output format is determined by LAFS flag resolution: - TTY terminals default to human-readable output. - Non-TTY (piped, CI, agents) defaults to JSON. - Explicit `--json` or `--human` flags always take precedence.  On failure, the full result is included alongside the error so agents get actionable data (e.g., suggestedFix) in a single response.
 
 **Signature**
 
@@ -35,11 +36,11 @@ Wraps a command result in a LAFS envelope and emits it.  - JSON mode: writes the
 
 **Parameters**
 
-| Name | Type | Description |
-|------|------|-------------|
-| `output` | `CommandOutput<T>` | Typed result from the command. |
-| `flags` | `OutputFlags` | Output format flags from citty args. |
-| `humanFormatter` | `(data: T` | Produces a human-readable string for TTY consumers. |
+| Name             | Type               | Description                                         |
+| ---------------- | ------------------ | --------------------------------------------------- |
+| `output`         | `CommandOutput<T>` | Typed result from the command.                      |
+| `flags`          | `OutputFlags`      | Output format flags from citty args.                |
+| `humanFormatter` | `(data: T`         | Produces a human-readable string for TTY consumers. |
 
 **Example**
 
@@ -60,8 +61,8 @@ Returns the LAFS-compliant exit code for a command output.
 
 **Parameters**
 
-| Name | Type | Description |
-|------|------|-------------|
+| Name     | Type                     | Description                    |
+| -------- | ------------------------ | ------------------------------ |
 | `output` | `CommandOutput<unknown>` | Typed result from the command. |
 
 **Returns** — `0` on success, `1` on validation/check failure.
@@ -78,8 +79,8 @@ Runs the full build pipeline and returns a typed command output.
 
 **Parameters**
 
-| Name | Type | Description |
-|------|------|-------------|
+| Name   | Type        | Description                          |
+| ------ | ----------- | ------------------------------------ |
 | `args` | `BuildArgs` | CLI arguments for the build command. |
 
 **Returns** — A typed `CommandOutput<BuildResult>`.
@@ -104,8 +105,8 @@ Runs the TSDoc enforcement pass and returns a typed command output.
 
 **Parameters**
 
-| Name | Type | Description |
-|------|------|-------------|
+| Name   | Type        | Description                          |
+| ------ | ----------- | ------------------------------------ |
 | `args` | `CheckArgs` | CLI arguments for the check command. |
 
 **Returns** — A typed `CommandOutput<CheckResult>`.
@@ -130,8 +131,8 @@ Starts the local dev server for the configured SSG target.  Reads `gen.ssgTarget
 
 **Parameters**
 
-| Name | Type | Description |
-|------|------|-------------|
+| Name   | Type                                                                                       | Description        |
+| ------ | ------------------------------------------------------------------------------------------ | ------------------ |
 | `args` | `{ cwd?: string \| undefined; target?: string \| undefined; port?: string \| undefined; }` | Command arguments. |
 
 **Returns** — A promise that resolves when the server exits.
@@ -155,8 +156,8 @@ Scaffolds a documentation site for the target SSG platform.  Resolves the target
 
 **Parameters**
 
-| Name | Type | Description |
-|------|------|-------------|
+| Name   | Type           | Description                              |
+| ------ | -------------- | ---------------------------------------- |
 | `args` | `InitDocsArgs` | CLI arguments for the init docs command. |
 
 **Returns** — A typed `CommandOutput<InitDocsResult>`.
@@ -181,8 +182,8 @@ Runs the doctest pipeline and returns a typed command output.
 
 **Parameters**
 
-| Name | Type | Description |
-|------|------|-------------|
+| Name   | Type       | Description                         |
+| ------ | ---------- | ----------------------------------- |
 | `args` | `TestArgs` | CLI arguments for the test command. |
 
 **Returns** — A typed `CommandOutput<TestResult>`.

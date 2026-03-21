@@ -1,20 +1,24 @@
 ---
-title: "Concepts"
-description: "Core concepts behind forge-ts"
+title: Concepts
+description: Core concepts behind forge-ts
 ---
+
 This page explains the core concepts behind **forge-ts**.
 
 > This is a stub page. Edit this file to add your project's conceptual documentation.
+>
 > Auto-generated sections below (inside FORGE:AUTO markers) update on every build.
 
-<!-- FORGE:AUTO-START how-it-works -->
+{/* FORGE:AUTO-START how-it-works */}
+
 ## How It Works
 
 forge-ts processes your TypeScript source with a single AST traversal, extracting TSDoc comments and type information to generate documentation.
 
-<!-- FORGE:AUTO-END how-it-works -->
+{/* FORGE:AUTO-END how-it-works */}
 
-<!-- FORGE:AUTO-START key-abstractions -->
+{/* FORGE:AUTO-START key-abstractions */}
+
 ## Key Abstractions
 
 - **`Visibility`** — Visibility levels for exported symbols. Derived from TSDoc release tags (public, beta, internal).
@@ -39,6 +43,26 @@ forge-ts processes your TypeScript source with a single AST traversal, extractin
 - **`SDKProperty`** — A single property extracted from an interface or class symbol.
 - **`SDKType`** — An SDK type descriptor extracted from the symbol graph.
 - **`ReferenceEntry`** — A single entry in the generated API reference.
+- **`MdText`** — Inline leaf node: literal text.
+- **`MdInlineCode`** — Inline leaf node: code span.
+- **`MdStrong`** — Inline container: strong emphasis (bold).
+- **`MdEmphasis`** — Inline container: emphasis (italic).
+- **`MdLink`** — Inline container: hyperlink.
+- **`MdPhrasing`** — Union of all inline (phrasing) content types.
+- **`MdHeading`** — Block node: heading (depth 1-6).
+- **`MdParagraph`** — Block node: paragraph.
+- **`MdCode`** — Block node: fenced code block.
+- **`MdBlockquote`** — Block node: blockquote.
+- **`MdHtml`** — Block node: raw HTML (including comments).
+- **`MdThematicBreak`** — Block node: horizontal rule.
+- **`MdListItem`** — List item container.
+- **`MdList`** — Block node: ordered or unordered list.
+- **`MdTableCell`** — GFM table cell.
+- **`MdTableRow`** — GFM table row.
+- **`MdTable`** — GFM table.
+- **`MdBlock`** — Union of all block content types.
+- **`MdRoot`** — Document root.
+- **`FrontmatterResult`** — Result of parsing frontmatter from markdown/MDX content.
 - **`DocPage`** — A single generated documentation page.
 - **`SiteGeneratorOptions`** — Options controlling the doc site generator.
 - **`SSGTarget`** — Supported SSG target identifiers.
@@ -62,9 +86,12 @@ forge-ts processes your TypeScript source with a single AST traversal, extractin
 - **`BuildStep`** — A single step in the build pipeline.
 - **`BuildResult`** — Typed result for the `build` command.
 - **`CheckArgs`** — Arguments for the `check` command.
-- **`CheckFileError`** — A single error entry within a file group, included at standard and full MVI levels.
-- **`CheckFileWarning`** — A single warning entry within a file group, included at standard and full MVI levels.
-- **`CheckFileGroup`** — Errors and warnings grouped by file, included at standard and full MVI levels.
+- **`CheckFileError`** — A single error entry within a file group.
+- **`CheckFileWarning`** — A single warning entry within a file group.
+- **`CheckFileGroup`** — Errors and warnings grouped by file.
+- **`CheckRuleCount`** — Error breakdown by rule code, sorted by count descending.
+- **`CheckTriage`** — Triage data for prioritizing fixes. Always present when the check has errors, bounded in size (\~9 rules + top 20 files).
+- **`CheckPage`** — Pagination metadata for byFile results.
 - **`CheckResult`** — Typed result for the `check` command.
 - **`InitDocsResult`** — Result of the `init docs` command.
 - **`InitDocsArgs`** — Arguments for the `init docs` command.
@@ -79,4 +106,4 @@ forge-ts processes your TypeScript source with a single AST traversal, extractin
 - **`RunResult`** — Result of running the generated test files.
 - **`TestCaseResult`** — The result of a single test case.
 
-<!-- FORGE:AUTO-END key-abstractions -->
+{/* FORGE:AUTO-END key-abstractions */}

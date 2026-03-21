@@ -234,6 +234,184 @@ const result = await generateApi(config);
 console.log(result.success); // true if spec was written successfully
 ```
 
+### `serializeMarkdown`
+
+Serialize an mdast tree to a well-formed markdown string.  Uses remark-stringify with GFM table support. The serializer handles all escaping (pipes in table cells, special characters in text, etc.) so callers never need manual escape functions.
+
+```typescript
+(tree: MdRoot) => string
+```
+
+**Parameters:**
+
+- `tree` — The mdast root node to serialize.
+
+**Returns:** The serialized markdown string.
+
+### `textP`
+
+Shorthand: paragraph containing a single text node.
+
+```typescript
+(value: string) => MdParagraph
+```
+
+### `boldIntroP`
+
+Shorthand: paragraph with bold intro text followed by regular text.
+
+```typescript
+(bold: string, rest: string) => MdParagraph
+```
+
+### `textListItem`
+
+Shorthand: list item containing a single text paragraph.
+
+```typescript
+(value: string) => MdListItem
+```
+
+### `rawBlock`
+
+Wrap a raw markdown string as an HTML node. Use for TSDoc content that may contain markdown formatting (backticks, bold, links) which should pass through to the output verbatim rather than being escaped by the serializer.
+
+```typescript
+(markdown: string) => MdHtml
+```
+
+### `truncate`
+
+Truncate a string to at most maxLen chars. Avoids cutting inside backtick-delimited code spans to prevent broken inline code that would cause escaping issues.
+
+```typescript
+(text: string, maxLen?: number) => string
+```
+
+### `toAnchor`
+
+Convert a label to a GitHub-compatible anchor slug.
+
+```typescript
+(text: string) => string
+```
+
+### `slugLink`
+
+Strip extension from a link path and normalize to a slug. Produces bare slug links compatible with Mintlify and most SSGs.
+
+```typescript
+(path: string) => string
+```
+
+### `parseFrontmatter`
+
+Parse frontmatter from markdown/MDX content.  Uses gray-matter for robust YAML parsing — handles multi-line values, quoted strings, and edge cases that regex-based stripping misses.
+
+```typescript
+(content: string) => FrontmatterResult
+```
+
+**Parameters:**
+
+- `content` — The full file content including frontmatter.
+
+**Returns:** The body (without frontmatter) and the parsed data object.
+
+### `stringifyWithFrontmatter`
+
+Serialize content with frontmatter prepended.  Produces the standard format:
+
+```typescript
+(body: string, data: Record<string, string | number | boolean>) => string
+```
+
+**Parameters:**
+
+- `body` — The markdown body content (without frontmatter).
+- `data` — The frontmatter fields to serialize.
+
+**Returns:** The combined frontmatter + body string.
+
+### `stripFrontmatter`
+
+Strip frontmatter from content, returning only the body.
+
+```typescript
+(content: string) => string
+```
+
+**Parameters:**
+
+- `content` — The full file content including frontmatter.
+
+**Returns:** The body content without the frontmatter block.
+
+### `parseInline`
+
+Parse a markdown string and extract inline (phrasing) content.  Use for TSDoc text that may contain backtick code, bold, links, etc. The returned nodes can be spread into paragraphs, table cells, or any other context that accepts inline content.  This prevents double-escaping: backticks become proper `inlineCode` nodes instead of text that gets escaped by the serializer.
+
+```typescript
+(markdown: string) => MdPhrasing[]
+```
+
+**Parameters:**
+
+- `markdown` — The TSDoc content string (may contain markdown).
+
+**Returns:** Array of inline mdast nodes.
+
+### `parseBlocks`
+
+Parse a markdown string and extract block-level content.  Use for multi-line TSDoc content that may contain headings, lists, blockquotes, code blocks, etc.
+
+```typescript
+(markdown: string) => MdBlock[]
+```
+
+**Parameters:**
+
+- `markdown` — The markdown string to parse.
+
+**Returns:** Array of block-level mdast nodes.
+
+### `sanitizeForMdx`
+
+Sanitize markdown content for MDX compatibility using AST-aware processing.  Parses the document with remark to understand its structure, then applies targeted string replacements only to text and HTML comment nodes — code blocks, inline code, and frontmatter are automatically preserved.  Transformations applied outside code: - HTML comments to MDX comments - Curly braces in text escaped (prevents MDX expression parsing) - Angle brackets around word chars escaped (prevents JSX tag parsing)
+
+```typescript
+(content: string) => string
+```
+
+**Parameters:**
+
+- `content` — The markdown content to sanitize.
+
+**Returns:** The sanitized content safe for MDX consumption.
+
+### `updateAutoSections`
+
+Updates auto-enriched sections in an existing stub file.  Uses AST-aware parsing to find FORGE:AUTO markers, ensuring markers inside code blocks are never accidentally matched. Replaces content between `<!-- FORGE:AUTO-START id -->` and `<!-- FORGE:AUTO-END id -->` markers (or their MDX comment equivalents) with fresh content from the newly generated version.  Manual content outside markers is preserved exactly — no reformatting.
+
+```typescript
+(existing: string, generated: string) => string | null
+```
+
+**Parameters:**
+
+- `existing` — The current file content on disk.
+- `generated` — The freshly generated content with updated markers.
+
+**Returns:** The merged content, or null if no markers were found to update.
+
+### `escapeMdx`
+
+Escape MDX-unsafe characters in text that appears outside code fences.  MDX parses `<Word>` as JSX tags and `{expr}` as JS expressions. In documentation content (summaries, descriptions, table cells), these come from TypeScript generics (`Array<string>`) and TSDoc inline tags (`{@link Foo}`). We escape them so MDX treats them as literal text.  This is exported so SSG adapters can apply it during page transformation.
+
+```typescript
+(text: string) => string
+```
+
 ### `groupSymbolsByPackage`
 
 Groups symbols by their package based on file path.  For monorepos (symbols under `packages/<name>/`) the package name is derived from the directory segment immediately after `packages/`. For non-monorepo projects all symbols fall under the project name.
@@ -518,7 +696,7 @@ Creates a `Logger` instance.
 
 ### `emitResult`
 
-Wraps a command result in a LAFS envelope and emits it.  - JSON mode: writes the projected envelope to stdout as JSON. - Human mode: calls the provided formatter function. - Quiet mode: suppresses all output regardless of format.
+Wraps a command result in a LAFS envelope and emits it.  Output format is determined by LAFS flag resolution: - TTY terminals default to human-readable output. - Non-TTY (piped, CI, agents) defaults to JSON. - Explicit `--json` or `--human` flags always take precedence.  On failure, the full result is included alongside the error so agents get actionable data (e.g., suggestedFix) in a single response.
 
 ```typescript
 <T>(output: CommandOutput<T>, flags: OutputFlags, humanFormatter: (data: T, output: CommandOutput<T>) => string) => void
@@ -882,6 +1060,7 @@ any
 - `api` — API generation configuration.
 - `gen` — Output generation configuration.
 - `skill` — Skill package generation settings. Custom sections here are merged into the generated SKILL.md, allowing projects to inject workflow knowledge, domain gotchas, and other context that cannot be derived from symbols alone.
+- `_configWarnings` — Warnings generated during config loading (e.g., unknown keys). Populated by loadConfig(). Agents should surface these in output.
 - `project` — Project metadata — auto-detected from package.json if not provided.
 
 ### `ForgeResult`
@@ -899,6 +1078,7 @@ any
 - `errors` — Errors that caused or would cause failure.
 - `warnings` — Non-fatal warnings.
 - `duration` — Wall-clock duration of the run in milliseconds.
+- `writtenFiles` — Absolute paths of files written during this run (populated by gen).
 
 ### `ForgeError`
 
@@ -1176,6 +1356,262 @@ any
 - `examples` — Code examples from TSDoc `@example` tags.
 - `children` — Nested child symbols (class methods, interface properties, enum members).
 - `location` — Source file location.
+
+### `MdText`
+
+Inline leaf node: literal text.
+
+```typescript
+any
+```
+
+**Members:**
+
+- `type`
+- `value`
+
+### `MdInlineCode`
+
+Inline leaf node: code span.
+
+```typescript
+any
+```
+
+**Members:**
+
+- `type`
+- `value`
+
+### `MdStrong`
+
+Inline container: strong emphasis (bold).
+
+```typescript
+any
+```
+
+**Members:**
+
+- `type`
+- `children`
+
+### `MdEmphasis`
+
+Inline container: emphasis (italic).
+
+```typescript
+any
+```
+
+**Members:**
+
+- `type`
+- `children`
+
+### `MdLink`
+
+Inline container: hyperlink.
+
+```typescript
+any
+```
+
+**Members:**
+
+- `type`
+- `url`
+- `children`
+
+### `MdPhrasing`
+
+Union of all inline (phrasing) content types.
+
+```typescript
+any
+```
+
+### `MdHeading`
+
+Block node: heading (depth 1-6).
+
+```typescript
+any
+```
+
+**Members:**
+
+- `type`
+- `depth`
+- `children`
+
+### `MdParagraph`
+
+Block node: paragraph.
+
+```typescript
+any
+```
+
+**Members:**
+
+- `type`
+- `children`
+
+### `MdCode`
+
+Block node: fenced code block.
+
+```typescript
+any
+```
+
+**Members:**
+
+- `type`
+- `lang`
+- `value`
+
+### `MdBlockquote`
+
+Block node: blockquote.
+
+```typescript
+any
+```
+
+**Members:**
+
+- `type`
+- `children`
+
+### `MdHtml`
+
+Block node: raw HTML (including comments).
+
+```typescript
+any
+```
+
+**Members:**
+
+- `type`
+- `value`
+
+### `MdThematicBreak`
+
+Block node: horizontal rule.
+
+```typescript
+any
+```
+
+**Members:**
+
+- `type`
+
+### `MdListItem`
+
+List item container.
+
+```typescript
+any
+```
+
+**Members:**
+
+- `type`
+- `spread`
+- `children`
+
+### `MdList`
+
+Block node: ordered or unordered list.
+
+```typescript
+any
+```
+
+**Members:**
+
+- `type`
+- `ordered`
+- `spread`
+- `children`
+
+### `MdTableCell`
+
+GFM table cell.
+
+```typescript
+any
+```
+
+**Members:**
+
+- `type`
+- `children`
+
+### `MdTableRow`
+
+GFM table row.
+
+```typescript
+any
+```
+
+**Members:**
+
+- `type`
+- `children`
+
+### `MdTable`
+
+GFM table.
+
+```typescript
+any
+```
+
+**Members:**
+
+- `type`
+- `align`
+- `children`
+
+### `MdBlock`
+
+Union of all block content types.
+
+```typescript
+any
+```
+
+### `MdRoot`
+
+Document root.
+
+```typescript
+any
+```
+
+**Members:**
+
+- `type`
+- `children`
+
+### `FrontmatterResult`
+
+Result of parsing frontmatter from markdown/MDX content.
+
+```typescript
+any
+```
+
+**Members:**
+
+- `body` — The body content without the frontmatter block.
+- `data` — The parsed frontmatter data as a key-value map.
 
 ### `DocPage`
 
@@ -1556,10 +1992,14 @@ any
 - `strict` — Exit with non-zero code on warnings as well as errors.
 - `verbose` — Include symbol signatures alongside diagnostics.
 - `mvi` — MVI verbosity level for structured output.
+- `rule` — Filter errors to a specific rule code (e.g., "E001").
+- `file` — Filter errors to a specific file path (substring match).
+- `limit` — Maximum number of file groups to return in byFile (default: 20).
+- `offset` — Offset into the byFile list for pagination (default: 0).
 
 ### `CheckFileError`
 
-A single error entry within a file group, included at standard and full MVI levels.
+A single error entry within a file group.
 
 ```typescript
 any
@@ -1572,12 +2012,12 @@ any
 - `kind` — Symbol kind (function, class, interface, etc.).
 - `line` — 1-based line number of the error.
 - `message` — Human-readable description.
-- `suggestedFix` — Exact TSDoc block to add (full MVI level only).
-- `agentAction` — Recommended agent action (full MVI level only).
+- `suggestedFix` — Exact TSDoc block to add (present at full MVI or with --rule/--file filters).
+- `agentAction` — Recommended agent action.
 
 ### `CheckFileWarning`
 
-A single warning entry within a file group, included at standard and full MVI levels.
+A single warning entry within a file group.
 
 ```typescript
 any
@@ -1593,7 +2033,7 @@ any
 
 ### `CheckFileGroup`
 
-Errors and warnings grouped by file, included at standard and full MVI levels.
+Errors and warnings grouped by file.
 
 ```typescript
 any
@@ -1604,6 +2044,50 @@ any
 - `file` — Absolute path to the source file.
 - `errors` — Errors in this file.
 - `warnings` — Warnings in this file.
+
+### `CheckRuleCount`
+
+Error breakdown by rule code, sorted by count descending.
+
+```typescript
+any
+```
+
+**Members:**
+
+- `code` — Machine-readable rule code (e.g., "E001").
+- `rule` — Human-readable rule name (e.g., "require-summary").
+- `count` — Number of violations.
+- `files` — Number of unique files affected by this rule.
+
+### `CheckTriage`
+
+Triage data for prioritizing fixes. Always present when the check has errors, bounded in size (~9 rules + top 20 files).
+
+```typescript
+any
+```
+
+**Members:**
+
+- `byRule` — Error counts by rule, sorted descending.
+- `topFiles` — Top files by error count (max 20).
+- `fixOrder` — Suggested fix order: rules sorted by fewest files affected first (quick wins).
+
+### `CheckPage`
+
+Pagination metadata for byFile results.
+
+```typescript
+any
+```
+
+**Members:**
+
+- `offset` — Current offset.
+- `limit` — Page size.
+- `hasMore` — Whether more results exist beyond this page.
+- `total` — Total number of file groups (after filters).
 
 ### `CheckResult`
 
@@ -1617,7 +2101,11 @@ any
 
 - `success` — Whether the check passed without errors.
 - `summary` — Aggregate counts — always present regardless of MVI level.
-- `byFile` — Per-file breakdown — present at standard and full MVI levels.
+- `triage` — Triage data for prioritizing fixes — present when errors  0 (except minimal).
+- `byFile` — Per-file breakdown — present at standard and full MVI levels, paginated.
+- `page` — Pagination metadata when byFile is paginated.
+- `filters` — Active filters applied to this result.
+- `nextCommand` — CLI command hint for the agent to run next.
 
 ### `InitDocsResult`
 
@@ -1773,6 +2261,14 @@ any
 
 ## Constants
 
+### `md`
+
+Concise factory functions for building mdast nodes.  Usage:
+
+```typescript
+{ text: (value: string) => MdText; inlineCode: (value: string) => MdInlineCode; strong: (...children: MdPhrasing[]) => MdStrong; emphasis: (...children: MdPhrasing[]) => MdEmphasis; ... 12 more ...; root: (...children: MdBlock[]) => MdRoot; }
+```
+
 ### `DEFAULT_TARGET`
 
 The default SSG target when none is specified.
@@ -1854,7 +2350,7 @@ CommandDef<{ readonly cwd: { readonly type: "string"; readonly description: "Pro
 Citty command definition for `forge-ts check`.
 
 ```typescript
-CommandDef<{ readonly cwd: { readonly type: "string"; readonly description: "Project root directory"; }; readonly strict: { readonly type: "boolean"; readonly description: "Treat warnings as errors"; readonly default: false; }; ... 4 more ...; readonly mvi: { ...; }; }>
+CommandDef<{ readonly cwd: { readonly type: "string"; readonly description: "Project root directory"; }; readonly strict: { readonly type: "boolean"; readonly description: "Treat warnings as errors"; readonly default: false; }; ... 8 more ...; readonly mvi: { ...; }; }>
 ```
 
 ### `docsDevCommand`

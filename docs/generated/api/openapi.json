@@ -34,6 +34,12 @@
       "name": "markdown"
     },
     {
+      "name": "markdown-utils"
+    },
+    {
+      "name": "mdast-builders"
+    },
+    {
       "name": "openapi-types"
     },
     {
@@ -309,6 +315,13 @@
           "duration": {
             "type": "number",
             "description": "Wall-clock duration of the run in milliseconds."
+          },
+          "writtenFiles": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Absolute paths of files written during this run (populated by gen)."
           }
         },
         "required": [
@@ -316,7 +329,8 @@
           "symbols",
           "errors",
           "warnings",
-          "duration"
+          "duration",
+          "writtenFiles"
         ]
       },
       "ForgeError": {
@@ -1094,6 +1108,385 @@
           "location"
         ]
       },
+      "MdText": {
+        "description": "Inline leaf node: literal text.",
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "object"
+          },
+          "value": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "value"
+        ]
+      },
+      "MdInlineCode": {
+        "description": "Inline leaf node: code span.",
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "object"
+          },
+          "value": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "value"
+        ]
+      },
+      "MdStrong": {
+        "description": "Inline container: strong emphasis (bold).",
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "object"
+          },
+          "children": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          }
+        },
+        "required": [
+          "type",
+          "children"
+        ]
+      },
+      "MdEmphasis": {
+        "description": "Inline container: emphasis (italic).",
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "object"
+          },
+          "children": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          }
+        },
+        "required": [
+          "type",
+          "children"
+        ]
+      },
+      "MdLink": {
+        "description": "Inline container: hyperlink.",
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "object"
+          },
+          "url": {
+            "type": "string"
+          },
+          "children": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          }
+        },
+        "required": [
+          "type",
+          "url",
+          "children"
+        ]
+      },
+      "MdPhrasing": {
+        "description": "Union of all inline (phrasing) content types."
+      },
+      "MdHeading": {
+        "description": "Block node: heading (depth 1-6).",
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "object"
+          },
+          "depth": {
+            "oneOf": [
+              {
+                "type": "object"
+              },
+              {
+                "type": "object"
+              },
+              {
+                "type": "object"
+              },
+              {
+                "type": "object"
+              },
+              {
+                "type": "object"
+              },
+              {
+                "type": "object"
+              }
+            ]
+          },
+          "children": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          }
+        },
+        "required": [
+          "type",
+          "depth",
+          "children"
+        ]
+      },
+      "MdParagraph": {
+        "description": "Block node: paragraph.",
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "object"
+          },
+          "children": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          }
+        },
+        "required": [
+          "type",
+          "children"
+        ]
+      },
+      "MdCode": {
+        "description": "Block node: fenced code block.",
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "object"
+          },
+          "lang": {
+            "type": "string"
+          },
+          "value": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "lang",
+          "value"
+        ]
+      },
+      "MdBlockquote": {
+        "description": "Block node: blockquote.",
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "object"
+          },
+          "children": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          }
+        },
+        "required": [
+          "type",
+          "children"
+        ]
+      },
+      "MdHtml": {
+        "description": "Block node: raw HTML (including comments).",
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "object"
+          },
+          "value": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "value"
+        ]
+      },
+      "MdThematicBreak": {
+        "description": "Block node: horizontal rule.",
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "object"
+          }
+        },
+        "required": [
+          "type"
+        ]
+      },
+      "MdListItem": {
+        "description": "List item container.",
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "object"
+          },
+          "spread": {
+            "type": "boolean"
+          },
+          "children": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          }
+        },
+        "required": [
+          "type",
+          "spread",
+          "children"
+        ]
+      },
+      "MdList": {
+        "description": "Block node: ordered or unordered list.",
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "object"
+          },
+          "ordered": {
+            "type": "boolean"
+          },
+          "spread": {
+            "type": "boolean"
+          },
+          "children": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          }
+        },
+        "required": [
+          "type",
+          "ordered",
+          "spread",
+          "children"
+        ]
+      },
+      "MdTableCell": {
+        "description": "GFM table cell.",
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "object"
+          },
+          "children": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          }
+        },
+        "required": [
+          "type",
+          "children"
+        ]
+      },
+      "MdTableRow": {
+        "description": "GFM table row.",
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "object"
+          },
+          "children": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          }
+        },
+        "required": [
+          "type",
+          "children"
+        ]
+      },
+      "MdTable": {
+        "description": "GFM table.",
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "object"
+          },
+          "align": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "children": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          }
+        },
+        "required": [
+          "type",
+          "align",
+          "children"
+        ]
+      },
+      "MdBlock": {
+        "description": "Union of all block content types."
+      },
+      "MdRoot": {
+        "description": "Document root.",
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "object"
+          },
+          "children": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          }
+        },
+        "required": [
+          "type",
+          "children"
+        ]
+      },
+      "FrontmatterResult": {
+        "description": "Result of parsing frontmatter from markdown/MDX content.",
+        "type": "object",
+        "properties": {
+          "body": {
+            "type": "string",
+            "description": "The body content without the frontmatter block."
+          },
+          "data": {
+            "type": "object",
+            "additionalProperties": {},
+            "description": "The parsed frontmatter data as a key-value map."
+          }
+        },
+        "required": [
+          "body",
+          "data"
+        ]
+      },
       "DocPage": {
         "description": "A single generated documentation page.",
         "type": "object",
@@ -1786,7 +2179,7 @@
         ]
       },
       "CheckFileError": {
-        "description": "A single error entry within a file group, included at standard and full MVI levels.",
+        "description": "A single error entry within a file group.",
         "type": "object",
         "properties": {
           "code": {
@@ -1811,11 +2204,11 @@
           },
           "suggestedFix": {
             "type": "string",
-            "description": "Exact TSDoc block to add (full MVI level only)."
+            "description": "Exact TSDoc block to add (present at full MVI or with --rule/--file filters)."
           },
           "agentAction": {
             "type": "string",
-            "description": "Recommended agent action (full MVI level only)."
+            "description": "Recommended agent action."
           }
         },
         "required": [
@@ -1829,7 +2222,7 @@
         ]
       },
       "CheckFileWarning": {
-        "description": "A single warning entry within a file group, included at standard and full MVI levels.",
+        "description": "A single warning entry within a file group.",
         "type": "object",
         "properties": {
           "code": {
@@ -1862,7 +2255,7 @@
         ]
       },
       "CheckFileGroup": {
-        "description": "Errors and warnings grouped by file, included at standard and full MVI levels.",
+        "description": "Errors and warnings grouped by file.",
         "type": "object",
         "properties": {
           "file": {
@@ -1890,6 +2283,94 @@
           "warnings"
         ]
       },
+      "CheckRuleCount": {
+        "description": "Error breakdown by rule code, sorted by count descending.",
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "description": "Machine-readable rule code (e.g., \"E001\")."
+          },
+          "rule": {
+            "type": "string",
+            "description": "Human-readable rule name (e.g., \"require-summary\")."
+          },
+          "count": {
+            "type": "number",
+            "description": "Number of violations."
+          },
+          "files": {
+            "type": "number",
+            "description": "Number of unique files affected by this rule."
+          }
+        },
+        "required": [
+          "code",
+          "rule",
+          "count",
+          "files"
+        ]
+      },
+      "CheckTriage": {
+        "description": "Triage data for prioritizing fixes. Always present when the check has errors, bounded in size (~9 rules + top 20 files).",
+        "type": "object",
+        "properties": {
+          "byRule": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            },
+            "description": "Error counts by rule, sorted descending."
+          },
+          "topFiles": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            },
+            "description": "Top files by error count (max 20)."
+          },
+          "fixOrder": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            },
+            "description": "Suggested fix order: rules sorted by fewest files affected first (quick wins)."
+          }
+        },
+        "required": [
+          "byRule",
+          "topFiles",
+          "fixOrder"
+        ]
+      },
+      "CheckPage": {
+        "description": "Pagination metadata for byFile results.",
+        "type": "object",
+        "properties": {
+          "offset": {
+            "type": "number",
+            "description": "Current offset."
+          },
+          "limit": {
+            "type": "number",
+            "description": "Page size."
+          },
+          "hasMore": {
+            "type": "boolean",
+            "description": "Whether more results exist beyond this page."
+          },
+          "total": {
+            "type": "number",
+            "description": "Total number of file groups (after filters)."
+          }
+        },
+        "required": [
+          "offset",
+          "limit",
+          "hasMore",
+          "total"
+        ]
+      },
       "CheckResult": {
         "description": "Typed result for the `check` command.",
         "type": "object",
@@ -1902,18 +2383,37 @@
             "type": "object",
             "description": "Aggregate counts — always present regardless of MVI level."
           },
+          "triage": {
+            "type": "object",
+            "description": "Triage data for prioritizing fixes — present when errors  0 (except minimal)."
+          },
           "byFile": {
             "type": "array",
             "items": {
               "type": "object"
             },
-            "description": "Per-file breakdown — present at standard and full MVI levels."
+            "description": "Per-file breakdown — present at standard and full MVI levels, paginated."
+          },
+          "page": {
+            "type": "object",
+            "description": "Pagination metadata when byFile is paginated."
+          },
+          "filters": {
+            "type": "object",
+            "description": "Active filters applied to this result."
+          },
+          "nextCommand": {
+            "type": "string",
+            "description": "CLI command hint for the agent to run next."
           }
         },
         "required": [
           "success",
           "summary",
-          "byFile"
+          "triage",
+          "byFile",
+          "page",
+          "nextCommand"
         ]
       },
       "InitDocsResult": {

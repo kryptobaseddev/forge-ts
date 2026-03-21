@@ -1,8 +1,235 @@
 ---
-title: "gen — Functions"
-description: "Functions and classes for the gen package"
+title: gen — Functions
+description: Functions and classes for the gen package
 ---
+
 Functions and classes exported by this package.
+
+## serializeMarkdown(tree)
+
+Serialize an mdast tree to a well-formed markdown string.  Uses remark-stringify with GFM table support. The serializer handles all escaping (pipes in table cells, special characters in text, etc.) so callers never need manual escape functions.
+
+**Signature**
+
+```typescript
+(tree: MdRoot) => string
+```
+
+**Parameters**
+
+| Name   | Type     | Description                       |
+| ------ | -------- | --------------------------------- |
+| `tree` | `MdRoot` | The mdast root node to serialize. |
+
+**Returns** — The serialized markdown string.
+
+## textP()
+
+Shorthand: paragraph containing a single text node.
+
+**Signature**
+
+```typescript
+(value: string) => MdParagraph
+```
+
+## boldIntroP()
+
+Shorthand: paragraph with bold intro text followed by regular text.
+
+**Signature**
+
+```typescript
+(bold: string, rest: string) => MdParagraph
+```
+
+## textListItem()
+
+Shorthand: list item containing a single text paragraph.
+
+**Signature**
+
+```typescript
+(value: string) => MdListItem
+```
+
+## rawBlock()
+
+Wrap a raw markdown string as an HTML node. Use for TSDoc content that may contain markdown formatting (backticks, bold, links) which should pass through to the output verbatim rather than being escaped by the serializer.
+
+**Signature**
+
+```typescript
+(markdown: string) => MdHtml
+```
+
+## truncate()
+
+Truncate a string to at most maxLen chars. Avoids cutting inside backtick-delimited code spans to prevent broken inline code that would cause escaping issues.
+
+**Signature**
+
+```typescript
+(text: string, maxLen?: number) => string
+```
+
+## toAnchor()
+
+Convert a label to a GitHub-compatible anchor slug.
+
+**Signature**
+
+```typescript
+(text: string) => string
+```
+
+## slugLink()
+
+Strip extension from a link path and normalize to a slug. Produces bare slug links compatible with Mintlify and most SSGs.
+
+**Signature**
+
+```typescript
+(path: string) => string
+```
+
+## parseFrontmatter(content)
+
+Parse frontmatter from markdown/MDX content.  Uses gray-matter for robust YAML parsing — handles multi-line values, quoted strings, and edge cases that regex-based stripping misses.
+
+**Signature**
+
+```typescript
+(content: string) => FrontmatterResult
+```
+
+**Parameters**
+
+| Name      | Type     | Description                                  |
+| --------- | -------- | -------------------------------------------- |
+| `content` | `string` | The full file content including frontmatter. |
+
+**Returns** — The body (without frontmatter) and the parsed data object.
+
+## stringifyWithFrontmatter(body, data)
+
+Serialize content with frontmatter prepended.  Produces the standard format:
+
+**Signature**
+
+```typescript
+(body: string, data: Record<string, string | number | boolean>) => string
+```
+
+**Parameters**
+
+| Name   | Type            | Description                                      |
+| ------ | --------------- | ------------------------------------------------ |
+| `body` | `string`        | The markdown body content (without frontmatter). |
+| `data` | `Record<string` | The frontmatter fields to serialize.             |
+
+**Returns** — The combined frontmatter + body string.
+
+## stripFrontmatter(content)
+
+Strip frontmatter from content, returning only the body.
+
+**Signature**
+
+```typescript
+(content: string) => string
+```
+
+**Parameters**
+
+| Name      | Type     | Description                                  |
+| --------- | -------- | -------------------------------------------- |
+| `content` | `string` | The full file content including frontmatter. |
+
+**Returns** — The body content without the frontmatter block.
+
+## parseInline(markdown)
+
+Parse a markdown string and extract inline (phrasing) content.  Use for TSDoc text that may contain backtick code, bold, links, etc. The returned nodes can be spread into paragraphs, table cells, or any other context that accepts inline content.  This prevents double-escaping: backticks become proper `inlineCode` nodes instead of text that gets escaped by the serializer.
+
+**Signature**
+
+```typescript
+(markdown: string) => MdPhrasing[]
+```
+
+**Parameters**
+
+| Name       | Type     | Description                                      |
+| ---------- | -------- | ------------------------------------------------ |
+| `markdown` | `string` | The TSDoc content string (may contain markdown). |
+
+**Returns** — Array of inline mdast nodes.
+
+## parseBlocks(markdown)
+
+Parse a markdown string and extract block-level content.  Use for multi-line TSDoc content that may contain headings, lists, blockquotes, code blocks, etc.
+
+**Signature**
+
+```typescript
+(markdown: string) => MdBlock[]
+```
+
+**Parameters**
+
+| Name       | Type     | Description                   |
+| ---------- | -------- | ----------------------------- |
+| `markdown` | `string` | The markdown string to parse. |
+
+**Returns** — Array of block-level mdast nodes.
+
+## sanitizeForMdx(content)
+
+Sanitize markdown content for MDX compatibility using AST-aware processing.  Parses the document with remark to understand its structure, then applies targeted string replacements only to text and HTML comment nodes — code blocks, inline code, and frontmatter are automatically preserved.  Transformations applied outside code: - HTML comments to MDX comments - Curly braces in text escaped (prevents MDX expression parsing) - Angle brackets around word chars escaped (prevents JSX tag parsing)
+
+**Signature**
+
+```typescript
+(content: string) => string
+```
+
+**Parameters**
+
+| Name      | Type     | Description                       |
+| --------- | -------- | --------------------------------- |
+| `content` | `string` | The markdown content to sanitize. |
+
+**Returns** — The sanitized content safe for MDX consumption.
+
+## updateAutoSections(existing, generated)
+
+Updates auto-enriched sections in an existing stub file.  Uses AST-aware parsing to find FORGE:AUTO markers, ensuring markers inside code blocks are never accidentally matched. Replaces content between `<!-- FORGE:AUTO-START id -->` and `<!-- FORGE:AUTO-END id -->` markers (or their MDX comment equivalents) with fresh content from the newly generated version.  Manual content outside markers is preserved exactly — no reformatting.
+
+**Signature**
+
+```typescript
+(existing: string, generated: string) => string | null
+```
+
+**Parameters**
+
+| Name        | Type     | Description                                         |
+| ----------- | -------- | --------------------------------------------------- |
+| `existing`  | `string` | The current file content on disk.                   |
+| `generated` | `string` | The freshly generated content with updated markers. |
+
+**Returns** — The merged content, or null if no markers were found to update.
+
+## escapeMdx()
+
+Escape MDX-unsafe characters in text that appears outside code fences.  MDX parses `<Word>` as JSX tags and `{expr}` as JS expressions. In documentation content (summaries, descriptions, table cells), these come from TypeScript generics (`Array<string>`) and TSDoc inline tags (`{@link Foo}`). We escape them so MDX treats them as literal text.  This is exported so SSG adapters can apply it during page transformation.
+
+**Signature**
+
+```typescript
+(text: string) => string
+```
 
 ## groupSymbolsByPackage(symbols, rootDir)
 
@@ -16,10 +243,10 @@ Groups symbols by their package based on file path.  For monorepos (symbols unde
 
 **Parameters**
 
-| Name | Type | Description |
-|------|------|-------------|
-| `symbols` | `ForgeSymbol[]` | All extracted symbols. |
-| `rootDir` | `string` | Absolute path to the project root. |
+| Name      | Type            | Description                        |
+| --------- | --------------- | ---------------------------------- |
+| `symbols` | `ForgeSymbol[]` | All extracted symbols.             |
+| `rootDir` | `string`        | Absolute path to the project root. |
 
 **Returns** — A map from package name to symbol list.
 
@@ -43,11 +270,11 @@ Generates a full multi-page documentation site from symbols grouped by package. 
 
 **Parameters**
 
-| Name | Type | Description |
-|------|------|-------------|
-| `symbolsByPackage` | `Map<string` | Symbols grouped by package name. |
-| `config` | `ForgeConfig` | The resolved `ForgeConfig`. |
-| `options` | `SiteGeneratorOptions` | Site generation options. |
+| Name               | Type                   | Description                      |
+| ------------------ | ---------------------- | -------------------------------- |
+| `symbolsByPackage` | `Map<string`           | Symbols grouped by package name. |
+| `config`           | `ForgeConfig`          | The resolved `ForgeConfig`.      |
+| `options`          | `SiteGeneratorOptions` | Site generation options.         |
 
 **Returns** — An array of `DocPage` objects ready to be written to disk.
 
@@ -72,8 +299,8 @@ Register an SSG adapter. Called once per provider at module load time.
 
 **Parameters**
 
-| Name | Type | Description |
-|------|------|-------------|
+| Name      | Type         | Description              |
+| --------- | ------------ | ------------------------ |
 | `adapter` | `SSGAdapter` | The adapter to register. |
 
 **Example**
@@ -95,8 +322,8 @@ Get a registered adapter by target name. Throws if the target is not registered.
 
 **Parameters**
 
-| Name | Type | Description |
-|------|------|-------------|
+| Name     | Type        | Description                |
+| -------- | ----------- | -------------------------- |
 | `target` | `SSGTarget` | The SSG target identifier. |
 
 **Returns** — The registered `SSGAdapter` for the given target.
@@ -143,10 +370,10 @@ Generates an `llms.txt` routing manifest from the extracted symbols.  The file f
 
 **Parameters**
 
-| Name | Type | Description |
-|------|------|-------------|
-| `symbols` | `ForgeSymbol[]` | The symbols to include. |
-| `config` | `ForgeConfig` | The resolved `ForgeConfig`. |
+| Name      | Type            | Description                 |
+| --------- | --------------- | --------------------------- |
+| `symbols` | `ForgeSymbol[]` | The symbols to include.     |
+| `config`  | `ForgeConfig`   | The resolved `ForgeConfig`. |
 
 **Returns** — The generated `llms.txt` content as a string.
 
@@ -170,10 +397,10 @@ Generates an `llms-full.txt` dense context file from the extracted symbols.  Unl
 
 **Parameters**
 
-| Name | Type | Description |
-|------|------|-------------|
-| `symbols` | `ForgeSymbol[]` | The symbols to include. |
-| `config` | `ForgeConfig` | The resolved `ForgeConfig`. |
+| Name      | Type            | Description                 |
+| --------- | --------------- | --------------------------- |
+| `symbols` | `ForgeSymbol[]` | The symbols to include.     |
+| `config`  | `ForgeConfig`   | The resolved `ForgeConfig`. |
 
 **Returns** — The generated `llms-full.txt` content as a string.
 
@@ -197,11 +424,11 @@ Generates a Markdown (or MDX) string from a list of symbols.
 
 **Parameters**
 
-| Name | Type | Description |
-|------|------|-------------|
-| `symbols` | `ForgeSymbol[]` | The symbols to document. |
-| `config` | `ForgeConfig` | The resolved `ForgeConfig`. |
-| `options` | `: MarkdownOptions` | Rendering options. |
+| Name      | Type                | Description                 |
+| --------- | ------------------- | --------------------------- |
+| `symbols` | `ForgeSymbol[]`     | The symbols to document.    |
+| `config`  | `ForgeConfig`       | The resolved `ForgeConfig`. |
+| `options` | `: MarkdownOptions` | Rendering options.          |
 
 **Returns** — The generated Markdown string.
 
@@ -225,11 +452,11 @@ Injects a summary of exported symbols into a `README.md` file.  The content is p
 
 **Parameters**
 
-| Name | Type | Description |
-|------|------|-------------|
-| `readmePath` | `string` | Absolute path to the `README.md` to update. |
-| `symbols` | `ForgeSymbol[]` | Symbols to summarise in the README. |
-| `options` | `: ReadmeSyncOptions` | Options controlling sync behaviour. |
+| Name         | Type                  | Description                                 |
+| ------------ | --------------------- | ------------------------------------------- |
+| `readmePath` | `string`              | Absolute path to the `README.md` to update. |
+| `symbols`    | `ForgeSymbol[]`       | Symbols to summarise in the README.         |
+| `options`    | `: ReadmeSyncOptions` | Options controlling sync behaviour.         |
 
 **Returns** — `true` if the file was modified, `false` otherwise.
 
@@ -253,10 +480,10 @@ Generates an agentskills.io-compliant skill package for ANY TypeScript project. 
 
 **Parameters**
 
-| Name | Type | Description |
-|------|------|-------------|
+| Name      | Type            | Description                   |
+| --------- | --------------- | ----------------------------- |
 | `symbols` | `ForgeSymbol[]` | All symbols from the project. |
-| `config` | `ForgeConfig` | The resolved forge-ts config. |
+| `config`  | `ForgeConfig`   | The resolved forge-ts config. |
 
 **Returns** — A `SkillPackage` describing the directory and its files.
 
@@ -282,10 +509,10 @@ Generates a SKILL.md string following the Agent Skills specification. Generic fo
 
 **Parameters**
 
-| Name | Type | Description |
-|------|------|-------------|
+| Name      | Type            | Description                   |
+| --------- | --------------- | ----------------------------- |
 | `symbols` | `ForgeSymbol[]` | All symbols from the project. |
-| `config` | `ForgeConfig` | The resolved forge-ts config. |
+| `config`  | `ForgeConfig`   | The resolved forge-ts config. |
 
 **Returns** — The SKILL.md content as a string.
 
@@ -308,11 +535,11 @@ Generate navigation configuration file(s) for the given SSG target.  Returns one
 
 **Parameters**
 
-| Name | Type | Description |
-|------|------|-------------|
-| `pages` | `DocPage[]` | The `DocPage` array produced by `generateDocSite`. |
-| `target` | `"docusaurus" \| "mintlify" \| "nextra" \| "vitepress"` | The SSG target. |
-| `projectName` | `string` | The project name (used in config metadata). |
+| Name          | Type                                                    | Description                                        |
+| ------------- | ------------------------------------------------------- | -------------------------------------------------- |
+| `pages`       | `DocPage[]`                                             | The `DocPage` array produced by `generateDocSite`. |
+| `target`      | `"docusaurus" \| "mintlify" \| "nextra" \| "vitepress"` | The SSG target.                                    |
+| `projectName` | `string`                                                | The project name (used in config metadata).        |
 
 **Returns** — An array of `SSGConfigFile` objects ready to be written to disk.
 
@@ -336,9 +563,9 @@ Runs the full generation pipeline: walk → render → write.  Auto-generated pa
 
 **Parameters**
 
-| Name | Type | Description |
-|------|------|-------------|
-| `config` | `ForgeConfig` | The resolved `ForgeConfig` for the project. |
+| Name      | Type                             | Description                                   |
+| --------- | -------------------------------- | --------------------------------------------- |
+| `config`  | `ForgeConfig`                    | The resolved `ForgeConfig` for the project.   |
 | `options` | `: GenerateOptions \| undefined` | Optional generation flags (e.g., forceStubs). |
 
 **Returns** — A `ForgeResult` describing the outcome.

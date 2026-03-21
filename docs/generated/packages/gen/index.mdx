@@ -1,50 +1,88 @@
 ---
-title: "gen"
-description: "gen package overview"
+title: gen
+description: gen package overview
 ---
+
 ## Functions & Classes
 
-| Symbol | Kind | Description |
-|--------|------|-------------|
-| [`groupSymbolsByPackage()`](/packages/gen/api/index#groupsymbolsbypackage) | function | Groups symbols by their package based on file path.  For monorepos (symbols u... |
-| [`generateDocSite()`](/packages/gen/api/index#generatedocsite) | function | Generates a full multi-page documentation site from symbols grouped by packag... |
-| [`registerAdapter()`](/packages/gen/api/index#registeradapter) | function | Register an SSG adapter. Called once per provider at module load time. |
-| [`getAdapter()`](/packages/gen/api/index#getadapter) | function | Get a registered adapter by target name. Throws if the target is not registered. |
-| [`getAvailableTargets()`](/packages/gen/api/index#getavailabletargets) | function | Get all registered adapter targets. |
-| [`generateLlmsTxt()`](/packages/gen/api/index#generatellmstxt) | function | Generates an `llms.txt` routing manifest from the extracted symbols.  The fil... |
-| [`generateLlmsFullTxt()`](/packages/gen/api/index#generatellmsfulltxt) | function | Generates an `llms-full.txt` dense context file from the extracted symbols.  ... |
-| [`generateMarkdown()`](/packages/gen/api/index#generatemarkdown) | function | Generates a Markdown (or MDX) string from a list of symbols. |
-| [`syncReadme()`](/packages/gen/api/index#syncreadme) | function | Injects a summary of exported symbols into a `README.md` file.  The content i... |
-| [`generateSkillPackage()`](/packages/gen/api/index#generateskillpackage) | function | Generates an agentskills.io-compliant skill package for ANY TypeScript projec... |
-| [`generateSkillMd()`](/packages/gen/api/index#generateskillmd) | function | Generates a SKILL.md string following the Agent Skills specification. Generic... |
-| [`generateSSGConfigs()`](/packages/gen/api/index#generatessgconfigs) | function | Generate navigation configuration file(s) for the given SSG target.  Returns ... |
-| [`generate()`](/packages/gen/api/index#generate) | function | Runs the full generation pipeline: walk → render → write.  Auto-generated pag... |
+| Symbol                                                                           | Kind     | Description                                                                      |
+| -------------------------------------------------------------------------------- | -------- | -------------------------------------------------------------------------------- |
+| [`serializeMarkdown()`](/packages/gen/api/index#serializemarkdown)               | function | Serialize an mdast tree to a well-formed markdown string.  Uses remark-string... |
+| [`textP()`](/packages/gen/api/index#textp)                                       | function | Shorthand: paragraph containing a single text node.                              |
+| [`boldIntroP()`](/packages/gen/api/index#boldintrop)                             | function | Shorthand: paragraph with bold intro text followed by regular text.              |
+| [`textListItem()`](/packages/gen/api/index#textlistitem)                         | function | Shorthand: list item containing a single text paragraph.                         |
+| [`rawBlock()`](/packages/gen/api/index#rawblock)                                 | function | Wrap a raw markdown string as an HTML node. Use for TSDoc content that may co... |
+| [`truncate()`](/packages/gen/api/index#truncate)                                 | function | Truncate a string to at most maxLen chars. Avoids cutting inside backtick-del... |
+| [`toAnchor()`](/packages/gen/api/index#toanchor)                                 | function | Convert a label to a GitHub-compatible anchor slug.                              |
+| [`slugLink()`](/packages/gen/api/index#sluglink)                                 | function | Strip extension from a link path and normalize to a slug. Produces bare slug...  |
+| [`parseFrontmatter()`](/packages/gen/api/index#parsefrontmatter)                 | function | Parse frontmatter from markdown/MDX content.  Uses gray-matter for robust YAM... |
+| [`stringifyWithFrontmatter()`](/packages/gen/api/index#stringifywithfrontmatter) | function | Serialize content with frontmatter prepended.  Produces the standard format:     |
+| [`stripFrontmatter()`](/packages/gen/api/index#stripfrontmatter)                 | function | Strip frontmatter from content, returning only the body.                         |
+| [`parseInline()`](/packages/gen/api/index#parseinline)                           | function | Parse a markdown string and extract inline (phrasing) content.  Use for TSDoc... |
+| [`parseBlocks()`](/packages/gen/api/index#parseblocks)                           | function | Parse a markdown string and extract block-level content.  Use for multi-line...  |
+| [`sanitizeForMdx()`](/packages/gen/api/index#sanitizeformdx)                     | function | Sanitize markdown content for MDX compatibility using AST-aware processing....   |
+| [`updateAutoSections()`](/packages/gen/api/index#updateautosections)             | function | Updates auto-enriched sections in an existing stub file.  Uses AST-aware pars... |
+| [`escapeMdx()`](/packages/gen/api/index#escapemdx)                               | function | Escape MDX-unsafe characters in text that appears outside code fences.  MDX p... |
+| [`groupSymbolsByPackage()`](/packages/gen/api/index#groupsymbolsbypackage)       | function | Groups symbols by their package based on file path.  For monorepos (symbols u... |
+| [`generateDocSite()`](/packages/gen/api/index#generatedocsite)                   | function | Generates a full multi-page documentation site from symbols grouped by packag... |
+| [`registerAdapter()`](/packages/gen/api/index#registeradapter)                   | function | Register an SSG adapter. Called once per provider at module load time.           |
+| [`getAdapter()`](/packages/gen/api/index#getadapter)                             | function | Get a registered adapter by target name. Throws if the target is not registered. |
+| [`getAvailableTargets()`](/packages/gen/api/index#getavailabletargets)           | function | Get all registered adapter targets.                                              |
+| [`generateLlmsTxt()`](/packages/gen/api/index#generatellmstxt)                   | function | Generates an `llms.txt` routing manifest from the extracted symbols.  The fil... |
+| [`generateLlmsFullTxt()`](/packages/gen/api/index#generatellmsfulltxt)           | function | Generates an `llms-full.txt` dense context file from the extracted symbols....   |
+| [`generateMarkdown()`](/packages/gen/api/index#generatemarkdown)                 | function | Generates a Markdown (or MDX) string from a list of symbols.                     |
+| [`syncReadme()`](/packages/gen/api/index#syncreadme)                             | function | Injects a summary of exported symbols into a `README.md` file.  The content i... |
+| [`generateSkillPackage()`](/packages/gen/api/index#generateskillpackage)         | function | Generates an agentskills.io-compliant skill package for ANY TypeScript projec... |
+| [`generateSkillMd()`](/packages/gen/api/index#generateskillmd)                   | function | Generates a SKILL.md string following the Agent Skills specification. Generic... |
+| [`generateSSGConfigs()`](/packages/gen/api/index#generatessgconfigs)             | function | Generate navigation configuration file(s) for the given SSG target.  Returns...  |
+| [`generate()`](/packages/gen/api/index#generate)                                 | function | Runs the full generation pipeline: walk → render → write.  Auto-generated pag... |
 
 ## Types & Interfaces
 
-| Symbol | Kind | Description |
-|--------|------|-------------|
-| [`DocPage`](/packages/gen/api/index#docpage) | interface | A single generated documentation page. |
-| [`SiteGeneratorOptions`](/packages/gen/api/index#sitegeneratoroptions) | interface | Options controlling the doc site generator. |
-| [`SSGTarget`](/packages/gen/api/index#ssgtarget) | type | Supported SSG target identifiers. |
-| [`GeneratedFile`](/packages/gen/api/index#generatedfile) | interface | A file to write to disk during scaffolding or generation. |
-| [`SSGStyleGuide`](/packages/gen/api/index#ssgstyleguide) | interface | Style guide configuration for the SSG target. |
-| [`ScaffoldManifest`](/packages/gen/api/index#scaffoldmanifest) | interface | Scaffold manifest describing what `init docs` creates. |
-| [`AdapterContext`](/packages/gen/api/index#adaptercontext) | interface | Context passed to adapter methods. |
-| [`DevServerCommand`](/packages/gen/api/index#devservercommand) | interface | Command to start a local dev server for doc preview. |
-| [`SSGAdapter`](/packages/gen/api/index#ssgadapter) | interface | The central SSG adapter interface. Every doc platform provider implements thi... |
-| [`MarkdownOptions`](/packages/gen/api/index#markdownoptions) | interface | Options controlling Markdown output. |
-| [`ReadmeSyncOptions`](/packages/gen/api/index#readmesyncoptions) | interface | Options controlling README sync behaviour. |
-| [`SkillPackage`](/packages/gen/api/index#skillpackage) | interface | A generated skill package following the agentskills.io directory structure. C... |
-| [`SSGConfigFile`](/packages/gen/api/index#ssgconfigfile) | interface | A single generated SSG configuration file. |
-| [`GenerateOptions`](/packages/gen/api/index#generateoptions) | interface | Options for the generation pipeline. |
+| Symbol                                                                 | Kind      | Description                                                                      |
+| ---------------------------------------------------------------------- | --------- | -------------------------------------------------------------------------------- |
+| [`MdText`](/packages/gen/api/index#mdtext)                             | interface | Inline leaf node: literal text.                                                  |
+| [`MdInlineCode`](/packages/gen/api/index#mdinlinecode)                 | interface | Inline leaf node: code span.                                                     |
+| [`MdStrong`](/packages/gen/api/index#mdstrong)                         | interface | Inline container: strong emphasis (bold).                                        |
+| [`MdEmphasis`](/packages/gen/api/index#mdemphasis)                     | interface | Inline container: emphasis (italic).                                             |
+| [`MdLink`](/packages/gen/api/index#mdlink)                             | interface | Inline container: hyperlink.                                                     |
+| [`MdPhrasing`](/packages/gen/api/index#mdphrasing)                     | type      | Union of all inline (phrasing) content types.                                    |
+| [`MdHeading`](/packages/gen/api/index#mdheading)                       | interface | Block node: heading (depth 1-6).                                                 |
+| [`MdParagraph`](/packages/gen/api/index#mdparagraph)                   | interface | Block node: paragraph.                                                           |
+| [`MdCode`](/packages/gen/api/index#mdcode)                             | interface | Block node: fenced code block.                                                   |
+| [`MdBlockquote`](/packages/gen/api/index#mdblockquote)                 | interface | Block node: blockquote.                                                          |
+| [`MdHtml`](/packages/gen/api/index#mdhtml)                             | interface | Block node: raw HTML (including comments).                                       |
+| [`MdThematicBreak`](/packages/gen/api/index#mdthematicbreak)           | interface | Block node: horizontal rule.                                                     |
+| [`MdListItem`](/packages/gen/api/index#mdlistitem)                     | interface | List item container.                                                             |
+| [`MdList`](/packages/gen/api/index#mdlist)                             | interface | Block node: ordered or unordered list.                                           |
+| [`MdTableCell`](/packages/gen/api/index#mdtablecell)                   | interface | GFM table cell.                                                                  |
+| [`MdTableRow`](/packages/gen/api/index#mdtablerow)                     | interface | GFM table row.                                                                   |
+| [`MdTable`](/packages/gen/api/index#mdtable)                           | interface | GFM table.                                                                       |
+| [`MdBlock`](/packages/gen/api/index#mdblock)                           | type      | Union of all block content types.                                                |
+| [`MdRoot`](/packages/gen/api/index#mdroot)                             | interface | Document root.                                                                   |
+| [`FrontmatterResult`](/packages/gen/api/index#frontmatterresult)       | interface | Result of parsing frontmatter from markdown/MDX content.                         |
+| [`DocPage`](/packages/gen/api/index#docpage)                           | interface | A single generated documentation page.                                           |
+| [`SiteGeneratorOptions`](/packages/gen/api/index#sitegeneratoroptions) | interface | Options controlling the doc site generator.                                      |
+| [`SSGTarget`](/packages/gen/api/index#ssgtarget)                       | type      | Supported SSG target identifiers.                                                |
+| [`GeneratedFile`](/packages/gen/api/index#generatedfile)               | interface | A file to write to disk during scaffolding or generation.                        |
+| [`SSGStyleGuide`](/packages/gen/api/index#ssgstyleguide)               | interface | Style guide configuration for the SSG target.                                    |
+| [`ScaffoldManifest`](/packages/gen/api/index#scaffoldmanifest)         | interface | Scaffold manifest describing what `init docs` creates.                           |
+| [`AdapterContext`](/packages/gen/api/index#adaptercontext)             | interface | Context passed to adapter methods.                                               |
+| [`DevServerCommand`](/packages/gen/api/index#devservercommand)         | interface | Command to start a local dev server for doc preview.                             |
+| [`SSGAdapter`](/packages/gen/api/index#ssgadapter)                     | interface | The central SSG adapter interface. Every doc platform provider implements thi... |
+| [`MarkdownOptions`](/packages/gen/api/index#markdownoptions)           | interface | Options controlling Markdown output.                                             |
+| [`ReadmeSyncOptions`](/packages/gen/api/index#readmesyncoptions)       | interface | Options controlling README sync behaviour.                                       |
+| [`SkillPackage`](/packages/gen/api/index#skillpackage)                 | interface | A generated skill package following the agentskills.io directory structure. C... |
+| [`SSGConfigFile`](/packages/gen/api/index#ssgconfigfile)               | interface | A single generated SSG configuration file.                                       |
+| [`GenerateOptions`](/packages/gen/api/index#generateoptions)           | interface | Options for the generation pipeline.                                             |
 
 ## Other Exports
 
-| Symbol | Kind | Description |
-|--------|------|-------------|
-| [`DEFAULT_TARGET`](/packages/gen/api/index#defaulttarget) | variable | The default SSG target when none is specified. |
-| [`mintlifyAdapter`](/packages/gen/api/index#mintlifyadapter) | variable | Mintlify SSG adapter. Implements the `SSGAdapter` contract for the Mintlify p... |
+| Symbol                                                           | Kind     | Description                                                                      |
+| ---------------------------------------------------------------- | -------- | -------------------------------------------------------------------------------- |
+| [`md`](/packages/gen/api/index#md)                               | variable | Concise factory functions for building mdast nodes.  Usage:                      |
+| [`DEFAULT_TARGET`](/packages/gen/api/index#defaulttarget)        | variable | The default SSG target when none is specified.                                   |
+| [`mintlifyAdapter`](/packages/gen/api/index#mintlifyadapter)     | variable | Mintlify SSG adapter. Implements the `SSGAdapter` contract for the Mintlify p... |
 | [`docusaurusAdapter`](/packages/gen/api/index#docusaurusadapter) | variable | Docusaurus SSG adapter. Implements the `SSGAdapter` contract for the Docusaur... |
-| [`nextraAdapter`](/packages/gen/api/index#nextraadapter) | variable | Nextra SSG adapter (v4, App Router). Implements the `SSGAdapter` contract for... |
-| [`vitepressAdapter`](/packages/gen/api/index#vitepressadapter) | variable | VitePress SSG adapter. Implements the `SSGAdapter` contract for the VitePress... |
+| [`nextraAdapter`](/packages/gen/api/index#nextraadapter)         | variable | Nextra SSG adapter (v4, App Router). Implements the `SSGAdapter` contract for... |
+| [`vitepressAdapter`](/packages/gen/api/index#vitepressadapter)   | variable | VitePress SSG adapter. Implements the `SSGAdapter` contract for the VitePress... |

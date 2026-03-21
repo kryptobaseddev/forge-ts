@@ -1,24 +1,25 @@
 ---
-title: "doctest — API Reference"
-description: "Full API reference for the doctest package"
+title: doctest — API Reference
+description: Full API reference for the doctest package
 ---
+
 API reference for the `doctest` package.
 
 ## Functions & Classes
 
-| Symbol | Kind | Description |
-|--------|------|-------------|
-| [`extractExamples()`](/packages/doctest/api/functions#extractexamples) | function | Extracts all `@example` blocks from a list of `ForgeSymbol` objects. |
-| [`generateTestFiles()`](/packages/doctest/api/functions#generatetestfiles) | function | Generates a virtual test file for a set of extracted examples.  Each example ... |
-| [`runTests()`](/packages/doctest/api/functions#runtests) | function | Writes virtual test files to disk and executes them with Node 24 native TypeS... |
-| [`doctest()`](/packages/doctest/api/functions#doctest) | function | Runs the full doctest pipeline: extract → generate → run. |
+| Symbol                                                                     | Kind     | Description                                                                      |
+| -------------------------------------------------------------------------- | -------- | -------------------------------------------------------------------------------- |
+| [`extractExamples()`](/packages/doctest/api/functions#extractexamples)     | function | Extracts all `@example` blocks from a list of `ForgeSymbol` objects.             |
+| [`generateTestFiles()`](/packages/doctest/api/functions#generatetestfiles) | function | Generates a virtual test file for a set of extracted examples.  Each example...  |
+| [`runTests()`](/packages/doctest/api/functions#runtests)                   | function | Writes virtual test files to disk and executes them with Node 24 native TypeS... |
+| [`doctest()`](/packages/doctest/api/functions#doctest)                     | function | Runs the full doctest pipeline: extract → generate → run.                        |
 
 ## Types & Interfaces
 
-| Symbol | Kind | Description |
-|--------|------|-------------|
+| Symbol                                                             | Kind      | Description                                                    |
+| ------------------------------------------------------------------ | --------- | -------------------------------------------------------------- |
 | [`ExtractedExample`](/packages/doctest/api/types#extractedexample) | interface | A single extracted `@example` block ready for test generation. |
-| [`GeneratorOptions`](/packages/doctest/api/types#generatoroptions) | interface | Options for virtual test file generation. |
-| [`VirtualTestFile`](/packages/doctest/api/types#virtualtestfile) | interface | A generated virtual test file. |
-| [`RunResult`](/packages/doctest/api/types#runresult) | interface | Result of running the generated test files. |
-| [`TestCaseResult`](/packages/doctest/api/types#testcaseresult) | interface | The result of a single test case. |
+| [`GeneratorOptions`](/packages/doctest/api/types#generatoroptions) | interface | Options for virtual test file generation.                      |
+| [`VirtualTestFile`](/packages/doctest/api/types#virtualtestfile)   | interface | A generated virtual test file.                                 |
+| [`RunResult`](/packages/doctest/api/types#runresult)               | interface | Result of running the generated test files.                    |
+| [`TestCaseResult`](/packages/doctest/api/types#testcaseresult)     | interface | The result of a single test case.                              |

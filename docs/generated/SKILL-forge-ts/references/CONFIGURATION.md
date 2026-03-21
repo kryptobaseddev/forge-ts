@@ -24,6 +24,8 @@ const config: Partial<ForgeConfig> = {
   gen: [],
   // Skill package generation settings. Custom sections here are merged into the generated SKILL.md, allowing projects to inject workflow knowledge, domain gotchas, and other context that cannot be derived from symbols alone.
   skill: [],
+  // Warnings generated during config loading (e.g., unknown keys). Populated by loadConfig(). Agents should surface these in output.
+  _configWarnings: "...",
   // Project metadata — auto-detected from package.json if not provided.
   project: [],
 };
@@ -39,6 +41,7 @@ const config: Partial<ForgeConfig> = {
 | `api` | `{ enabled: boolean; openapi: boolean; openapiPath: string; }` | API generation configuration. |
 | `gen` | `{ enabled: boolean; formats: ("markdown" | "mdx")[]; llmsTxt: boolean; readmeSync: boolean; ssgTarget?: "docusaurus" | "mintlify" | "nextra" | "vitepress" | undefined; }` | Output generation configuration. |
 | `skill` | `{ enabled?: boolean | undefined; customSections?: { heading: string; content: string; }[] | undefined; extraGotchas?: string[] | undefined; }` | Skill package generation settings. Custom sections here are merged into the generated SKILL.md, allowing projects to inject workflow knowledge, domain gotchas, and other context that cannot be derived from symbols alone. |
+| `_configWarnings` | `string[] | undefined` | Warnings generated during config loading (e.g., unknown keys). Populated by loadConfig(). Agents should surface these in output. |
 | `project` | `{ repository?: string | undefined; homepage?: string | undefined; packageName?: string | undefined; description?: string | undefined; version?: string | undefined; bin?: Record<string, string> | undefined; scripts?: Record<...> | undefined; keywords?: string[] | undefined; }` | Project metadata — auto-detected from package.json if not provided. |
 
 ## `SSGConfigFile`

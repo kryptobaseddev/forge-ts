@@ -1,7 +1,7 @@
 ---
-name: forge-ts
+name: SKILL-forge-ts
 description: >
-  Runs the API generation pipeline: walk → extract → generate → write. Use when: (1) calling its 39 API functions, (2) configuring forge-ts, (3) understanding its 61 type definitions, (4) user mentions "forge-ts" or asks about its API.
+  Runs the API generation pipeline: walk → extract → generate → write. Use when: (1) calling its 55 API functions, (2) configuring forge-ts, (3) understanding its 84 type definitions, (4) user mentions "forge-ts" or asks about its API.
 ---
 
 # forge-ts
@@ -35,11 +35,11 @@ console.log(config.enforce.enabled); // true
 | `generateOpenAPISpec()` | Generates a production-quality OpenAPI 3.2 document from the extracted SDK types.  The document is populated with: - An `info` block sourced from the config or reasonable defaults. - A `components.schemas` section with one schema per exported type. - `tags` derived from unique source file paths (grouping by file). - Visibility filtering: `@internal` symbols are never emitted.  HTTP paths are not yet emitted (`paths` is always `{}`); route extraction will be added in a future release. |
 | `buildReference()` | Builds a structured API reference from a list of exported symbols.  Unlike the minimal stub, this version includes nested children (class methods, interface properties) and all available TSDoc metadata.  Symbols with `Visibility.Internal` or `Visibility.Private` are excluded from the top-level results. Children with private/internal visibility are also filtered out. |
 | `generateApi()` | Runs the API generation pipeline: walk → extract → generate → write. |
-| `groupSymbolsByPackage()` | Groups symbols by their package based on file path.  For monorepos (symbols under `packages/<name>/`) the package name is derived from the directory segment immediately after `packages/`. For non-monorepo projects all symbols fall under the project name. |
-| `generateDocSite()` | Generates a full multi-page documentation site from symbols grouped by package.  Follows a 5-stage information architecture: 1. ORIENT — Landing page, Getting Started 2. LEARN — Concepts (stub) 3. BUILD — Guides (stub) 4. REFERENCE — API Reference, Types, Configuration, Changelog 5. COMMUNITY — FAQ, Contributing (stubs) |
-| `registerAdapter()` | Register an SSG adapter. Called once per provider at module load time. |
-| `getAdapter()` | Get a registered adapter by target name. Throws if the target is not registered. |
-| ... | 24 more — see API reference |
+| `serializeMarkdown()` | Serialize an mdast tree to a well-formed markdown string.  Uses remark-stringify with GFM table support. The serializer handles all escaping (pipes in table cells, special characters in text, etc.) so callers never need manual escape functions. |
+| `textP()` | Shorthand: paragraph containing a single text node. |
+| `boldIntroP()` | Shorthand: paragraph with bold intro text followed by regular text. |
+| `textListItem()` | Shorthand: list item containing a single text paragraph. |
+| ... | 40 more — see API reference |
 
 ## Configuration
 
@@ -63,6 +63,8 @@ const config: Partial<ForgeConfig> = {
   gen: [],
   // Skill package generation settings. Custom sections here are merged into the generated SKILL.md, allowing projects to inject workflow knowledge, domain gotchas, and other context that cannot be derived from symbols alone.
   skill: [],
+  // Warnings generated during config loading (e.g., unknown keys). Populated by loadConfig(). Agents should surface these in output.
+  _configWarnings: "...",
   // Project metadata — auto-detected from package.json if not provided.
   project: [],
 };

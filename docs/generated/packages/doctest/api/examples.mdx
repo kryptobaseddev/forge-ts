@@ -1,12 +1,13 @@
 ---
-title: "doctest — Examples"
-description: "Usage examples for the doctest package"
+title: doctest — Examples
+description: Usage examples for the doctest package
 ---
+
 All usage examples from the package, aggregated for quick reference.
 
 ## `extractExamples()`
 
-_Extracts all `@example` blocks from a list of `ForgeSymbol` objects._
+*Extracts all `@example` blocks from a list of `ForgeSymbol` objects.*
 
 [View in API reference](/packages/doctest/api/functions#extractexamples)
 
@@ -21,7 +22,7 @@ console.log(`Found ${examples.length} examples`);
 
 ## `generateTestFiles()`
 
-_Generates a virtual test file for a set of extracted examples.  Each example is wrapped in an `it()` block using the Node built-in `node:test` runner so that no additional test framework is required. Auto-imports the tested symbol from the source file, processes `// =>` assertion patterns, and appends an inline source map._
+*Generates a virtual test file for a set of extracted examples.  Each example is wrapped in an `it()` block using the Node built-in `node:test` runner so that no additional test framework is required. Auto-imports the tested symbol from the source file, processes `// =>` assertion patterns, and appends an inline source map.*
 
 [View in API reference](/packages/doctest/api/functions#generatetestfiles)
 
@@ -33,7 +34,7 @@ console.log(`Generated ${files.length} test file(s)`);
 
 ## `runTests()`
 
-_Writes virtual test files to disk and executes them with Node 24 native TypeScript support (`--experimental-strip-types --test`)._
+*Writes virtual test files to disk and executes them with Node 24 native TypeScript support (`--experimental-strip-types --test`).*
 
 [View in API reference](/packages/doctest/api/functions#runtests)
 
@@ -47,7 +48,7 @@ if (!result.success) {
 
 ## `doctest()`
 
-_Runs the full doctest pipeline: extract → generate → run._
+*Runs the full doctest pipeline: extract → generate → run.*
 
 [View in API reference](/packages/doctest/api/functions#doctest)
 

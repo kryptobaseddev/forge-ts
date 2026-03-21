@@ -1,18 +1,19 @@
 ---
-title: "enforcer"
-description: "enforcer package overview"
+title: enforcer
+description: enforcer package overview
 ---
+
 ## Functions & Classes
 
-| Symbol | Kind | Description |
-|--------|------|-------------|
-| [`findDeprecatedUsages()`](/packages/enforcer/api/index#finddeprecatedusages) | function | Scans symbols for imports of deprecated exports from other packages. |
-| [`enforce()`](/packages/enforcer/api/index#enforce) | function | Runs the TSDoc enforcement pass against a project.  The enforcer walks all ex... |
-| [`formatResults()`](/packages/enforcer/api/index#formatresults) | function | Formats a `ForgeResult` into a human-readable string suitable for printing to... |
+| Symbol                                                                        | Kind     | Description                                                                      |
+| ----------------------------------------------------------------------------- | -------- | -------------------------------------------------------------------------------- |
+| [`findDeprecatedUsages()`](/packages/enforcer/api/index#finddeprecatedusages) | function | Scans symbols for imports of deprecated exports from other packages.             |
+| [`enforce()`](/packages/enforcer/api/index#enforce)                           | function | Runs the TSDoc enforcement pass against a project.  The enforcer walks all ex... |
+| [`formatResults()`](/packages/enforcer/api/index#formatresults)               | function | Formats a `ForgeResult` into a human-readable string suitable for printing to... |
 
 ## Types & Interfaces
 
-| Symbol | Kind | Description |
-|--------|------|-------------|
-| [`DeprecatedUsage`](/packages/enforcer/api/index#deprecatedusage) | interface | A detected usage of a deprecated symbol. |
-| [`FormatOptions`](/packages/enforcer/api/index#formatoptions) | interface | Options that control how `formatResults` renders its output. |
+| Symbol                                                            | Kind      | Description                                                  |
+| ----------------------------------------------------------------- | --------- | ------------------------------------------------------------ |
+| [`DeprecatedUsage`](/packages/enforcer/api/index#deprecatedusage) | interface | A detected usage of a deprecated symbol.                     |
+| [`FormatOptions`](/packages/enforcer/api/index#formatoptions)     | interface | Options that control how `formatResults` renders its output. |

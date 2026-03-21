@@ -1,12 +1,13 @@
 ---
-title: "gen — Examples"
-description: "Usage examples for the gen package"
+title: gen — Examples
+description: Usage examples for the gen package
 ---
+
 All usage examples from the package, aggregated for quick reference.
 
 ## `groupSymbolsByPackage()`
 
-_Groups symbols by their package based on file path.  For monorepos (symbols under `packages/<name>/`) the package name is derived from the directory segment immediately after `packages/`. For non-monorepo projects all symbols fall under the project name._
+*Groups symbols by their package based on file path.  For monorepos (symbols under `packages/<name>/`) the package name is derived from the directory segment immediately after `packages/`. For non-monorepo projects all symbols fall under the project name.*
 
 [View in API reference](/packages/gen/api/functions#groupsymbolsbypackage)
 
@@ -18,7 +19,7 @@ console.log(grouped.has("core")); // true for monorepo
 
 ## `generateDocSite()`
 
-_Generates a full multi-page documentation site from symbols grouped by package.  Follows a 5-stage information architecture: 1. ORIENT — Landing page, Getting Started 2. LEARN — Concepts (stub) 3. BUILD — Guides (stub) 4. REFERENCE — API Reference, Types, Configuration, Changelog 5. COMMUNITY — FAQ, Contributing (stubs)_
+*Generates a full multi-page documentation site from symbols grouped by package.  Follows a 5-stage information architecture: 1. ORIENT — Landing page, Getting Started 2. LEARN — Concepts (stub) 3. BUILD — Guides (stub) 4. REFERENCE — API Reference, Types, Configuration, Changelog 5. COMMUNITY — FAQ, Contributing (stubs)*
 
 [View in API reference](/packages/gen/api/functions#generatedocsite)
 
@@ -31,7 +32,7 @@ console.log(pages.length > 0); // true
 
 ## `SSGAdapter`
 
-_The central SSG adapter interface. Every doc platform provider implements this contract. One file per provider. No shared mutable state._
+*The central SSG adapter interface. Every doc platform provider implements this contract. One file per provider. No shared mutable state.*
 
 [View in API reference](/packages/gen/api/functions#ssgadapter)
 
@@ -43,7 +44,7 @@ const files = adapter.transformPages(pages, context);
 
 ## `registerAdapter()`
 
-_Register an SSG adapter. Called once per provider at module load time._
+*Register an SSG adapter. Called once per provider at module load time.*
 
 [View in API reference](/packages/gen/api/functions#registeradapter)
 
@@ -54,7 +55,7 @@ registerAdapter(mintlifyAdapter);
 
 ## `getAdapter()`
 
-_Get a registered adapter by target name. Throws if the target is not registered._
+*Get a registered adapter by target name. Throws if the target is not registered.*
 
 [View in API reference](/packages/gen/api/functions#getadapter)
 
@@ -65,7 +66,7 @@ const adapter = getAdapter("mintlify");
 
 ## `getAvailableTargets()`
 
-_Get all registered adapter targets._
+*Get all registered adapter targets.*
 
 [View in API reference](/packages/gen/api/functions#getavailabletargets)
 
@@ -76,7 +77,7 @@ const targets = getAvailableTargets(); // ["mintlify", "docusaurus", ...]
 
 ## `mintlifyAdapter`
 
-_Mintlify SSG adapter. Implements the `SSGAdapter` contract for the Mintlify platform._
+*Mintlify SSG adapter. Implements the `SSGAdapter` contract for the Mintlify platform.*
 
 [View in API reference](/packages/gen/api/functions#mintlifyadapter)
 
@@ -89,7 +90,7 @@ console.log(configs[0].path); // "docs.json"
 
 ## `docusaurusAdapter`
 
-_Docusaurus SSG adapter. Implements the `SSGAdapter` contract for the Docusaurus platform._
+*Docusaurus SSG adapter. Implements the `SSGAdapter` contract for the Docusaurus platform.*
 
 [View in API reference](/packages/gen/api/functions#docusaurusadapter)
 
@@ -102,7 +103,7 @@ console.log(configs[0].path); // "sidebars.ts"
 
 ## `nextraAdapter`
 
-_Nextra SSG adapter (v4, App Router). Implements the `SSGAdapter` contract for the Nextra platform._
+*Nextra SSG adapter (v4, App Router). Implements the `SSGAdapter` contract for the Nextra platform.*
 
 [View in API reference](/packages/gen/api/functions#nextraadapter)
 
@@ -115,7 +116,7 @@ console.log(configs[0].path); // "content/_meta.js"
 
 ## `vitepressAdapter`
 
-_VitePress SSG adapter. Implements the `SSGAdapter` contract for the VitePress platform._
+*VitePress SSG adapter. Implements the `SSGAdapter` contract for the VitePress platform.*
 
 [View in API reference](/packages/gen/api/functions#vitepressadapter)
 
@@ -128,7 +129,7 @@ console.log(configs[0].path); // ".vitepress/config.mts"
 
 ## `generateLlmsTxt()`
 
-_Generates an `llms.txt` routing manifest from the extracted symbols.  The file follows the llms.txt specification: a compact, structured overview designed to help large language models navigate a project's documentation._
+*Generates an `llms.txt` routing manifest from the extracted symbols.  The file follows the llms.txt specification: a compact, structured overview designed to help large language models navigate a project's documentation.*
 
 [View in API reference](/packages/gen/api/functions#generatellmstxt)
 
@@ -140,7 +141,7 @@ console.log(txt.startsWith("# ")); // true
 
 ## `generateLlmsFullTxt()`
 
-_Generates an `llms-full.txt` dense context file from the extracted symbols.  Unlike `llms.txt`, this file contains complete documentation for every exported symbol, intended for LLM ingestion that requires full context._
+*Generates an `llms-full.txt` dense context file from the extracted symbols.  Unlike `llms.txt`, this file contains complete documentation for every exported symbol, intended for LLM ingestion that requires full context.*
 
 [View in API reference](/packages/gen/api/functions#generatellmsfulltxt)
 
@@ -152,7 +153,7 @@ console.log(fullTxt.includes("Full Context")); // true
 
 ## `generateMarkdown()`
 
-_Generates a Markdown (or MDX) string from a list of symbols._
+*Generates a Markdown (or MDX) string from a list of symbols.*
 
 [View in API reference](/packages/gen/api/functions#generatemarkdown)
 
@@ -164,7 +165,7 @@ console.log(md.startsWith("# API Reference")); // true
 
 ## `syncReadme()`
 
-_Injects a summary of exported symbols into a `README.md` file.  The content is placed between `<!-- forge-ts:start -->` and `<!-- forge-ts:end -->` comment markers.  If neither marker exists, the summary is appended to the end of the file._
+*Injects a summary of exported symbols into a `README.md` file.  The content is placed between `<!-- forge-ts:start -->` and `<!-- forge-ts:end -->` comment markers.  If neither marker exists, the summary is appended to the end of the file.*
 
 [View in API reference](/packages/gen/api/functions#syncreadme)
 
@@ -176,7 +177,7 @@ console.log(modified); // true if README was updated
 
 ## `generateSkillPackage()`
 
-_Generates an agentskills.io-compliant skill package for ANY TypeScript project.  All content is derived from the project's exported symbols and metadata. No hardcoded project-specific content. Works for any project that forge-ts analyzes._
+*Generates an agentskills.io-compliant skill package for ANY TypeScript project.  All content is derived from the project's exported symbols and metadata. No hardcoded project-specific content. Works for any project that forge-ts analyzes.*
 
 [View in API reference](/packages/gen/api/functions#generateskillpackage)
 
@@ -190,7 +191,7 @@ console.log(pkg.files.map(f => f.path));
 
 ## `generateSkillMd()`
 
-_Generates a SKILL.md string following the Agent Skills specification. Generic for any TypeScript project — content derived from symbols._
+*Generates a SKILL.md string following the Agent Skills specification. Generic for any TypeScript project — content derived from symbols.*
 
 [View in API reference](/packages/gen/api/functions#generateskillmd)
 
@@ -201,7 +202,7 @@ const skill = generateSkillMd(symbols, config);
 
 ## `generateSSGConfigs()`
 
-_Generate navigation configuration file(s) for the given SSG target.  Returns one file for most targets, but multiple files for Nextra (which uses per-directory `_meta.json` files)._
+*Generate navigation configuration file(s) for the given SSG target.  Returns one file for most targets, but multiple files for Nextra (which uses per-directory `_meta.json` files).*
 
 [View in API reference](/packages/gen/api/functions#generatessgconfigs)
 
@@ -213,7 +214,7 @@ console.log(configs[0].path); // ".vitepress/sidebar.json"
 
 ## `generate()`
 
-_Runs the full generation pipeline: walk → render → write.  Auto-generated pages are always regenerated from source code. Stub pages (scaffolding for human/agent editing) are only created if they don't already exist, preserving manual edits across builds. Pass `{ forceStubs: true }` to overwrite stubs._
+*Runs the full generation pipeline: walk → render → write.  Auto-generated pages are always regenerated from source code. Stub pages (scaffolding for human/agent editing) are only created if they don't already exist, preserving manual edits across builds. Pass `{ forceStubs: true }` to overwrite stubs.*
 
 [View in API reference](/packages/gen/api/functions#generate)
 

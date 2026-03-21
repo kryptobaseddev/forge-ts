@@ -1,7 +1,8 @@
 ---
-title: "core — Functions"
-description: "Functions and classes for the core package"
+title: core — Functions
+description: Functions and classes for the core package
 ---
+
 Functions and classes exported by this package.
 
 ## defaultConfig(rootDir)
@@ -16,8 +17,8 @@ Constructs a sensible default `ForgeConfig` rooted at `rootDir`.
 
 **Parameters**
 
-| Name | Type | Description |
-|------|------|-------------|
+| Name      | Type     | Description                        |
+| --------- | -------- | ---------------------------------- |
 | `rootDir` | `string` | Absolute path to the project root. |
 
 **Returns** — A fully-populated default configuration.
@@ -42,8 +43,8 @@ Loads the forge-ts configuration for a project.  Resolution order: 1. `<rootDir>
 
 **Parameters**
 
-| Name | Type | Description |
-|------|------|-------------|
+| Name      | Type                    | Description                                                          |
+| --------- | ----------------------- | -------------------------------------------------------------------- |
 | `rootDir` | `: string \| undefined` | The project root to search for config.  Defaults to `process.cwd()`. |
 
 **Returns** — A fully-resolved `ForgeConfig`.
@@ -68,8 +69,8 @@ Determines the visibility level of a symbol from its TSDoc release tags.  The pr
 
 **Parameters**
 
-| Name | Type | Description |
-|------|------|-------------|
+| Name   | Type            | Description                                             |
+| ------ | --------------- | ------------------------------------------------------- |
 | `tags` | `Record<string` | The parsed `tags` map from `ForgeSymbol.documentation`. |
 
 **Returns** — The resolved `Visibility` value.
@@ -94,10 +95,10 @@ Returns whether `candidate` meets or exceeds the required minimum visibility.  "
 
 **Parameters**
 
-| Name | Type | Description |
-|------|------|-------------|
-| `candidate` | `Visibility` | The visibility of the symbol being tested. |
-| `minVisibility` | `Visibility` | The minimum visibility threshold. |
+| Name            | Type         | Description                                |
+| --------------- | ------------ | ------------------------------------------ |
+| `candidate`     | `Visibility` | The visibility of the symbol being tested. |
+| `minVisibility` | `Visibility` | The minimum visibility threshold.          |
 
 **Returns** — `true` if `candidate` is at least as visible as `minVisibility`.
 
@@ -121,10 +122,10 @@ Filters an array of `ForgeSymbol` objects to only include symbols whose visibili
 
 **Parameters**
 
-| Name | Type | Description |
-|------|------|-------------|
-| `symbols` | `ForgeSymbol[]` | The full list of symbols to filter. |
-| `minVisibility` | `Visibility` | The minimum visibility threshold to keep. |
+| Name            | Type            | Description                               |
+| --------------- | --------------- | ----------------------------------------- |
+| `symbols`       | `ForgeSymbol[]` | The full list of symbols to filter.       |
+| `minVisibility` | `Visibility`    | The minimum visibility threshold to keep. |
 
 **Returns** — A new array containing only symbols that pass the visibility check.
 
@@ -147,8 +148,8 @@ Creates an `ASTWalker` configured for the given forge config.  The walker uses t
 
 **Parameters**
 
-| Name | Type | Description |
-|------|------|-------------|
+| Name     | Type          | Description                                 |
+| -------- | ------------- | ------------------------------------------- |
 | `config` | `ForgeConfig` | The resolved `ForgeConfig` for the project. |
 
 **Returns** — An `ASTWalker` instance whose `walk()` method performs the extraction.

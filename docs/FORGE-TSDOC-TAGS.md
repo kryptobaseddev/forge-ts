@@ -211,7 +211,7 @@ export class MintlifyAdapter extends BaseAdapter {
 
 ## forge-ts Custom Tags
 
-Tags defined by the `@forge-ts/tsdoc-config` preset. These extend the TSDoc standard with forge-ts-specific semantics. The preset defines **15 custom tags** (14 block tags and 1 modifier tag, plus `@forge-ignore`).
+Tags defined by the `@forge-ts/tsdoc-config` preset. These extend the TSDoc standard with forge-ts-specific semantics. The preset defines **15 custom tags** (14 block tags and 1 modifier tag, plus `@forgeIgnore`).
 
 ### API Generation Tags
 
@@ -375,16 +375,16 @@ export function walk(): ForgeSymbol[] { ... }
 
 | Tag | Kind | Layer | Status | Used By | Purpose |
 |-----|------|-------|--------|---------|---------|
-| `@forge-ignore` | modifier | Dev | ACTIVE | enforcer | Skip all enforcement rules on this symbol |
+| `@forgeIgnore` | modifier | Dev | ACTIVE | enforcer | Skip all enforcement rules on this symbol |
 
-The `@forge-ignore` tag is a modifier tag that suppresses all enforcer diagnostics for the annotated symbol. Use it sparingly for symbols that intentionally break documentation conventions (e.g., auto-generated code, re-exports with passthrough semantics).
+The `@forgeIgnore` tag is a modifier tag that suppresses all enforcer diagnostics for the annotated symbol. Use it sparingly for symbols that intentionally break documentation conventions (e.g., auto-generated code, re-exports with passthrough semantics).
 
 **Examples:**
 
 ```typescript
 /**
  * Re-exported for backwards compatibility. See the upstream package.
- * @forge-ignore
+ * @forgeIgnore
  * @public
  */
 export { legacyHelper } from "./compat.js";
@@ -393,7 +393,7 @@ export { legacyHelper } from "./compat.js";
 ```typescript
 /**
  * Auto-generated type -- documentation lives in the schema file.
- * @forge-ignore
+ * @forgeIgnore
  * @internal
  */
 export type GeneratedPayload = z.infer<typeof PayloadSchema>;
@@ -444,11 +444,11 @@ These rules validate TSDoc presence and correctness on exported symbols.
 | W013 | `require-fresh-examples` | warn | `@example` block may be stale -- function call arg count mismatches signature |
 
 **Notes on E008, W001-W004:**
-E008, W001, W002, W003, and W004 are emitted by the enforcer but are not part of the `EnforceRules` config interface. They cannot be individually set to `"off"` via `enforce.rules`. They always emit (W-codes as warnings, E-codes as errors) unless suppressed by `@forge-ignore` or `enforce.ignoreFile`. When `enforce.strict` is `true`, all W-codes are promoted to errors.
+E008, W001, W002, W003, and W004 are emitted by the enforcer but are not part of the `EnforceRules` config interface. They cannot be individually set to `"off"` via `enforce.rules`. They always emit (W-codes as warnings, E-codes as errors) unless suppressed by `@forgeIgnore` or `enforce.ignoreFile`. When `enforce.strict` is `true`, all W-codes are promoted to errors.
 
 ### Config Guard Rules
 
-These rules protect project configuration from regression. They are not per-symbol rules and cannot be suppressed with `@forge-ignore`.
+These rules protect project configuration from regression. They are not per-symbol rules and cannot be suppressed with `@forgeIgnore`.
 
 | Code | Key | Default | Condition |
 |------|-----|---------|-----------|
@@ -463,13 +463,13 @@ Config guard rules can be bypassed via the bypass budget system (`forge-ts bypas
 
 ## Enforcement Suppression
 
-### Per-Symbol: `@forge-ignore` Tag
+### Per-Symbol: `@forgeIgnore` Tag
 
-Add the `@forge-ignore` modifier tag to any symbol's TSDoc to skip all enforcement rules on that symbol.
+Add the `@forgeIgnore` modifier tag to any symbol's TSDoc to skip all enforcement rules on that symbol.
 
 ```typescript
 /**
- * @forge-ignore
+ * @forgeIgnore
  * @public
  */
 export type SkippedType = unknown;
@@ -583,7 +583,7 @@ The `@forge-ts/tsdoc-config` preset ships 15 custom tags in `tsdoc.json`:
 | `@breaking` | block | v0.14.0 |
 | `@migration` | block | v0.14.0 |
 | `@complexity` | block | v0.14.0 |
-| `@forge-ignore` | modifier | v0.19.0 |
+| `@forgeIgnore` | modifier | v0.19.0 |
 
 ### Adding Project-Specific Tags
 
@@ -622,7 +622,7 @@ The `@forge-ts/tsdoc-config` package ships this preset. All projects using forge
 
 ### Custom Tags (15 defined)
 
-`@route`, `@category`, `@since`, `@guide`, `@concept`, `@response`, `@query`, `@header`, `@body`, `@quickstart`, `@faq`, `@breaking`, `@migration`, `@complexity`, `@forge-ignore`
+`@route`, `@category`, `@since`, `@guide`, `@concept`, `@response`, `@query`, `@header`, `@body`, `@quickstart`, `@faq`, `@breaking`, `@migration`, `@complexity`, `@forgeIgnore`
 
 ---
 

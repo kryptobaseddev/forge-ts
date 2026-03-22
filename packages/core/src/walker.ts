@@ -62,7 +62,9 @@ export function loadTSDocConfiguration(folderPath: string): TSDocConfiguration {
 
 	try {
 		const configFile = TSDocConfigFile.loadForFolder(folderPath);
-		if (!configFile.fileNotFound && !configFile.hasErrors) {
+		if (!configFile.fileNotFound) {
+			// configureParser still works even when hasErrors is true —
+			// it applies what it can and skips what it can't.
 			configFile.configureParser(configuration);
 		} else {
 			// No project-level tsdoc.json found — load the bundled preset so
@@ -94,9 +96,9 @@ function loadBundledPreset(configuration: TSDocConfiguration): void {
 	const require = createRequire(import.meta.url);
 	const presetPath = require.resolve("@forge-ts/core/tsdoc-preset/tsdoc.json");
 	const presetFile = TSDocConfigFile.loadFile(presetPath);
-	if (!presetFile.hasErrors) {
-		presetFile.configureParser(configuration);
-	}
+	// configureParser applies valid config and skips invalid parts,
+	// so we always call it rather than gating on hasErrors.
+	presetFile.configureParser(configuration);
 }
 
 // ---------------------------------------------------------------------------

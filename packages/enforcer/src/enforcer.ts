@@ -424,8 +424,8 @@ export async function enforce(config: ForgeConfig): Promise<ForgeResult> {
 		// Skip enforcement for symbols in the ignore file (Knip dead-export integration)
 		if (ignoreSet.has(symbol.name)) continue;
 
-		// Skip enforcement for symbols with @forge-ignore tag
-		if (symbol.documentation?.tags?.["forge-ignore"] !== undefined) continue;
+		// Skip enforcement for symbols with @forgeIgnore tag
+		if (symbol.documentation?.tags?.forgeIgnore !== undefined) continue;
 
 		// Skip specific rules for the "file" symbol (which just carries @packageDocumentation)
 		if (symbol.kind === "file") continue;
@@ -787,7 +787,7 @@ export async function enforce(config: ForgeConfig): Promise<ForgeResult> {
 	for (const symbol of symbols) {
 		if (!symbol.exported) continue;
 		if (ignoreSet.has(symbol.name)) continue;
-		if (symbol.documentation?.tags?.["forge-ignore"] !== undefined) continue;
+		if (symbol.documentation?.tags?.forgeIgnore !== undefined) continue;
 
 		const isFn = symbol.kind === "function" || symbol.kind === "method";
 		if (!isFn) continue;

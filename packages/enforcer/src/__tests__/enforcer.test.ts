@@ -4081,7 +4081,7 @@ describe("enforce — W011 new public export missing @since", () => {
 });
 
 // ---------------------------------------------------------------------------
-// Knip integration: ignore file and @forge-ignore tag
+// Knip integration: ignore file and @forgeIgnore tag
 // ---------------------------------------------------------------------------
 
 describe("enforce — Knip ignore file integration", () => {
@@ -4198,15 +4198,15 @@ describe("enforce — Knip ignore file integration", () => {
 	});
 });
 
-describe("enforce — @forge-ignore tag", () => {
-	it("skips all enforcement for a symbol with @forge-ignore", async () => {
+describe("enforce — @forgeIgnore tag", () => {
+	it("skips all enforcement for a symbol with @forgeIgnore", async () => {
 		const sym = makeSymbol({
 			name: "ignoredFunc",
 			kind: "function",
 			signature: "(x: number) => string",
 			documentation: {
 				summary: "", // Would trigger E001
-				tags: { "forge-ignore": [] },
+				tags: { forgeIgnore: [] },
 			},
 		});
 		const result = await runEnforce([sym]);
@@ -4215,7 +4215,7 @@ describe("enforce — @forge-ignore tag", () => {
 		expect(forSymbol).toHaveLength(0);
 	});
 
-	it("still enforces symbols without @forge-ignore", async () => {
+	it("still enforces symbols without @forgeIgnore", async () => {
 		const sym = makeSymbol({
 			name: "normalFunc",
 			kind: "function",
@@ -4362,7 +4362,7 @@ describe("enforce — W013 stale @example detection", () => {
 		expect(w013).toHaveLength(0);
 	});
 
-	it("W013 is also skipped for @forge-ignore symbols", async () => {
+	it("W013 is also skipped for @forgeIgnore symbols", async () => {
 		const sym = makeSymbol({
 			name: "ignoredFunc",
 			kind: "function",
@@ -4374,7 +4374,7 @@ describe("enforce — W013 stale @example detection", () => {
 					{ name: "b", description: "Second." },
 				],
 				examples: [{ code: "ignoredFunc()", language: "typescript", line: 5 }],
-				tags: { "forge-ignore": [], remarks: ["Details."] },
+				tags: { forgeIgnore: [], remarks: ["Details."] },
 			},
 		});
 		const result = await runEnforce([sym], {

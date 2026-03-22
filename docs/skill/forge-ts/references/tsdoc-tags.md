@@ -49,7 +49,7 @@ Canonical source: `docs/FORGE-TSDOC-TAGS.md`
 | E012 | error | `engines.node` below minimum or required field missing |
 
 E008, W001-W004: Not in `EnforceRules` -- always emit, cannot be set to `"off"` individually.
-E009-E012: Config guards -- suppressed via bypass budget, not `@forge-ignore`.
+E009-E012: Config guards -- suppressed via bypass budget, not `@forgeIgnore`.
 
 ## Custom Tags (15)
 
@@ -71,7 +71,7 @@ Defined in `packages/core/tsdoc-preset/tsdoc.json`:
 | `@breaking` | block | Breaking change documentation |
 | `@migration` | block | Migration path from old API |
 | `@complexity` | block | Algorithmic complexity |
-| `@forge-ignore` | modifier | Skip all enforcement on this symbol |
+| `@forgeIgnore` | modifier | Skip all enforcement on this symbol |
 
 ## Standard Tags (24 enabled)
 
@@ -80,12 +80,12 @@ Defined in `packages/core/tsdoc-preset/tsdoc.json`:
 `@packageDocumentation`, `@param`, `@privateRemarks`, `@public`, `@readonly`,
 `@remarks`, `@returns`, `@sealed`, `@see`, `@throws`, `@typeParam`, `@virtual`
 
-## `@forge-ignore` Tag
+## `@forgeIgnore` Tag
 
 Modifier tag. Suppresses all enforcer diagnostics for the annotated symbol.
 
 ```typescript
-/** @forge-ignore @public */
+/** @forgeIgnore @public */
 export type Generated = z.infer<typeof Schema>;
 ```
 
@@ -96,7 +96,7 @@ Does not affect config guard rules (E009-E012).
 ### Per-Symbol
 
 ```typescript
-/** @forge-ignore */
+/** @forgeIgnore */
 export const skipped = "no enforcement";
 ```
 

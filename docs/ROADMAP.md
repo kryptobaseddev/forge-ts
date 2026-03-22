@@ -20,6 +20,7 @@
 | T078 | v0.19.0 | Advanced Enforcement | high | DONE |
 | T079 | v0.20.0 | Guide Intelligence | medium | Pending |
 | T080 | v1.0.0 | LSP Extension | medium | Pending |
+| — | v1.0.x | SSG Platform Adapters (Mintlify, VitePress, etc.) | low | Pending |
 
 ---
 
@@ -80,6 +81,20 @@ Real-time editor diagnostics via Language Server Protocol.
 | — | Quick fix actions (add @param, @returns, etc.) | Pending |
 | — | Hover: rule description + suggested fix | Pending |
 | — | v1.0.0 integration tests and release | Pending |
+
+---
+
+## SSG Platform Adapters (Backlog - Post v1.0)
+
+We need to add official plugin/adapters for static site generators that deeply integrate `forge-ts` rather than just dumping Markdown.
+
+| Task | Title | Status |
+|------|-------|--------|
+| — | Define generic SSG Provider Adapter interface within `@forge-ts/gen` | Pending |
+| — | Mintlify adapter (injects `openapi.json` into Mintlify API playground) | Pending |
+| — | Docusaurus adapter (integrates with native Docusaurus OpenAPI plugins) | Pending |
+| — | VitePress adapter (generates VitePress-specific deeply nested sidebars) | Pending |
+| — | Nextra adapter (handles specialized meta/page config generation) | Pending |
 
 ---
 

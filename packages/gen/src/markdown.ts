@@ -29,6 +29,7 @@ const KIND_LABELS: Record<ForgeSymbol["kind"], string> = {
 	variable: "Variables",
 	method: "Methods",
 	property: "Properties",
+	file: "Files",
 };
 
 /** Canonical ordering for top-level kind groups. */

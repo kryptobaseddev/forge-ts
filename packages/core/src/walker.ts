@@ -19,6 +19,7 @@ import {
 import { TSDocConfigFile } from "@microsoft/tsdoc-config";
 import ts from "typescript";
 import type { ForgeConfig, ForgeSymbol } from "./types.js";
+import { Visibility } from "./types.js";
 import { resolveVisibility } from "./visibility.js";
 
 // ---------------------------------------------------------------------------
@@ -688,6 +689,65 @@ function extractSymbolsFromFile(sourceFile: ts.SourceFile, checker: ts.TypeCheck
 	}
 
 	ts.forEachChild(sourceFile, (node) => visit(node, false));
+
+	// Capture file-level documentation (@packageDocumentation)
+	// Often sits at the very top of the file before any imports or exports.
+	const fileRawComment = getLeadingComment(sourceFile, sourceFile);
+	const fileDocumentation = fileRawComment ? parseTSDoc(fileRawComment, 1, fileDir) : undefined;
+	const isPackageDoc = fileDocumentation?.tags?.packageDocumentation !== undefined;
+
+	if (fileRawComment && isPackageDoc) {
+		symbols.push({
+			name: filePath.split("/").pop() ?? "file",
+			kind: "file",
+			visibility: Visibility.Public,
+			filePath,
+			line: 1,
+			column: 0,
+			documentation: fileDocumentation,
+			exported: true,
+		});
+	} else {
+		// If the file-level comment isn't directly on the source file, it might be
+		// on the first statement (like an import statement)
+		let foundOnStatement = false;
+		if (sourceFile.statements.length > 0) {
+			const firstStmtComment = getLeadingComment(sourceFile.statements[0], sourceFile);
+			if (firstStmtComment) {
+				const pos = sourceFile.getLineAndCharacterOfPosition(sourceFile.statements[0].getStart());
+				const stmtDoc = parseTSDoc(firstStmtComment, pos.line + 1, fileDir);
+				if (stmtDoc?.tags?.packageDocumentation !== undefined) {
+					symbols.push({
+						name: filePath.split("/").pop() ?? "file",
+						kind: "file",
+						visibility: Visibility.Public,
+						filePath,
+						line: pos.line + 1,
+						column: pos.character,
+						documentation: stmtDoc,
+						exported: true,
+					});
+					foundOnStatement = true;
+				}
+			}
+		}
+
+		// If no @packageDocumentation was found at all, we still emit a dummy file symbol
+		// so that downstream rules (like E005) know this file was processed.
+		if (!foundOnStatement) {
+			symbols.push({
+				name: filePath.split("/").pop() ?? "file",
+				kind: "file",
+				visibility: Visibility.Public,
+				filePath,
+				line: 1,
+				column: 0,
+				documentation: undefined,
+				exported: true,
+			});
+		}
+	}
+
 	return symbols;
 }
 

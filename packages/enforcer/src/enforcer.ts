@@ -427,6 +427,9 @@ export async function enforce(config: ForgeConfig): Promise<ForgeResult> {
 		// Skip enforcement for symbols with @forge-ignore tag
 		if (symbol.documentation?.tags?.["forge-ignore"] !== undefined) continue;
 
+		// Skip specific rules for the "file" symbol (which just carries @packageDocumentation)
+		if (symbol.kind === "file") continue;
+
 		const isFunctionLike = symbol.kind === "function" || symbol.kind === "method";
 
 		// E001 — Missing summary

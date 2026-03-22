@@ -18,7 +18,16 @@ export interface ForgeSymbol {
 	/** The declared name of the symbol. */
 	name: string;
 	/** The syntactic kind of the symbol. */
-	kind: "function" | "class" | "interface" | "type" | "enum" | "variable" | "method" | "property";
+	kind:
+		| "function"
+		| "class"
+		| "interface"
+		| "type"
+		| "enum"
+		| "variable"
+		| "method"
+		| "property"
+		| "file";
 	/** Resolved visibility from TSDoc release tags. */
 	visibility: Visibility;
 	/** Absolute path to the source file. */

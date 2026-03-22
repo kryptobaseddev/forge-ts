@@ -23,9 +23,7 @@ export type { OpenAPIDocument };
  * - A `components.schemas` section with one schema per exported type.
  * - `tags` derived from unique source file paths (grouping by file).
  * - Visibility filtering: `@internal` symbols are never emitted.
- *
- * HTTP paths are not yet emitted (`paths` is always `{}`); route extraction
- * will be added in a future release.
+ * - HTTP paths are extracted from `@route` tags and appropriately mapped.
  *
  * @param config - The resolved {@link ForgeConfig}.
  * @param sdkTypes - SDK types to include as component schemas.

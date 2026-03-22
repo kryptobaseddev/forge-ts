@@ -562,8 +562,22 @@ function buildSignature(node: ts.Declaration, checker: ts.TypeChecker): string |
 	try {
 		const symbol = checker.getSymbolAtLocation((node as ts.NamedDeclaration).name ?? node);
 		if (!symbol) return undefined;
+
+		// For interfaces, type aliases, and enums, use getDeclaredTypeOfSymbol.
+		// getTypeOfSymbolAtLocation returns `any` for these declaration kinds,
+		// which causes false E020 violations.
+		if (
+			ts.isInterfaceDeclaration(node) ||
+			ts.isTypeAliasDeclaration(node) ||
+			ts.isEnumDeclaration(node)
+		) {
+			const declaredType = checker.getDeclaredTypeOfSymbol(symbol);
+			return checker.typeToString(declaredType, node, ts.TypeFormatFlags.NoTruncation);
+		}
+
+		// For functions, variables, classes — getTypeOfSymbolAtLocation is correct.
 		const type = checker.getTypeOfSymbolAtLocation(symbol, node);
-		return checker.typeToString(type);
+		return checker.typeToString(type, node, ts.TypeFormatFlags.NoTruncation);
 	} catch {
 		return undefined;
 	}

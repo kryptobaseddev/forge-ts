@@ -21,8 +21,8 @@ importers:
         specifier: ^1.8.0
         version: 1.8.0
       '@forge-ts/cli':
-        specifier: ^0.8.0
-        version: 0.8.0
+        specifier: ^0.19.2
+        version: 0.19.2
       '@microsoft/tsdoc':
         specifier: ^0.16.0
         version: 0.16.0
@@ -494,24 +494,24 @@ packages:
     cpu: [x64]
     os: [win32]
 
-  '@forge-ts/api@0.8.0':
-    resolution: {integrity: sha512-jkcJeYSIDAZwpqIaULDyOTUBON1JaT7pCz45d4uY6/yhcHiEUhMg/eoIIbudwr3hq6FazrUwqARfIHfK92J9YA==}
+  '@forge-ts/api@0.19.2':
+    resolution: {integrity: sha512-3QtlGRH9bLSARtEdHVjivDy0TcQlxgUW5SB1dILTXbekGzLx87plft/vn9g7oWqCFAACe7bAzbqkgZBTbZZPTw==}
 
-  '@forge-ts/cli@0.8.0':
-    resolution: {integrity: sha512-ryxVg9FkAzK47LIAx3xT2D+FP5SHN0JLFJf9eDS5dQwUh9DDHtx0o1F6YDF5/igDXDYJccKB5Sv1SqhhOx1qjw==}
+  '@forge-ts/cli@0.19.2':
+    resolution: {integrity: sha512-0B+RCZHbGKewKvLQuzsJqmlO6HCa33XdnyDhtNQyCUi8AaYD/Qdy0UoNkIF4EeMkjyUMPPzbk+8NbgSbVPeOmA==}
     hasBin: true
 
-  '@forge-ts/core@0.8.0':
-    resolution: {integrity: sha512-ceohNZiFQ35TLOPgvmlc6CAPF28kBAMn12SCBjQNxKNGl3jXyZgPMy4Oh1Vz7bHPikB+3MNmW2LqNaLPoym49Q==}
+  '@forge-ts/core@0.19.2':
+    resolution: {integrity: sha512-N4Wl5AE+AmA47Prpejjr7KwWpQc0/+bofY2cWgHP5KoFJc8LvVSpWob/XQM5uM63JFpvnWJF9wW3ll3CAXC7ig==}
 
-  '@forge-ts/doctest@0.8.0':
-    resolution: {integrity: sha512-dXKF8u7m+bxJ02K4PYRTAPlorTPiGgUBmnyD7HTKh+3JkNqctCZjZz9rRDS0ScQvn6LRr0i/63UlxGY2e5+GEw==}
+  '@forge-ts/doctest@0.19.2':
+    resolution: {integrity: sha512-6F99TccwMWdho/MK2sRIpvtEHQzczTpquFjFqf52JgaujIgXMIeCAZKSvcEc40G8UTn0jNn5nycqm+M+DBt/+w==}
 
-  '@forge-ts/enforcer@0.8.0':
-    resolution: {integrity: sha512-CY8p9I8+fBcoRp9zxsYZCcPGyj+oQzBJaHDbMfj1zw8XJtk50XSe6+pE2ZNOtcFF5kPa89NLhA2ZqRhRD2BBdg==}
+  '@forge-ts/enforcer@0.19.2':
+    resolution: {integrity: sha512-35+I+SRTX4sTMqg/wMpRaV3Et8v7jkQbtTOsnOCoyFgiW7o6/1i6RsAcdZkUPxcsav3V7Vagqiqau6P4TY375A==}
 
-  '@forge-ts/gen@0.8.0':
-    resolution: {integrity: sha512-SuPszi+D+hpRDzFnqoaJb0XpuhcclC1/75xpbKAFn6YqYk6FqElegLFvmYW2G8tF2h8VSZCOMbww8RoHNmLZww==}
+  '@forge-ts/gen@0.19.2':
+    resolution: {integrity: sha512-+FMF40nR9g4rzBMWiOxGwOJIDwnJzRBtWQ1uSVHOTf+gcD8SER38Ad57tfNSvaQmuHk92TiGTxY66zod8disog==}
 
   '@inquirer/external-editor@1.0.3':
     resolution: {integrity: sha512-RWbSrDiYmO4LbejWY7ttpxczuwQyZLBUyygsA9Nsv95hpzUWwnNTVQmAq3xuh7vNwCp07UTmE5i11XAEExx4RA==}
@@ -543,9 +543,6 @@ packages:
 
   '@microsoft/tsdoc-config@0.18.1':
     resolution: {integrity: sha512-9brPoVdfN9k9g0dcWkFeA7IH9bbcttzDJlXvkf8b2OBzd5MueR1V2wkKBL0abn0otvmkHJC6aapBOTJDDeMCZg==}
-
-  '@microsoft/tsdoc@0.15.1':
-    resolution: {integrity: sha512-4aErSrCR/On/e5G2hDP0wjooqDdauzEbIq8hIkIe5pXV0rtWJZvdCEKL0ykZxex+IxIwBp0eGeV48hQN07dXtw==}
 
   '@microsoft/tsdoc@0.16.0':
     resolution: {integrity: sha512-xgAyonlVVS+q7Vc7qLW0UrJU7rSFcETRWsqdXZtjzRU8dF+6CkozTK4V4y1LwOX7j8r/vHphjDeMeGI4tNGeGA==}
@@ -2512,40 +2509,42 @@ snapshots:
   '@esbuild/win32-x64@0.27.4':
     optional: true
 
-  '@forge-ts/api@0.8.0':
+  '@forge-ts/api@0.19.2':
     dependencies:
-      '@forge-ts/core': 0.8.0
+      '@forge-ts/core': 0.19.2
 
-  '@forge-ts/cli@0.8.0':
+  '@forge-ts/cli@0.19.2':
     dependencies:
       '@cleocode/lafs-protocol': 1.8.0
-      '@forge-ts/api': 0.8.0
-      '@forge-ts/core': 0.8.0
-      '@forge-ts/doctest': 0.8.0
-      '@forge-ts/enforcer': 0.8.0
-      '@forge-ts/gen': 0.8.0
+      '@forge-ts/api': 0.19.2
+      '@forge-ts/core': 0.19.2
+      '@forge-ts/doctest': 0.19.2
+      '@forge-ts/enforcer': 0.19.2
+      '@forge-ts/gen': 0.19.2
       citty: 0.2.1
+      consola: 3.4.2
     transitivePeerDependencies:
       - '@bufbuild/protobuf'
       - '@grpc/grpc-js'
       - supports-color
 
-  '@forge-ts/core@0.8.0':
+  '@forge-ts/core@0.19.2':
     dependencies:
-      '@microsoft/tsdoc': 0.15.1
+      '@microsoft/tsdoc': 0.16.0
+      '@microsoft/tsdoc-config': 0.18.1
       typescript: 5.9.3
 
-  '@forge-ts/doctest@0.8.0':
+  '@forge-ts/doctest@0.19.2':
     dependencies:
-      '@forge-ts/core': 0.8.0
+      '@forge-ts/core': 0.19.2
 
-  '@forge-ts/enforcer@0.8.0':
+  '@forge-ts/enforcer@0.19.2':
     dependencies:
-      '@forge-ts/core': 0.8.0
+      '@forge-ts/core': 0.19.2
 
-  '@forge-ts/gen@0.8.0':
+  '@forge-ts/gen@0.19.2':
     dependencies:
-      '@forge-ts/core': 0.8.0
+      '@forge-ts/core': 0.19.2
       gray-matter: 4.0.3
       remark-frontmatter: 5.0.0
       remark-gfm: 4.0.1
@@ -2600,8 +2599,6 @@ snapshots:
       ajv: 8.18.0
       jju: 1.4.0
       resolve: 1.22.11
-
-  '@microsoft/tsdoc@0.15.1': {}
 
   '@microsoft/tsdoc@0.16.0': {}
 

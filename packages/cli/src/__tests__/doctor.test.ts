@@ -130,9 +130,7 @@ describe("runDoctor", () => {
 
 		const output = await runDoctor({ cwd: "/fake" });
 
-		const configCheck = output.data.checks.find(
-			(c) => c.name === "forge-ts.config",
-		);
+		const configCheck = output.data.checks.find((c) => c.name === "forge-ts.config");
 		expect(configCheck).toBeDefined();
 		expect(configCheck?.status).toBe("error");
 		expect(configCheck?.message).toContain("MISSING");
@@ -146,9 +144,7 @@ describe("runDoctor", () => {
 
 		const output = await runDoctor({ cwd: "/fake" });
 
-		const tsdocCheck = output.data.checks.find(
-			(c) => c.name === "tsdoc.json",
-		);
+		const tsdocCheck = output.data.checks.find((c) => c.name === "tsdoc.json");
 		expect(tsdocCheck).toBeDefined();
 		expect(tsdocCheck?.status).toBe("error");
 		expect(tsdocCheck?.fixable).toBe(true);
@@ -162,15 +158,11 @@ describe("runDoctor", () => {
 			if (s.endsWith("tsdoc.json")) return true;
 			return false;
 		});
-		vi.mocked(readFileSync).mockReturnValue(
-			JSON.stringify({ extends: ["some-other-config"] }),
-		);
+		vi.mocked(readFileSync).mockReturnValue(JSON.stringify({ extends: ["some-other-config"] }));
 
 		const output = await runDoctor({ cwd: "/fake" });
 
-		const tsdocCheck = output.data.checks.find(
-			(c) => c.name === "tsdoc.json",
-		);
+		const tsdocCheck = output.data.checks.find((c) => c.name === "tsdoc.json");
 		expect(tsdocCheck).toBeDefined();
 		expect(tsdocCheck?.status).toBe("warn");
 		expect(tsdocCheck?.message).toContain("does not extend");
@@ -183,9 +175,7 @@ describe("runDoctor", () => {
 
 		const output = await runDoctor({ cwd: "/fake" });
 
-		const lockCheck = output.data.checks.find(
-			(c) => c.name === ".forge-lock.json",
-		);
+		const lockCheck = output.data.checks.find((c) => c.name === ".forge-lock.json");
 		expect(lockCheck).toBeDefined();
 		expect(lockCheck?.status).toBe("warn");
 		expect(lockCheck?.message).toContain("not locked");
@@ -202,9 +192,7 @@ describe("runDoctor", () => {
 		expect(output.data.fixed).toContain("forge-ts.config.ts");
 
 		const writeCalls = vi.mocked(writeFile).mock.calls;
-		const configCall = writeCalls.find(
-			(c) => String(c[0]).endsWith("forge-ts.config.ts"),
-		);
+		const configCall = writeCalls.find((c) => String(c[0]).endsWith("forge-ts.config.ts"));
 		expect(configCall).toBeDefined();
 		const written = configCall?.[1] as string;
 		expect(written).toContain("defineConfig");
@@ -221,9 +209,7 @@ describe("runDoctor", () => {
 		expect(output.data.fixed).toContain("tsdoc.json");
 
 		const writeCalls = vi.mocked(writeFile).mock.calls;
-		const tsdocCall = writeCalls.find(
-			(c) => String(c[0]).endsWith("tsdoc.json"),
-		);
+		const tsdocCall = writeCalls.find((c) => String(c[0]).endsWith("tsdoc.json"));
 		expect(tsdocCall).toBeDefined();
 		const written = tsdocCall?.[1] as string;
 		const parsed = JSON.parse(written);
@@ -265,9 +251,7 @@ describe("runDoctor", () => {
 
 		const output = await runDoctor({ cwd: "/fake" });
 
-		const auditCheck = output.data.checks.find(
-			(c) => c.name === ".forge-audit.jsonl",
-		);
+		const auditCheck = output.data.checks.find((c) => c.name === ".forge-audit.jsonl");
 		expect(auditCheck).toBeDefined();
 		expect(auditCheck?.status).toBe("info");
 		expect(auditCheck?.message).toContain("3 events");
@@ -284,16 +268,12 @@ describe("runDoctor", () => {
 			return false;
 		});
 		vi.mocked(readFileSync).mockReturnValue(
-			JSON.stringify([
-				{ id: "1", expiresAt: futureDate, rule: "E009" },
-			]),
+			JSON.stringify([{ id: "1", expiresAt: futureDate, rule: "E009" }]),
 		);
 
 		const output = await runDoctor({ cwd: "/fake" });
 
-		const bypassCheck = output.data.checks.find(
-			(c) => c.name === ".forge-bypass.json",
-		);
+		const bypassCheck = output.data.checks.find((c) => c.name === ".forge-bypass.json");
 		expect(bypassCheck).toBeDefined();
 		expect(bypassCheck?.status).toBe("info");
 		expect(bypassCheck?.message).toContain("1 active bypass");
@@ -306,9 +286,7 @@ describe("runDoctor", () => {
 
 		const output = await runDoctor({ cwd: "/fake" });
 
-		const hookCheck = output.data.checks.find(
-			(c) => c.name === "Git hooks",
-		);
+		const hookCheck = output.data.checks.find((c) => c.name === "Git hooks");
 		expect(hookCheck).toBeDefined();
 		expect(hookCheck?.status).toBe("warn");
 		expect(hookCheck?.message).toContain("not in pre-commit");
@@ -322,15 +300,11 @@ describe("runDoctor", () => {
 			if (s.endsWith("pre-commit")) return true;
 			return false;
 		});
-		vi.mocked(readFileSync).mockReturnValue(
-			"#!/usr/bin/env sh\nnpx forge-ts check\n",
-		);
+		vi.mocked(readFileSync).mockReturnValue("#!/usr/bin/env sh\nnpx forge-ts check\n");
 
 		const output = await runDoctor({ cwd: "/fake" });
 
-		const hookCheck = output.data.checks.find(
-			(c) => c.name === "Git hooks",
-		);
+		const hookCheck = output.data.checks.find((c) => c.name === "Git hooks");
 		expect(hookCheck).toBeDefined();
 		expect(hookCheck?.status).toBe("pass");
 		expect(hookCheck?.message).toContain("husky pre-commit");
@@ -350,9 +324,7 @@ describe("runDoctor", () => {
 
 		const output = await runDoctor({ cwd: "/fake" });
 
-		const hookCheck = output.data.checks.find(
-			(c) => c.name === "Git hooks",
-		);
+		const hookCheck = output.data.checks.find((c) => c.name === "Git hooks");
 		expect(hookCheck).toBeDefined();
 		expect(hookCheck?.status).toBe("pass");
 		expect(hookCheck?.message).toContain("lefthook");
@@ -428,9 +400,7 @@ describe("runDoctor", () => {
 
 		const output = await runDoctor({ cwd: "/fake" });
 
-		const tsconfigCheck = output.data.checks.find(
-			(c) => c.name === "tsconfig.json",
-		);
+		const tsconfigCheck = output.data.checks.find((c) => c.name === "tsconfig.json");
 		expect(tsconfigCheck).toBeDefined();
 		expect(tsconfigCheck?.status).toBe("warn");
 		expect(tsconfigCheck?.message).toContain("strict");
@@ -447,9 +417,7 @@ describe("runDoctor", () => {
 
 		const output = await runDoctor({ cwd: "/fake" });
 
-		const configCheck = output.data.checks.find(
-			(c) => c.name === "forge-ts.config",
-		);
+		const configCheck = output.data.checks.find((c) => c.name === "forge-ts.config");
 		expect(configCheck).toBeDefined();
 		expect(configCheck?.status).toBe("pass");
 		expect(configCheck?.message).toContain("forge-ts.config.js");

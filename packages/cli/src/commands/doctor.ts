@@ -13,13 +13,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { defineCommand } from "citty";
-import { createLogger } from "../logger.js";
-import {
-	type CommandOutput,
-	emitResult,
-	type OutputFlags,
-	resolveExitCode,
-} from "../output.js";
+import { type CommandOutput, emitResult, type OutputFlags, resolveExitCode } from "../output.js";
 
 // ---------------------------------------------------------------------------
 // Public types
@@ -138,8 +132,7 @@ export default defineConfig({
  */
 const DEFAULT_TSDOC_CONTENT = JSON.stringify(
 	{
-		$schema:
-			"https://developer.microsoft.com/json-schemas/tsdoc/v0/tsdoc.schema.json",
+		$schema: "https://developer.microsoft.com/json-schemas/tsdoc/v0/tsdoc.schema.json",
 		extends: ["@forge-ts/tsdoc-config/tsdoc.json"],
 	},
 	null,
@@ -175,9 +168,7 @@ const DEFAULT_TSDOC_CONTENT = JSON.stringify(
  * ```
  * @public
  */
-export async function runDoctor(
-	args: DoctorArgs,
-): Promise<CommandOutput<DoctorResult>> {
+export async function runDoctor(args: DoctorArgs): Promise<CommandOutput<DoctorResult>> {
 	const start = Date.now();
 	const rootDir = args.cwd ?? process.cwd();
 	const fix = args.fix ?? false;
@@ -192,9 +183,7 @@ export async function runDoctor(
 	const configPath = join(rootDir, "forge-ts.config.ts");
 	const configJsPath = join(rootDir, "forge-ts.config.js");
 	if (existsSync(configPath) || existsSync(configJsPath)) {
-		const which = existsSync(configPath)
-			? "forge-ts.config.ts"
-			: "forge-ts.config.js";
+		const which = existsSync(configPath) ? "forge-ts.config.ts" : "forge-ts.config.js";
 		checks.push({
 			name: "forge-ts.config",
 			status: "pass",
@@ -215,8 +204,7 @@ export async function runDoctor(
 		checks.push({
 			name: "forge-ts.config",
 			status: "error",
-			message:
-				"forge-ts.config.ts — MISSING (run forge-ts init or forge-ts doctor --fix)",
+			message: "forge-ts.config.ts — MISSING (run forge-ts init or forge-ts doctor --fix)",
 			fixable: true,
 		});
 	}
@@ -230,10 +218,7 @@ export async function runDoctor(
 		const tsdoc = readJsonSafe<{
 			extends?: string[];
 		}>(tsdocPath);
-		if (
-			tsdoc?.extends &&
-			tsdoc.extends.includes("@forge-ts/tsdoc-config/tsdoc.json")
-		) {
+		if (tsdoc?.extends?.includes("@forge-ts/tsdoc-config/tsdoc.json")) {
 			checks.push({
 				name: "tsdoc.json",
 				status: "pass",
@@ -244,8 +229,7 @@ export async function runDoctor(
 			checks.push({
 				name: "tsdoc.json",
 				status: "warn",
-				message:
-					"tsdoc.json — does not extend @forge-ts/tsdoc-config",
+				message: "tsdoc.json — does not extend @forge-ts/tsdoc-config",
 				fixable: false,
 			});
 		}
@@ -262,8 +246,7 @@ export async function runDoctor(
 		checks.push({
 			name: "tsdoc.json",
 			status: "error",
-			message:
-				"tsdoc.json — MISSING (run forge-ts init or forge-ts doctor --fix)",
+			message: "tsdoc.json — MISSING (run forge-ts init or forge-ts doctor --fix)",
 			fixable: true,
 		});
 	}
@@ -280,9 +263,7 @@ export async function runDoctor(
 		"package.json",
 	);
 	if (existsSync(tsdocConfigModulePath)) {
-		const tsdocPkg = readJsonSafe<{ version?: string }>(
-			tsdocConfigModulePath,
-		);
+		const tsdocPkg = readJsonSafe<{ version?: string }>(tsdocConfigModulePath);
 		const version = tsdocPkg?.version ?? "unknown";
 		checks.push({
 			name: "@forge-ts/tsdoc-config",
@@ -294,8 +275,7 @@ export async function runDoctor(
 		checks.push({
 			name: "@forge-ts/tsdoc-config",
 			status: "warn",
-			message:
-				"@forge-ts/tsdoc-config — MISSING (run npm install @forge-ts/tsdoc-config)",
+			message: "@forge-ts/tsdoc-config — MISSING (run npm install @forge-ts/tsdoc-config)",
 			fixable: false,
 		});
 	}
@@ -304,12 +284,7 @@ export async function runDoctor(
 	// Check 4: TypeScript installed
 	// -----------------------------------------------------------------------
 
-	const tsPkgPath = join(
-		rootDir,
-		"node_modules",
-		"typescript",
-		"package.json",
-	);
+	const tsPkgPath = join(rootDir, "node_modules", "typescript", "package.json");
 	if (existsSync(tsPkgPath)) {
 		const tsPkg = readJsonSafe<{ version?: string }>(tsPkgPath);
 		const version = tsPkg?.version ?? "unknown";
@@ -341,8 +316,7 @@ export async function runDoctor(
 			checks.push({
 				name: "TypeScript",
 				status: "error",
-				message:
-					"TypeScript — MISSING (run npm install -D typescript)",
+				message: "TypeScript — MISSING (run npm install -D typescript)",
 				fixable: false,
 			});
 		}
@@ -437,8 +411,7 @@ export async function runDoctor(
 			checks.push({
 				name: ".forge-lock.json",
 				status: "warn",
-				message:
-					".forge-lock.json — invalid format (run forge-ts lock to regenerate)",
+				message: ".forge-lock.json — invalid format (run forge-ts lock to regenerate)",
 				fixable: false,
 			});
 		}
@@ -446,8 +419,7 @@ export async function runDoctor(
 		checks.push({
 			name: ".forge-lock.json",
 			status: "warn",
-			message:
-				".forge-lock.json — not locked (run forge-ts lock)",
+			message: ".forge-lock.json — not locked (run forge-ts lock)",
 			fixable: false,
 		});
 	}
@@ -460,9 +432,7 @@ export async function runDoctor(
 	if (existsSync(auditPath)) {
 		try {
 			const raw = readFileSync(auditPath, "utf8");
-			const lines = raw
-				.split("\n")
-				.filter((line) => line.trim().length > 0);
+			const lines = raw.split("\n").filter((line) => line.trim().length > 0);
 			checks.push({
 				name: ".forge-audit.jsonl",
 				status: "info",
@@ -492,14 +462,10 @@ export async function runDoctor(
 
 	const bypassPath = join(rootDir, ".forge-bypass.json");
 	if (existsSync(bypassPath)) {
-		const records = readJsonSafe<
-			Array<{ expiresAt?: string }>
-		>(bypassPath);
+		const records = readJsonSafe<Array<{ expiresAt?: string }>>(bypassPath);
 		if (records && Array.isArray(records)) {
 			const now = new Date();
-			const active = records.filter(
-				(r) => r.expiresAt && new Date(r.expiresAt) > now,
-			);
+			const active = records.filter((r) => r.expiresAt && new Date(r.expiresAt) > now);
 			const expired = records.length - active.length;
 			if (active.length > 0) {
 				checks.push({
@@ -585,8 +551,7 @@ export async function runDoctor(
 		checks.push({
 			name: "Git hooks",
 			status: "warn",
-			message:
-				"Git hooks — forge-ts check not in pre-commit (run forge-ts init hooks)",
+			message: "Git hooks — forge-ts check not in pre-commit (run forge-ts init hooks)",
 			fixable: false,
 		});
 	}
@@ -661,9 +626,7 @@ function formatDoctorHuman(result: DoctorResult): string {
 	);
 
 	if (result.summary.errors > 0 || result.summary.warnings > 0) {
-		lines.push(
-			"  Run: forge-ts doctor --fix   to auto-fix resolvable issues",
-		);
+		lines.push("  Run: forge-ts doctor --fix   to auto-fix resolvable issues");
 	}
 
 	return lines.join("\n");

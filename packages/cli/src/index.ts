@@ -28,8 +28,8 @@ import { auditCommand } from "./commands/audit.js";
 import { buildCommand } from "./commands/build.js";
 import { bypassCommand } from "./commands/bypass.js";
 import { checkCommand } from "./commands/check.js";
-import { doctorCommand } from "./commands/doctor.js";
 import { docsDevCommand } from "./commands/docs-dev.js";
+import { doctorCommand } from "./commands/doctor.js";
 import { initDocsCommand } from "./commands/init-docs.js";
 import { initHooksCommand } from "./commands/init-hooks.js";
 import { initProjectCommand } from "./commands/init-project.js";
@@ -60,6 +60,7 @@ export {
 	type CheckTriage,
 	checkCommand,
 } from "./commands/check.js";
+export { docsDevCommand, runDocsDev } from "./commands/docs-dev.js";
 export {
 	type DoctorCheckResult,
 	type DoctorCheckStatus,
@@ -67,7 +68,6 @@ export {
 	doctorCommand,
 	runDoctor,
 } from "./commands/doctor.js";
-export { docsDevCommand, runDocsDev } from "./commands/docs-dev.js";
 export {
 	type InitDocsResult,
 	initDocsCommand,
@@ -249,8 +249,7 @@ const initCommand = defineCommand({
 			lines.push(`    TypeScript: ${env.typescriptVersion ?? "not detected"}`);
 			lines.push(`    Biome: ${env.biomeDetected ? "detected" : "not detected"}`);
 
-			const hookLabel =
-				env.hookManager === "none" ? "not detected" : `${env.hookManager} detected`;
+			const hookLabel = env.hookManager === "none" ? "not detected" : `${env.hookManager} detected`;
 			lines.push(`    Git hooks: ${hookLabel}`);
 
 			if (env.monorepo) {

@@ -61,15 +61,15 @@ Reads the `.forge-audit.jsonl` file and returns parsed audit events.  Returns ne
 **Signature**
 
 ```typescript
-(rootDir: string, options?: ReadAuditOptions | undefined) => AuditEvent[]
+(rootDir: string, options?: ReadAuditOptions) => AuditEvent[]
 ```
 
 **Parameters**
 
-| Name      | Type                              | Description                                  |
-| --------- | --------------------------------- | -------------------------------------------- |
-| `rootDir` | `string`                          | Absolute path to the project root directory. |
-| `options` | `: ReadAuditOptions \| undefined` | Optional limit and event type filter.        |
+| Name      | Type                 | Description                                  |
+| --------- | -------------------- | -------------------------------------------- |
+| `rootDir` | `string`             | Absolute path to the project root directory. |
+| `options` | `: ReadAuditOptions` | Optional limit and event type filter.        |
 
 **Returns** — Array of audit events, newest first.
 
@@ -121,17 +121,17 @@ Creates a new bypass record, writes it to `.forge-bypass.json`, and appends an a
 **Signature**
 
 ```typescript
-(rootDir: string, reason: string, rule?: string | undefined, config?: Partial<BypassConfig> | undefined) => BypassRecord
+(rootDir: string, reason: string, rule?: string, config?: Partial<BypassConfig>) => BypassRecord
 ```
 
 **Parameters**
 
-| Name      | Type                                   | Description                                                               |
-| --------- | -------------------------------------- | ------------------------------------------------------------------------- |
-| `rootDir` | `string`                               | Absolute path to the project root directory.                              |
-| `reason`  | `string`                               | Mandatory justification for the bypass.                                   |
-| `rule`    | `: string \| undefined`                | Specific rule code to bypass (e.g., "E009"), or "all". Defaults to "all". |
-| `config`  | `: Partial<BypassConfig> \| undefined` | Optional bypass budget configuration overrides.                           |
+| Name      | Type                      | Description                                                               |
+| --------- | ------------------------- | ------------------------------------------------------------------------- |
+| `rootDir` | `string`                  | Absolute path to the project root directory.                              |
+| `reason`  | `string`                  | Mandatory justification for the bypass.                                   |
+| `rule`    | `: string`                | Specific rule code to bypass (e.g., "E009"), or "all". Defaults to "all". |
+| `config`  | `: Partial<BypassConfig>` | Optional bypass budget configuration overrides.                           |
 
 **Returns** — The created bypass record.
 
@@ -208,15 +208,15 @@ Returns the number of bypass budget slots remaining for today.  Counts bypasses 
 **Signature**
 
 ```typescript
-(rootDir: string, config?: Partial<BypassConfig> | undefined) => number
+(rootDir: string, config?: Partial<BypassConfig>) => number
 ```
 
 **Parameters**
 
-| Name      | Type                                   | Description                                     |
-| --------- | -------------------------------------- | ----------------------------------------------- |
-| `rootDir` | `string`                               | Absolute path to the project root directory.    |
-| `config`  | `: Partial<BypassConfig> \| undefined` | Optional bypass budget configuration overrides. |
+| Name      | Type                      | Description                                     |
+| --------- | ------------------------- | ----------------------------------------------- |
+| `rootDir` | `string`                  | Absolute path to the project root directory.    |
+| `config`  | `: Partial<BypassConfig>` | Optional bypass budget configuration overrides. |
 
 **Returns** — Number of remaining bypass slots for today.
 
@@ -254,6 +254,36 @@ const removed = expireOldBypasses("/path/to/project");
 console.log(`${removed} expired bypass(es) removed`);
 ```
 
+## defineConfig(config)
+
+Type-safe helper for defining a partial forge-ts configuration.  Only include the settings you want to override — everything else inherits sensible defaults via `loadConfig()`.
+
+**Signature**
+
+```typescript
+(config: Partial<ForgeConfig>) => Partial<ForgeConfig>
+```
+
+**Parameters**
+
+| Name     | Type                   | Description                      |
+| -------- | ---------------------- | -------------------------------- |
+| `config` | `Partial<ForgeConfig>` | Partial configuration overrides. |
+
+**Returns** — The same object (identity function for type checking).
+
+**Example**
+
+```typescript
+import { defineConfig } from "@forge-ts/core";
+
+export default defineConfig({
+  outDir: "docs",
+  enforce: { strict: true },
+  gen: { ssgTarget: "mintlify" },
+});
+```
+
 ## defaultConfig(rootDir)
 
 Constructs a sensible default `ForgeConfig` rooted at `rootDir`.
@@ -287,14 +317,14 @@ Loads the forge-ts configuration for a project.  Resolution order: 1. `<rootDir>
 **Signature**
 
 ```typescript
-(rootDir?: string | undefined) => Promise<ForgeConfig>
+(rootDir?: string) => Promise<ForgeConfig>
 ```
 
 **Parameters**
 
-| Name      | Type                    | Description                                                          |
-| --------- | ----------------------- | -------------------------------------------------------------------- |
-| `rootDir` | `: string \| undefined` | The project root to search for config.  Defaults to `process.cwd()`. |
+| Name      | Type       | Description                                                          |
+| --------- | ---------- | -------------------------------------------------------------------- |
+| `rootDir` | `: string` | The project root to search for config.  Defaults to `process.cwd()`. |
 
 **Returns** — A fully-resolved `ForgeConfig`.
 
@@ -475,20 +505,20 @@ const vis = resolveVisibility({ internal: [] });
 
 ## meetsVisibility(candidate, minVisibility)
 
-Returns whether `candidate` meets or exceeds the required minimum visibility.  "Meets" means the symbol is at least as visible as `minVisibility`. For example, `Public` meets a minimum of `Public`, but `Internal` does not.
+Returns whether `candidate` meets or exceeds the required minimum visibility.  "Meets" means the symbol is at least as visible as `minVisibility`. For example, `Public` meets a minimum of `Public`, but `Internal` does not.  Both parameters accept either a `Visibility` enum value or the equivalent string literal (`"public"`, `"beta"`, `"internal"`, `"private"`).
 
 **Signature**
 
 ```typescript
-(candidate: Visibility, minVisibility: Visibility) => boolean
+(candidate: Visibility | "public" | "beta" | "internal" | "private", minVisibility: Visibility | "public" | "beta" | "internal" | "private") => boolean
 ```
 
 **Parameters**
 
-| Name            | Type         | Description                                |
-| --------------- | ------------ | ------------------------------------------ |
-| `candidate`     | `Visibility` | The visibility of the symbol being tested. |
-| `minVisibility` | `Visibility` | The minimum visibility threshold.          |
+| Name            | Type                                                          | Description                                |
+| --------------- | ------------------------------------------------------------- | ------------------------------------------ |
+| `candidate`     | `Visibility \| "public" \| "beta" \| "internal" \| "private"` | The visibility of the symbol being tested. |
+| `minVisibility` | `Visibility \| "public" \| "beta" \| "internal" \| "private"` | The minimum visibility threshold.          |
 
 **Returns** — `true` if `candidate` is at least as visible as `minVisibility`.
 
@@ -498,6 +528,7 @@ Returns whether `candidate` meets or exceeds the required minimum visibility.  "
 import { meetsVisibility, Visibility } from "@forge-ts/core";
 meetsVisibility(Visibility.Public, Visibility.Public); // true
 meetsVisibility(Visibility.Internal, Visibility.Public); // false
+meetsVisibility("public", "beta"); // true (string literals also accepted)
 ```
 
 ## filterByVisibility(symbols, minVisibility)
@@ -507,15 +538,15 @@ Filters an array of `ForgeSymbol` objects to only include symbols whose visibili
 **Signature**
 
 ```typescript
-(symbols: ForgeSymbol[], minVisibility: Visibility) => ForgeSymbol[]
+(symbols: ForgeSymbol[], minVisibility: Visibility | "public" | "beta" | "internal" | "private") => ForgeSymbol[]
 ```
 
 **Parameters**
 
-| Name            | Type            | Description                               |
-| --------------- | --------------- | ----------------------------------------- |
-| `symbols`       | `ForgeSymbol[]` | The full list of symbols to filter.       |
-| `minVisibility` | `Visibility`    | The minimum visibility threshold to keep. |
+| Name            | Type                                                          | Description                               |
+| --------------- | ------------------------------------------------------------- | ----------------------------------------- |
+| `symbols`       | `ForgeSymbol[]`                                               | The full list of symbols to filter.       |
+| `minVisibility` | `Visibility \| "public" \| "beta" \| "internal" \| "private"` | The minimum visibility threshold to keep. |
 
 **Returns** — A new array containing only symbols that pass the visibility check.
 
@@ -538,7 +569,7 @@ Clears the TSDoc configuration cache. Intended for use in tests only.
 
 ## loadTSDocConfiguration(folderPath)
 
-Resolve the `TSDocConfiguration` to use when parsing comments in files under `folderPath`.  If a `tsdoc.json` file exists in or above the folder and can be loaded without errors, its settings are applied to a fresh configuration via `TSDocConfigFile.configureParser`. Otherwise the default `TSDocConfiguration` is returned (backward-compatible behaviour).  Results are cached per folder path so the file system is only consulted once per unique directory.
+Resolve the TSDoc configuration to use when parsing comments in files under `folderPath`.  If a `tsdoc.json` file exists in or above the folder and can be loaded without errors, its settings are applied to a fresh `TSDocConfiguration` via `TSDocConfigFile.configureParser()`. Otherwise the default `TSDocConfiguration` is returned (backward-compatible behaviour).  Results are cached per folder path so the file system is only consulted once per unique directory.
 
 **Signature**
 

@@ -1,4 +1,4 @@
-# forge-ts Configuration Reference (v0.13.0)
+# forge-ts Configuration Reference (v0.19.4)
 
 ## Config File Resolution
 
@@ -14,9 +14,9 @@ Unknown keys produce a warning to stderr and in the JSON envelope
 ## Full Configuration
 
 ```typescript
-import type { ForgeConfig } from "@forge-ts/core";
+import { defineConfig } from "@forge-ts/core";
 
-export default {
+export default defineConfig({
   rootDir: ".",
   tsconfig: "./tsconfig.json",
   outDir: "./docs/generated",
@@ -25,6 +25,7 @@ export default {
     enabled: true,
     minVisibility: "public",    // "public" | "beta" | "internal"
     strict: false,              // true promotes all warnings to errors
+    ignoreFile: ".forge-ignore", // Knip integration: symbol names to skip
     rules: {
       // API Layer
       "require-summary": "error",              // E001
@@ -38,12 +39,22 @@ export default {
       "require-remarks": "error",              // E013
       "require-default-value": "warn",         // E014
       "require-type-param": "error",           // E015
+      "require-internal-boundary": "error",    // E017
+      "require-route-response": "warn",        // E018
       "require-see": "warn",                   // W005
       "require-tsdoc-syntax": "warn",          // W006
+      "require-inheritdoc-source": "warn",     // W009
       // Consumer Layer
       "require-release-tag": "error",          // E016
       "require-fresh-guides": "warn",          // W007
       "require-guide-coverage": "warn",        // W008
+      "require-migration-path": "warn",        // W010
+      "require-since": "warn",                 // W011
+      // LLM Anti-Pattern Layer
+      "require-no-ts-ignore": "error",         // E019
+      "require-no-any-in-api": "error",        // E020
+      "require-fresh-link-text": "warn",       // W012
+      "require-fresh-examples": "warn",        // W013
     },
   },
 
@@ -74,8 +85,12 @@ export default {
 
   tsdoc: {
     writeConfig: false,         // true writes tsdoc.json to project root
-    customTags: [],             // additional custom tag definitions
-    enforce: [],                // standardization groups to enforce
+    customTags: [],             // additional custom tag definitions (written to tsdoc.json during init)
+    enforce: {                  // per-group enforcement severity
+      core: "error",
+      extended: "warn",
+      discretionary: "off",
+    },
   },
 
   guards: {
@@ -110,7 +125,7 @@ export default {
     description: "Short description",
     version: "1.0.0",
   },
-} satisfies Partial<ForgeConfig>;
+});
 ```
 
 ## Defaults

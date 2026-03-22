@@ -18,6 +18,7 @@ API reference for the `core` package.
 | [`isRuleBypassed()`](/packages/core/api/functions#isrulebypassed)                 | function | Checks whether a specific rule has an active bypass.  A rule is considered by... |
 | [`getRemainingBudget()`](/packages/core/api/functions#getremainingbudget)         | function | Returns the number of bypass budget slots remaining for today.  Counts bypass... |
 | [`expireOldBypasses()`](/packages/core/api/functions#expireoldbypasses)           | function | Removes expired bypass records from `.forge-bypass.json`.  Also appends a...     |
+| [`defineConfig()`](/packages/core/api/functions#defineconfig)                     | function | Type-safe helper for defining a partial forge-ts configuration.  Only include... |
 | [`defaultConfig()`](/packages/core/api/functions#defaultconfig)                   | function | Constructs a sensible default `ForgeConfig` rooted at `rootDir`.                 |
 | [`loadConfig()`](/packages/core/api/functions#loadconfig)                         | function | Loads the forge-ts configuration for a project.  Resolution order: 1....         |
 | [`readLockFile()`](/packages/core/api/functions#readlockfile)                     | function | Reads the `.forge-lock.json` file from the given project root.                   |
@@ -29,7 +30,7 @@ API reference for the `core` package.
 | [`meetsVisibility()`](/packages/core/api/functions#meetsvisibility)               | function | Returns whether `candidate` meets or exceeds the required minimum visibility.... |
 | [`filterByVisibility()`](/packages/core/api/functions#filterbyvisibility)         | function | Filters an array of `ForgeSymbol` objects to only include symbols whose visib... |
 | [`clearTSDocConfigCache()`](/packages/core/api/functions#cleartsdocconfigcache)   | function | Clears the TSDoc configuration cache. Intended for use in tests only.            |
-| [`loadTSDocConfiguration()`](/packages/core/api/functions#loadtsdocconfiguration) | function | Resolve the `TSDocConfiguration` to use when parsing comments in files under...  |
+| [`loadTSDocConfiguration()`](/packages/core/api/functions#loadtsdocconfiguration) | function | Resolve the TSDoc configuration to use when parsing comments in files under...   |
 | [`createWalker()`](/packages/core/api/functions#createwalker)                     | function | Creates an `ASTWalker` configured for the given forge config.  The walker use... |
 
 ## Types & Interfaces
@@ -62,3 +63,23 @@ API reference for the `core` package.
 | [`OpenAPIResponseObject`](/packages/core/api/types#openapiresponseobject)   | interface | OpenAPI 3.2 response object.                                                     |
 | [`OpenAPIDocument`](/packages/core/api/types#openapidocument)               | interface | Complete OpenAPI 3.2 document.                                                   |
 | [`ASTWalker`](/packages/core/api/types#astwalker)                           | interface | The return type of `createWalker`.                                               |
+
+## Other Exports
+
+| Symbol                                                             | Kind     | Description                                                                       |
+| ------------------------------------------------------------------ | -------- | --------------------------------------------------------------------------------- |
+| [`audit.ts`](/packages/core/api/functions#auditts)                 | file     | Append-only audit trail for forge-ts configuration and governance events.  Ev...  |
+| [`bypass.ts`](/packages/core/api/functions#bypassts)               | file     | Bypass budget system for forge-ts config governance.  Allows agents to tempor...  |
+| [`types.ts`](/packages/core/api/functions#typests)                 | file     |                                                                                   |
+| [`RULE_GROUP_MAP`](/packages/core/api/functions#rulegroupmap)      | variable | Maps each rule key in `EnforceRules` to its TSDoc standardisation group.  - \*... |
+| [`config.ts`](/packages/core/api/functions#configts)               | file     |                                                                                   |
+| [`lock.ts`](/packages/core/api/functions#lockts)                   | file     | Config locking system for forge-ts.  Prevents LLM agents from silently weaken...  |
+| [`openapi-types.ts`](/packages/core/api/functions#openapi-typests) | file     |                                                                                   |
+| [`visibility.ts`](/packages/core/api/functions#visibilityts)       | file     |                                                                                   |
+| [`walker.ts`](/packages/core/api/functions#walkerts)               | file     |                                                                                   |
+| [`index.ts`](/packages/core/api/functions#indexts)                 | file     | forge-ts/core — Shared types, interfaces, config loader, and AST walker.  Thi...  |
+| [`tsup.config.ts`](/packages/core/api/functions#tsupconfigts)      | file     |                                                                                   |
+| [`audit.test.ts`](/packages/core/api/functions#audittestts)        | file     |                                                                                   |
+| [`bypass.test.ts`](/packages/core/api/functions#bypasstestts)      | file     |                                                                                   |
+| [`e2e.test.ts`](/packages/core/api/functions#e2etestts)            | file     |                                                                                   |
+| [`lock.test.ts`](/packages/core/api/functions#locktestts)          | file     |                                                                                   |

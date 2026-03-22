@@ -1,9 +1,9 @@
-# forge-ts Feature Inventory (v0.16.0)
+# forge-ts Feature Inventory (v0.19.4)
 
 > Canonical reference for every implemented feature in forge-ts.
 > No roadmap. No vision. Every item listed here exists in the codebase and passes tests.
 >
-> **790 tests | 20 test files | 6 packages | All v0.16.0**
+> **859 tests | 20 test files | 6 packages | All v0.19.4**
 
 ---
 
@@ -23,17 +23,16 @@
 
 ## Packages
 
-All packages are published under the `@forge-ts` scope at version **0.13.0**.
+All packages are published under the `@forge-ts` scope at version **0.19.4**.
 
 | Package | Responsibility |
 |---------|---------------|
-| `@forge-ts/core` | AST walker, config loading/validation, lock file management, audit trail, bypass system, shared types |
-| `@forge-ts/enforcer` | 22 enforcement rules across 4 layers (API, Dev, Consumer, Config Guard) |
+| `@forge-ts/core` | AST walker, config loading/validation (`defineConfig()`), lock file management, audit trail, bypass system, shared types, shared pkg-json.ts, bundled tsdoc-preset |
+| `@forge-ts/enforcer` | 33 enforcement rules across 4 layers (API, Dev, Consumer, Config Guard) |
 | `@forge-ts/doctest` | `@example` block extraction from TSDoc and execution via `node:test` runner |
 | `@forge-ts/api` | OpenAPI 3.2.0 specification generation from `@route` tags, schema mapping |
 | `@forge-ts/gen` | Markdown/MDX site generation, guide discovery, llms.txt, SKILL.md, README sync, SSG adapters |
-| `@forge-ts/cli` | 11 commands via citty, LAFS JSON output, human-readable formatting |
-| `@forge-ts/tsdoc-config` | Opinionated `tsdoc.json` preset with 24 standard tags and 5 custom tags |
+| `@forge-ts/cli` | 12 commands via citty + consola, LAFS JSON output, human-readable formatting |
 
 ---
 
@@ -43,23 +42,25 @@ All commands are invoked as `forge-ts <command>`. Output supports both human-rea
 
 | Command | Description |
 |---------|-------------|
-| `forge-ts check` | Lint TSDoc coverage on exported symbols. Runs all enabled enforcement rules. |
+| `forge-ts check` | Lint TSDoc coverage on exported symbols. Runs all enabled enforcement rules. Supports `--staged` flag for pre-commit use. |
 | `forge-ts test` | Extract `@example` blocks from TSDoc and run them as doctests via `node:test`. |
 | `forge-ts build` | Generate API reference, documentation site, llms.txt, SKILL.md, and README sync. |
+| `forge-ts init setup` | Initial project setup: scaffold config, tsdoc.json, and recommended scripts. |
 | `forge-ts init docs` | Scaffold a documentation site for the configured SSG target. |
-| `forge-ts init hooks` | Scaffold pre-commit hook configuration (husky or lefthook) with `forge-ts check` as the gate. |
+| `forge-ts init hooks` | Scaffold pre-commit hook configuration (Husky v9) with `forge-ts check` as the gate. Adds `prepare` script. |
 | `forge-ts docs dev` | Start a local dev server for the configured SSG target. Reads `gen.ssgTarget` from config and spawns the correct platform dev server. |
 | `forge-ts lock` | Snapshot current config to `.forge-lock.json` to prevent silent weakening. |
 | `forge-ts unlock --reason` | Remove config lock. Requires a justification string. |
 | `forge-ts bypass --reason` | Create a temporary rule bypass. Subject to daily budget and expiry. |
 | `forge-ts audit` | Display the append-only audit trail from `.forge-audit.jsonl`. |
 | `forge-ts prepublish` | Safety gate: runs `check` + `build` sequentially. Integrates with npm `prepublishOnly` lifecycle. Non-zero exit on failure. |
+| `forge-ts doctor` | Validate project setup: checks Husky v9 hooks, prepare script, tsdoc.json, config file presence. |
 
 ---
 
 ## Enforcement Rules
 
-22 rules organized into 4 enforcement layers. Rules with a **Key** column value are configurable in `enforce.rules`. Rules without a key are always active at their default severity.
+33 rules organized into 4 enforcement layers. Rules with a **Key** column value are configurable in `enforce.rules`. Rules without a key are always active at their default severity.
 
 ### API Layer (10 rules)
 
@@ -78,7 +79,7 @@ Coverage enforcement for public API surface documentation.
 | W003 | -- | warn | `@deprecated` tag without explanation text |
 | W004 | -- | warn | Cross-package import of a deprecated symbol |
 
-### Dev Layer (5 rules)
+### Dev Layer (8 rules)
 
 Enforcement for developer-facing documentation quality.
 
@@ -87,10 +88,13 @@ Enforcement for developer-facing documentation quality.
 | E013 | `require-remarks` | error | Exported function or class missing `@remarks` block |
 | E014 | `require-default-value` | warn | Optional property missing `@defaultValue` tag |
 | E015 | `require-type-param` | error | Generic symbol missing `@typeParam` for each type parameter |
+| E017 | `require-internal-boundary` | error | `@internal` symbol re-exported through public barrel (index.ts) |
+| E018 | `require-route-response` | warn | `@route`-tagged function missing `@response` tag |
 | W005 | `require-see` | warn | Symbol contains `{@link}` references but no `@see` tags |
 | W006 | `require-tsdoc-syntax` | warn | TSDoc parser syntax error (covers 70+ message types from `@microsoft/tsdoc`) |
+| W009 | `require-inheritdoc-source` | warn | `{@inheritDoc}` references a symbol that does not exist |
 
-### Consumer Layer (3 rules)
+### Consumer Layer (7 rules)
 
 Enforcement for consumer-facing documentation and guide coverage.
 
@@ -99,6 +103,19 @@ Enforcement for consumer-facing documentation and guide coverage.
 | E016 | `require-release-tag` | error | Exported symbol missing `@public`, `@beta`, or `@internal` release tag |
 | W007 | `require-fresh-guides` | warn | Guide `FORGE:AUTO` zone references a symbol that no longer exists |
 | W008 | `require-guide-coverage` | warn | Public symbol exported from `index.ts` not mentioned in any guide page |
+| W010 | `require-migration-path` | warn | `@breaking` tag present without `@migration` path |
+| W011 | `require-since` | warn | New public export missing `@since` version tag |
+
+### LLM Anti-Pattern Layer (4 rules)
+
+Enforcement to detect common LLM agent shortcuts.
+
+| Code | Config Key | Default | Description |
+|------|-----------|---------|-------------|
+| E019 | `require-no-ts-ignore` | error | Non-test file contains `@ts-ignore` or `@ts-expect-error` directive |
+| E020 | `require-no-any-in-api` | error | Exported symbol has `any` in its public API signature (uses `getDeclaredTypeOfSymbol` for interfaces/types) |
+| W012 | `require-fresh-link-text` | warn | `{@link}` display text appears stale relative to target summary |
+| W013 | `require-fresh-examples` | warn | `@example` block call arg count mismatches function signature |
 
 ### Config Guard Layer (4 rules)
 
@@ -217,7 +234,7 @@ The `tsdoc.json` preset shipped in `@forge-ts/tsdoc-config` defines the full tag
 
 `@alpha`, `@beta`, `@decorator`, `@defaultValue`, `@deprecated`, `@eventProperty`, `@example`, `@inheritDoc`, `@internal`, `@label`, `@link`, `@override`, `@packageDocumentation`, `@param`, `@privateRemarks`, `@public`, `@readonly`, `@remarks`, `@returns`, `@sealed`, `@see`, `@throws`, `@typeParam`, `@virtual`
 
-**5 custom tags:**
+**15 custom tags:**
 
 | Tag | Syntax Kind | Purpose |
 |-----|-------------|---------|
@@ -226,12 +243,24 @@ The `tsdoc.json` preset shipped in `@forge-ts/tsdoc-config` defines the full tag
 | `@since` | block | Version when the symbol was introduced |
 | `@guide` | block | Associates a symbol with a named guide page |
 | `@concept` | block | Links a symbol to a conceptual documentation page |
+| `@response` | block | HTTP response type and status code |
+| `@query` | block | Query parameter documentation for REST endpoints |
+| `@header` | block | HTTP header parameter documentation |
+| `@body` | block | Request body schema documentation |
+| `@quickstart` | modifier | "Start here" marker for new users |
+| `@faq` | block | FAQ entry association |
+| `@breaking` | block | Breaking change documentation |
+| `@migration` | block | Migration path from old API |
+| `@complexity` | block | Algorithmic complexity documentation |
+| `@forgeIgnore` | modifier | Skip all enforcement rules on this symbol |
 
 ### Integration
 
 - `@microsoft/tsdoc-config` integration via `TSDocConfigFile.loadForFolder` with caching
 - Interoperable with `eslint-plugin-tsdoc`, TypeDoc, and API Extractor
 - `tsdoc.writeConfig` option writes `tsdoc.json` to the project (forge-ts owns the TSDoc standard)
+- `tsdoc.customTags` array for project-specific tags, written to `tsdoc.json` during init
+- Per-group enforcement via `tsdoc.enforce` (core/extended/discretionary severity groups)
 
 ---
 
@@ -241,12 +270,12 @@ forge-ts is configured via `forge-ts.config.ts` (or `.js`, `.json`). The `ForgeC
 
 | Section | Purpose |
 |---------|---------|
-| `enforce` | Rule configuration: per-rule severity overrides, strict mode, `minVisibility` threshold |
+| `enforce` | Rule configuration: per-rule severity overrides, strict mode, `minVisibility` threshold, `ignoreFile` for Knip integration |
 | `doctest` | Doctest toggle (`enabled`) and cache directory (`cacheDir`) |
 | `api` | OpenAPI generation toggle (`openapi`), output path (`openapiPath`) |
 | `gen` | Output formats, `llmsTxt` toggle, `readmeSync` toggle, `ssgTarget` selection |
 | `skill` | SKILL.md customization: `customSections`, `extraGotchas` |
-| `tsdoc` | `writeConfig` toggle, `customTags` array, `enforce` groups for standardization |
+| `tsdoc` | `writeConfig` toggle, `customTags` array (written to tsdoc.json during init), `enforce` groups for per-group severity (core/extended/discretionary) |
 | `guards` | Drift detection for `tsconfig`, `biome`, and `packageJson` configurations |
 | `bypass` | `dailyBudget` (default 3) and `durationHours` (default 24) for temporary rule bypasses |
 | `guides` | `enabled` toggle, `autoDiscover` toggle, custom guide definitions |

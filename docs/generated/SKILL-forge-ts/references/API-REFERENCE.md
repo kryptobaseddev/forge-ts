@@ -52,7 +52,7 @@ appendAuditEvent("/path/to/project", {
 Reads the `.forge-audit.jsonl` file and returns parsed audit events.  Returns newest events first. If the file does not exist, returns an empty array.
 
 ```typescript
-(rootDir: string, options?: ReadAuditOptions | undefined) => AuditEvent[]
+(rootDir: string, options?: ReadAuditOptions) => AuditEvent[]
 ```
 
 **Parameters:**
@@ -100,7 +100,7 @@ console.log(line);
 Creates a new bypass record, writes it to `.forge-bypass.json`, and appends an audit event.  Throws an error if the daily budget is exhausted.
 
 ```typescript
-(rootDir: string, reason: string, rule?: string | undefined, config?: Partial<BypassConfig> | undefined) => BypassRecord
+(rootDir: string, reason: string, rule?: string, config?: Partial<BypassConfig>) => BypassRecord
 ```
 
 **Parameters:**
@@ -165,7 +165,7 @@ if (isRuleBypassed("/path/to/project", "E009")) {
 Returns the number of bypass budget slots remaining for today.  Counts bypasses created today (UTC) against the configured daily budget.
 
 ```typescript
-(rootDir: string, config?: Partial<BypassConfig> | undefined) => number
+(rootDir: string, config?: Partial<BypassConfig>) => number
 ```
 
 **Parameters:**
@@ -201,6 +201,30 @@ const removed = expireOldBypasses("/path/to/project");
 console.log(`${removed} expired bypass(es) removed`);
 ```
 
+### `defineConfig`
+
+Type-safe helper for defining a partial forge-ts configuration.  Only include the settings you want to override — everything else inherits sensible defaults via `loadConfig()`.
+
+```typescript
+(config: Partial<ForgeConfig>) => Partial<ForgeConfig>
+```
+
+**Parameters:**
+
+- `config` — Partial configuration overrides.
+
+**Returns:** The same object (identity function for type checking).
+
+```typescript
+import { defineConfig } from "@forge-ts/core";
+
+export default defineConfig({
+  outDir: "docs",
+  enforce: { strict: true },
+  gen: { ssgTarget: "mintlify" },
+});
+```
+
 ### `defaultConfig`
 
 Constructs a sensible default `ForgeConfig` rooted at `rootDir`.
@@ -226,7 +250,7 @@ console.log(config.enforce.enabled); // true
 Loads the forge-ts configuration for a project.  Resolution order: 1. `<rootDir>/forge-ts.config.ts` 2. `<rootDir>/forge-ts.config.js` 3. `"forge-ts"` key inside `<rootDir>/package.json` 4. Built-in defaults (returned when none of the above is found)
 
 ```typescript
-(rootDir?: string | undefined) => Promise<ForgeConfig>
+(rootDir?: string) => Promise<ForgeConfig>
 ```
 
 **Parameters:**
@@ -374,10 +398,10 @@ const vis = resolveVisibility({ internal: [] });
 
 ### `meetsVisibility`
 
-Returns whether `candidate` meets or exceeds the required minimum visibility.  "Meets" means the symbol is at least as visible as `minVisibility`. For example, `Public` meets a minimum of `Public`, but `Internal` does not.
+Returns whether `candidate` meets or exceeds the required minimum visibility.  "Meets" means the symbol is at least as visible as `minVisibility`. For example, `Public` meets a minimum of `Public`, but `Internal` does not.  Both parameters accept either a `Visibility` enum value or the equivalent string literal (`"public"`, `"beta"`, `"internal"`, `"private"`).
 
 ```typescript
-(candidate: Visibility, minVisibility: Visibility) => boolean
+(candidate: Visibility | "public" | "beta" | "internal" | "private", minVisibility: Visibility | "public" | "beta" | "internal" | "private") => boolean
 ```
 
 **Parameters:**
@@ -391,6 +415,7 @@ Returns whether `candidate` meets or exceeds the required minimum visibility.  "
 import { meetsVisibility, Visibility } from "@forge-ts/core";
 meetsVisibility(Visibility.Public, Visibility.Public); // true
 meetsVisibility(Visibility.Internal, Visibility.Public); // false
+meetsVisibility("public", "beta"); // true (string literals also accepted)
 ```
 
 ### `filterByVisibility`
@@ -398,7 +423,7 @@ meetsVisibility(Visibility.Internal, Visibility.Public); // false
 Filters an array of `ForgeSymbol` objects to only include symbols whose visibility meets or exceeds `minVisibility`.
 
 ```typescript
-(symbols: ForgeSymbol[], minVisibility: Visibility) => ForgeSymbol[]
+(symbols: ForgeSymbol[], minVisibility: Visibility | "public" | "beta" | "internal" | "private") => ForgeSymbol[]
 ```
 
 **Parameters:**
@@ -423,7 +448,7 @@ Clears the TSDoc configuration cache. Intended for use in tests only.
 
 ### `loadTSDocConfiguration`
 
-Resolve the `TSDocConfiguration` to use when parsing comments in files under `folderPath`.  If a `tsdoc.json` file exists in or above the folder and can be loaded without errors, its settings are applied to a fresh configuration via `TSDocConfigFile.configureParser`. Otherwise the default `TSDocConfiguration` is returned (backward-compatible behaviour).  Results are cached per folder path so the file system is only consulted once per unique directory.
+Resolve the TSDoc configuration to use when parsing comments in files under `folderPath`.  If a `tsdoc.json` file exists in or above the folder and can be loaded without errors, its settings are applied to a fresh `TSDocConfiguration` via `TSDocConfigFile.configureParser()`. Otherwise the default `TSDocConfiguration` is returned (backward-compatible behaviour).  Results are cached per folder path so the file system is only consulted once per unique directory.
 
 ```typescript
 (folderPath: string) => TSDocConfiguration
@@ -499,7 +524,7 @@ console.log(sdkTypes.length); // number of public SDK types
 
 ### `generateOpenAPISpec`
 
-Generates a production-quality OpenAPI 3.2 document from the extracted SDK types.  The document is populated with: - An `info` block sourced from the config or reasonable defaults. - A `components.schemas` section with one schema per exported type. - `tags` derived from unique source file paths (grouping by file). - Visibility filtering: `@internal` symbols are never emitted.  HTTP paths are not yet emitted (`paths` is always `{}`); route extraction will be added in a future release.
+Generates a production-quality OpenAPI 3.2 document from the extracted SDK types.  The document is populated with: - An `info` block sourced from the config or reasonable defaults. - A `components.schemas` section with one schema per exported type. - `tags` derived from unique source file paths (grouping by file). - Visibility filtering: `@internal` symbols are never emitted. - HTTP paths are extracted from `@route` tags and appropriately mapped.
 
 ```typescript
 (config: ForgeConfig, sdkTypes: SDKType[], symbols?: ForgeSymbol[]) => OpenAPIDocument
@@ -558,6 +583,24 @@ Runs the API generation pipeline: walk → extract → generate → write.
 import { generateApi } from "@forge-ts/api";
 const result = await generateApi(config);
 console.log(result.success); // true if spec was written successfully
+```
+
+### `configureLogger`
+
+Configures the global `forgeLogger` based on CLI flags.  Call this once at the start of a command's `run()` handler to align consola's output level with the user's intent:  - `quiet` or `json` sets level to 0 (silent) so only LAFS output appears. - `verbose` sets level to 4 (debug) for maximum detail. - Default level is 3 (info) which covers info, warn, error, and success.
+
+```typescript
+(options: ForgeLoggerOptions) => void
+```
+
+**Parameters:**
+
+- `options` — Flag-driven configuration.
+
+```typescript
+import { configureLogger, forgeLogger } from "./forge-logger.js";
+configureLogger({ quiet: args.quiet, json: args.json, verbose: args.verbose });
+forgeLogger.info("This respects the configured level");
 ```
 
 ### `emitResult`
@@ -833,7 +876,7 @@ Checks if a FORGE:STUB section has been modified by the user.  Compares the embe
 Updates FORGE:STUB sections in existing content.  Behavior for each stub: - If the stub doesn't exist yet, appends it at the end of the content. - If the stub exists but is unmodified (hash matches generated content), regenerates it. - If the stub exists and was modified by user (hash mismatch), PRESERVES user content.  Each generated stub includes a `FORGE:STUB-HASH` comment containing a fingerprint of the generated content. On subsequent builds, this hash is compared to determine whether the user has made edits.
 
 ```typescript
-(existingContent: string, stubs: { id: string; content: string; }[]) => string
+(existingContent: string, stubs: Array<{ id: string; content: string; }>) => string
 ```
 
 **Parameters:**
@@ -1102,7 +1145,7 @@ console.log(configs[0].path); // ".vitepress/sidebar.json"
 Runs the full generation pipeline: walk → render → write.  Auto-generated pages are always regenerated from source code. Stub pages (scaffolding for human/agent editing) are only created if they don't already exist, preserving manual edits across builds. Pass `{ forceStubs: true }` to overwrite stubs.
 
 ```typescript
-(config: ForgeConfig, options?: GenerateOptions | undefined) => Promise<ForgeResult>
+(config: ForgeConfig, options?: GenerateOptions) => Promise<ForgeResult>
 ```
 
 **Parameters:**
@@ -1117,21 +1160,6 @@ import { generate } from "@forge-ts/gen";
 const result = await generate(config);
 console.log(result.success); // true if all files were written
 ```
-
-### `createLogger`
-
-Creates a `Logger` instance.
-
-```typescript
-(options?: { colors?: boolean | undefined; } | undefined) => Logger
-```
-
-**Parameters:**
-
-- `options` — Optional configuration.
-- `` — options.colors - Emit ANSI colour codes.  Defaults to `process.stdout.isTTY`.
-
-**Returns:** A configured logger.
 
 ### `runBuild`
 
@@ -1158,7 +1186,7 @@ console.log(output.success); // true if all steps succeeded
 Runs the bypass creation: creates a new bypass record with budget enforcement.
 
 ```typescript
-(args: { cwd?: string | undefined; reason: string; rule?: string | undefined; }) => Promise<CommandOutput<BypassCreateResult>>
+(args: { cwd?: string; reason: string; rule?: string; }) => Promise<CommandOutput<BypassCreateResult>>
 ```
 
 **Parameters:**
@@ -1182,7 +1210,7 @@ console.log(output.data.remainingBudget);
 Runs the bypass status query: shows active bypasses and remaining budget.
 
 ```typescript
-(args: { cwd?: string | undefined; }) => Promise<CommandOutput<BypassStatusResult>>
+(args: { cwd?: string; }) => Promise<CommandOutput<BypassStatusResult>>
 ```
 
 **Parameters:**
@@ -1213,7 +1241,7 @@ Scans symbols for imports of deprecated exports from other packages.
 
 ### `enforce`
 
-Runs the TSDoc enforcement pass against a project.  The enforcer walks all exported symbols that meet the configured minimum visibility threshold and emits diagnostics for any documentation deficiencies it finds.  ### Error codes | Code | Severity | Condition | |------|----------|-----------| | E001 | error    | Exported symbol is missing a TSDoc summary. | | E002 | error    | Function/method parameter lacks a `@param` tag. | | E003 | error    | Non-void function/method lacks a `@returns` tag. | | E004 | error    | Exported function/method is missing an `@example` block. | | E005 | error    | Package entry point (index.ts) is missing `@packageDocumentation`. | | E006 | error    | Public/protected class member is missing a TSDoc comment. | | E007 | error    | Interface/type alias property is missing a TSDoc comment. | | W001 | warning  | TSDoc comment contains parse errors. | | W002 | warning  | Function body throws but has no `@throws` tag. | | W003 | warning  | `@deprecated` tag is present without explanation. | | W006 | warning  | TSDoc parser-level syntax error (invalid tag, malformed block, etc.). | | E009 | error    | tsconfig.json required strict-mode flag is missing or disabled (guard). | | E010 | error    | Config drift: a rule severity is weaker than the locked value. | | E013 | error    | Exported function/class is missing a `@remarks` block. | | E014 | warn     | Optional property of interface/type is missing `@defaultValue`. | | E015 | error    | Generic symbol is missing `@typeParam` for a type parameter. | | W005 | warn     | Symbol references other symbols via `{@link}` but has no `@see` tags. | | W007 | warn     | Guide FORGE:AUTO section references a symbol that no longer exists. | | W008 | warn     | Exported public symbol is not mentioned in any guide page. |  When `config.enforce.strict` is `true` all warnings are promoted to errors.
+Runs the TSDoc enforcement pass against a project.  The enforcer walks all exported symbols that meet the configured minimum visibility threshold and emits diagnostics for any documentation deficiencies it finds.  ### Error codes | Code | Severity | Condition | |------|----------|-----------| | E001 | error    | Exported symbol is missing a TSDoc summary. | | E002 | error    | Function/method parameter lacks a `@param` tag. | | E003 | error    | Non-void function/method lacks a `@returns` tag. | | E004 | error    | Exported function/method is missing an `@example` block. | | E005 | error    | Package entry point (index.ts) is missing `@packageDocumentation`. | | E006 | error    | Public/protected class member is missing a TSDoc comment. | | E007 | error    | Interface/type alias property is missing a TSDoc comment. | | W001 | warning  | TSDoc comment contains parse errors. | | W002 | warning  | Function body throws but has no `@throws` tag. | | W003 | warning  | `@deprecated` tag is present without explanation. | | W006 | warning  | TSDoc parser-level syntax error (invalid tag, malformed block, etc.). | | E009 | error    | tsconfig.json required strict-mode flag is missing or disabled (guard). | | E010 | error    | Config drift: a rule severity is weaker than the locked value. | | E013 | error    | Exported function/class is missing a `@remarks` block. | | E014 | warn     | Optional property of interface/type is missing `@defaultValue`. | | E015 | error    | Generic symbol is missing `@typeParam` for a type parameter. | | W005 | warn     | Symbol references other symbols via `{@link}` but has no `@see` tags. | | W007 | warn     | Guide FORGE:AUTO section references a symbol that no longer exists. | | W008 | warn     | Exported public symbol is not mentioned in any guide page. | | E017 | error    | `@internal` symbol re-exported through public barrel (index.ts). | | E018 | warn     | `@route`-tagged function missing `@response` tag. | | W009 | warn     | `{@inheritDoc}` references a symbol that does not exist. | | W010 | warn     | `@breaking` tag present without `@migration` path. | | W011 | warn     | New public export missing `@since` version tag. |  When `config.enforce.strict` is `true` all warnings are promoted to errors.
 
 ```typescript
 (config: ForgeConfig) => Promise<ForgeResult>
@@ -1259,6 +1287,20 @@ const result = await enforce(config);
 console.log(formatResults(result, { colors: true, verbose: false }));
 ```
 
+### `getStagedFiles`
+
+Returns the list of staged .ts/.tsx files (relative paths) by querying git. Returns `null` when git is unavailable or the working directory is not a git repository. Deleted files are excluded.  The command is a fixed string with no interpolated user input, so shell injection is not a concern here.
+
+```typescript
+(cwd: string) => string[] | null
+```
+
+**Parameters:**
+
+- `cwd` — Working directory for the git command.
+
+**Returns:** Array of relative file paths, or `null` on failure.
+
 ### `runCheck`
 
 Runs the TSDoc enforcement pass and returns a typed command output.
@@ -1284,7 +1326,7 @@ console.log(output.data.summary.errors); // number of TSDoc errors found
 Starts the local dev server for the configured SSG target.  Reads `gen.ssgTarget` from the forge-ts config, resolves the adapter, and spawns the platform's dev server in the output directory.
 
 ```typescript
-(args: { cwd?: string | undefined; target?: string | undefined; port?: string | undefined; }) => Promise<void>
+(args: { cwd?: string; target?: string; port?: string; }) => Promise<void>
 ```
 
 **Parameters:**
@@ -1296,6 +1338,129 @@ Starts the local dev server for the configured SSG target.  Reads `gen.ssgTarget
 ```typescript
 import { runDocsDev } from "@forge-ts/cli";
 await runDocsDev({ cwd: "./my-project" });
+```
+
+### `readPkgJson`
+
+Read and parse package.json from a project root.  Detects indent style and trailing newline for lossless round-tripping. Returns `null` if the file doesn't exist or can't be parsed.
+
+```typescript
+(rootDir: string) => PkgJson | null
+```
+
+**Parameters:**
+
+- `rootDir` — Absolute path to the project root.
+
+**Returns:** Parsed package.json with formatting metadata, or null.
+
+### `serializePkgJson`
+
+Serialize a package.json object preserving original formatting.
+
+```typescript
+(pkg: PkgJson) => string
+```
+
+**Parameters:**
+
+- `pkg` — The parsed package.json with formatting metadata.
+
+**Returns:** Formatted JSON string ready to write to disk.
+
+### `writePkgJson`
+
+Write a modified package.json back to disk, preserving formatting.
+
+```typescript
+(pkg: PkgJson) => Promise<void>
+```
+
+**Parameters:**
+
+- `pkg` — The parsed and modified package.json.
+
+### `addScripts`
+
+Add scripts to package.json idempotently.  Only adds scripts where the key doesn't already exist. Never overwrites existing script values. Returns the list of keys added.
+
+```typescript
+(pkg: PkgJson, scripts: Record<string, string>) => string[]
+```
+
+**Parameters:**
+
+- `pkg` — The parsed package.json to modify (mutated in place).
+- `scripts` — Map of script key to command value.
+
+**Returns:** Array of script keys that were added (empty if all already existed).
+
+### `detectEnvironment`
+
+Detects the project environment by checking for files and dependencies.
+
+```typescript
+(rootDir: string) => InitProjectEnvironment
+```
+
+**Parameters:**
+
+- `rootDir` — Absolute path to the project root.
+
+**Returns:** The detected environment.
+
+### `buildTsdocContent`
+
+Builds tsdoc.json content, merging in customTags from the forge config.  When `customTags` is non-empty, the written tsdoc.json includes both `tagDefinitions` and `supportForTags` entries so that the TSDoc parser (and any editor extensions) recognise the custom tags.
+
+```typescript
+(customTags?: Array<{ tagName: string; syntaxKind: "block" | "inline" | "modifier"; }>) => string
+```
+
+**Parameters:**
+
+- `customTags` — Custom tag definitions from `ForgeConfig.tsdoc.customTags`.
+
+**Returns:** A JSON string for tsdoc.json.
+
+### `runInitProject`
+
+Runs the full project init flow.  Steps: 1. Detect project environment 2. Write forge-ts.config.ts (if not exists) 3. Write tsdoc.json (if not exists) 4. Wire package.json scripts (idempotent) 5. Validate tsconfig.json strictness 6. Validate package.json 7. Report summary
+
+```typescript
+(args: InitProjectArgs) => Promise<CommandOutput<InitProjectResult>>
+```
+
+**Parameters:**
+
+- `args` — CLI arguments for the init command.
+
+**Returns:** A typed `CommandOutput<InitProjectResult>`.
+
+```typescript
+import { runInitProject } from "@forge-ts/cli/commands/init-project";
+const output = await runInitProject({ cwd: process.cwd() });
+console.log(output.data.created); // ["forge-ts.config.ts", "tsdoc.json"]
+```
+
+### `runDoctor`
+
+Runs the doctor integrity check flow.  Checks: 1. forge-ts.config.ts — exists and loadable 2. tsdoc.json — exists and extends forge-ts/core/tsdoc-preset 3. forge-ts/core — installed in node_modules 4. TypeScript — installed 5. tsconfig.json — exists and has strict mode 6. biome.json — exists (informational) 7. .forge-lock.json — exists, valid, matches config 8. .forge-audit.jsonl — exists and event count 9. .forge-bypass.json — exists and active bypasses 10. Git hooks — forge-ts check in pre-commit
+
+```typescript
+(args: DoctorArgs) => Promise<CommandOutput<DoctorResult>>
+```
+
+**Parameters:**
+
+- `args` — CLI arguments for the doctor command.
+
+**Returns:** A typed `CommandOutput<DoctorResult>`.
+
+```typescript
+import { runDoctor } from "@forge-ts/cli/commands/doctor";
+const output = await runDoctor({ cwd: process.cwd(), fix: false });
+console.log(output.data.summary); // { passed: 7, warnings: 2, errors: 1, info: 0 }
 ```
 
 ### `runInitDocs`
@@ -1318,12 +1483,70 @@ const output = await runInitDocs({ target: "mintlify", cwd: process.cwd() });
 console.log(output.data.files); // list of created file paths
 ```
 
+### `detectHookManager`
+
+Detects which hook manager is present in the project.  Checks for: - husky: `.husky/` directory or `husky` in package.json devDependencies - lefthook: `lefthook.yml` or `lefthook` in package.json devDependencies
+
+```typescript
+(rootDir: string) => HookManager
+```
+
+**Parameters:**
+
+- `rootDir` — Absolute path to the project root.
+
+**Returns:** The detected hook manager, or "none" if neither is found.
+
+### `generateHuskyHook`
+
+Generates the husky pre-commit hook file content (modern husky v9+).
+
+```typescript
+() => string
+```
+
+### `generateHuskyPrePushHook`
+
+Generates the husky pre-push hook file content (modern husky v9+).
+
+```typescript
+() => string
+```
+
+### `generateLefthookBlock`
+
+Generates the lefthook block with both pre-commit and pre-push sections.
+
+```typescript
+() => string
+```
+
+### `runInitHooks`
+
+Scaffolds git hook integration for the project.  Detects the hook manager (husky or lefthook), generates appropriate hook files, and reports what was written.
+
+```typescript
+(args: InitHooksArgs) => Promise<CommandOutput<InitHooksResult>>
+```
+
+**Parameters:**
+
+- `args` — CLI arguments for the init hooks command.
+
+**Returns:** A typed `CommandOutput<InitHooksResult>`.
+
+```typescript
+import { runInitHooks } from "@forge-ts/cli/commands/init-hooks";
+const output = await runInitHooks({ cwd: "/my/project" });
+console.log(output.data.files); // [".husky/pre-commit"]
+```
+
 ### `runLock`
 
 Runs the lock command: reads current config and creates `.forge-lock.json`.
 
 ```typescript
-(args: { cwd?: string | undefined; }) => Promise<CommandOutput<LockResult>>
+(args: { cwd?: string; }) => Promise<CommandOutput<LockResult>>
 ```
 
 **Parameters:**
@@ -1336,6 +1559,26 @@ Runs the lock command: reads current config and creates `.forge-lock.json`.
 import { runLock } from "@forge-ts/cli/commands/lock";
 const output = await runLock({ cwd: process.cwd() });
 console.log(output.data.locked.rules); // number of rules locked
+```
+
+### `runPrepublish`
+
+Runs the prepublish safety gate: check then build.  If the check step fails, the build step is skipped entirely. Both steps use the same project root (cwd).
+
+```typescript
+(args: PrepublishArgs) => Promise<CommandOutput<PrepublishResult>>
+```
+
+**Parameters:**
+
+- `args` — CLI arguments for the prepublish command.
+
+**Returns:** A typed `CommandOutput<PrepublishResult>`.
+
+```typescript
+import { runPrepublish } from "@forge-ts/cli/commands/prepublish";
+const output = await runPrepublish({ cwd: process.cwd() });
+if (!output.success) process.exit(1);
 ```
 
 ### `extractExamples`
@@ -1453,7 +1696,7 @@ console.log(output.data.summary.passed); // number of passing doctests
 Runs the unlock command: removes `.forge-lock.json` with a mandatory reason.
 
 ```typescript
-(args: { cwd?: string | undefined; reason: string; }) => Promise<CommandOutput<UnlockResult>>
+(args: { cwd?: string; reason: string; }) => Promise<CommandOutput<UnlockResult>>
 ```
 
 **Parameters:**
@@ -1475,7 +1718,7 @@ console.log(output.data.success); // true
 Discriminated event types recorded in the audit trail.
 
 ```typescript
-any
+AuditEventType
 ```
 
 ### `AuditEvent`
@@ -1483,7 +1726,7 @@ any
 A single audit event recorded in the forge-ts audit trail.
 
 ```typescript
-any
+AuditEvent
 ```
 
 **Members:**
@@ -1499,7 +1742,7 @@ any
 Options for reading the audit log.
 
 ```typescript
-any
+ReadAuditOptions
 ```
 
 **Members:**
@@ -1512,7 +1755,7 @@ any
 Configuration for the bypass budget system.
 
 ```typescript
-any
+BypassConfig
 ```
 
 **Members:**
@@ -1525,7 +1768,7 @@ any
 A single bypass record stored in `.forge-bypass.json`.
 
 ```typescript
-any
+BypassRecord
 ```
 
 **Members:**
@@ -1542,7 +1785,7 @@ any
 Visibility levels for exported symbols. Derived from TSDoc release tags (public, beta, internal).
 
 ```typescript
-typeof Visibility
+Visibility
 ```
 
 **Members:**
@@ -1557,7 +1800,7 @@ typeof Visibility
 A single extracted and annotated symbol from the TypeScript AST.
 
 ```typescript
-any
+ForgeSymbol
 ```
 
 **Members:**
@@ -1578,7 +1821,7 @@ any
 Severity level for an individual enforcement rule. - `"error"` — violation fails the build. - `"warn"`  — violation is reported but does not fail the build. - `"off"`   — rule is disabled entirely.
 
 ```typescript
-any
+RuleSeverity
 ```
 
 ### `EnforceRules`
@@ -1586,7 +1829,7 @@ any
 Per-rule severity configuration for the TSDoc enforcer. Each key corresponds to one of the E001–E007 rule codes.
 
 ```typescript
-any
+EnforceRules
 ```
 
 **Members:**
@@ -1603,15 +1846,25 @@ any
 - `"require-default-value"` — E014: Optional property with default is missing defaultValue.
 - `"require-type-param"` — E015: Generic symbol is missing
 - `"require-see"` — W005: Symbol references other symbols via  but has no
+- `"require-release-tag"` — E016: Exported symbol is missing a release tag (public, beta, internal).
 - `"require-fresh-guides"` — W007: Guide FORGE:AUTO section references a symbol that no longer exists or has changed.
 - `"require-guide-coverage"` — W008: Exported public symbol is not mentioned in any guide page.
+- `"require-internal-boundary"` — E017:  symbol re-exported through public barrel (index.ts).
+- `"require-route-response"` — E018: route-tagged function missing
+- `"require-inheritdoc-source"` — W009:  references a symbol that does not exist.
+- `"require-migration-path"` — W010:
+- `"require-since"` — W011: New public export missing
+- `"require-fresh-examples"` — W013:
+- `"require-no-ts-ignore"` — E019: Non-test file contains ts-ignore or ts-expect-error directive.
+- `"require-no-any-in-api"` — E020: Exported symbol has `any` in its public API signature.
+- `"require-fresh-link-text"` — W012:  display text appears stale relative to target summary.
 
 ### `ForgeConfig`
 
 Full configuration for a forge-ts run. Loaded from forge-ts.config.ts or the "forge-ts" key in package.json.
 
 ```typescript
-any
+ForgeConfig
 ```
 
 **Members:**
@@ -1636,7 +1889,7 @@ any
 The result of a forge-ts compilation pass.
 
 ```typescript
-any
+ForgeResult
 ```
 
 **Members:**
@@ -1653,7 +1906,7 @@ any
 A diagnostic error produced during a forge-ts run.
 
 ```typescript
-any
+ForgeError
 ```
 
 **Members:**
@@ -1672,7 +1925,7 @@ any
 A diagnostic warning produced during a forge-ts run.
 
 ```typescript
-any
+ForgeWarning
 ```
 
 **Members:**
@@ -1688,7 +1941,7 @@ any
 Manifest stored in `.forge-lock.json`. Captures a point-in-time snapshot of the project's forge-ts configuration so that future runs can detect when settings have been weakened.
 
 ```typescript
-any
+ForgeLockManifest
 ```
 
 **Members:**
@@ -1703,7 +1956,7 @@ any
 A single violation found when comparing current config against the lock.
 
 ```typescript
-any
+LockViolation
 ```
 
 **Members:**
@@ -1718,7 +1971,7 @@ any
 OpenAPI 3.2 schema object.
 
 ```typescript
-any
+OpenAPISchemaObject
 ```
 
 **Members:**
@@ -1744,7 +1997,7 @@ any
 OpenAPI 3.2 info object.
 
 ```typescript
-any
+OpenAPIInfoObject
 ```
 
 **Members:**
@@ -1760,7 +2013,7 @@ any
 OpenAPI 3.2 tag object.
 
 ```typescript
-any
+OpenAPITagObject
 ```
 
 **Members:**
@@ -1773,7 +2026,7 @@ any
 OpenAPI 3.2 path item object.
 
 ```typescript
-any
+OpenAPIPathItemObject
 ```
 
 **Members:**
@@ -1796,7 +2049,7 @@ any
 OpenAPI 3.2 operation object.
 
 ```typescript
-any
+OpenAPIOperationObject
 ```
 
 **Members:**
@@ -1813,7 +2066,7 @@ any
 OpenAPI 3.2 parameter object.
 
 ```typescript
-any
+OpenAPIParameterObject
 ```
 
 **Members:**
@@ -1830,7 +2083,7 @@ any
 OpenAPI 3.2 encoding object.
 
 ```typescript
-any
+OpenAPIEncodingObject
 ```
 
 **Members:**
@@ -1846,7 +2099,7 @@ any
 OpenAPI 3.2 media type object.
 
 ```typescript
-any
+OpenAPIMediaTypeObject
 ```
 
 **Members:**
@@ -1859,7 +2112,7 @@ any
 OpenAPI 3.2 response object.
 
 ```typescript
-any
+OpenAPIResponseObject
 ```
 
 **Members:**
@@ -1873,7 +2126,7 @@ any
 Complete OpenAPI 3.2 document.
 
 ```typescript
-any
+OpenAPIDocument
 ```
 
 **Members:**
@@ -1890,7 +2143,7 @@ any
 The return type of `createWalker`.
 
 ```typescript
-any
+ASTWalker
 ```
 
 **Members:**
@@ -1902,7 +2155,7 @@ any
 A single property extracted from an interface or class symbol.
 
 ```typescript
-any
+SDKProperty
 ```
 
 **Members:**
@@ -1918,7 +2171,7 @@ any
 An SDK type descriptor extracted from the symbol graph.
 
 ```typescript
-any
+SDKType
 ```
 
 **Members:**
@@ -1937,7 +2190,7 @@ any
 A single entry in the generated API reference.
 
 ```typescript
-any
+ReferenceEntry
 ```
 
 **Members:**
@@ -1955,12 +2208,26 @@ any
 - `children` — Nested child symbols (class methods, interface properties, enum members).
 - `location` — Source file location.
 
+### `ForgeLoggerOptions`
+
+Options for configuring the forge-ts logger at CLI startup.
+
+```typescript
+ForgeLoggerOptions
+```
+
+**Members:**
+
+- `quiet` — Suppress all consola output (--quiet flag).
+- `json` — JSON output mode (--json flag). LAFS handles JSON; suppress consola.
+- `verbose` — Enable debug-level output (--verbose flag).
+
 ### `CommandOutput`
 
 Typed result from a forge-ts command.
 
 ```typescript
-any
+CommandOutput<T>
 ```
 
 **Members:**
@@ -1977,7 +2244,7 @@ any
 Structured error for CLI commands.
 
 ```typescript
-any
+ForgeCliError
 ```
 
 **Members:**
@@ -1993,7 +2260,7 @@ any
 Structured warning for CLI commands.
 
 ```typescript
-any
+ForgeCliWarning
 ```
 
 **Members:**
@@ -2009,7 +2276,7 @@ any
 Output format flags passed through from citty args.
 
 ```typescript
-any
+OutputFlags
 ```
 
 **Members:**
@@ -2024,7 +2291,7 @@ any
 Arguments for the `audit` command.
 
 ```typescript
-any
+AuditArgs
 ```
 
 **Members:**
@@ -2038,7 +2305,7 @@ any
 Typed result for the `audit` command.
 
 ```typescript
-any
+AuditResult
 ```
 
 **Members:**
@@ -2052,7 +2319,7 @@ any
 The source heuristic that discovered a guide.
 
 ```typescript
-any
+GuideSource
 ```
 
 ### `DiscoveredGuide`
@@ -2060,7 +2327,7 @@ any
 A guide discovered from the symbol graph by code analysis heuristics.
 
 ```typescript
-any
+DiscoveredGuide
 ```
 
 **Members:**
@@ -2076,7 +2343,7 @@ any
 Inline leaf node: literal text.
 
 ```typescript
-any
+MdText
 ```
 
 **Members:**
@@ -2089,7 +2356,7 @@ any
 Inline leaf node: code span.
 
 ```typescript
-any
+MdInlineCode
 ```
 
 **Members:**
@@ -2102,7 +2369,7 @@ any
 Inline container: strong emphasis (bold).
 
 ```typescript
-any
+MdStrong
 ```
 
 **Members:**
@@ -2115,7 +2382,7 @@ any
 Inline container: emphasis (italic).
 
 ```typescript
-any
+MdEmphasis
 ```
 
 **Members:**
@@ -2128,7 +2395,7 @@ any
 Inline container: hyperlink.
 
 ```typescript
-any
+MdLink
 ```
 
 **Members:**
@@ -2142,7 +2409,7 @@ any
 Union of all inline (phrasing) content types.
 
 ```typescript
-any
+MdPhrasing
 ```
 
 ### `MdHeading`
@@ -2150,7 +2417,7 @@ any
 Block node: heading (depth 1-6).
 
 ```typescript
-any
+MdHeading
 ```
 
 **Members:**
@@ -2164,7 +2431,7 @@ any
 Block node: paragraph.
 
 ```typescript
-any
+MdParagraph
 ```
 
 **Members:**
@@ -2177,7 +2444,7 @@ any
 Block node: fenced code block.
 
 ```typescript
-any
+MdCode
 ```
 
 **Members:**
@@ -2191,7 +2458,7 @@ any
 Block node: blockquote.
 
 ```typescript
-any
+MdBlockquote
 ```
 
 **Members:**
@@ -2204,7 +2471,7 @@ any
 Block node: raw HTML (including comments).
 
 ```typescript
-any
+MdHtml
 ```
 
 **Members:**
@@ -2217,7 +2484,7 @@ any
 Block node: horizontal rule.
 
 ```typescript
-any
+MdThematicBreak
 ```
 
 **Members:**
@@ -2229,7 +2496,7 @@ any
 List item container.
 
 ```typescript
-any
+MdListItem
 ```
 
 **Members:**
@@ -2243,7 +2510,7 @@ any
 Block node: ordered or unordered list.
 
 ```typescript
-any
+MdList
 ```
 
 **Members:**
@@ -2258,7 +2525,7 @@ any
 GFM table cell.
 
 ```typescript
-any
+MdTableCell
 ```
 
 **Members:**
@@ -2271,7 +2538,7 @@ any
 GFM table row.
 
 ```typescript
-any
+MdTableRow
 ```
 
 **Members:**
@@ -2284,7 +2551,7 @@ any
 GFM table.
 
 ```typescript
-any
+MdTable
 ```
 
 **Members:**
@@ -2298,7 +2565,7 @@ any
 Union of all block content types.
 
 ```typescript
-any
+MdBlock
 ```
 
 ### `MdRoot`
@@ -2306,7 +2573,7 @@ any
 Document root.
 
 ```typescript
-any
+MdRoot
 ```
 
 **Members:**
@@ -2319,7 +2586,7 @@ any
 Result of parsing frontmatter from markdown/MDX content.
 
 ```typescript
-any
+FrontmatterResult
 ```
 
 **Members:**
@@ -2332,7 +2599,7 @@ any
 A single generated documentation page.
 
 ```typescript
-any
+DocPage
 ```
 
 **Members:**
@@ -2347,7 +2614,7 @@ any
 Options controlling the doc site generator.
 
 ```typescript
-any
+SiteGeneratorOptions
 ```
 
 **Members:**
@@ -2364,7 +2631,7 @@ any
 Supported SSG target identifiers.
 
 ```typescript
-any
+SSGTarget
 ```
 
 ### `GeneratedFile`
@@ -2372,7 +2639,7 @@ any
 A file to write to disk during scaffolding or generation.
 
 ```typescript
-any
+GeneratedFile
 ```
 
 **Members:**
@@ -2386,7 +2653,7 @@ any
 Style guide configuration for the SSG target.
 
 ```typescript
-any
+SSGStyleGuide
 ```
 
 **Members:**
@@ -2403,7 +2670,7 @@ any
 Scaffold manifest describing what `init docs` creates.
 
 ```typescript
-any
+ScaffoldManifest
 ```
 
 **Members:**
@@ -2420,7 +2687,7 @@ any
 Context passed to adapter methods.
 
 ```typescript
-any
+AdapterContext
 ```
 
 **Members:**
@@ -2437,7 +2704,7 @@ any
 Command to start a local dev server for doc preview.
 
 ```typescript
-any
+DevServerCommand
 ```
 
 **Members:**
@@ -2453,7 +2720,7 @@ any
 The central SSG adapter interface. Every doc platform provider implements this contract. One file per provider. No shared mutable state.
 
 ```typescript
-any
+SSGAdapter
 ```
 
 **Members:**
@@ -2478,7 +2745,7 @@ const files = adapter.transformPages(pages, context);
 Options controlling Markdown output.
 
 ```typescript
-any
+MarkdownOptions
 ```
 
 **Members:**
@@ -2490,7 +2757,7 @@ any
 Options controlling README sync behaviour.
 
 ```typescript
-any
+ReadmeSyncOptions
 ```
 
 **Members:**
@@ -2503,7 +2770,7 @@ any
 A generated skill package following the agentskills.io directory structure. Contains SKILL.md plus optional references and scripts files.
 
 ```typescript
-any
+SkillPackage
 ```
 
 **Members:**
@@ -2516,7 +2783,7 @@ any
 A single generated SSG configuration file.
 
 ```typescript
-any
+SSGConfigFile
 ```
 
 **Members:**
@@ -2529,35 +2796,19 @@ any
 Options for the generation pipeline.
 
 ```typescript
-any
+GenerateOptions
 ```
 
 **Members:**
 
 - `forceStubs` — When true, overwrite stub pages even if they already exist on disk. Normally stub pages (concepts, guides, faq, contributing, changelog) are only created on the first build to preserve manual edits. Use this to reset stubs to their scaffolding state.
 
-### `Logger`
-
-A minimal structured logger used throughout the CLI commands.
-
-```typescript
-any
-```
-
-**Members:**
-
-- `info` — Print an informational message.
-- `success` — Print a success message (green ✓ prefix when colours are on).
-- `warn` — Print a warning message (yellow prefix when colours are on).
-- `error` — Print an error message (red ✗ prefix when colours are on).
-- `step` — Print a build-step line.
-
 ### `BuildArgs`
 
 Arguments for the `build` command.
 
 ```typescript
-any
+BuildArgs
 ```
 
 **Members:**
@@ -2573,7 +2824,7 @@ any
 A single step in the build pipeline.
 
 ```typescript
-any
+BuildStep
 ```
 
 **Members:**
@@ -2589,7 +2840,7 @@ any
 Typed result for the `build` command.
 
 ```typescript
-any
+BuildResult
 ```
 
 **Members:**
@@ -2604,7 +2855,7 @@ any
 Typed result for the `bypass` command when creating a bypass.
 
 ```typescript
-any
+BypassCreateResult
 ```
 
 **Members:**
@@ -2619,7 +2870,7 @@ any
 Typed result for the `bypass --status` command.
 
 ```typescript
-any
+BypassStatusResult
 ```
 
 **Members:**
@@ -2635,7 +2886,7 @@ any
 A detected usage of a deprecated symbol.
 
 ```typescript
-any
+DeprecatedUsage
 ```
 
 **Members:**
@@ -2651,7 +2902,7 @@ any
 Options that control how `formatResults` renders its output.
 
 ```typescript
-any
+FormatOptions
 ```
 
 **Members:**
@@ -2664,7 +2915,7 @@ any
 Arguments for the `check` command.
 
 ```typescript
-any
+CheckArgs
 ```
 
 **Members:**
@@ -2675,6 +2926,7 @@ any
 - `mvi` — MVI verbosity level for structured output.
 - `rule` — Filter errors to a specific rule code (e.g., "E001").
 - `file` — Filter errors to a specific file path (substring match).
+- `staged` — Only check symbols from git-staged .ts/.tsx files.
 - `limit` — Maximum number of file groups to return in byFile (default: 20).
 - `offset` — Offset into the byFile list for pagination (default: 0).
 
@@ -2683,7 +2935,7 @@ any
 A single error entry within a file group.
 
 ```typescript
-any
+CheckFileError
 ```
 
 **Members:**
@@ -2701,7 +2953,7 @@ any
 A single warning entry within a file group.
 
 ```typescript
-any
+CheckFileWarning
 ```
 
 **Members:**
@@ -2717,7 +2969,7 @@ any
 Errors and warnings grouped by file.
 
 ```typescript
-any
+CheckFileGroup
 ```
 
 **Members:**
@@ -2731,7 +2983,7 @@ any
 Error breakdown by rule code, sorted by count descending.
 
 ```typescript
-any
+CheckRuleCount
 ```
 
 **Members:**
@@ -2746,7 +2998,7 @@ any
 Triage data for prioritizing fixes. Always present when the check has errors, bounded in size (~9 rules + top 20 files).
 
 ```typescript
-any
+CheckTriage
 ```
 
 **Members:**
@@ -2760,7 +3012,7 @@ any
 Pagination metadata for byFile results.
 
 ```typescript
-any
+CheckPage
 ```
 
 **Members:**
@@ -2775,7 +3027,7 @@ any
 Typed result for the `check` command.
 
 ```typescript
-any
+CheckResult
 ```
 
 **Members:**
@@ -2788,12 +3040,141 @@ any
 - `filters` — Active filters applied to this result.
 - `nextCommand` — CLI command hint for the agent to run next.
 
+### `PkgJson`
+
+Parsed package.json with formatting metadata for lossless round-tripping.
+
+```typescript
+PkgJson
+```
+
+**Members:**
+
+- `path` — Absolute path to the file.
+- `raw` — Raw file content as read from disk.
+- `obj` — Parsed JSON object.
+- `indent` — Detected indent string (tabs or spaces).
+- `trailingNewline` — Whether the original file ended with a newline.
+
+### `InitProjectEnvironment`
+
+Detected project environment from Step 1 of the init flow.
+
+```typescript
+InitProjectEnvironment
+```
+
+**Members:**
+
+- `packageJsonExists` — Whether package.json exists.
+- `tsconfigExists` — Whether tsconfig.json exists.
+- `biomeDetected` — Whether biome.json or biome.jsonc exists.
+- `typescriptVersion` — TypeScript version from dependencies, or null if not found.
+- `hookManager` — Detected hook manager.
+- `monorepo` — Whether the project is a monorepo.
+- `monorepoType` — Monorepo type if detected.
+
+### `InitProjectResult`
+
+Result of the `init` (project setup) command.
+
+```typescript
+InitProjectResult
+```
+
+**Members:**
+
+- `success` — Whether the init succeeded.
+- `created` — Files that were created.
+- `skipped` — Files that already existed and were skipped.
+- `warnings` — Warning messages collected during init.
+- `environment` — Detected project environment.
+- `nextSteps` — Next steps for the user.
+- `scriptsAdded` — Scripts that were added to package.json (empty if none were added).
+
+```typescript
+import { runInitProject } from "@forge-ts/cli/commands/init-project";
+const output = await runInitProject({ cwd: process.cwd() });
+console.log(output.data.created); // list of created files
+```
+
+### `InitProjectArgs`
+
+Arguments for the `init` (project setup) command.
+
+```typescript
+InitProjectArgs
+```
+
+**Members:**
+
+- `cwd` — Project root directory (default: cwd).
+- `mvi` — MVI verbosity level for structured output.
+
+### `DoctorCheckStatus`
+
+Status of a single doctor check.
+
+```typescript
+DoctorCheckStatus
+```
+
+### `DoctorCheckResult`
+
+Result of a single doctor check.
+
+```typescript
+DoctorCheckResult
+```
+
+**Members:**
+
+- `name` — Name of the check.
+- `status` — Status of the check.
+- `message` — Human-readable message.
+- `fixable` — Whether this issue can be auto-fixed with --fix.
+
+### `DoctorResult`
+
+Result of the `doctor` command.
+
+```typescript
+DoctorResult
+```
+
+**Members:**
+
+- `success` — Whether all checks passed without errors.
+- `checks` — Individual check results.
+- `summary` — Summary counts.
+- `fixed` — Files that were fixed (only populated when --fix is used).
+
+```typescript
+import { runDoctor } from "@forge-ts/cli/commands/doctor";
+const output = await runDoctor({ cwd: process.cwd() });
+console.log(output.data.summary.passed); // number of passed checks
+```
+
+### `DoctorArgs`
+
+Arguments for the `doctor` command.
+
+```typescript
+DoctorArgs
+```
+
+**Members:**
+
+- `cwd` — Project root directory (default: cwd).
+- `fix` — Auto-fix resolvable issues.
+- `mvi` — MVI verbosity level for structured output.
+
 ### `InitDocsResult`
 
 Result of the `init docs` command.
 
 ```typescript
-any
+InitDocsResult
 ```
 
 **Members:**
@@ -2815,7 +3196,7 @@ console.log(output.data.summary.filesCreated); // number of files written
 Arguments for the `init docs` command.
 
 ```typescript
-any
+InitDocsArgs
 ```
 
 **Members:**
@@ -2826,12 +3207,56 @@ any
 - `force` — Overwrite an existing scaffold without prompting.
 - `mvi` — MVI verbosity level for structured output.
 
+### `HookManager`
+
+Detected hook manager in the project.
+
+```typescript
+HookManager
+```
+
+### `InitHooksResult`
+
+Result of the `init hooks` command.
+
+```typescript
+InitHooksResult
+```
+
+**Members:**
+
+- `success` — Whether the hook scaffolding succeeded.
+- `hookManager` — The detected or chosen hook manager.
+- `summary` — Summary of what was created.
+- `files` — Relative paths of all files written.
+- `instructions` — Post-scaffold instructions for the user.
+
+```typescript
+import { runInitHooks } from "@forge-ts/cli/commands/init-hooks";
+const output = await runInitHooks({ cwd: process.cwd() });
+console.log(output.data.hookManager); // "husky" | "lefthook" | "none"
+```
+
+### `InitHooksArgs`
+
+Arguments for the `init hooks` command.
+
+```typescript
+InitHooksArgs
+```
+
+**Members:**
+
+- `cwd` — Project root directory (default: cwd).
+- `force` — Force overwrite existing hook files.
+- `mvi` — MVI verbosity level for structured output.
+
 ### `LockResult`
 
 Typed result for the `lock` command.
 
 ```typescript
-any
+LockResult
 ```
 
 **Members:**
@@ -2843,12 +3268,49 @@ any
 - `locked` — Summary of what was locked.
 - `overwrote` — Whether a previous lock file was overwritten.
 
+### `PrepublishResult`
+
+Typed result for the `prepublish` command.
+
+```typescript
+PrepublishResult
+```
+
+**Members:**
+
+- `success` — Whether both check and build passed.
+- `summary` — Summary of the prepublish pipeline.
+- `check` — Result of the check step.
+- `build` — Result of the build step (absent if check failed and build was skipped).
+- `skippedReason` — If check failed, the reason build was skipped.
+
+```typescript
+import { runPrepublish } from "@forge-ts/cli/commands/prepublish";
+const output = await runPrepublish({ cwd: process.cwd() });
+console.log(output.data.check.success); // true if check passed
+console.log(output.data.build?.success); // true if build passed
+```
+
+### `PrepublishArgs`
+
+Arguments for the `prepublish` command.
+
+```typescript
+PrepublishArgs
+```
+
+**Members:**
+
+- `cwd` — Project root directory (default: cwd).
+- `strict` — Treat warnings as errors during the check step.
+- `mvi` — MVI verbosity level for structured output.
+
 ### `ExtractedExample`
 
 A single extracted `@example` block ready for test generation.
 
 ```typescript
-any
+ExtractedExample
 ```
 
 **Members:**
@@ -2865,7 +3327,7 @@ any
 Options for virtual test file generation.
 
 ```typescript
-any
+GeneratorOptions
 ```
 
 **Members:**
@@ -2877,7 +3339,7 @@ any
 A generated virtual test file.
 
 ```typescript
-any
+VirtualTestFile
 ```
 
 **Members:**
@@ -2890,7 +3352,7 @@ any
 Result of running the generated test files.
 
 ```typescript
-any
+RunResult
 ```
 
 **Members:**
@@ -2906,7 +3368,7 @@ any
 The result of a single test case.
 
 ```typescript
-any
+TestCaseResult
 ```
 
 **Members:**
@@ -2920,7 +3382,7 @@ any
 Arguments for the `test` command.
 
 ```typescript
-any
+TestArgs
 ```
 
 **Members:**
@@ -2933,7 +3395,7 @@ any
 A single test failure entry, included at standard and full MVI levels.
 
 ```typescript
-any
+TestFailure
 ```
 
 **Members:**
@@ -2948,7 +3410,7 @@ any
 Typed result for the `test` command.
 
 ```typescript
-any
+TestResult
 ```
 
 **Members:**
@@ -2962,7 +3424,7 @@ any
 Typed result for the `unlock` command.
 
 ```typescript
-any
+UnlockResult
 ```
 
 **Members:**
@@ -2974,12 +3436,37 @@ any
 
 ## Constants
 
+### `RULE_GROUP_MAP`
+
+Maps each rule key in `EnforceRules` to its TSDoc standardisation group.  - **core**: Tags defined in the TSDoc core standard (`@param`, `@returns`, etc.). - **extended**: Tags from the extended standard (`@example`, `@defaultValue`, etc.). - **discretionary**: Release-tag family (`@public`, `@beta`, `@internal`). - Rules not listed here are **guard rules** and are not affected by group settings.
+
+```typescript
+Partial<Record<keyof EnforceRules, "core" | "extended" | "discretionary">>
+```
+
+### `forgeLogger`
+
+Pre-configured consola instance branded for forge-ts.
+
+```typescript
+import("/mnt/projects/forge-ts/node_modules/.pnpm/consola@3.4.2/node_modules/consola/dist/core").ConsolaInstance
+```
+
+```typescript
+import { forgeLogger } from "./forge-logger.js";
+forgeLogger.info("Checking 42 files...");
+forgeLogger.success("All checks passed");
+forgeLogger.warn("Deprecated import detected");
+forgeLogger.error("Build failed");
+forgeLogger.debug("Resolved config from forge-ts.config.ts");
+```
+
 ### `auditCommand`
 
 Citty command definition for `forge-ts audit`.
 
 ```typescript
-CommandDef<{ readonly cwd: { readonly type: "string"; readonly description: "Project root directory"; }; readonly limit: { readonly type: "string"; readonly description: "Maximum events to display (default: 20)"; }; readonly type: { ...; }; readonly json: { ...; }; readonly human: { ...; }; readonly quiet: { ...; };...
+import("/mnt/projects/forge-ts/node_modules/.pnpm/citty@0.2.1/node_modules/citty/dist/index").CommandDef<{ readonly cwd: { readonly type: "string"; readonly description: "Project root directory"; }; readonly limit: { readonly type: "string"; readonly description: "Maximum events to display (default: 20)"; }; readonly type: { readonly type: "string"; readonly description: "Filter by event type (config.lock, config.unlock, config.drift, bypass.create, bypass.expire, rule.change)"; }; readonly json: { readonly type: "boolean"; readonly description: "Output as LAFS JSON envelope (agent-friendly)"; readonly default: false; }; readonly human: { readonly type: "boolean"; readonly description: "Output as formatted text (default for TTY)"; readonly default: false; }; readonly quiet: { readonly type: "boolean"; readonly description: "Suppress non-essential output"; readonly default: false; }; }>
 ```
 
 ### `md`
@@ -2987,7 +3474,7 @@ CommandDef<{ readonly cwd: { readonly type: "string"; readonly description: "Pro
 Concise factory functions for building mdast nodes.  Usage:
 
 ```typescript
-{ text: (value: string) => MdText; inlineCode: (value: string) => MdInlineCode; strong: (...children: MdPhrasing[]) => MdStrong; emphasis: (...children: MdPhrasing[]) => MdEmphasis; ... 12 more ...; root: (...children: MdBlock[]) => MdRoot; }
+{ text: (value: string) => MdText; inlineCode: (value: string) => MdInlineCode; strong: (...children: MdPhrasing[]) => MdStrong; emphasis: (...children: MdPhrasing[]) => MdEmphasis; link: (url: string, ...children: MdPhrasing[]) => MdLink; heading: (depth: 1 | 2 | 3 | 4 | 5 | 6, ...children: MdPhrasing[]) => MdHeading; paragraph: (...children: MdPhrasing[]) => MdParagraph; code: (lang: string, value: string) => MdCode; blockquote: (...children: MdBlock[]) => MdBlockquote; html: (value: string) => MdHtml; thematicBreak: () => MdThematicBreak; listItem: (...children: MdBlock[]) => MdListItem; list: (items: MdListItem[], ordered?: boolean) => MdList; tableCell: (...children: MdPhrasing[]) => MdTableCell; tableRow: (...cells: MdTableCell[]) => MdTableRow; table: (align: ("left" | "center" | "right" | null)[] | null, ...rows: MdTableRow[]) => MdTable; root: (...children: MdBlock[]) => MdRoot; }
 ```
 
 ### `DEFAULT_TARGET`
@@ -3063,7 +3550,7 @@ console.log(configs[0].path); // ".vitepress/config.mts"
 Citty command definition for `forge-ts build`.
 
 ```typescript
-CommandDef<{ readonly cwd: { readonly type: "string"; readonly description: "Project root directory"; }; readonly "skip-api": { readonly type: "boolean"; readonly description: "Skip OpenAPI generation"; readonly default: false; }; ... 5 more ...; readonly mvi: { ...; }; }>
+import("/mnt/projects/forge-ts/node_modules/.pnpm/citty@0.2.1/node_modules/citty/dist/index").CommandDef<{ readonly cwd: { readonly type: "string"; readonly description: "Project root directory"; }; readonly "skip-api": { readonly type: "boolean"; readonly description: "Skip OpenAPI generation"; readonly default: false; }; readonly "skip-gen": { readonly type: "boolean"; readonly description: "Skip doc generation"; readonly default: false; }; readonly "force-stubs": { readonly type: "boolean"; readonly description: "Overwrite stub pages even if they exist (reset to scaffolding)"; readonly default: false; }; readonly json: { readonly type: "boolean"; readonly description: "Output as LAFS JSON envelope (agent-friendly)"; readonly default: false; }; readonly human: { readonly type: "boolean"; readonly description: "Output as formatted text (default for TTY)"; readonly default: false; }; readonly quiet: { readonly type: "boolean"; readonly description: "Suppress non-essential output"; readonly default: false; }; readonly mvi: { readonly type: "string"; readonly description: "MVI verbosity level: minimal, standard, full"; }; }>
 ```
 
 ### `bypassCommand`
@@ -3071,7 +3558,7 @@ CommandDef<{ readonly cwd: { readonly type: "string"; readonly description: "Pro
 Citty command definition for `forge-ts bypass`.
 
 ```typescript
-CommandDef<{ readonly cwd: { readonly type: "string"; readonly description: "Project root directory"; }; readonly reason: { readonly type: "string"; readonly description: "Mandatory justification for bypassing rules"; }; ... 4 more ...; readonly quiet: { ...; }; }>
+import("/mnt/projects/forge-ts/node_modules/.pnpm/citty@0.2.1/node_modules/citty/dist/index").CommandDef<{ readonly cwd: { readonly type: "string"; readonly description: "Project root directory"; }; readonly reason: { readonly type: "string"; readonly description: "Mandatory justification for bypassing rules"; }; readonly rule: { readonly type: "string"; readonly description: "Specific rule code to bypass (e.g., \"E009\"). Defaults to \"all\""; }; readonly status: { readonly type: "boolean"; readonly description: "Show active bypasses and remaining budget"; readonly default: false; }; readonly json: { readonly type: "boolean"; readonly description: "Output as LAFS JSON envelope (agent-friendly)"; readonly default: false; }; readonly human: { readonly type: "boolean"; readonly description: "Output as formatted text (default for TTY)"; readonly default: false; }; readonly quiet: { readonly type: "boolean"; readonly description: "Suppress non-essential output"; readonly default: false; }; }>
 ```
 
 ### `checkCommand`
@@ -3079,7 +3566,7 @@ CommandDef<{ readonly cwd: { readonly type: "string"; readonly description: "Pro
 Citty command definition for `forge-ts check`.
 
 ```typescript
-CommandDef<{ readonly cwd: { readonly type: "string"; readonly description: "Project root directory"; }; readonly strict: { readonly type: "boolean"; readonly description: "Treat warnings as errors"; readonly default: false; }; ... 8 more ...; readonly mvi: { ...; }; }>
+import("/mnt/projects/forge-ts/node_modules/.pnpm/citty@0.2.1/node_modules/citty/dist/index").CommandDef<{ readonly cwd: { readonly type: "string"; readonly description: "Project root directory"; }; readonly strict: { readonly type: "boolean"; readonly description: "Treat warnings as errors"; readonly default: false; }; readonly verbose: { readonly type: "boolean"; readonly description: "Show detailed output"; readonly default: false; }; readonly rule: { readonly type: "string"; readonly description: "Filter by rule code (e.g., E001, W004)"; }; readonly file: { readonly type: "string"; readonly description: "Filter by file path (substring match)"; }; readonly staged: { readonly type: "boolean"; readonly description: "Only check symbols from git-staged .ts/.tsx files"; readonly default: false; }; readonly limit: { readonly type: "string"; readonly description: "Max file groups in output (default: 20)"; }; readonly offset: { readonly type: "string"; readonly description: "Skip N file groups for pagination (default: 0)"; }; readonly json: { readonly type: "boolean"; readonly description: "Output as LAFS JSON envelope (agent-friendly)"; readonly default: false; }; readonly human: { readonly type: "boolean"; readonly description: "Output as formatted text (default for TTY)"; readonly default: false; }; readonly quiet: { readonly type: "boolean"; readonly description: "Suppress non-essential output"; readonly default: false; }; readonly mvi: { readonly type: "string"; readonly description: "MVI verbosity level: minimal, standard, full"; }; }>
 ```
 
 ### `docsDevCommand`
@@ -3087,11 +3574,37 @@ CommandDef<{ readonly cwd: { readonly type: "string"; readonly description: "Pro
 Citty command definition for `forge-ts docs dev`.
 
 ```typescript
-CommandDef<{ readonly cwd: { readonly type: "string"; readonly description: "Project root directory"; }; readonly target: { readonly type: "string"; readonly description: "SSG target override (reads from config by default)"; }; readonly port: { ...; }; }>
+import("/mnt/projects/forge-ts/node_modules/.pnpm/citty@0.2.1/node_modules/citty/dist/index").CommandDef<{ readonly cwd: { readonly type: "string"; readonly description: "Project root directory"; }; readonly target: { readonly type: "string"; readonly description: "SSG target override (reads from config by default)"; }; readonly port: { readonly type: "string"; readonly description: "Port for the dev server"; }; }>
 ```
 
 ```typescript
 import { docsDevCommand } from "@forge-ts/cli";
+```
+
+### `initProjectCommand`
+
+Citty command definition for `forge-ts init` (bare — full project setup).  Detects the project environment, writes default configuration files, validates tsconfig/package.json, and reports a summary.
+
+```typescript
+import("/mnt/projects/forge-ts/node_modules/.pnpm/citty@0.2.1/node_modules/citty/dist/index").CommandDef<{ readonly cwd: { readonly type: "string"; readonly description: "Project root directory"; }; readonly json: { readonly type: "boolean"; readonly description: "Output as LAFS JSON envelope"; readonly default: false; }; readonly human: { readonly type: "boolean"; readonly description: "Output as formatted text"; readonly default: false; }; readonly quiet: { readonly type: "boolean"; readonly description: "Suppress non-essential output"; readonly default: false; }; readonly mvi: { readonly type: "string"; readonly description: "MVI verbosity level: minimal, standard, full"; }; }>
+```
+
+```typescript
+import { initProjectCommand } from "@forge-ts/cli/commands/init-project";
+// Registered as the default handler for `forge-ts init`
+```
+
+### `doctorCommand`
+
+Citty command definition for `forge-ts doctor`.  Performs project integrity checks and optionally auto-fixes resolvable issues with `--fix`.
+
+```typescript
+import("/mnt/projects/forge-ts/node_modules/.pnpm/citty@0.2.1/node_modules/citty/dist/index").CommandDef<{ readonly cwd: { readonly type: "string"; readonly description: "Project root directory"; }; readonly fix: { readonly type: "boolean"; readonly description: "Auto-fix resolvable issues"; readonly default: false; }; readonly json: { readonly type: "boolean"; readonly description: "Output as LAFS JSON envelope"; readonly default: false; }; readonly human: { readonly type: "boolean"; readonly description: "Output as formatted text"; readonly default: false; }; readonly quiet: { readonly type: "boolean"; readonly description: "Suppress non-essential output"; readonly default: false; }; readonly mvi: { readonly type: "string"; readonly description: "MVI verbosity level: minimal, standard, full"; }; }>
+```
+
+```typescript
+import { doctorCommand } from "@forge-ts/cli/commands/doctor";
+// Registered as a top-level subcommand of `forge-ts`
 ```
 
 ### `initDocsCommand`
@@ -3099,7 +3612,7 @@ import { docsDevCommand } from "@forge-ts/cli";
 Citty command definition for `forge-ts init docs`.  Scaffolds a complete documentation site for the target SSG platform. Use `--json` for LAFS JSON envelope output (agent/CI-friendly).
 
 ```typescript
-CommandDef<{ readonly target: { readonly type: "string"; readonly description: `SSG target: ${string} (default: docusaurus)` | `SSG target: ${string} (default: mintlify)` | `SSG target: ${string} (default: nextra)` | `SSG target: ${string} (default: vitepress)`; }; readonly cwd: { readonly type: "string"; readonly d...
+import("/mnt/projects/forge-ts/node_modules/.pnpm/citty@0.2.1/node_modules/citty/dist/index").CommandDef<{ readonly target: { readonly type: "string"; readonly description: `SSG target: ${string} (default: docusaurus)` | `SSG target: ${string} (default: mintlify)` | `SSG target: ${string} (default: nextra)` | `SSG target: ${string} (default: vitepress)`; }; readonly cwd: { readonly type: "string"; readonly description: "Project root directory"; }; readonly "out-dir": { readonly type: "string"; readonly description: "Output directory for doc site (default: ./docs)"; }; readonly force: { readonly type: "boolean"; readonly description: "Overwrite existing scaffold"; readonly default: false; }; readonly json: { readonly type: "boolean"; readonly description: "Output as LAFS JSON envelope"; readonly default: false; }; readonly human: { readonly type: "boolean"; readonly description: "Output as formatted text"; readonly default: false; }; readonly quiet: { readonly type: "boolean"; readonly description: "Suppress non-essential output"; readonly default: false; }; readonly mvi: { readonly type: "string"; readonly description: "MVI verbosity level: minimal, standard, full"; }; }>
 ```
 
 ```typescript
@@ -3112,7 +3625,7 @@ import { initDocsCommand } from "@forge-ts/cli/commands/init-docs";
 Citty command definition for `forge-ts init`.  Exposes subcommands for scaffolding project artefacts.
 
 ```typescript
-CommandDef<ArgsDef>
+import("/mnt/projects/forge-ts/node_modules/.pnpm/citty@0.2.1/node_modules/citty/dist/index").CommandDef<import("/mnt/projects/forge-ts/node_modules/.pnpm/citty@0.2.1/node_modules/citty/dist/index").ArgsDef>
 ```
 
 ```typescript
@@ -3120,12 +3633,38 @@ import { initCommand } from "@forge-ts/cli/commands/init-docs";
 // Registered automatically as a subcommand of `forge-ts`
 ```
 
+### `initHooksCommand`
+
+Citty command definition for `forge-ts init hooks`.  Scaffolds git hook integration for the project by detecting the hook manager (husky or lefthook) and generating pre-commit hooks.
+
+```typescript
+import("/mnt/projects/forge-ts/node_modules/.pnpm/citty@0.2.1/node_modules/citty/dist/index").CommandDef<{ readonly cwd: { readonly type: "string"; readonly description: "Project root directory"; }; readonly force: { readonly type: "boolean"; readonly description: "Overwrite existing hook files"; readonly default: false; }; readonly json: { readonly type: "boolean"; readonly description: "Output as LAFS JSON envelope"; readonly default: false; }; readonly human: { readonly type: "boolean"; readonly description: "Output as formatted text"; readonly default: false; }; readonly quiet: { readonly type: "boolean"; readonly description: "Suppress non-essential output"; readonly default: false; }; readonly mvi: { readonly type: "string"; readonly description: "MVI verbosity level: minimal, standard, full"; }; }>
+```
+
+```typescript
+import { initHooksCommand } from "@forge-ts/cli/commands/init-hooks";
+// Registered as a subcommand of `forge-ts init`
+```
+
 ### `lockCommand`
 
 Citty command definition for `forge-ts lock`.
 
 ```typescript
-CommandDef<{ readonly cwd: { readonly type: "string"; readonly description: "Project root directory"; }; readonly json: { readonly type: "boolean"; readonly description: "Output as LAFS JSON envelope (agent-friendly)"; readonly default: false; }; readonly human: { ...; }; readonly quiet: { ...; }; }>
+import("/mnt/projects/forge-ts/node_modules/.pnpm/citty@0.2.1/node_modules/citty/dist/index").CommandDef<{ readonly cwd: { readonly type: "string"; readonly description: "Project root directory"; }; readonly json: { readonly type: "boolean"; readonly description: "Output as LAFS JSON envelope (agent-friendly)"; readonly default: false; }; readonly human: { readonly type: "boolean"; readonly description: "Output as formatted text (default for TTY)"; readonly default: false; }; readonly quiet: { readonly type: "boolean"; readonly description: "Suppress non-essential output"; readonly default: false; }; }>
+```
+
+### `prepublishCommand`
+
+Citty command definition for `forge-ts prepublish`.  Runs check then build as a publish safety gate. Add to package.json as: `"prepublishOnly": "forge-ts prepublish"`
+
+```typescript
+import("/mnt/projects/forge-ts/node_modules/.pnpm/citty@0.2.1/node_modules/citty/dist/index").CommandDef<{ readonly cwd: { readonly type: "string"; readonly description: "Project root directory"; }; readonly strict: { readonly type: "boolean"; readonly description: "Treat warnings as errors during check"; readonly default: false; }; readonly json: { readonly type: "boolean"; readonly description: "Output as LAFS JSON envelope (agent-friendly)"; readonly default: false; }; readonly human: { readonly type: "boolean"; readonly description: "Output as formatted text (default for TTY)"; readonly default: false; }; readonly quiet: { readonly type: "boolean"; readonly description: "Suppress non-essential output"; readonly default: false; }; readonly mvi: { readonly type: "string"; readonly description: "MVI verbosity level: minimal, standard, full"; }; }>
+```
+
+```typescript
+import { prepublishCommand } from "@forge-ts/cli/commands/prepublish";
+// Registered as `forge-ts prepublish`
 ```
 
 ### `testCommand`
@@ -3133,7 +3672,7 @@ CommandDef<{ readonly cwd: { readonly type: "string"; readonly description: "Pro
 Citty command definition for `forge-ts test`.
 
 ```typescript
-CommandDef<{ readonly cwd: { readonly type: "string"; readonly description: "Project root directory"; }; readonly json: { readonly type: "boolean"; readonly description: "Output as LAFS JSON envelope (agent-friendly)"; readonly default: false; }; readonly human: { ...; }; readonly quiet: { ...; }; readonly mvi: { .....
+import("/mnt/projects/forge-ts/node_modules/.pnpm/citty@0.2.1/node_modules/citty/dist/index").CommandDef<{ readonly cwd: { readonly type: "string"; readonly description: "Project root directory"; }; readonly json: { readonly type: "boolean"; readonly description: "Output as LAFS JSON envelope (agent-friendly)"; readonly default: false; }; readonly human: { readonly type: "boolean"; readonly description: "Output as formatted text (default for TTY)"; readonly default: false; }; readonly quiet: { readonly type: "boolean"; readonly description: "Suppress non-essential output"; readonly default: false; }; readonly mvi: { readonly type: "string"; readonly description: "MVI verbosity level: minimal, standard, full"; }; }>
 ```
 
 ### `unlockCommand`
@@ -3141,5 +3680,5 @@ CommandDef<{ readonly cwd: { readonly type: "string"; readonly description: "Pro
 Citty command definition for `forge-ts unlock`.
 
 ```typescript
-CommandDef<{ readonly cwd: { readonly type: "string"; readonly description: "Project root directory"; }; readonly reason: { readonly type: "string"; readonly description: "Mandatory reason for unlocking (audit trail)"; readonly required: true; }; readonly json: { ...; }; readonly human: { ...; }; readonly quiet: { ....
+import("/mnt/projects/forge-ts/node_modules/.pnpm/citty@0.2.1/node_modules/citty/dist/index").CommandDef<{ readonly cwd: { readonly type: "string"; readonly description: "Project root directory"; }; readonly reason: { readonly type: "string"; readonly description: "Mandatory reason for unlocking (audit trail)"; readonly required: true; }; readonly json: { readonly type: "boolean"; readonly description: "Output as LAFS JSON envelope (agent-friendly)"; readonly default: false; }; readonly human: { readonly type: "boolean"; readonly description: "Output as formatted text (default for TTY)"; readonly default: false; }; readonly quiet: { readonly type: "boolean"; readonly description: "Suppress non-essential output"; readonly default: false; }; }>
 ```

@@ -1,4 +1,4 @@
-# forge-ts Generated Pages & Guide System (v0.13.0)
+# forge-ts Generated Pages & Guide System (v0.19.4)
 
 ## Page Categories
 

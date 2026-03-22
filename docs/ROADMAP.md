@@ -32,12 +32,12 @@ Note: W009 (@inheritDoc validation) and git hooks hardening were completed in ea
 
 | Task | Title | Status |
 |------|-------|--------|
-| — | Knip integration: skip enforcement on dead exports | Pending |
-| — | Enhanced DocTest: detect stale @example blocks | Pending |
-| — | LLM anti-pattern: flag @ts-ignore in non-test files | Pending |
-| — | LLM anti-pattern: flag `any` casts in public API | Pending |
-| — | Orphaned {@link} description detection | Pending |
-| — | v0.19.0 integration tests and release | Pending |
+| — | Knip integration: skip enforcement on dead exports (ignoreFile + @forgeIgnore) | DONE |
+| — | Enhanced DocTest: detect stale @example blocks (W013) | DONE |
+| — | LLM anti-pattern: flag @ts-ignore in non-test files (E019) | DONE |
+| — | LLM anti-pattern: flag `any` casts in public API (E020) | DONE |
+| — | Orphaned {@link} description detection (W012) | DONE |
+| — | v0.19.0 integration tests and release | DONE |
 
 ### Knip Integration
 
@@ -76,7 +76,7 @@ Real-time editor diagnostics via Language Server Protocol.
 
 | Task | Title | Status |
 |------|-------|--------|
-| — | LSP server with E001-E018, W001-W011 diagnostics | Pending |
+| — | LSP server with E001-E020, W001-W013 diagnostics | Pending |
 | — | VS Code extension (marketplace) | Pending |
 | — | Quick fix actions (add @param, @returns, etc.) | Pending |
 | — | Hover: rule description + suggested fix | Pending |
@@ -121,3 +121,6 @@ We need to add official plugin/adapters for static site generators that deeply i
 | v0.17.0 | — | defineConfig + Init DX Fixes | defineConfig(), string minVisibility, script wiring |
 | v0.18.0 | — | Husky + Staged | Husky v9 full integration, check --staged, shared pkg-json.ts |
 | v0.19.0 | T078 | Advanced Enforcement | Knip ignore, stale DocTest (W013), @ts-ignore (E019), any-cast (E020), orphaned links (W012) |
+| v0.19.2 | — | Per-Group Enforcement | tsdoc.enforce (core/extended/discretionary), customTags written to tsdoc.json |
+| v0.19.3 | — | @forgeIgnore Fix | @forgeIgnore tag enforcement suppression fix |
+| v0.19.4 | — | E020 Fix | getDeclaredTypeOfSymbol for interfaces/types, fixes E020 false positives |

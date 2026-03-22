@@ -1,6 +1,6 @@
 # Feature Gap Analysis: ferrous-forge -> forge-ts
 
-> **ferrous-forge** v1.9.0 (Rust) | **forge-ts** v0.13.0 (TypeScript)
+> **ferrous-forge** v1.9.0 (Rust) | **forge-ts** v0.19.4 (TypeScript)
 >
 > This document maps every significant ferrous-forge feature to forge-ts with a clear recommendation:
 > **SHOULD port**, **SHOULD NOT port**, or **CANNOT port** (language-specific).
@@ -12,9 +12,9 @@
 
 | Category | Total | Closed | Open / Partial |
 |----------|-------|--------|----------------|
-| SHOULD port (ferrous-forge gaps) | 7 | 6 | 1 (partial) |
+| SHOULD port (ferrous-forge gaps) | 7 | 7 | 0 |
 | Internal gaps (forge-ts-specific) | 4 | 4 | 0 |
-| **Total trackable gaps** | **11** | **10** | **1** |
+| **Total trackable gaps** | **11** | **11** | **0** |
 
 | Gap | Description | Status | Closed In |
 |-----|-------------|--------|-----------|
@@ -23,7 +23,7 @@
 | #3 | Bypass Budget | CLOSED | v0.10.0 |
 | #4 | Safety Pipeline Hooks | CLOSED | v0.13.0 |
 | #5 | Config Drift Detection | CLOSED | v0.10.0 + v0.13.0 |
-| #6 | LLM Anti-Pattern Detection | PARTIAL | E016 in v0.13.0; @ts-ignore and any detection not done |
+| #6 | LLM Anti-Pattern Detection | CLOSED | E016 in v0.13.0; E019 (@ts-ignore) + E020 (any-cast) in v0.19.0 |
 | #7 | Pre-Publish Gate | CLOSED | v0.13.0 |
 | #8 | TSDoc Ecosystem Integration | CLOSED | v0.9.0 |
 | #9 | Central Config Orchestrator | CLOSED | v0.9.0 + v0.10.0 |
@@ -123,18 +123,14 @@ Custom TSDoc tags `@guide` and `@concept` link symbols to consumer documentation
 
 ---
 
-### 6. LLM Anti-Pattern Detection -- PARTIAL
+### 6. LLM Anti-Pattern Detection -- CLOSED in v0.13.0 + v0.19.0
 
 **ferrous-forge**: Underscore bandaid detection (`_param`, `let _ =`), unwrap/expect usage, panic/todo/unimplemented detection. Flags common agent shortcuts.
 
-**forge-ts delivered (partial)**:
+**forge-ts delivered**:
 - E016 release tag required on public symbols (v0.13.0)
-
-**forge-ts remaining**:
-- `@ts-ignore` / `@ts-expect-error` additions in non-test files -- not started
-- `any` type casts in public API signatures -- not started
-
-Design is complete in [FORGE-ARCHITECTURE-SPEC.md](./FORGE-ARCHITECTURE-SPEC.md). Remaining items are tracked in [ROADMAP.md](./ROADMAP.md).
+- E019 `@ts-ignore` / `@ts-expect-error` additions in non-test files (v0.19.0)
+- E020 `any` type casts in public API signatures (v0.19.0; uses `getDeclaredTypeOfSymbol` for interfaces/types, fixed in v0.19.4)
 
 ---
 

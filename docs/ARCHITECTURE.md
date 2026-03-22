@@ -1,12 +1,12 @@
-# forge-ts: System Architecture (v0.13.0)
+# forge-ts: System Architecture (v0.19.4)
 
 This document describes how forge-ts works technically. It covers the package
 structure, data flow, subsystems, and technology choices that make up the system
-as of v0.13.0. For the project vision, see `VISION.md`. For the feature
+as of v0.19.4. For the project vision, see `VISION.md`. For the feature
 inventory, see `FEATURES.md`.
 
 > **Note:** The former `FORGE-ARCHITECTURE-SPEC.md` in this directory served as
-> the working design spec during the v0.9.0 through v0.13.0 development cycle.
+> the working design spec during the v0.9.0 through v0.19.4 development cycle.
 > Its content has been absorbed into this document and the spec file is now
 > deprecated. It remains in the repository for historical reference only.
 
@@ -23,7 +23,7 @@ forge-ts is a pnpm monorepo comprising 6 packages. Fixed versioning via
         |               config loading, lock/audit/bypass systems,
         |               bundled tsdoc-preset/tsdoc.json
         |
-        +-- @forge-ts/enforcer    27 rules across 4 enforcement layers
+        +-- @forge-ts/enforcer    33 rules across 4 enforcement layers
         |
         +-- @forge-ts/doctest     @example extraction + node:test runner
         |
@@ -65,7 +65,7 @@ Source Code (.ts / .tsx)
     +---> forge-ts check: enforce(config) -> ForgeResult
     |         |
     |         |-- Per-symbol rules
-    |         |     E001-E008, E013-E016, W003-W006
+    |         |     E001-E008, E013-E020, W003-W006, W009-W013
     |         |
     |         |-- Per-file rules
     |         |     E005 (index.ts @packageDocumentation)
@@ -121,6 +121,11 @@ interface, type alias, enum, variable), visibility modifiers, full type
 signature, parsed documentation, and child symbols (members of classes and
 interfaces).
 
+The walker uses `getDeclaredTypeOfSymbol` (via the TypeScript checker) for
+interfaces and type aliases to build accurate signatures. This avoids false
+positives in rules like E020 (`require-no-any-in-api`) that inspect type
+signatures for `any`.
+
 ### 3.2 TSDoc Parsing
 
 The walker loads TSDoc configuration via
@@ -175,7 +180,7 @@ configurable daily budget limits how many bypasses can be active simultaneously.
 
 ## 4. Enforcer Subsystem (`@forge-ts/enforcer`)
 
-The enforcer runs 22 rules organized into 4 layers. Each rule receives the
+The enforcer runs 33 rules organized into 4 layers. Each rule receives the
 `ForgeSymbol[]` graph (or config files for guard rules) and emits diagnostics
 at either `error` or `warn` severity.
 
@@ -206,8 +211,11 @@ Rules that enforce documentation depth beyond presence:
 | E014 | warn | Optional property with default missing `@defaultValue` |
 | E015 | error | Generic function/class/interface missing `@typeParam` |
 | E016 | error | Exported symbol missing release tag (`@public`/`@beta`/`@internal`) |
+| E017 | error | `@internal` symbol re-exported through public barrel (index.ts) |
+| E018 | warn | `@route`-tagged function missing `@response` tag |
 | W005 | warn | Function referencing symbols not mentioned in `@see` |
 | W006 | warn | TSDoc parse error (surfaces parser-level syntax messages) |
+| W009 | warn | `{@inheritDoc}` references a symbol that does not exist |
 
 ### 4.3 Guard Rules
 
@@ -231,6 +239,19 @@ source code:
 |------|----------|----------------|
 | W007 | warn | FORGE:AUTO section is stale (code changed, guide not rebuilt) |
 | W008 | warn | Symbol exported from index.ts not referenced in any guide page |
+| W010 | warn | `@breaking` tag present without `@migration` path |
+| W011 | warn | New public export missing `@since` version tag |
+
+### 4.5 LLM Anti-Pattern Rules
+
+Rules that detect common shortcuts introduced by AI coding agents:
+
+| Rule | Severity | What It Checks |
+|------|----------|----------------|
+| E019 | error | Non-test file contains `@ts-ignore` or `@ts-expect-error` |
+| E020 | error | `any` type in public API signature (uses `getDeclaredTypeOfSymbol` for interfaces/types to avoid false positives) |
+| W012 | warn | `{@link}` display text stale relative to target summary |
+| W013 | warn | `@example` call arg count mismatches function signature |
 
 ---
 
@@ -368,7 +389,7 @@ for agent consumption.
 
 ## 8. CLI Subsystem (`@forge-ts/cli`)
 
-The CLI is built on `citty 0.2.1` and provides 10 commands. It integrates
+The CLI is built on `citty 0.2.1` with `consola` for logging and provides 12 commands. It integrates
 `@cleocode/lafs-protocol 1.8.0` for machine-readable output.
 
 **Output mode flags** (available on all commands):
@@ -401,16 +422,26 @@ per directory to avoid repeated filesystem access.
 
 ### 9.2 Custom Tags
 
-forge-ts defines 5 custom tags in its opinionated `tsdoc.json` preset (shipped
-by `@forge-ts/tsdoc-config`):
+forge-ts defines 15 custom tags in its opinionated `tsdoc.json` preset (bundled
+in `@forge-ts/core`):
 
 | Tag | Syntax Kind | Purpose |
 |-----|-------------|---------|
 | `@route` | block | HTTP route extraction for OpenAPI (e.g., `@route GET /api/users`) |
-| `@category` | modifier | Symbol categorization for documentation organization |
-| `@since` | modifier | Version tracking |
+| `@category` | block | Symbol categorization for documentation organization |
+| `@since` | block | Version tracking |
 | `@guide` | block | Links a symbol to a consumer guide topic |
 | `@concept` | block | Links a symbol to a concepts page section |
+| `@response` | block | HTTP response type and status code |
+| `@query` | block | Query parameter documentation |
+| `@header` | block | HTTP header parameter documentation |
+| `@body` | block | Request body schema documentation |
+| `@quickstart` | modifier | "Start here" marker for new users |
+| `@faq` | block | FAQ entry association |
+| `@breaking` | block | Breaking change documentation |
+| `@migration` | block | Migration path from old API |
+| `@complexity` | block | Algorithmic complexity documentation |
+| `@forgeIgnore` | modifier | Skip all enforcement rules on this symbol |
 
 ### 9.3 Config Ownership Model
 
@@ -441,7 +472,13 @@ forge-ts.config.ts (SSoT)
 
 The config contains 10 sections (documented in section 3.3 above). At runtime,
 `loadConfig()` in `@forge-ts/core` reads and validates the config, providing
-typed defaults for any omitted sections.
+typed defaults for any omitted sections. The `defineConfig()` helper exported
+from `@forge-ts/core` provides type-safe config authoring.
+
+Per-group TSDoc enforcement (`tsdoc.enforce.core/extended/discretionary`) allows
+bulk severity control over categories of tags. Individual `enforce.rules`
+overrides always take precedence over group-level settings. Custom tags defined
+in `tsdoc.customTags` are written to `tsdoc.json` during init.
 
 ---
 

@@ -5,6 +5,33 @@ description: Usage examples for the cli package
 
 All usage examples from the package, aggregated for quick reference.
 
+## `forgeLogger`
+
+*Pre-configured consola instance branded for forge-ts.*
+
+[View in API reference](/packages/cli/api/functions#forgelogger)
+
+```typescript
+import { forgeLogger } from "./forge-logger.js";
+forgeLogger.info("Checking 42 files...");
+forgeLogger.success("All checks passed");
+forgeLogger.warn("Deprecated import detected");
+forgeLogger.error("Build failed");
+forgeLogger.debug("Resolved config from forge-ts.config.ts");
+```
+
+## `configureLogger()`
+
+*Configures the global `forgeLogger` based on CLI flags.  Call this once at the start of a command's `run()` handler to align consola's output level with the user's intent:  - `quiet` or `json` sets level to 0 (silent) so only LAFS output appears. - `verbose` sets level to 4 (debug) for maximum detail. - Default level is 3 (info) which covers info, warn, error, and success.*
+
+[View in API reference](/packages/cli/api/functions#configurelogger)
+
+```typescript
+import { configureLogger, forgeLogger } from "./forge-logger.js";
+configureLogger({ quiet: args.quiet, json: args.json, verbose: args.verbose });
+forgeLogger.info("This respects the configured level");
+```
+
 ## `emitResult()`
 
 *Wraps a command result in a LAFS envelope and emits it.  Output format is determined by LAFS flag resolution: - TTY terminals default to human-readable output. - Non-TTY (piped, CI, agents) defaults to JSON. - Explicit `--json` or `--human` flags always take precedence.  On failure, the full result is included alongside the error so agents get actionable data (e.g., suggestedFix) in a single response.*
@@ -101,6 +128,76 @@ await runDocsDev({ cwd: "./my-project" });
 import { docsDevCommand } from "@forge-ts/cli";
 ```
 
+## `InitProjectResult`
+
+*Result of the `init` (project setup) command.*
+
+[View in API reference](/packages/cli/api/functions#initprojectresult)
+
+```typescript
+import { runInitProject } from "@forge-ts/cli/commands/init-project";
+const output = await runInitProject({ cwd: process.cwd() });
+console.log(output.data.created); // list of created files
+```
+
+## `runInitProject()`
+
+*Runs the full project init flow.  Steps: 1. Detect project environment 2. Write forge-ts.config.ts (if not exists) 3. Write tsdoc.json (if not exists) 4. Wire package.json scripts (idempotent) 5. Validate tsconfig.json strictness 6. Validate package.json 7. Report summary*
+
+[View in API reference](/packages/cli/api/functions#runinitproject)
+
+```typescript
+import { runInitProject } from "@forge-ts/cli/commands/init-project";
+const output = await runInitProject({ cwd: process.cwd() });
+console.log(output.data.created); // ["forge-ts.config.ts", "tsdoc.json"]
+```
+
+## `initProjectCommand`
+
+*Citty command definition for `forge-ts init` (bare — full project setup).  Detects the project environment, writes default configuration files, validates tsconfig/package.json, and reports a summary.*
+
+[View in API reference](/packages/cli/api/functions#initprojectcommand)
+
+```typescript
+import { initProjectCommand } from "@forge-ts/cli/commands/init-project";
+// Registered as the default handler for `forge-ts init`
+```
+
+## `DoctorResult`
+
+*Result of the `doctor` command.*
+
+[View in API reference](/packages/cli/api/functions#doctorresult)
+
+```typescript
+import { runDoctor } from "@forge-ts/cli/commands/doctor";
+const output = await runDoctor({ cwd: process.cwd() });
+console.log(output.data.summary.passed); // number of passed checks
+```
+
+## `runDoctor()`
+
+*Runs the doctor integrity check flow.  Checks: 1. forge-ts.config.ts — exists and loadable 2. tsdoc.json — exists and extends forge-ts/core/tsdoc-preset 3. forge-ts/core — installed in node\_modules 4. TypeScript — installed 5. tsconfig.json — exists and has strict mode 6. biome.json — exists (informational) 7. .forge-lock.json — exists, valid, matches config 8. .forge-audit.jsonl — exists and event count 9. .forge-bypass.json — exists and active bypasses 10. Git hooks — forge-ts check in pre-commit*
+
+[View in API reference](/packages/cli/api/functions#rundoctor)
+
+```typescript
+import { runDoctor } from "@forge-ts/cli/commands/doctor";
+const output = await runDoctor({ cwd: process.cwd(), fix: false });
+console.log(output.data.summary); // { passed: 7, warnings: 2, errors: 1, info: 0 }
+```
+
+## `doctorCommand`
+
+*Citty command definition for `forge-ts doctor`.  Performs project integrity checks and optionally auto-fixes resolvable issues with `--fix`.*
+
+[View in API reference](/packages/cli/api/functions#doctorcommand)
+
+```typescript
+import { doctorCommand } from "@forge-ts/cli/commands/doctor";
+// Registered as a top-level subcommand of `forge-ts`
+```
+
 ## `InitDocsResult`
 
 *Result of the `init docs` command.*
@@ -147,6 +244,41 @@ import { initCommand } from "@forge-ts/cli/commands/init-docs";
 // Registered automatically as a subcommand of `forge-ts`
 ```
 
+## `InitHooksResult`
+
+*Result of the `init hooks` command.*
+
+[View in API reference](/packages/cli/api/functions#inithooksresult)
+
+```typescript
+import { runInitHooks } from "@forge-ts/cli/commands/init-hooks";
+const output = await runInitHooks({ cwd: process.cwd() });
+console.log(output.data.hookManager); // "husky" | "lefthook" | "none"
+```
+
+## `runInitHooks()`
+
+*Scaffolds git hook integration for the project.  Detects the hook manager (husky or lefthook), generates appropriate hook files, and reports what was written.*
+
+[View in API reference](/packages/cli/api/functions#runinithooks)
+
+```typescript
+import { runInitHooks } from "@forge-ts/cli/commands/init-hooks";
+const output = await runInitHooks({ cwd: "/my/project" });
+console.log(output.data.files); // [".husky/pre-commit"]
+```
+
+## `initHooksCommand`
+
+*Citty command definition for `forge-ts init hooks`.  Scaffolds git hook integration for the project by detecting the hook manager (husky or lefthook) and generating pre-commit hooks.*
+
+[View in API reference](/packages/cli/api/functions#inithookscommand)
+
+```typescript
+import { initHooksCommand } from "@forge-ts/cli/commands/init-hooks";
+// Registered as a subcommand of `forge-ts init`
+```
+
 ## `runLock()`
 
 *Runs the lock command: reads current config and creates `.forge-lock.json`.*
@@ -157,6 +289,42 @@ import { initCommand } from "@forge-ts/cli/commands/init-docs";
 import { runLock } from "@forge-ts/cli/commands/lock";
 const output = await runLock({ cwd: process.cwd() });
 console.log(output.data.locked.rules); // number of rules locked
+```
+
+## `PrepublishResult`
+
+*Typed result for the `prepublish` command.*
+
+[View in API reference](/packages/cli/api/functions#prepublishresult)
+
+```typescript
+import { runPrepublish } from "@forge-ts/cli/commands/prepublish";
+const output = await runPrepublish({ cwd: process.cwd() });
+console.log(output.data.check.success); // true if check passed
+console.log(output.data.build?.success); // true if build passed
+```
+
+## `runPrepublish()`
+
+*Runs the prepublish safety gate: check then build.  If the check step fails, the build step is skipped entirely. Both steps use the same project root (cwd).*
+
+[View in API reference](/packages/cli/api/functions#runprepublish)
+
+```typescript
+import { runPrepublish } from "@forge-ts/cli/commands/prepublish";
+const output = await runPrepublish({ cwd: process.cwd() });
+if (!output.success) process.exit(1);
+```
+
+## `prepublishCommand`
+
+*Citty command definition for `forge-ts prepublish`.  Runs check then build as a publish safety gate. Add to package.json as: `"prepublishOnly": "forge-ts prepublish"`*
+
+[View in API reference](/packages/cli/api/functions#prepublishcommand)
+
+```typescript
+import { prepublishCommand } from "@forge-ts/cli/commands/prepublish";
+// Registered as `forge-ts prepublish`
 ```
 
 ## `runTest()`

@@ -22,6 +22,9 @@
       "name": "deprecation-tracker"
     },
     {
+      "name": "doctor"
+    },
+    {
       "name": "extractor"
     },
     {
@@ -40,6 +43,12 @@
       "name": "init-docs"
     },
     {
+      "name": "init-hooks"
+    },
+    {
+      "name": "init-project"
+    },
+    {
       "name": "lock"
     },
     {
@@ -56,6 +65,9 @@
     },
     {
       "name": "output"
+    },
+    {
+      "name": "prepublish"
     },
     {
       "name": "readme-sync"
@@ -95,7 +107,8 @@
   "components": {
     "schemas": {
       "AuditEventType": {
-        "description": "Discriminated event types recorded in the audit trail."
+        "description": "Discriminated event types recorded in the audit trail.",
+        "type": "object"
       },
       "AuditEvent": {
         "description": "A single audit event recorded in the forge-ts audit trail.",
@@ -248,6 +261,9 @@
               },
               {
                 "type": "object"
+              },
+              {
+                "type": "object"
               }
             ],
             "description": "The syntactic kind of the symbol."
@@ -301,7 +317,8 @@
         ]
       },
       "RuleSeverity": {
-        "description": "Severity level for an individual enforcement rule. - `\"error\"` — violation fails the build. - `\"warn\"`  — violation is reported but does not fail the build. - `\"off\"`   — rule is disabled entirely."
+        "description": "Severity level for an individual enforcement rule. - `\"error\"` — violation fails the build. - `\"warn\"`  — violation is reported but does not fail the build. - `\"off\"`   — rule is disabled entirely.",
+        "type": "object"
       },
       "EnforceRules": {
         "description": "Per-rule severity configuration for the TSDoc enforcer. Each key corresponds to one of the E001–E007 rule codes.",
@@ -355,6 +372,10 @@
             "type": "object",
             "description": "W005: Symbol references other symbols via  but has no"
           },
+          "\"require-release-tag\"": {
+            "type": "object",
+            "description": "E016: Exported symbol is missing a release tag (public, beta, internal)."
+          },
           "\"require-fresh-guides\"": {
             "type": "object",
             "description": "W007: Guide FORGE:AUTO section references a symbol that no longer exists or has changed."
@@ -362,6 +383,38 @@
           "\"require-guide-coverage\"": {
             "type": "object",
             "description": "W008: Exported public symbol is not mentioned in any guide page."
+          },
+          "\"require-route-response\"": {
+            "type": "object",
+            "description": "E018: route-tagged function missing"
+          },
+          "\"require-inheritdoc-source\"": {
+            "type": "object",
+            "description": "W009:  references a symbol that does not exist."
+          },
+          "\"require-migration-path\"": {
+            "type": "object",
+            "description": "W010:"
+          },
+          "\"require-since\"": {
+            "type": "object",
+            "description": "W011: New public export missing"
+          },
+          "\"require-fresh-examples\"": {
+            "type": "object",
+            "description": "W013:"
+          },
+          "\"require-no-ts-ignore\"": {
+            "type": "object",
+            "description": "E019: Non-test file contains ts-ignore or ts-expect-error directive."
+          },
+          "\"require-no-any-in-api\"": {
+            "type": "object",
+            "description": "E020: Exported symbol has `any` in its public API signature."
+          },
+          "\"require-fresh-link-text\"": {
+            "type": "object",
+            "description": "W012:  display text appears stale relative to target summary."
           }
         },
         "required": [
@@ -377,8 +430,17 @@
           "\"require-default-value\"",
           "\"require-type-param\"",
           "\"require-see\"",
+          "\"require-release-tag\"",
           "\"require-fresh-guides\"",
-          "\"require-guide-coverage\""
+          "\"require-guide-coverage\"",
+          "\"require-route-response\"",
+          "\"require-inheritdoc-source\"",
+          "\"require-migration-path\"",
+          "\"require-since\"",
+          "\"require-fresh-examples\"",
+          "\"require-no-ts-ignore\"",
+          "\"require-no-any-in-api\"",
+          "\"require-fresh-link-text\""
         ]
       },
       "ForgeConfig": {
@@ -398,7 +460,23 @@
             "description": "Output directory for generated files."
           },
           "enforce": {
-            "type": "object",
+            "oneOf": [
+              {
+                "type": "object"
+              },
+              {
+                "type": "object"
+              },
+              {
+                "type": "object"
+              },
+              {
+                "type": "object"
+              },
+              {
+                "type": "object"
+              }
+            ],
             "description": "Enforce TSDoc on all public exports."
           },
           "doctest": {
@@ -455,7 +533,6 @@
           "rootDir",
           "tsconfig",
           "outDir",
-          "enforce",
           "doctest",
           "api",
           "tsdoc",
@@ -1275,6 +1352,9 @@
               },
               {
                 "type": "object"
+              },
+              {
+                "type": "object"
               }
             ],
             "description": "Symbol kind."
@@ -1509,7 +1589,8 @@
         ]
       },
       "GuideSource": {
-        "description": "The source heuristic that discovered a guide."
+        "description": "The source heuristic that discovered a guide.",
+        "type": "object"
       },
       "DiscoveredGuide": {
         "description": "A guide discovered from the symbol graph by code analysis heuristics.",
@@ -1641,7 +1722,8 @@
         ]
       },
       "MdPhrasing": {
-        "description": "Union of all inline (phrasing) content types."
+        "description": "Union of all inline (phrasing) content types.",
+        "type": "object"
       },
       "MdHeading": {
         "description": "Block node: heading (depth 1-6).",
@@ -1886,7 +1968,8 @@
         ]
       },
       "MdBlock": {
-        "description": "Union of all block content types."
+        "description": "Union of all block content types.",
+        "type": "object"
       },
       "MdRoot": {
         "description": "Document root.",
@@ -2026,7 +2109,8 @@
         ]
       },
       "SSGTarget": {
-        "description": "Supported SSG target identifiers."
+        "description": "Supported SSG target identifiers.",
+        "type": "object"
       },
       "GeneratedFile": {
         "description": "A file to write to disk during scaffolding or generation.",
@@ -2781,6 +2865,190 @@
           "nextCommand"
         ]
       },
+      "InitProjectEnvironment": {
+        "description": "Detected project environment from Step 1 of the init flow.",
+        "type": "object",
+        "properties": {
+          "packageJsonExists": {
+            "type": "boolean",
+            "description": "Whether package.json exists."
+          },
+          "tsconfigExists": {
+            "type": "boolean",
+            "description": "Whether tsconfig.json exists."
+          },
+          "biomeDetected": {
+            "type": "boolean",
+            "description": "Whether biome.json or biome.jsonc exists."
+          },
+          "typescriptVersion": {
+            "type": "string",
+            "description": "TypeScript version from dependencies, or null if not found."
+          },
+          "hookManager": {
+            "oneOf": [
+              {
+                "type": "object"
+              },
+              {
+                "type": "object"
+              },
+              {
+                "type": "object"
+              }
+            ],
+            "description": "Detected hook manager."
+          },
+          "monorepo": {
+            "type": "boolean",
+            "description": "Whether the project is a monorepo."
+          },
+          "monorepoType": {
+            "oneOf": [
+              {
+                "type": "object"
+              },
+              {
+                "type": "object"
+              }
+            ],
+            "description": "Monorepo type if detected."
+          }
+        },
+        "required": [
+          "packageJsonExists",
+          "tsconfigExists",
+          "biomeDetected",
+          "typescriptVersion",
+          "hookManager",
+          "monorepo",
+          "monorepoType"
+        ]
+      },
+      "InitProjectResult": {
+        "description": "Result of the `init` (project setup) command.",
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "Whether the init succeeded."
+          },
+          "created": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Files that were created."
+          },
+          "skipped": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Files that already existed and were skipped."
+          },
+          "warnings": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Warning messages collected during init."
+          },
+          "environment": {
+            "type": "object",
+            "description": "Detected project environment."
+          },
+          "nextSteps": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Next steps for the user."
+          },
+          "scriptsAdded": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Scripts that were added to package.json (empty if none were added)."
+          }
+        },
+        "required": [
+          "success",
+          "created",
+          "skipped",
+          "warnings",
+          "environment",
+          "nextSteps",
+          "scriptsAdded"
+        ]
+      },
+      "DoctorCheckStatus": {
+        "description": "Status of a single doctor check.",
+        "type": "object"
+      },
+      "DoctorCheckResult": {
+        "description": "Result of a single doctor check.",
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Name of the check."
+          },
+          "status": {
+            "type": "object",
+            "description": "Status of the check."
+          },
+          "message": {
+            "type": "string",
+            "description": "Human-readable message."
+          },
+          "fixable": {
+            "type": "boolean",
+            "description": "Whether this issue can be auto-fixed with --fix."
+          }
+        },
+        "required": [
+          "name",
+          "status",
+          "message",
+          "fixable"
+        ]
+      },
+      "DoctorResult": {
+        "description": "Result of the `doctor` command.",
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "Whether all checks passed without errors."
+          },
+          "checks": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            },
+            "description": "Individual check results."
+          },
+          "summary": {
+            "type": "object",
+            "description": "Summary counts."
+          },
+          "fixed": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Files that were fixed (only populated when --fix is used)."
+          }
+        },
+        "required": [
+          "success",
+          "checks",
+          "summary",
+          "fixed"
+        ]
+      },
       "InitDocsResult": {
         "description": "Result of the `init docs` command.",
         "type": "object",
@@ -2815,6 +3083,49 @@
         "required": [
           "success",
           "target",
+          "summary",
+          "files",
+          "instructions"
+        ]
+      },
+      "HookManager": {
+        "description": "Detected hook manager in the project.",
+        "type": "object"
+      },
+      "InitHooksResult": {
+        "description": "Result of the `init hooks` command.",
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "Whether the hook scaffolding succeeded."
+          },
+          "hookManager": {
+            "type": "object",
+            "description": "The detected or chosen hook manager."
+          },
+          "summary": {
+            "type": "object",
+            "description": "Summary of what was created."
+          },
+          "files": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Relative paths of all files written."
+          },
+          "instructions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Post-scaffold instructions for the user."
+          }
+        },
+        "required": [
+          "success",
+          "hookManager",
           "summary",
           "files",
           "instructions"
@@ -2856,6 +3167,39 @@
           "lockedBy",
           "locked",
           "overwrote"
+        ]
+      },
+      "PrepublishResult": {
+        "description": "Typed result for the `prepublish` command.",
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "Whether both check and build passed."
+          },
+          "summary": {
+            "type": "object",
+            "description": "Summary of the prepublish pipeline."
+          },
+          "check": {
+            "type": "object",
+            "description": "Result of the check step."
+          },
+          "build": {
+            "type": "object",
+            "description": "Result of the build step (absent if check failed and build was skipped)."
+          },
+          "skippedReason": {
+            "type": "string",
+            "description": "If check failed, the reason build was skipped."
+          }
+        },
+        "required": [
+          "success",
+          "summary",
+          "check",
+          "build",
+          "skippedReason"
         ]
       },
       "ExtractedExample": {

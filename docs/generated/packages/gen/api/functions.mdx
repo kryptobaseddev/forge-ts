@@ -285,15 +285,15 @@ Updates FORGE:STUB sections in existing content.  Behavior for each stub: - If t
 **Signature**
 
 ```typescript
-(existingContent: string, stubs: { id: string; content: string; }[]) => string
+(existingContent: string, stubs: Array<{ id: string; content: string; }>) => string
 ```
 
 **Parameters**
 
-| Name              | Type                                 | Description                                                     |
-| ----------------- | ------------------------------------ | --------------------------------------------------------------- |
-| `existingContent` | `string`                             | The current file content on disk.                               |
-| `stubs`           | `{ id: string; content: string; }[]` | Array of stub definitions with their IDs and generated content. |
+| Name              | Type                                      | Description                                                     |
+| ----------------- | ----------------------------------------- | --------------------------------------------------------------- |
+| `existingContent` | `string`                                  | The current file content on disk.                               |
+| `stubs`           | `Array<{ id: string; content: string; }>` | Array of stub definitions with their IDs and generated content. |
 
 **Returns** — The updated content with stubs inserted or refreshed as needed.
 
@@ -634,15 +634,15 @@ Runs the full generation pipeline: walk → render → write.  Auto-generated pa
 **Signature**
 
 ```typescript
-(config: ForgeConfig, options?: GenerateOptions | undefined) => Promise<ForgeResult>
+(config: ForgeConfig, options?: GenerateOptions) => Promise<ForgeResult>
 ```
 
 **Parameters**
 
-| Name      | Type                             | Description                                   |
-| --------- | -------------------------------- | --------------------------------------------- |
-| `config`  | `ForgeConfig`                    | The resolved `ForgeConfig` for the project.   |
-| `options` | `: GenerateOptions \| undefined` | Optional generation flags (e.g., forceStubs). |
+| Name      | Type                | Description                                   |
+| --------- | ------------------- | --------------------------------------------- |
+| `config`  | `ForgeConfig`       | The resolved `ForgeConfig` for the project.   |
+| `options` | `: GenerateOptions` | Optional generation flags (e.g., forceStubs). |
 
 **Returns** — A `ForgeResult` describing the outcome.
 

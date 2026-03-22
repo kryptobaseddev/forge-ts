@@ -3,7 +3,7 @@
 ## The Premise
 As of 2026, the TypeScript ecosystem has matured incredibly in type safety, build tooling (esbuild, swc), and runtime engines (Node 24 LTS "Krypton", Deno). Yet, the documentation and API specification layer remains a fractured relic of the past. Teams currently stitch together ESLint plugins, TypeDoc, Zod schemas, and Swagger generators just to achieve what the Rust ecosystem gets out-of-the-box with a single command: `cargo doc`.
 
-> **Status (v0.13.0):** forge-ts v0.13.0 delivers the complete vision: 22 enforcement rules across 4 layers, intelligent guide generation, agent-proof guardrails, and full ecosystem integration. A single `npx forge-ts build` compiles TSDoc into OpenAPI specs, consumer-ready MDX, llms.txt artifacts, and SKILL packages -- all from one AST traversal pass.
+> **Status (v0.19.4):** forge-ts v0.19.4 delivers the complete vision: 33 enforcement rules across 4 layers, intelligent guide generation, agent-proof guardrails, and full ecosystem integration. A single `npx forge-ts build` compiles TSDoc into OpenAPI specs, consumer-ready MDX, llms.txt artifacts, and SKILL packages -- all from one AST traversal pass.
 
 Worse, in the era of AI-driven development, documentation isn't just for humans anymore. LLM agents need dense, high-signal context (`llms.txt`), and existing HTML-heavy documentation generators fail to deliver this natively.
 
@@ -23,7 +23,7 @@ Documentation must be trusted by developers and instantly understood by AI.
 - **AI Context:** Natively generates token-optimized `llms.txt` and `llms-full.txt` artifacts. It aggregates OpenAPI specs, TSDoc comments, and repository guidelines into a dense format, ensuring that AI agents (Cursor, Copilot, Claude) instantly understand the codebase.
 - **Build Gate:** Acts as a strict, zero-config linter during `npm run build`, powered by **Biome 2.4** (replacing the ESLint + Prettier combination), aggressively failing the build if developers try to push new public features without TSDoc comments.
 
-> **Implemented:** 22 enforcement rules (E001-E016, W001-W008) across 4 layers with per-rule severity configuration (error/warn/off). `--strict` mode promotes all warnings to errors. Non-zero exit code on violations ensures CI integration as a build gate.
+> **Implemented:** 33 enforcement rules (E001-E020, W001-W013) across 4 layers with per-rule severity configuration (error/warn/off). `--strict` mode promotes all warnings to errors. Non-zero exit code on violations ensures CI integration as a build gate.
 
 ### 3. Consumer Docs (The User-Facing Layer) -- COMPLETE
 Instead of dumping raw JSON, `forge-ts` outputs clean, beautifully formatted Markdown/MDX files ready to be dropped into static site generators like Docusaurus, Mintlify, Nextra, or VitePress. It dynamically injects your primary code examples and API summaries directly into the project's `README.md` (similar to `cargo-rdme`), ensuring your GitHub front page is always perfectly synchronized with your actual code.
@@ -59,21 +59,20 @@ By centralizing API specs, Dev Docs, and Consumer Docs into a single AST-travers
 
 ---
 
-## Current State: v0.16.0
+## Current State: v0.19.4
 
-**6 packages**, all at v0.16.0 with fixed versioning:
+**6 packages**, all at v0.19.4 with fixed versioning:
 
 | Package | Role |
 |---------|------|
 | `@forge-ts/core` | TypeScript Compiler API traversal, ForgeSymbol graph, TSDoc parsing, config, lock/audit/bypass, bundled tsdoc-preset |
-| `@forge-ts/enforcer` | 27 rules (E001-E018, W001-W011) across 4 layers with per-rule severity config |
+| `@forge-ts/enforcer` | 33 rules (E001-E020, W001-W013) across 4 layers with per-rule severity config |
 | `@forge-ts/doctest` | `@example` extraction + Node.js `node:test` runner integration |
 | `@forge-ts/api` | OpenAPI 3.2.0 spec generation with `@route` tag extraction |
 | `@forge-ts/gen` | Markdown/MDX generation, SSG adapters, intelligent guide generation, llms.txt, SKILL packages, README sync |
-| `@forge-ts/cli` | CLI entry point (citty + consola), 12 commands: check, test, build, init, docs, lock, unlock, bypass, audit, prepublish, doctor |
-| `@forge-ts/site` | Static site generation orchestration |
+| `@forge-ts/cli` | CLI entry point (citty + consola), 12 commands: check [--staged], test, build, init [setup/docs/hooks], docs [init/dev], lock, unlock, bypass, audit, prepublish, doctor |
 
-**730 tests** across all packages, all passing. CI pipeline: lint + typecheck + test + dogfood.
+**859 tests** across 20 test files, all passing. CI pipeline: lint + typecheck + test + dogfood.
 
 ## The Five Pillars
 
@@ -107,14 +106,28 @@ Strict TSDoc quality enforcement across all three documentation layers, plus con
 | E015 | Missing `@typeParam` on generic symbol | error |
 | W005 | Missing `@see` for referenced symbols | warn |
 | W006 | TSDoc parse errors (surfaces 70+ parser-level messages) | warn |
+| W009 | `{@inheritDoc}` references non-existent symbol | warn |
 
 **Consumer Layer:**
 
 | Rule | Description | Severity |
 |------|-------------|----------|
 | E016 | Exported symbol missing release tag (`@public`/`@beta`/`@internal`) | error |
+| E017 | `@internal` symbol re-exported through public barrel (index.ts) | error |
+| E018 | `@route`-tagged function missing `@response` tag | warn |
 | W007 | Guide FORGE:AUTO section is stale (code changed, guide not rebuilt) | warn |
 | W008 | Symbol exported from index.ts but not documented in any guide | warn |
+| W010 | `@breaking` tag present without `@migration` path | warn |
+| W011 | New public export missing `@since` version tag | warn |
+
+**LLM Anti-Pattern Layer:**
+
+| Rule | Description | Severity |
+|------|-------------|----------|
+| E019 | `@ts-ignore` / `@ts-expect-error` in non-test file | error |
+| E020 | `any` type in public API signature | error |
+| W012 | `{@link}` display text stale relative to target summary | warn |
+| W013 | `@example` call arg count mismatches function signature | warn |
 
 **Config Guard Layer:**
 
@@ -152,7 +165,7 @@ forge-ts is the central authority for TSDoc standards in a project.
 
 **Opinionated TSDoc Preset** (`@forge-ts/tsdoc-config`):
 - Ships a `tsdoc.json` with all Core + Extended standardization groups enabled
-- Defines custom tags: `@route`, `@category`, `@since`, `@guide`, `@concept`
+- Defines 15 custom tags including `@route`, `@category`, `@since`, `@guide`, `@concept`, `@forgeIgnore`, and more
 - Consumed by eslint-plugin-tsdoc, TypeDoc, API Extractor automatically
 
 **Central Config Orchestration** (`forge-ts.config.ts` flows DOWN):
@@ -192,10 +205,10 @@ Every bypass is explicit, justified, and audited.
 - Style warnings (W001-W004): configurable, auto-fix permitted
 
 **LLM Anti-Pattern Detection**: Flags common agent shortcuts in monitored files.
-- `@ts-ignore` / `@ts-expect-error` additions in non-test files
-- `any` type casts in public API signatures
-- `strict: false` or strictness loosening in tsconfig
-- `"off"` overrides in forge-ts or Biome config
+- E019: `@ts-ignore` / `@ts-expect-error` additions in non-test files
+- E020: `any` type casts in public API signatures (uses `getDeclaredTypeOfSymbol` for interfaces/types)
+- `strict: false` or strictness loosening in tsconfig (E009)
+- `"off"` overrides in forge-ts or Biome config (E010, E011)
 
 ### Pillar 4: Safety Pipeline -- COMPLETE
 
@@ -225,12 +238,12 @@ forge-ts complements, never replaces, existing best-practice tools.
 |------|------|---------------|
 | Biome | Code quality, formatting | Config drift prevention -- detect weakened rules (E011) |
 | ESLint/TSDoc plugin | JSDoc syntax validation | TSDoc completeness and cross-reference validation |
-| Knip | Dead code / unused exports | Skip enforcement on Knip-flagged dead exports (future) |
+| Knip | Dead code / unused exports | Skip enforcement on Knip-flagged dead exports via `ignoreFile` + `@forgeIgnore` tag |
 | publint / attw | Package quality | Documentation coverage as a publish gate |
 | TypeScript | Type checking | tsconfig strictness locking (E009) |
 
 **forge-ts Owns** (no other tool does this):
-- TSDoc completeness enforcement (E001-E016)
+- TSDoc completeness enforcement (E001-E020, W001-W013)
 - Documentation pipeline integration (lint -> generate -> validate -> publish)
 - Config drift prevention (tsconfig, Biome, forge-ts rules)
 - Agent-proof guardrails on documentation quality
@@ -284,13 +297,16 @@ Guide discovery via 5 heuristics, FORGE:STUB zone support, code-derived guide st
 
 `forge-ts init --hooks` (husky/lefthook scaffolding), `forge-ts prepublish` gate, E011 (Biome config guard), E012 (engine guard), E016 (release tag requirement).
 
+### Phase 9-12: DX Polish, Init, Husky, Advanced Enforcement -- COMPLETE (v0.14.0 - v0.19.4)
+
+Complete tag system (15 custom tags), init setup + doctor commands, defineConfig(), Husky v9 integration, check --staged, shared pkg-json.ts, Knip integration via ignoreFile + @forgeIgnore, E017-E020, W009-W013, per-group TSDoc enforcement, customTags written to tsdoc.json, getDeclaredTypeOfSymbol fix for E020 false positives.
+
 ### What's Next
 
 The core vision is fully realized. Future work focuses on deeper ecosystem integration and developer experience:
 
-- **Knip integration** -- skip enforcement on dead exports flagged by Knip
 - **LSP extension** -- real-time diagnostics in editor (VS Code, Neovim)
-- **Enhanced DocTest** -- detect stale `@example` blocks where function signatures have changed
-- **@inheritDoc validation** -- verify `{@inheritDoc}` sources exist and have content
+- **Guide intelligence** -- workflow detection heuristic, extension pattern heuristic
+- **eslint-plugin-tsdoc scaffolding** -- automated setup during `forge-ts init`
 
 See ROADMAP.md for full future plans.

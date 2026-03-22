@@ -1,12 +1,12 @@
 ---
 name: SKILL-forge-ts
 description: >
-  Runs the API generation pipeline: walk → extract → generate → write. Use when: (1) calling its 80 API functions, (2) configuring forge-ts, (3) understanding its 99 type definitions, (4) user mentions "forge-ts" or asks about its API.
+  Append-only audit trail for forge-ts configuration and governance events.  Events are stored as JSON Lines in `.forge-audit.jsonl` at the project root. Each line is a single JSON object — the file is never truncated or overwritten. Use when: (1) calling its 96 API functions, (2) configuring forge-ts, (3) understanding its 112 type definitions, (4) user mentions "forge-ts" or asks about its API.
 ---
 
 # forge-ts
 
-Runs the API generation pipeline: walk → extract → generate → write.
+Append-only audit trail for forge-ts configuration and governance events.  Events are stored as JSON Lines in `.forge-audit.jsonl` at the project root. Each line is a single JSON object — the file is never truncated or overwritten.
 
 ## Quick Start
 
@@ -32,13 +32,13 @@ const user = getCurrentUser(); // e.g. "alice"
 | `isRuleBypassed()` | Checks whether a specific rule has an active bypass.  A rule is considered bypassed if there is an active bypass with the exact rule code or an "all" bypass. |
 | `getRemainingBudget()` | Returns the number of bypass budget slots remaining for today.  Counts bypasses created today (UTC) against the configured daily budget. |
 | `expireOldBypasses()` | Removes expired bypass records from `.forge-bypass.json`.  Also appends a `bypass.expire` audit event for each expired record removed. |
+| `defineConfig()` | Type-safe helper for defining a partial forge-ts configuration.  Only include the settings you want to override — everything else inherits sensible defaults via `loadConfig()`. |
 | `defaultConfig()` | Constructs a sensible default `ForgeConfig` rooted at `rootDir`. |
 | `loadConfig()` | Loads the forge-ts configuration for a project.  Resolution order: 1. `<rootDir>/forge-ts.config.ts` 2. `<rootDir>/forge-ts.config.js` 3. `"forge-ts"` key inside `<rootDir>/package.json` 4. Built-in defaults (returned when none of the above is found) |
 | `readLockFile()` | Reads the `.forge-lock.json` file from the given project root. |
 | `writeLockFile()` | Writes a `ForgeLockManifest` to `.forge-lock.json` in the project root. |
 | `removeLockFile()` | Removes the `.forge-lock.json` file from the project root. |
-| `createLockManifest()` | Creates a `ForgeLockManifest` from the current project config.  Snapshots the enforce rule severities and guard settings so they can be compared on future runs to detect weakening. |
-| ... | 65 more — see API reference |
+| ... | 81 more — see API reference |
 
 ## Configuration
 

@@ -18,7 +18,7 @@ How to handle errors thrown by the library, including error types and recovery p
 Creates a new bypass record, writes it to `.forge-bypass.json`, and appends an audit event.  Throws an error if the daily budget is exhausted.
 
 ```typescript
-(rootDir: string, reason: string, rule?: string | undefined, config?: Partial<BypassConfig> | undefined) => BypassRecord
+(rootDir: string, reason: string, rule?: string, config?: Partial<BypassConfig>) => BypassRecord
 ```
 
 **Throws**

@@ -55,6 +55,16 @@
             ]
           },
           {
+            "group": "@forge-ts/.",
+            "pages": [
+              "packages/./index",
+              "packages/./api/index",
+              "packages/./api/functions",
+              "packages/./api/types",
+              "packages/./api/examples"
+            ]
+          },
+          {
             "group": "@forge-ts/api",
             "pages": [
               "packages/api/index",

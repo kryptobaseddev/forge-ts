@@ -32,7 +32,7 @@ console.log(result.success); // true if spec was written successfully
 Runs the full generation pipeline: walk → render → write.  Auto-generated pages are always regenerated from source code. Stub pages (scaffolding for human/agent editing) are only created if they don't already exist, preserving manual edits across builds. Pass `{ forceStubs: true }` to overwrite stubs.
 
 ```typescript
-(config: ForgeConfig, options?: GenerateOptions | undefined) => Promise<ForgeResult>
+(config: ForgeConfig, options?: GenerateOptions) => Promise<ForgeResult>
 ```
 
 **Example**

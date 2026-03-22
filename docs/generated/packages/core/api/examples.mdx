@@ -125,6 +125,22 @@ const removed = expireOldBypasses("/path/to/project");
 console.log(`${removed} expired bypass(es) removed`);
 ```
 
+## `defineConfig()`
+
+*Type-safe helper for defining a partial forge-ts configuration.  Only include the settings you want to override — everything else inherits sensible defaults via `loadConfig()`.*
+
+[View in API reference](/packages/core/api/functions#defineconfig)
+
+```typescript
+import { defineConfig } from "@forge-ts/core";
+
+export default defineConfig({
+  outDir: "docs",
+  enforce: { strict: true },
+  gen: { ssgTarget: "mintlify" },
+});
+```
+
 ## `defaultConfig()`
 
 *Constructs a sensible default `ForgeConfig` rooted at `rootDir`.*
@@ -233,7 +249,7 @@ const vis = resolveVisibility({ internal: [] });
 
 ## `meetsVisibility()`
 
-*Returns whether `candidate` meets or exceeds the required minimum visibility.  "Meets" means the symbol is at least as visible as `minVisibility`. For example, `Public` meets a minimum of `Public`, but `Internal` does not.*
+*Returns whether `candidate` meets or exceeds the required minimum visibility.  "Meets" means the symbol is at least as visible as `minVisibility`. For example, `Public` meets a minimum of `Public`, but `Internal` does not.  Both parameters accept either a `Visibility` enum value or the equivalent string literal (`"public"`, `"beta"`, `"internal"`, `"private"`).*
 
 [View in API reference](/packages/core/api/functions#meetsvisibility)
 
@@ -241,6 +257,7 @@ const vis = resolveVisibility({ internal: [] });
 import { meetsVisibility, Visibility } from "@forge-ts/core";
 meetsVisibility(Visibility.Public, Visibility.Public); // true
 meetsVisibility(Visibility.Internal, Visibility.Public); // false
+meetsVisibility("public", "beta"); // true (string literals also accepted)
 ```
 
 ## `filterByVisibility()`

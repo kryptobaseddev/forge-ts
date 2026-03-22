@@ -1,4 +1,4 @@
-# forge-ts Programmatic API (v0.13.0)
+# forge-ts Programmatic API (v0.19.4)
 
 ## Table of Contents
 
@@ -86,7 +86,7 @@ const publicOnly = filterByVisibility(symbols, Visibility.Public);
 ```typescript
 import { enforce } from "@forge-ts/enforcer";
 const result = enforce(symbols, config.enforce);
-// result.errors: ForgeError[] with suggestedFix (22 rules across 4 layers)
+// result.errors: ForgeError[] with suggestedFix (33 rules across 4 layers)
 // result.warnings: ForgeWarning[]
 // Guard rules check isRuleBypassed() before emitting
 ```
@@ -186,6 +186,6 @@ import { loadTSDocConfig } from "@forge-ts/core";
 // Falls back to bare TSDocConfiguration if no tsdoc.json found
 ```
 
-The `@forge-ts/tsdoc-config` package exports an opinionated `tsdoc.json`
-preset with 24 standard tags and 5 custom tags (`@route`, `@category`,
-`@since`, `@guide`, `@concept`).
+The bundled tsdoc-preset in `@forge-ts/core` exports an opinionated `tsdoc.json`
+with 24 standard tags and 15 custom tags (including `@route`, `@category`,
+`@since`, `@guide`, `@concept`, `@forgeIgnore`, and more).

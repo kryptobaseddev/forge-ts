@@ -15,76 +15,19 @@
 | — | v0.14.0 | Complete Tag System (hotfix) | — | DONE |
 | — | v0.15.0 | Init + Doctor Commands (hotfix) | — | DONE |
 | T077 | v0.16.0 | DX Polish | high | DONE |
-| T078 | v0.17.0 | Advanced Enforcement | high | Pending |
-| T079 | v0.18.0 | Guide Intelligence | medium | Pending |
+| — | v0.17.0 | defineConfig + Init DX Fixes (hotfix) | — | DONE |
+| — | v0.18.0 | Husky Integration + check --staged (hotfix) | — | DONE |
+| T078 | v0.19.0 | Advanced Enforcement | high | IN PROGRESS |
+| T079 | v0.20.0 | Guide Intelligence | medium | Pending |
 | T080 | v1.0.0 | LSP Extension | medium | Pending |
 
 ---
 
-## T077: v0.16.0 — DX Polish
+## T078: v0.19.0 — Advanced Enforcement (IN PROGRESS)
 
-Centralized logging, package simplification, spec tooling.
+Knip integration, enhanced DocTest, LLM anti-pattern detection, orphaned link detection.
 
-| Task | Title | Status |
-|------|-------|--------|
-| T081 | Replace custom logger.ts with consola | DONE |
-| T082 | Merge @forge-ts/tsdoc-config into @forge-ts/core | DONE |
-| T083 | Add TSDoc spec sync script | DONE |
-| T084 | v0.16.0 integration tests and release validation | DONE |
-
-### T081: Centralized Logging (consola)
-
-- Replace hand-rolled `logger.ts` with [consola](https://github.com/unjs/consola) (UnJS ecosystem, same as citty)
-- Migrate all 13 command files from `console.log`/`createLogger()` to `forgeLogger`
-- Structured output: TTY-aware, respects `--quiet`/`--json` flags
-- Coexists with LAFS `emitResult()` for command results
-
-### T082: Merge @forge-ts/tsdoc-config into @forge-ts/core
-
-- Move `tsdoc.json` preset into `packages/core/tsdoc-preset/tsdoc.json`
-- Walker fallback loads bundled preset (custom tags recognized without user tsdoc.json)
-- Remove `packages/tsdoc-config/` directory, deprecate npm package
-- Eliminates: npm publish auth failures, 404 install breakage, extra package complexity
-
-### T083: TSDoc Spec Sync Script
-
-- `scripts/sync-tsdoc-spec.ts` reads `@microsoft/tsdoc` and writes machine-readable JSON
-- `packages/core/spec/standard-tags.json` — all tag definitions
-- `packages/core/spec/message-ids.json` — all parser message IDs
-- Git-tracked for drift visibility, LLM-agent-friendly
-
----
-
-## DX Improvements
-
-### Git Hooks Hardening — DONE (v0.18.0)
-
-Shipped in v0.18.0. Init hooks now writes pre-commit + pre-push, adds prepare script, validates husky installation. Doctor checks husky installed + prepare script + both hooks active. `check --staged` filters to staged files only.
-
-Remaining DX items:
-- No lint-staged integration — runs full project check, slow on large codebases
-- No `--staged` flag on `forge-ts check` to only check changed files
-- Only wires pre-commit, not prepublish hook
-- Fallback creates husky files without husky installed — file exists but never runs
-
-Planned fixes:
-- Doctor should verify husky is actually installed (not just that the file exists)
-- `forge-ts init hooks` should offer to install husky if missing (`npx husky-init`)
-- Add `"prepare": "husky install"` to package.json scripts during init hooks
-- Add `forge-ts check --staged` for lint-staged integration
-- Wire both pre-commit (`forge-ts check`) and pre-push (`forge-ts prepublish`) hooks
-
-### Init Script Improvements
-
-- Detect user's package manager (npm/pnpm/yarn/bun) and use correct commands in suggestions
-- Validate that `forge-ts.config.ts` is included in tsconfig `include` array (common miss)
-- Offer to add `@forge-ts/cli` to devDependencies if running via npx
-
----
-
-## T078: v0.17.0 — Advanced Enforcement
-
-Knip integration, enhanced DocTest, LLM anti-pattern detection.
+Note: W009 (@inheritDoc validation) and git hooks hardening were completed in earlier releases.
 
 | Task | Title | Status |
 |------|-------|--------|
@@ -92,10 +35,8 @@ Knip integration, enhanced DocTest, LLM anti-pattern detection.
 | — | Enhanced DocTest: detect stale @example blocks | Pending |
 | — | LLM anti-pattern: flag @ts-ignore in non-test files | Pending |
 | — | LLM anti-pattern: flag `any` casts in public API | Pending |
-| — | @inheritDoc validation: verify source exists | Pending |
 | — | Orphaned {@link} description detection | Pending |
-| — | Git hooks hardening (from DX improvements above) | Pending |
-| — | v0.17.0 integration tests and release | Pending |
+| — | v0.19.0 integration tests and release | Pending |
 
 ### Knip Integration
 
@@ -109,17 +50,13 @@ Detect stale `@example` blocks where function signatures changed. Validate `@exa
 
 Flag `@ts-ignore` additions in non-test files. Flag `any` type casts in public API signatures. These are the most common LLM agent shortcuts.
 
-### @inheritDoc Validation
-
-Validate `{@inheritDoc}` sources exist and have content to inherit. Catch broken inheritance chains.
-
 ### Orphaned {@link} Description Detection
 
 Detect when `{@link Target | description}` text doesn't match the target's current summary.
 
 ---
 
-## T079: v0.18.0 — Guide Intelligence
+## T079: v0.20.0 — Guide Intelligence
 
 Advanced guide discovery heuristics, eslint-plugin-tsdoc scaffolding.
 
@@ -128,19 +65,7 @@ Advanced guide discovery heuristics, eslint-plugin-tsdoc scaffolding.
 | — | Workflow detection heuristic from function call chains | Pending |
 | — | Extension pattern heuristic from Adapter/Strategy/Factory | Pending |
 | — | eslint-plugin-tsdoc scaffolding in forge-ts init | Pending |
-| — | v0.18.0 integration tests and release | Pending |
-
-### Workflow Detection Heuristic
-
-Discover guide topics from function call chains (functions calling functions in sequence). Generate "Workflow Guide" stubs.
-
-### Extension Pattern Heuristic
-
-Discover guide topics from Adapter/Strategy/Factory patterns. Generate "Extending" guide stubs with relevant interfaces.
-
-### eslint-plugin-tsdoc Scaffolding
-
-`forge-ts init` scaffolds `.eslintrc` with `tsdoc/syntax` rule if ESLint detected. Closes gap between forge-ts validation and real-time editor feedback.
+| — | v0.20.0 integration tests and release | Pending |
 
 ---
 
@@ -158,6 +83,14 @@ Real-time editor diagnostics via Language Server Protocol.
 
 ---
 
+## DX Improvements (Backlog)
+
+- Detect user's package manager (npm/pnpm/yarn/bun) and use correct commands in suggestions
+- Validate that `forge-ts.config.ts` is included in tsconfig `include` array (common miss)
+- lint-staged integration for `forge-ts check --staged`
+
+---
+
 ## Completed Versions
 
 | Version | Epic | Theme | Key Deliverables |
@@ -167,6 +100,8 @@ Real-time editor diagnostics via Language Server Protocol.
 | v0.11.0 | T050 | Dev Layer Enforcement | E013-E015, W005, @concept/@guide tags |
 | v0.12.0 | T060 | Intelligent Guide Generation | Guide discovery, FORGE:STUB, W007-W008 |
 | v0.13.0 | T070 | Safety Pipeline + Ecosystem | init --hooks, prepublish, E011-E012, E016 |
-| v0.14.0 | — | Complete Tag System | 14 custom tags, E017-E018, W009-W011, fixed @category/@since |
-| v0.15.0 | — | Init + Doctor Commands | forge-ts init setup, forge-ts doctor, 787 tests |
-| v0.16.0 | T077 | DX Polish | consola logging, tsdoc-config merged into core, spec sync script |
+| v0.14.0 | — | Complete Tag System | 14 custom tags, E017-E018, W009-W011 |
+| v0.15.0 | — | Init + Doctor Commands | forge-ts init setup, forge-ts doctor |
+| v0.16.0 | T077 | DX Polish | consola, tsdoc-config merged into core, spec sync |
+| v0.17.0 | — | defineConfig + Init DX Fixes | defineConfig(), string minVisibility, script wiring |
+| v0.18.0 | — | Husky + Staged | Husky v9 full integration, check --staged, shared pkg-json.ts |

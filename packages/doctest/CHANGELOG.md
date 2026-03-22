@@ -1,5 +1,21 @@
 # @forge-ts/doctest
 
+## 0.17.0
+
+### Patch Changes
+
+- fix: critical DX bugs — defineConfig, minVisibility strings, init script wiring
+
+  - Add defineConfig() to @forge-ts/core for type-safe config authoring
+  - minVisibility now accepts string literals ("public"/"beta"/"internal"/"private")
+  - Init template simplified: only overrides what differs from defaults
+  - Init wires forge-ts scripts into package.json (forge:check, forge:test, forge:build, forge:doctor, prepublishOnly)
+  - Script wiring is idempotent — existing scripts never overwritten
+  - 797 tests (7 new), all passing
+
+- Updated dependencies
+  - @forge-ts/core@0.17.0
+
 ## 0.16.0
 
 ### Patch Changes

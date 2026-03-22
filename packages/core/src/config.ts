@@ -42,6 +42,11 @@ export function defaultConfig(rootDir: string): ForgeConfig {
 				"require-release-tag": "error",
 				"require-fresh-guides": "warn",
 				"require-guide-coverage": "warn",
+				"require-internal-boundary": "error",
+				"require-route-response": "warn",
+				"require-inheritdoc-source": "warn",
+				"require-migration-path": "warn",
+				"require-since": "warn",
 			},
 		},
 		doctest: {
@@ -138,6 +143,11 @@ const KNOWN_RULE_KEYS = new Set([
 	"require-release-tag",
 	"require-fresh-guides",
 	"require-guide-coverage",
+	"require-internal-boundary",
+	"require-route-response",
+	"require-inheritdoc-source",
+	"require-migration-path",
+	"require-since",
 ]);
 
 /**

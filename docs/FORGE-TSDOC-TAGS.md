@@ -6,7 +6,7 @@
 ## Tag Status Legend
 
 - **ACTIVE** — Implemented: parsed by walker, used by enforcer/generator
-- **PLANNED** — Designed but not yet implemented in code
+- *No PLANNED items remain — all tags and rules are implemented as of v0.14.0*
 
 ---
 
@@ -145,7 +145,7 @@ export function clearTSDocConfigCache(): void { ... }
 | Tag | Kind | Layer | Status | Enforced By | Purpose |
 |-----|------|-------|--------|-------------|---------|
 | `{@link}` | inline | Dev | ACTIVE | E008 (dead links) | Hyperlink to another symbol or URL |
-| `{@inheritDoc}` | inline | Dev | PLANNED | W009 | Inherit documentation from another symbol |
+| `{@inheritDoc}` | inline | Dev | ACTIVE | W009 | Inherit documentation from another symbol |
 | `{@label}` | inline | Dev | ACTIVE | — | Label a declaration for reference selectors |
 
 **Examples:**
@@ -218,10 +218,10 @@ Tags defined by the `@forge-ts/tsdoc-config` preset. These extend the TSDoc stan
 | Tag | Kind | Layer | Status | Used By | Purpose |
 |-----|------|-------|--------|---------|---------|
 | `@route` | block | API | ACTIVE | OpenAPI gen | HTTP method and path for REST endpoint documentation |
-| `@response` | block | API | PLANNED | OpenAPI gen | HTTP response type and status code |
-| `@query` | block | API | PLANNED | OpenAPI gen | Query parameter documentation for REST endpoints |
-| `@header` | block | API | PLANNED | OpenAPI gen | HTTP header parameter documentation |
-| `@body` | block | API | PLANNED | OpenAPI gen | Request body schema documentation |
+| `@response` | block | API | ACTIVE | OpenAPI gen | HTTP response type and status code |
+| `@query` | block | API | ACTIVE | OpenAPI gen | Query parameter documentation for REST endpoints |
+| `@header` | block | API | ACTIVE | OpenAPI gen | HTTP header parameter documentation |
+| `@body` | block | API | ACTIVE | OpenAPI gen | Request body schema documentation |
 
 **Examples:**
 
@@ -264,8 +264,8 @@ export async function createProject(req: Request): Promise<Project> { ... }
 | `@guide` | block | Consumer | ACTIVE | guide-discovery | Associate a symbol with a consumer guide page |
 | `@category` | block | Consumer | ACTIVE | guide-discovery | Group symbols by topic for guide generation |
 | `@concept` | block | Consumer | ACTIVE | concept page gen | Associate a symbol with a concepts page section |
-| `@quickstart` | modifier | Consumer | PLANNED | guide-discovery | Mark a symbol as "start here" for new users |
-| `@faq` | block | Consumer | PLANNED | FAQ page gen | Associate a symbol with a FAQ entry |
+| `@quickstart` | modifier | Consumer | ACTIVE | guide-discovery | Mark a symbol as "start here" for new users |
+| `@faq` | block | Consumer | ACTIVE | FAQ page gen | Associate a symbol with a FAQ entry |
 
 **Examples:**
 
@@ -312,8 +312,8 @@ export async function enforce(config: ForgeConfig): Promise<ForgeResult> { ... }
 | Tag | Kind | Layer | Status | Used By | Purpose |
 |-----|------|-------|--------|---------|---------|
 | `@since` | block | API | ACTIVE | — | Version when the symbol was introduced |
-| `@breaking` | block | Consumer | PLANNED | migration guide gen | Document a breaking change with context |
-| `@migration` | block | Consumer | PLANNED | migration guide gen | Document the migration path from old to new API |
+| `@breaking` | block | Consumer | ACTIVE | migration guide gen | Document a breaking change with context |
+| `@migration` | block | Consumer | ACTIVE | migration guide gen | Document the migration path from old to new API |
 
 **Examples:**
 
@@ -351,7 +351,7 @@ export interface EnforceRules { ... }
 
 | Tag | Kind | Layer | Status | Used By | Purpose |
 |-----|------|-------|--------|---------|---------|
-| `@complexity` | block | Dev | PLANNED | dev guide gen | Document algorithmic complexity |
+| `@complexity` | block | Dev | ACTIVE | dev guide gen | Document algorithmic complexity |
 
 **Examples:**
 
@@ -397,9 +397,9 @@ Every tag in the forge-ts system has a clear enforcement story — either an act
 | TSDoc syntax | W006 | warn | All TSDoc must parse without syntax errors |
 | FORGE:AUTO references | W007 | warn | Guide references must point to existing symbols |
 | Guide coverage | W008 | warn | Public symbols should appear in at least one guide |
-| `{@inheritDoc}` | W009 | warn | PLANNED — Source must exist and have content |
-| `@breaking` + `@migration` | W010 | warn | PLANNED — Breaking changes need migration path |
-| `@since` | W011 | warn | PLANNED — New exports should have version annotation |
+| `{@inheritDoc}` | W009 | warn | Active — Source must exist and have content |
+| `@breaking` + `@migration` | W010 | warn | Active — Breaking changes need migration path |
+| `@since` | W011 | warn | Active — New exports should have version annotation |
 
 ### Tags Enforced by Config Guards
 
@@ -409,8 +409,8 @@ Every tag in the forge-ts system has a clear enforcement story — either an act
 | forge-ts rule severities | E010 | Rules cannot be weakened below locked level |
 | biome.json rules | E011 | Biome rules cannot be weakened below locked level |
 | package.json engines | E012 | Node.js version cannot be downgraded below minimum |
-| `@internal` re-export | E017 | PLANNED — Internal symbols must not leak through public barrels |
-| `@response` on routes | E018 | PLANNED — Route handlers should document response types |
+| `@internal` re-export | E017 | Active — Internal symbols must not leak through public barrels |
+| `@response` on routes | E018 | Active — Route handlers should document response types |
 
 ### Tags Used for Generation (No Enforcement Needed)
 
@@ -421,15 +421,15 @@ Every tag in the forge-ts system has a clear enforcement story — either an act
 | `@category` | Guide discovery | Category-grouped guide pages |
 | `@concept` | Site generator | Concepts page FORGE:AUTO sections |
 | `@since` | — | Version metadata in output |
-| `@quickstart` | PLANNED — Guide discovery | "Start here" prioritization |
-| `@faq` | PLANNED — FAQ page generator | FAQ entry generation |
-| `@breaking` | PLANNED — Migration guide gen | Breaking change catalog |
-| `@migration` | PLANNED — Migration guide gen | Migration path documentation |
-| `@complexity` | PLANNED — Dev guide gen | Performance documentation |
-| `@response` | PLANNED — OpenAPI gen | Response schema in spec |
-| `@query` | PLANNED — OpenAPI gen | Query parameters in spec |
-| `@header` | PLANNED — OpenAPI gen | Header parameters in spec |
-| `@body` | PLANNED — OpenAPI gen | Request body in spec |
+| `@quickstart` | Active — Guide discovery | "Start here" prioritization |
+| `@faq` | Active — FAQ page generator | FAQ entry generation |
+| `@breaking` | Active — Migration guide gen | Breaking change catalog |
+| `@migration` | Active — Migration guide gen | Migration path documentation |
+| `@complexity` | Active — Dev guide gen | Performance documentation |
+| `@response` | Active — OpenAPI gen | Response schema in spec |
+| `@query` | Active — OpenAPI gen | Query parameters in spec |
+| `@header` | Active — OpenAPI gen | Header parameters in spec |
+| `@body` | Active — OpenAPI gen | Request body in spec |
 
 ### Tags Used for Filtering (No Enforcement Beyond E016)
 
@@ -468,19 +468,19 @@ The `@forge-ts/tsdoc-config` package ships this preset. All projects using forge
 | `@guide` | block | ACTIVE |
 | `@concept` | block | ACTIVE |
 
-### Custom Tags (planned additions)
+### Custom Tags (added v0.14.0)
 
 | Tag | syntaxKind | Status |
 |-----|-----------|--------|
-| `@response` | block | PLANNED |
-| `@query` | block | PLANNED |
-| `@header` | block | PLANNED |
-| `@body` | block | PLANNED |
-| `@quickstart` | modifier | PLANNED |
-| `@faq` | block | PLANNED |
-| `@breaking` | block | PLANNED |
-| `@migration` | block | PLANNED |
-| `@complexity` | block | PLANNED |
+| `@response` | block | ACTIVE |
+| `@query` | block | ACTIVE |
+| `@header` | block | ACTIVE |
+| `@body` | block | ACTIVE |
+| `@quickstart` | modifier | ACTIVE |
+| `@faq` | block | ACTIVE |
+| `@breaking` | block | ACTIVE |
+| `@migration` | block | ACTIVE |
+| `@complexity` | block | ACTIVE |
 
 ---
 

@@ -6,7 +6,16 @@
 		{ "tagName": "@category", "syntaxKind": "block" },
 		{ "tagName": "@since", "syntaxKind": "block" },
 		{ "tagName": "@guide", "syntaxKind": "block" },
-		{ "tagName": "@concept", "syntaxKind": "block" }
+		{ "tagName": "@concept", "syntaxKind": "block" },
+		{ "tagName": "@response", "syntaxKind": "block" },
+		{ "tagName": "@query", "syntaxKind": "block" },
+		{ "tagName": "@header", "syntaxKind": "block" },
+		{ "tagName": "@body", "syntaxKind": "block" },
+		{ "tagName": "@quickstart", "syntaxKind": "modifier" },
+		{ "tagName": "@faq", "syntaxKind": "block" },
+		{ "tagName": "@breaking", "syntaxKind": "block" },
+		{ "tagName": "@migration", "syntaxKind": "block" },
+		{ "tagName": "@complexity", "syntaxKind": "block" }
 	],
 	"supportForTags": {
 		"@alpha": true,
@@ -37,6 +46,15 @@
 		"@category": true,
 		"@since": true,
 		"@guide": true,
-		"@concept": true
+		"@concept": true,
+		"@response": true,
+		"@query": true,
+		"@header": true,
+		"@body": true,
+		"@quickstart": true,
+		"@faq": true,
+		"@breaking": true,
+		"@migration": true,
+		"@complexity": true
 	}
 }

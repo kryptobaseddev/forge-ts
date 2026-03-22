@@ -94,6 +94,16 @@ export interface EnforceRules {
 	"require-fresh-guides": RuleSeverity;
 	/** W008: Exported public symbol is not mentioned in any guide page. */
 	"require-guide-coverage": RuleSeverity;
+	/** E017: @internal symbol re-exported through public barrel (index.ts). */
+	"require-internal-boundary": RuleSeverity;
+	/** E018: @route-tagged function missing @response tag. */
+	"require-route-response": RuleSeverity;
+	/** W009: {@inheritDoc} references a symbol that does not exist. */
+	"require-inheritdoc-source": RuleSeverity;
+	/** W010: @breaking without @migration path. */
+	"require-migration-path": RuleSeverity;
+	/** W011: New public export missing @since version tag. */
+	"require-since": RuleSeverity;
 }
 
 /**

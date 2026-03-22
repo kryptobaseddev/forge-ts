@@ -31,6 +31,11 @@ const DEFAULT_RULES: EnforceRules = {
 	"require-release-tag": "error",
 	"require-fresh-guides": "warn",
 	"require-guide-coverage": "warn",
+	"require-internal-boundary": "error",
+	"require-route-response": "warn",
+	"require-inheritdoc-source": "warn",
+	"require-migration-path": "warn",
+	"require-since": "warn",
 };
 
 /**
@@ -40,11 +45,12 @@ const DEFAULT_RULES: EnforceRules = {
  */
 function makeConfig(overrides?: Partial<ForgeConfig["enforce"]>): ForgeConfig {
 	const { rules: ruleOverrides, ...restOverrides } = overrides ?? {};
-	// Default require-release-tag to "off" in tests so E016 does not interfere
-	// with unrelated test suites.  E016-specific tests explicitly enable it.
+	// Default require-release-tag and require-since to "off" in tests so E016/W011
+	// do not interfere with unrelated test suites.  Their specific tests explicitly enable them.
 	const testRules: EnforceRules = {
 		...DEFAULT_RULES,
 		"require-release-tag": "off",
+		"require-since": "off",
 		...ruleOverrides,
 	};
 	return {
@@ -966,6 +972,11 @@ describe("enforce — per-rule configuration", () => {
 		expect(DEFAULT_RULES["require-release-tag"]).toBe("error");
 		expect(DEFAULT_RULES["require-fresh-guides"]).toBe("warn");
 		expect(DEFAULT_RULES["require-guide-coverage"]).toBe("warn");
+		expect(DEFAULT_RULES["require-internal-boundary"]).toBe("error");
+		expect(DEFAULT_RULES["require-route-response"]).toBe("warn");
+		expect(DEFAULT_RULES["require-inheritdoc-source"]).toBe("warn");
+		expect(DEFAULT_RULES["require-migration-path"]).toBe("warn");
+		expect(DEFAULT_RULES["require-since"]).toBe("warn");
 	});
 
 	it("custom rules override defaults while keeping other defaults intact", async () => {
@@ -3634,5 +3645,420 @@ describe("enforce — E016 release tag required on public symbols", () => {
 			expect(e016.length).toBeGreaterThanOrEqual(1);
 			expect(e016.some((e) => e.message.includes(`My${kind}`))).toBe(true);
 		}
+	});
+});
+
+// ---------------------------------------------------------------------------
+// E017 — @internal symbol re-exported through public barrel
+// ---------------------------------------------------------------------------
+
+describe("enforce — E017 @internal symbol re-exported through public barrel", () => {
+	it("emits E017 for @internal symbol exported from index.ts", async () => {
+		const sym = makeSymbol({
+			name: "secretHelper",
+			kind: "function",
+			filePath: "/fake/src/index.ts",
+			documentation: {
+				summary: "Internal helper.",
+				examples: [{ code: "secretHelper();", language: "typescript", line: 5 }],
+				tags: { internal: [], remarks: ["Details."] },
+			},
+		});
+		const result = await runEnforce([sym], {
+			rules: { "require-internal-boundary": "error" },
+		});
+		const e017 = result.errors.filter((e) => e.code === "E017");
+		expect(e017).toHaveLength(1);
+		expect(e017[0].message).toContain("secretHelper");
+		expect(e017[0].message).toContain("index.ts");
+	});
+
+	it("does not emit E017 for @internal symbol in a non-barrel file", async () => {
+		const sym = makeSymbol({
+			name: "secretHelper",
+			kind: "function",
+			filePath: "/fake/src/utils.ts",
+			documentation: {
+				summary: "Internal helper.",
+				examples: [{ code: "secretHelper();", language: "typescript", line: 5 }],
+				tags: { internal: [], remarks: ["Details."] },
+			},
+		});
+		const result = await runEnforce([sym], {
+			rules: { "require-internal-boundary": "error" },
+		});
+		const e017 = result.errors.filter((e) => e.code === "E017");
+		expect(e017).toHaveLength(0);
+	});
+
+	it("does not emit E017 for @public symbol in index.ts", async () => {
+		const sym = makeSymbol({
+			name: "publicApi",
+			kind: "function",
+			filePath: "/fake/src/index.ts",
+			documentation: {
+				summary: "Public API.",
+				examples: [{ code: "publicApi();", language: "typescript", line: 5 }],
+				tags: { public: [], remarks: ["Details."] },
+			},
+		});
+		const result = await runEnforce([sym], {
+			rules: { "require-internal-boundary": "error" },
+		});
+		const e017 = result.errors.filter((e) => e.code === "E017");
+		expect(e017).toHaveLength(0);
+	});
+
+	it('respects require-internal-boundary set to "off"', async () => {
+		const sym = makeSymbol({
+			name: "secretHelper",
+			kind: "function",
+			filePath: "/fake/src/index.ts",
+			documentation: {
+				summary: "Internal helper.",
+				examples: [{ code: "secretHelper();", language: "typescript", line: 5 }],
+				tags: { internal: [], remarks: ["Details."] },
+			},
+		});
+		const result = await runEnforce([sym], {
+			rules: { "require-internal-boundary": "off" },
+		});
+		const e017 = [...result.errors, ...result.warnings].filter((d) => d.code === "E017");
+		expect(e017).toHaveLength(0);
+	});
+});
+
+// ---------------------------------------------------------------------------
+// E018 — @route-tagged function missing @response
+// ---------------------------------------------------------------------------
+
+describe("enforce — E018 @route-tagged function missing @response", () => {
+	it("emits E018 for @route function without @response", async () => {
+		const sym = makeSymbol({
+			name: "getUsers",
+			kind: "function",
+			documentation: {
+				summary: "Gets users.",
+				examples: [{ code: "getUsers();", language: "typescript", line: 5 }],
+				tags: { route: ["GET /users"], remarks: ["Details."] },
+			},
+		});
+		const result = await runEnforce([sym], {
+			rules: { "require-route-response": "error" },
+		});
+		const e018 = result.errors.filter((e) => e.code === "E018");
+		expect(e018).toHaveLength(1);
+		expect(e018[0].message).toContain("getUsers");
+		expect(e018[0].message).toContain("@response");
+	});
+
+	it("does not emit E018 when @route function has @response", async () => {
+		const sym = makeSymbol({
+			name: "getUsers",
+			kind: "function",
+			documentation: {
+				summary: "Gets users.",
+				examples: [{ code: "getUsers();", language: "typescript", line: 5 }],
+				tags: {
+					route: ["GET /users"],
+					response: ["200 - Success response"],
+					remarks: ["Details."],
+				},
+			},
+		});
+		const result = await runEnforce([sym], {
+			rules: { "require-route-response": "error" },
+		});
+		const e018 = result.errors.filter((e) => e.code === "E018");
+		expect(e018).toHaveLength(0);
+	});
+
+	it("does not emit E018 for non-route functions", async () => {
+		const sym = makeSymbol({
+			name: "doThing",
+			kind: "function",
+			documentation: {
+				summary: "Does a thing.",
+				examples: [{ code: "doThing();", language: "typescript", line: 5 }],
+				tags: { remarks: ["Details."] },
+			},
+		});
+		const result = await runEnforce([sym], {
+			rules: { "require-route-response": "error" },
+		});
+		const e018 = result.errors.filter((e) => e.code === "E018");
+		expect(e018).toHaveLength(0);
+	});
+
+	it('respects require-route-response set to "off"', async () => {
+		const sym = makeSymbol({
+			name: "getUsers",
+			kind: "function",
+			documentation: {
+				summary: "Gets users.",
+				examples: [{ code: "getUsers();", language: "typescript", line: 5 }],
+				tags: { route: ["GET /users"], remarks: ["Details."] },
+			},
+		});
+		const result = await runEnforce([sym], {
+			rules: { "require-route-response": "off" },
+		});
+		const e018 = [...result.errors, ...result.warnings].filter((d) => d.code === "E018");
+		expect(e018).toHaveLength(0);
+	});
+});
+
+// ---------------------------------------------------------------------------
+// W009 — {@inheritDoc} source doesn't exist
+// ---------------------------------------------------------------------------
+
+describe("enforce — W009 {@inheritDoc} source doesn't exist", () => {
+	it("emits W009 when {@inheritDoc} target does not exist in symbol graph", async () => {
+		const sym = makeSymbol({
+			name: "MyClass",
+			kind: "class",
+			documentation: {
+				summary: "My class.",
+				tags: { inheritDoc: ["NonExistentBase"], remarks: ["Details."] },
+			},
+		});
+		const result = await runEnforce([sym], {
+			rules: { "require-inheritdoc-source": "warn" },
+		});
+		const w009 = result.warnings.filter((w) => w.code === "W009");
+		expect(w009).toHaveLength(1);
+		expect(w009[0].message).toContain("NonExistentBase");
+		expect(w009[0].message).toContain("MyClass");
+	});
+
+	it("does not emit W009 when {@inheritDoc} target exists", async () => {
+		const base = makeSymbol({
+			name: "BaseClass",
+			kind: "class",
+			documentation: {
+				summary: "Base class.",
+				tags: { remarks: ["Details."] },
+			},
+		});
+		const derived = makeSymbol({
+			name: "DerivedClass",
+			kind: "class",
+			documentation: {
+				summary: "Derived class.",
+				tags: { inheritDoc: ["BaseClass"], remarks: ["Details."] },
+			},
+		});
+		const result = await runEnforce([base, derived], {
+			rules: { "require-inheritdoc-source": "warn" },
+		});
+		const w009 = result.warnings.filter((w) => w.code === "W009");
+		expect(w009).toHaveLength(0);
+	});
+
+	it('respects require-inheritdoc-source set to "off"', async () => {
+		const sym = makeSymbol({
+			name: "MyClass",
+			kind: "class",
+			documentation: {
+				summary: "My class.",
+				tags: { inheritDoc: ["NonExistentBase"], remarks: ["Details."] },
+			},
+		});
+		const result = await runEnforce([sym], {
+			rules: { "require-inheritdoc-source": "off" },
+		});
+		const w009 = [...result.errors, ...result.warnings].filter((d) => d.code === "W009");
+		expect(w009).toHaveLength(0);
+	});
+});
+
+// ---------------------------------------------------------------------------
+// W010 — @breaking without @migration
+// ---------------------------------------------------------------------------
+
+describe("enforce — W010 @breaking without @migration", () => {
+	it("emits W010 when @breaking is present without @migration", async () => {
+		const sym = makeSymbol({
+			name: "oldApi",
+			kind: "function",
+			documentation: {
+				summary: "Old API.",
+				examples: [{ code: "oldApi();", language: "typescript", line: 5 }],
+				tags: { breaking: ["Removed param X"], remarks: ["Details."] },
+			},
+		});
+		const result = await runEnforce([sym], {
+			rules: { "require-migration-path": "warn" },
+		});
+		const w010 = result.warnings.filter((w) => w.code === "W010");
+		expect(w010).toHaveLength(1);
+		expect(w010[0].message).toContain("oldApi");
+		expect(w010[0].message).toContain("@breaking");
+		expect(w010[0].message).toContain("@migration");
+	});
+
+	it("does not emit W010 when @breaking has @migration", async () => {
+		const sym = makeSymbol({
+			name: "oldApi",
+			kind: "function",
+			documentation: {
+				summary: "Old API.",
+				examples: [{ code: "oldApi();", language: "typescript", line: 5 }],
+				tags: {
+					breaking: ["Removed param X"],
+					migration: ["Use newApi() instead"],
+					remarks: ["Details."],
+				},
+			},
+		});
+		const result = await runEnforce([sym], {
+			rules: { "require-migration-path": "warn" },
+		});
+		const w010 = result.warnings.filter((w) => w.code === "W010");
+		expect(w010).toHaveLength(0);
+	});
+
+	it("does not emit W010 when no @breaking tag is present", async () => {
+		const sym = makeSymbol({
+			name: "stableApi",
+			kind: "function",
+			documentation: {
+				summary: "Stable API.",
+				examples: [{ code: "stableApi();", language: "typescript", line: 5 }],
+				tags: { remarks: ["Details."] },
+			},
+		});
+		const result = await runEnforce([sym], {
+			rules: { "require-migration-path": "warn" },
+		});
+		const w010 = result.warnings.filter((w) => w.code === "W010");
+		expect(w010).toHaveLength(0);
+	});
+
+	it('respects require-migration-path set to "off"', async () => {
+		const sym = makeSymbol({
+			name: "oldApi",
+			kind: "function",
+			documentation: {
+				summary: "Old API.",
+				examples: [{ code: "oldApi();", language: "typescript", line: 5 }],
+				tags: { breaking: ["Removed param X"], remarks: ["Details."] },
+			},
+		});
+		const result = await runEnforce([sym], {
+			rules: { "require-migration-path": "off" },
+		});
+		const w010 = [...result.errors, ...result.warnings].filter((d) => d.code === "W010");
+		expect(w010).toHaveLength(0);
+	});
+});
+
+// ---------------------------------------------------------------------------
+// W011 — New public export missing @since
+// ---------------------------------------------------------------------------
+
+describe("enforce — W011 new public export missing @since", () => {
+	it("emits W011 for @public symbol without @since", async () => {
+		const sym = makeSymbol({
+			name: "newFeature",
+			kind: "function",
+			documentation: {
+				summary: "New feature.",
+				examples: [{ code: "newFeature();", language: "typescript", line: 5 }],
+				tags: { public: [], remarks: ["Details."] },
+			},
+		});
+		const result = await runEnforce([sym], {
+			rules: { "require-since": "warn" },
+		});
+		const w011 = result.warnings.filter((w) => w.code === "W011");
+		expect(w011).toHaveLength(1);
+		expect(w011[0].message).toContain("newFeature");
+		expect(w011[0].message).toContain("@since");
+	});
+
+	it("does not emit W011 for @public symbol with @since", async () => {
+		const sym = makeSymbol({
+			name: "newFeature",
+			kind: "function",
+			documentation: {
+				summary: "New feature.",
+				examples: [{ code: "newFeature();", language: "typescript", line: 5 }],
+				tags: { public: [], since: ["1.0.0"], remarks: ["Details."] },
+			},
+		});
+		const result = await runEnforce([sym], {
+			rules: { "require-since": "warn" },
+		});
+		const w011 = result.warnings.filter((w) => w.code === "W011");
+		expect(w011).toHaveLength(0);
+	});
+
+	it("emits W011 for @beta symbol without @since", async () => {
+		const sym = makeSymbol({
+			name: "betaFeature",
+			kind: "function",
+			documentation: {
+				summary: "Beta feature.",
+				examples: [{ code: "betaFeature();", language: "typescript", line: 5 }],
+				tags: { beta: [], remarks: ["Details."] },
+			},
+		});
+		const result = await runEnforce([sym], {
+			rules: { "require-since": "warn" },
+		});
+		const w011 = result.warnings.filter((w) => w.code === "W011");
+		expect(w011).toHaveLength(1);
+	});
+
+	it("does not emit W011 for @internal symbol without @since", async () => {
+		const sym = makeSymbol({
+			name: "internalHelper",
+			kind: "function",
+			documentation: {
+				summary: "Internal helper.",
+				examples: [{ code: "internalHelper();", language: "typescript", line: 5 }],
+				tags: { internal: [], remarks: ["Details."] },
+			},
+		});
+		const result = await runEnforce([sym], {
+			rules: { "require-since": "warn" },
+		});
+		const w011 = result.warnings.filter((w) => w.code === "W011");
+		expect(w011).toHaveLength(0);
+	});
+
+	it("does not emit W011 for symbol with no release tag at all", async () => {
+		const sym = makeSymbol({
+			name: "noTag",
+			kind: "function",
+			documentation: {
+				summary: "No tag.",
+				examples: [{ code: "noTag();", language: "typescript", line: 5 }],
+				tags: { remarks: ["Details."] },
+			},
+		});
+		const result = await runEnforce([sym], {
+			rules: { "require-since": "warn" },
+		});
+		const w011 = result.warnings.filter((w) => w.code === "W011");
+		expect(w011).toHaveLength(0);
+	});
+
+	it('respects require-since set to "off"', async () => {
+		const sym = makeSymbol({
+			name: "newFeature",
+			kind: "function",
+			documentation: {
+				summary: "New feature.",
+				examples: [{ code: "newFeature();", language: "typescript", line: 5 }],
+				tags: { public: [], remarks: ["Details."] },
+			},
+		});
+		const result = await runEnforce([sym], {
+			rules: { "require-since": "off" },
+		});
+		const w011 = [...result.errors, ...result.warnings].filter((d) => d.code === "W011");
+		expect(w011).toHaveLength(0);
 	});
 });

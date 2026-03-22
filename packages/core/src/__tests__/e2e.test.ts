@@ -35,6 +35,18 @@ const DEFAULT_E2E_RULES: EnforceRules = {
 	"require-class-member-doc": "error",
 	"require-interface-member-doc": "error",
 	"require-tsdoc-syntax": "warn",
+	"require-remarks": "error",
+	"require-default-value": "warn",
+	"require-type-param": "error",
+	"require-see": "warn",
+	"require-release-tag": "off",
+	"require-fresh-guides": "warn",
+	"require-guide-coverage": "warn",
+	"require-internal-boundary": "error",
+	"require-route-response": "warn",
+	"require-inheritdoc-source": "warn",
+	"require-migration-path": "warn",
+	"require-since": "off",
 };
 
 function makeFixtureConfig(overrides: Partial<ForgeConfig> = {}): ForgeConfig {

@@ -282,6 +282,11 @@ const RULE_MAP: Record<string, keyof EnforceRules> = {
 	E016: "require-release-tag",
 	W007: "require-fresh-guides",
 	W008: "require-guide-coverage",
+	E017: "require-internal-boundary",
+	E018: "require-route-response",
+	W009: "require-inheritdoc-source",
+	W010: "require-migration-path",
+	W011: "require-since",
 };
 
 // ---------------------------------------------------------------------------
@@ -317,6 +322,11 @@ const RULE_MAP: Record<string, keyof EnforceRules> = {
  * | W005 | warn     | Symbol references other symbols via `{@link}` but has no `@see` tags. |
  * | W007 | warn     | Guide FORGE:AUTO section references a symbol that no longer exists. |
  * | W008 | warn     | Exported public symbol is not mentioned in any guide page. |
+ * | E017 | error    | `@internal` symbol re-exported through public barrel (index.ts). |
+ * | E018 | warn     | `@route`-tagged function missing `@response` tag. |
+ * | W009 | warn     | `{@inheritDoc}` references a symbol that does not exist. |
+ * | W010 | warn     | `@breaking` tag present without `@migration` path. |
+ * | W011 | warn     | New public export missing `@since` version tag. |
  *
  * When `config.enforce.strict` is `true` all warnings are promoted to errors.
  *
@@ -594,6 +604,79 @@ export async function enforce(config: ForgeConfig): Promise<ForgeResult> {
 			}
 		}
 
+		// E017 — @internal symbol re-exported through public barrel (index.ts)
+		if (
+			symbol.documentation?.tags?.internal !== undefined &&
+			/[/\\]index\.ts$/.test(symbol.filePath)
+		) {
+			emit(
+				"E017",
+				`@internal symbol "${symbol.name}" is re-exported through public barrel "${symbol.filePath}".`,
+				symbol.filePath,
+				symbol.line,
+				symbol.column,
+				{
+					suggestedFix: `Remove "${symbol.name}" from the public barrel file (index.ts) or remove the @internal tag.`,
+					symbolName: symbol.name,
+					symbolKind: symbol.kind,
+				},
+			);
+		}
+
+		// E018 — @route-tagged function missing @response
+		if (symbol.documentation?.tags?.route && !symbol.documentation?.tags?.response) {
+			emit(
+				"E018",
+				`Route handler "${symbol.name}" is missing a @response tag. Document expected HTTP responses.`,
+				symbol.filePath,
+				symbol.line,
+				symbol.column,
+				{
+					suggestedFix: "@response 200 - Success response",
+					symbolName: symbol.name,
+					symbolKind: symbol.kind,
+				},
+			);
+		}
+
+		// W010 — @breaking without @migration
+		if (symbol.documentation?.tags?.breaking && !symbol.documentation?.tags?.migration) {
+			emit(
+				"W010",
+				`"${symbol.name}" has a @breaking tag but no @migration path. Provide migration guidance.`,
+				symbol.filePath,
+				symbol.line,
+				symbol.column,
+				{
+					suggestedFix: "@migration [Describe how to migrate from the old API]",
+					symbolName: symbol.name,
+					symbolKind: symbol.kind,
+				},
+			);
+		}
+
+		// W011 — New public export missing @since
+		{
+			const releaseTags = ["public", "beta", "alpha"];
+			const hasReleaseTag = releaseTags.some(
+				(tag) => symbol.documentation?.tags?.[tag] !== undefined,
+			);
+			if (hasReleaseTag && !symbol.documentation?.tags?.since) {
+				emit(
+					"W011",
+					`Exported symbol "${symbol.name}" has a release tag but is missing @since version.`,
+					symbol.filePath,
+					symbol.line,
+					symbol.column,
+					{
+						suggestedFix: "@since 1.0.0",
+						symbolName: symbol.name,
+						symbolKind: symbol.kind,
+					},
+				);
+			}
+		}
+
 		// W003 — @deprecated without reason
 		if (deprecatedWithoutReason(symbol)) {
 			emit(
@@ -706,6 +789,29 @@ export async function enforce(config: ForgeConfig): Promise<ForgeResult> {
 						symbolKind: symbol.kind,
 					},
 				);
+			}
+		}
+	}
+
+	// W009 — {@inheritDoc} source doesn't exist
+	for (const symbol of allSymbols) {
+		const inheritDocTargets = symbol.documentation?.tags?.inheritDoc;
+		if (inheritDocTargets && inheritDocTargets.length > 0) {
+			for (const target of inheritDocTargets) {
+				if (!knownSymbols.has(target)) {
+					emit(
+						"W009",
+						`{@inheritDoc ${target}} in "${symbol.name}" references a symbol that does not exist in this project.`,
+						symbol.filePath,
+						symbol.line,
+						symbol.column,
+						{
+							suggestedFix: `Remove or update the {@inheritDoc ${target}} reference to point to an existing symbol.`,
+							symbolName: symbol.name,
+							symbolKind: symbol.kind,
+						},
+					);
+				}
 			}
 		}
 	}

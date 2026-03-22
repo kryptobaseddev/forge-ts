@@ -294,6 +294,124 @@ function parseTSDoc(
 		}
 	}
 
+	// @category blocks — grouping labels for navigation and guide discovery
+	for (const block of comment.customBlocks) {
+		if (block.blockTag.tagName.toLowerCase() === "@category") {
+			const categoryText = renderBlock(block).trim();
+			if (categoryText) {
+				if (!tags.category) tags.category = [];
+				tags.category.push(categoryText);
+			}
+		}
+	}
+
+	// @since blocks — version when the symbol was introduced
+	for (const block of comment.customBlocks) {
+		if (block.blockTag.tagName.toLowerCase() === "@since") {
+			const sinceText = renderBlock(block).trim();
+			if (sinceText) {
+				if (!tags.since) tags.since = [];
+				tags.since.push(sinceText);
+			}
+		}
+	}
+
+	// @response blocks — format: "STATUS_CODE - Description"
+	for (const block of comment.customBlocks) {
+		if (block.blockTag.tagName.toLowerCase() === "@response") {
+			const responseText = renderBlock(block).trim();
+			if (responseText) {
+				if (!tags.response) tags.response = [];
+				tags.response.push(responseText);
+			}
+		}
+	}
+
+	// @query blocks — format: "paramName - Description"
+	for (const block of comment.customBlocks) {
+		if (block.blockTag.tagName.toLowerCase() === "@query") {
+			const queryText = renderBlock(block).trim();
+			if (queryText) {
+				if (!tags.query) tags.query = [];
+				tags.query.push(queryText);
+			}
+		}
+	}
+
+	// @header blocks — format: "headerName - Description"
+	for (const block of comment.customBlocks) {
+		if (block.blockTag.tagName.toLowerCase() === "@header") {
+			const headerText = renderBlock(block).trim();
+			if (headerText) {
+				if (!tags.header) tags.header = [];
+				tags.header.push(headerText);
+			}
+		}
+	}
+
+	// @body blocks — format: "TypeName - Description"
+	for (const block of comment.customBlocks) {
+		if (block.blockTag.tagName.toLowerCase() === "@body") {
+			const bodyText = renderBlock(block).trim();
+			if (bodyText) {
+				if (!tags.body) tags.body = [];
+				tags.body.push(bodyText);
+			}
+		}
+	}
+
+	// @faq blocks — free text
+	for (const block of comment.customBlocks) {
+		if (block.blockTag.tagName.toLowerCase() === "@faq") {
+			const faqText = renderBlock(block).trim();
+			if (faqText) {
+				if (!tags.faq) tags.faq = [];
+				tags.faq.push(faqText);
+			}
+		}
+	}
+
+	// @breaking blocks — free text describing the breaking change
+	for (const block of comment.customBlocks) {
+		if (block.blockTag.tagName.toLowerCase() === "@breaking") {
+			const breakingText = renderBlock(block).trim();
+			if (breakingText) {
+				if (!tags.breaking) tags.breaking = [];
+				tags.breaking.push(breakingText);
+			}
+		}
+	}
+
+	// @migration blocks — free text describing migration path
+	for (const block of comment.customBlocks) {
+		if (block.blockTag.tagName.toLowerCase() === "@migration") {
+			const migrationText = renderBlock(block).trim();
+			if (migrationText) {
+				if (!tags.migration) tags.migration = [];
+				tags.migration.push(migrationText);
+			}
+		}
+	}
+
+	// @complexity blocks — free text (e.g., "O(n log n)")
+	for (const block of comment.customBlocks) {
+		if (block.blockTag.tagName.toLowerCase() === "@complexity") {
+			const complexityText = renderBlock(block).trim();
+			if (complexityText) {
+				if (!tags.complexity) tags.complexity = [];
+				tags.complexity.push(complexityText);
+			}
+		}
+	}
+
+	// @quickstart modifier tag — presence-only, no content
+	for (const tag of comment.modifierTagSet.nodes) {
+		if (tag.tagName.toLowerCase() === "@quickstart") {
+			tags.quickstart = [];
+			break;
+		}
+	}
+
 	// @example blocks
 	const examples = extractExamples(comment, startLine);
 
@@ -317,6 +435,19 @@ function parseTSDoc(
 		}
 	}
 	walkForLinks(comment);
+
+	// Extract {@inheritDoc} target if present
+	if (comment.inheritDocTag?.declarationReference) {
+		const ref = comment.inheritDocTag.declarationReference;
+		const target = ref.memberReferences
+			.map((r) => r.memberIdentifier?.identifier ?? "")
+			.filter(Boolean)
+			.join(".");
+		if (target) {
+			if (!tags.inheritDoc) tags.inheritDoc = [];
+			tags.inheritDoc.push(target);
+		}
+	}
 
 	// Collect TSDoc parser messages (syntax warnings/errors)
 	const parseMessages: Array<{ messageId: string; text: string; line: number }> = [];

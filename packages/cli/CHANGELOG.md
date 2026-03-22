@@ -1,5 +1,27 @@
 # @forge-ts/cli
 
+## 0.14.0
+
+### Patch Changes
+
+- f29584f: feat: complete tag system — all 14 custom tags, 27 enforcer rules, zero PLANNED items
+
+  - Fix: @category and @since extraction was broken (defined in tsdoc.json but never extracted by walker)
+  - Add 9 new custom tags: @response, @query, @header, @body, @quickstart, @faq, @breaking, @migration, @complexity
+  - Add 5 new enforcer rules: E017 (internal re-export), E018 (route without response), W009 (inheritDoc source), W010 (breaking without migration), W011 (since on public exports)
+  - Extract {@inheritDoc} targets in walker for W009 validation
+  - tsdoc.json preset: 14 custom tags, 38 total supported tags
+  - 751 tests (21 new), all passing
+  - FORGE-TSDOC-TAGS.md: zero PLANNED items — everything is ACTIVE
+
+- Updated dependencies [f29584f]
+  - @forge-ts/core@0.14.0
+  - @forge-ts/enforcer@0.14.0
+  - @forge-ts/tsdoc-config@0.14.0
+  - @forge-ts/gen@0.14.0
+  - @forge-ts/doctest@0.14.0
+  - @forge-ts/api@0.14.0
+
 ## 0.13.0
 
 ### Minor Changes

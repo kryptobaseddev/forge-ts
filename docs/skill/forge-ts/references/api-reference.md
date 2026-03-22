@@ -1,4 +1,4 @@
-# forge-ts Programmatic API
+# forge-ts Programmatic API (v0.13.0)
 
 ## Table of Contents
 
@@ -10,6 +10,9 @@
 - [API Generator](#api-generator)
 - [Site Generator](#site-generator)
 - [SSG Adapters](#ssg-adapters)
+- [Lock / Audit / Bypass](#lock--audit--bypass)
+- [Guide Discovery](#guide-discovery)
+- [TSDoc Config](#tsdoc-config)
 
 ## Core Functions
 
@@ -26,7 +29,7 @@ const config = defaultConfig("/path/to/project");
 ```typescript
 import { loadConfig } from "@forge-ts/core";
 const config = await loadConfig("/path/to/project");
-// Resolves: config.ts → config.js → package.json → defaults
+// Resolves: config.ts → config.js → config.json → defaults
 ```
 
 ### walkProject
@@ -34,7 +37,16 @@ const config = await loadConfig("/path/to/project");
 ```typescript
 import { walkProject } from "@forge-ts/core";
 const symbols: ForgeSymbol[] = walkProject(config);
-// Extracts all exported symbols with TSDoc from the AST
+// Single-pass AST traversal via ts.createProgram
+// TSDoc parsed via TSDocConfigFile.loadForFolder() (cached per directory)
+```
+
+### clearTSDocConfigCache
+
+```typescript
+import { clearTSDocConfigCache } from "@forge-ts/core";
+clearTSDocConfigCache();
+// Resets cached TSDoc configurations (useful for test isolation)
 ```
 
 ## Visibility
@@ -54,13 +66,19 @@ const publicOnly = filterByVisibility(symbols, Visibility.Public);
 
 | Type | Description |
 |------|-------------|
-| `ForgeConfig` | Full configuration (loaded from config file or defaults) |
-| `ForgeSymbol` | Extracted symbol with TSDoc, visibility, parameters, examples |
+| `ForgeConfig` | Full configuration (10 sections, loaded from config file or defaults) |
+| `ForgeSymbol` | Extracted symbol with TSDoc, visibility, parameters, examples, children |
 | `ForgeResult` | Compilation pass result |
 | `ForgeError` | Diagnostic error with file, line, rule code, suggestedFix |
 | `ForgeWarning` | Diagnostic warning |
 | `RuleSeverity` | `"error"` \| `"warn"` \| `"off"` |
-| `EnforceRules` | Per-rule severity map (E001-E007 codes) |
+| `EnforceRules` | Per-rule severity map (15 configurable rules) |
+| `ForgeLockManifest` | Snapshot of rule severities and guard values |
+| `BypassRecord` | Rule ID, reason, expiration timestamp |
+| `AuditEntry` | Timestamped log entry for lock/unlock/bypass/config events |
+| `DocPage` | Generated documentation page (path, content, stage) |
+| `GuideDiscoveryResult` | Auto-discovered guide topic with heuristic source |
+| `SSGAdapter` | Interface for SSG-specific transformations |
 | `OpenAPISchemaObject` | OpenAPI 3.2 schema object |
 
 ## Enforcer
@@ -68,8 +86,9 @@ const publicOnly = filterByVisibility(symbols, Visibility.Public);
 ```typescript
 import { enforce } from "@forge-ts/enforcer";
 const result = enforce(symbols, config.enforce);
-// result.errors: ForgeError[] with suggestedFix
+// result.errors: ForgeError[] with suggestedFix (22 rules across 4 layers)
 // result.warnings: ForgeWarning[]
+// Guard rules check isRuleBypassed() before emitting
 ```
 
 ## DocTest
@@ -86,6 +105,7 @@ const results = await runTests(tests); // Execute via node:test
 import { generateOpenAPI } from "@forge-ts/api";
 const spec = generateOpenAPI(symbols, config);
 // OpenAPI 3.2.0 spec — paths from @route tags
+// Visibility filtering via @public/@beta/@internal
 ```
 
 ## Site Generator
@@ -95,19 +115,77 @@ import { generateSite } from "@forge-ts/gen";
 const files = await generateSite(symbols, config);
 // Returns: { path: string; content: string }[]
 // Includes: MDX pages, llms.txt, SKILL.md, SSG nav config
+// Runs guide discovery, zone processing, README sync
 ```
 
 ## SSG Adapters
 
 ```typescript
-import { getAdapter, type SSGAdapter } from "@forge-ts/gen";
+import { getAdapter, registerAdapter, type SSGAdapter } from "@forge-ts/gen";
 
 const adapter: SSGAdapter = getAdapter("mintlify");
 // Also: "docusaurus", "nextra", "vitepress"
-// Throws if target not registered
 
 // SSGAdapter interface:
-// - generateNav(symbols, config): navigation config
-// - generateConfigFiles(symbols, config): SSGConfigFile[]
-// - getPageExtension(): ".mdx" | ".md"
+// - transformPages(pages, config): SSG-specific file format
+// - generateConfig(symbols, config): SSG configuration file
+// - scaffold(config): initial project structure
+// - getDevCommand(): local dev server command
+// - detectExisting(rootDir): check if SSG already configured
+
+// Register custom adapter at runtime:
+registerAdapter("custom", myAdapter);
 ```
+
+## Lock / Audit / Bypass
+
+```typescript
+import {
+  createLockManifest,
+  loadLockManifest,
+  validateAgainstLock,
+  appendAuditEntry,
+  loadAuditTrail,
+  createBypass,
+  isRuleBypassed,
+} from "@forge-ts/core";
+
+// Lock: snapshot current config
+const manifest = createLockManifest(config);
+// Saved to .forge-lock.json by forge-ts lock
+
+// Validate: detect drift
+const driftErrors = validateAgainstLock(config, manifest);
+// Returns ForgeError[] for E010 violations
+
+// Audit: append-only log
+appendAuditEntry({ type: "lock", timestamp: Date.now(), ... });
+const trail = loadAuditTrail(".forge-audit.jsonl");
+
+// Bypass: temporary rule exemption
+const bypass = createBypass("E009", "migrating tsconfig", config.bypass);
+const bypassed = isRuleBypassed("E009", bypasses);
+```
+
+## Guide Discovery
+
+```typescript
+import { discoverGuides } from "@forge-ts/gen";
+const guides = discoverGuides(symbols, config.guides);
+// Returns GuideDiscoveryResult[] — one per discovered topic
+// Each has: slug, title, heuristic source, related symbols
+// 5 heuristics: config-interface, error-types, guide-tag, category, entry-point
+```
+
+## TSDoc Config
+
+```typescript
+import { loadTSDocConfig } from "@forge-ts/core";
+// Uses TSDocConfigFile.loadForFolder() from @microsoft/tsdoc-config
+// Cached per directory in a Map<string, TSDocConfiguration>
+// Falls back to bare TSDocConfiguration if no tsdoc.json found
+```
+
+The `@forge-ts/tsdoc-config` package exports an opinionated `tsdoc.json`
+preset with 24 standard tags and 5 custom tags (`@route`, `@category`,
+`@since`, `@guide`, `@concept`).

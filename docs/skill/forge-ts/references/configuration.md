@@ -1,11 +1,11 @@
-# forge-ts Configuration Reference
+# forge-ts Configuration Reference (v0.13.0)
 
 ## Config File Resolution
 
 forge-ts looks for configuration in this order:
 1. `forge-ts.config.ts` in the project root
 2. `forge-ts.config.js` in the project root
-3. `"forge-ts"` key in `package.json`
+3. `forge-ts.config.json` in the project root
 4. Built-in defaults
 
 Unknown keys produce a warning to stderr and in the JSON envelope
@@ -23,17 +23,27 @@ export default {
 
   enforce: {
     enabled: true,
-    // "public" | "beta" | "internal"
-    minVisibility: "public",
-    strict: false,
+    minVisibility: "public",    // "public" | "beta" | "internal"
+    strict: false,              // true promotes all warnings to errors
     rules: {
-      "require-summary": "error",           // E001
-      "require-param": "error",             // E002
-      "require-returns": "error",           // E003
-      "require-example": "error",           // E004
-      "require-package-doc": "warn",        // E005
-      "require-class-member-doc": "error",  // E006
+      // API Layer
+      "require-summary": "error",              // E001
+      "require-param": "error",                // E002
+      "require-returns": "error",              // E003
+      "require-example": "error",              // E004
+      "require-package-doc": "error",          // E005
+      "require-class-member-doc": "error",     // E006
       "require-interface-member-doc": "error", // E007
+      // Dev Layer
+      "require-remarks": "error",              // E013
+      "require-default-value": "warn",         // E014
+      "require-type-param": "error",           // E015
+      "require-see": "warn",                   // W005
+      "require-tsdoc-syntax": "warn",          // W006
+      // Consumer Layer
+      "require-release-tag": "error",          // E016
+      "require-fresh-guides": "warn",          // W007
+      "require-guide-coverage": "warn",        // W008
     },
   },
 
@@ -62,6 +72,36 @@ export default {
     extraGotchas: [],
   },
 
+  tsdoc: {
+    writeConfig: false,         // true writes tsdoc.json to project root
+    customTags: [],             // additional custom tag definitions
+    enforce: [],                // standardization groups to enforce
+  },
+
+  guards: {
+    tsconfig: {
+      enabled: true,            // E009: detect strict mode regression
+    },
+    biome: {
+      enabled: true,            // E011: detect rule weakening
+    },
+    packageJson: {
+      enabled: true,            // E012: detect engine field tampering
+      minNodeVersion: "24.0.0",
+    },
+  },
+
+  bypass: {
+    dailyBudget: 3,             // max active bypasses per day
+    durationHours: 24,          // auto-expiry for each bypass
+  },
+
+  guides: {
+    enabled: true,
+    autoDiscover: true,         // run 5 heuristics on symbol graph
+    // custom guide definitions (in addition to auto-discovered)
+  },
+
   // Auto-detected from package.json if not set
   project: {
     repository: "https://github.com/user/repo",
@@ -86,6 +126,14 @@ export default {
 | `gen.llmsTxt` | `true` |
 | `gen.ssgTarget` | `undefined` (Mintlify used as default adapter) |
 | `skill.enabled` | follows `gen.llmsTxt` |
+| `tsdoc.writeConfig` | `false` |
+| `guards.tsconfig.enabled` | `true` |
+| `guards.biome.enabled` | `true` |
+| `guards.packageJson.enabled` | `true` |
+| `bypass.dailyBudget` | `3` |
+| `bypass.durationHours` | `24` |
+| `guides.enabled` | `true` |
+| `guides.autoDiscover` | `true` |
 
 ## Project Metadata
 
@@ -101,6 +149,21 @@ Auto-populated from `package.json`:
 
 Used in generated documentation links, install commands, SSG configs,
 and skill package content.
+
+## Config Ownership Model
+
+forge-ts **writes** `tsdoc.json` (it owns the TSDoc standard for the project).
+forge-ts **guards** (reads but does not write) `tsconfig.json`, `biome.json`,
+and `package.json`. Those tools own their files; forge-ts validates against
+expected thresholds via guard rules (E009, E011, E012).
+
+## Agent-Proof Files
+
+| File | Created By | Purpose |
+|------|-----------|---------|
+| `.forge-lock.json` | `forge-ts lock` | Snapshot of rule severities and guard values |
+| `.forge-audit.jsonl` | Auto (append-only) | Log of lock/unlock/bypass/config changes |
+| `.forge-bypass.json` | `forge-ts bypass` | Active temporary rule exemptions |
 
 ## Skill Configuration
 

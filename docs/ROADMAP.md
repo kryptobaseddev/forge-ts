@@ -17,13 +17,13 @@
 | T077 | v0.16.0 | DX Polish | high | DONE |
 | — | v0.17.0 | defineConfig + Init DX Fixes (hotfix) | — | DONE |
 | — | v0.18.0 | Husky Integration + check --staged (hotfix) | — | DONE |
-| T078 | v0.19.0 | Advanced Enforcement | high | IN PROGRESS |
+| T078 | v0.19.0 | Advanced Enforcement | high | DONE |
 | T079 | v0.20.0 | Guide Intelligence | medium | Pending |
 | T080 | v1.0.0 | LSP Extension | medium | Pending |
 
 ---
 
-## T078: v0.19.0 — Advanced Enforcement (IN PROGRESS)
+## T078: v0.19.0 — Advanced Enforcement (DONE)
 
 Knip integration, enhanced DocTest, LLM anti-pattern detection, orphaned link detection.
 
@@ -105,3 +105,4 @@ Real-time editor diagnostics via Language Server Protocol.
 | v0.16.0 | T077 | DX Polish | consola, tsdoc-config merged into core, spec sync |
 | v0.17.0 | — | defineConfig + Init DX Fixes | defineConfig(), string minVisibility, script wiring |
 | v0.18.0 | — | Husky + Staged | Husky v9 full integration, check --staged, shared pkg-json.ts |
+| v0.19.0 | T078 | Advanced Enforcement | Knip ignore, stale DocTest (W013), @ts-ignore (E019), any-cast (E020), orphaned links (W012) |

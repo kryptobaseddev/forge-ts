@@ -1,5 +1,22 @@
 # @forge-ts/doctest
 
+## 0.15.0
+
+### Patch Changes
+
+- d3f5350: feat: forge-ts init (full project setup) + forge-ts doctor (integrity check)
+
+  - `forge-ts init setup` — full project setup: writes forge-ts.config.ts, tsdoc.json, validates tsconfig/package.json, reports environment
+  - `forge-ts init docs` / `forge-ts init hooks` — unchanged, now subcommands of init
+  - `forge-ts doctor` — 10-point integrity check: config, tsdoc.json, TypeScript, tsconfig strict, biome, lock, audit, bypass, git hooks
+  - `forge-ts doctor --fix` — auto-creates missing forge-ts.config.ts and tsdoc.json
+  - Idempotent: existing files never overwritten, running twice produces same result
+  - Actionable output: every warning includes the exact command to fix it
+  - 787 tests (36 new), all passing
+
+- Updated dependencies [d3f5350]
+  - @forge-ts/core@0.15.0
+
 ## 0.14.0
 
 ### Patch Changes

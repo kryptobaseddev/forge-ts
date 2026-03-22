@@ -1,5 +1,19 @@
 # @forge-ts/core
 
+## 0.19.2
+
+### Patch Changes
+
+- 21dc38f: fix: implement per-group TSDoc enforcement + customTags writing to tsdoc.json
+
+  - tsdoc.enforce.core/extended/discretionary now controls rule severity by group
+  - Individual enforce.rules overrides always take precedence over group settings
+  - Guard rules (E009-E012) unaffected by group settings
+  - forge-ts init writes customTags from config into tsdoc.json (tagDefinitions + supportForTags)
+  - doctor --fix respects customTags when generating tsdoc.json
+  - Updated FORGE-TSDOC-TAGS.md and skill doc to v0.19.1 with all 33 rules and 15 tags
+  - 859 tests (18 new), all passing
+
 ## 0.19.1
 
 ### Patch Changes

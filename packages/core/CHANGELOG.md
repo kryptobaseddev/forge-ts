@@ -1,5 +1,17 @@
 # @forge-ts/core
 
+## 0.18.0
+
+### Patch Changes
+
+- feat: husky full integration, check --staged, shared pkg-json utility
+
+  - forge-ts init hooks: pre-commit + pre-push, prepare script, husky v9 format
+  - forge-ts check --staged: only check git-staged .ts/.tsx files
+  - forge-ts doctor: validates husky installed, prepare script, both hooks active
+  - Shared pkg-json.ts utility: DRY read-modify-write for package.json operations
+  - 812 tests (25 new), all passing
+
 ## 0.17.0
 
 ### Minor Changes

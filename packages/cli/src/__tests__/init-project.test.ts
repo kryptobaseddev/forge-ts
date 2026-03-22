@@ -1,8 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import {
-	detectEnvironment,
-	runInitProject,
-} from "../commands/init-project.js";
+import { detectEnvironment, runInitProject } from "../commands/init-project.js";
 import { resolveExitCode } from "../output.js";
 
 // ---------------------------------------------------------------------------
@@ -127,9 +124,7 @@ describe("detectEnvironment", () => {
 			if (s.endsWith("package.json")) return true;
 			return false;
 		});
-		vi.mocked(readFileSync).mockReturnValue(
-			JSON.stringify({ workspaces: ["packages/*"] }),
-		);
+		vi.mocked(readFileSync).mockReturnValue(JSON.stringify({ workspaces: ["packages/*"] }));
 
 		const env = detectEnvironment("/fake");
 		expect(env.monorepo).toBe(true);
@@ -173,9 +168,7 @@ describe("runInitProject", () => {
 		expect(output.data.created).toContain("forge-ts.config.ts");
 
 		const writeCalls = vi.mocked(writeFile).mock.calls;
-		const configCall = writeCalls.find(
-			(c) => String(c[0]).endsWith("forge-ts.config.ts"),
-		);
+		const configCall = writeCalls.find((c) => String(c[0]).endsWith("forge-ts.config.ts"));
 		expect(configCall).toBeDefined();
 		const written = configCall?.[1] as string;
 		expect(written).toContain("defineConfig");
@@ -197,9 +190,7 @@ describe("runInitProject", () => {
 		expect(output.data.created).toContain("tsdoc.json");
 
 		const writeCalls = vi.mocked(writeFile).mock.calls;
-		const tsdocCall = writeCalls.find(
-			(c) => String(c[0]).endsWith("tsdoc.json"),
-		);
+		const tsdocCall = writeCalls.find((c) => String(c[0]).endsWith("tsdoc.json"));
 		expect(tsdocCall).toBeDefined();
 		const written = tsdocCall?.[1] as string;
 		const parsed = JSON.parse(written);
@@ -222,12 +213,8 @@ describe("runInitProject", () => {
 
 		// writeFile should not be called for config or tsdoc
 		const writeCalls = vi.mocked(writeFile).mock.calls;
-		const configCall = writeCalls.find(
-			(c) => String(c[0]).endsWith("forge-ts.config.ts"),
-		);
-		const tsdocCall = writeCalls.find(
-			(c) => String(c[0]).endsWith("tsdoc.json"),
-		);
+		const configCall = writeCalls.find((c) => String(c[0]).endsWith("forge-ts.config.ts"));
+		const tsdocCall = writeCalls.find((c) => String(c[0]).endsWith("tsdoc.json"));
 		expect(configCall).toBeUndefined();
 		expect(tsdocCall).toBeUndefined();
 	});
@@ -268,14 +255,10 @@ describe("runInitProject", () => {
 
 		expect(output.success).toBe(true);
 		expect(output.data.warnings).toEqual(
-			expect.arrayContaining([
-				expect.stringContaining("strict"),
-			]),
+			expect.arrayContaining([expect.stringContaining("strict")]),
 		);
 		expect(output.warnings).toEqual(
-			expect.arrayContaining([
-				expect.objectContaining({ code: "INIT_TSCONFIG_NOT_STRICT" }),
-			]),
+			expect.arrayContaining([expect.objectContaining({ code: "INIT_TSCONFIG_NOT_STRICT" })]),
 		);
 	});
 
@@ -287,17 +270,13 @@ describe("runInitProject", () => {
 			if (s.endsWith("package.json")) return true;
 			return false;
 		});
-		vi.mocked(readFileSync).mockReturnValue(
-			JSON.stringify({ name: "test-project" }),
-		);
+		vi.mocked(readFileSync).mockReturnValue(JSON.stringify({ name: "test-project" }));
 
 		const output = await runInitProject({ cwd: "/fake" });
 
 		expect(output.success).toBe(true);
 		expect(output.data.warnings).toEqual(
-			expect.arrayContaining([
-				expect.stringContaining('"type": "module"'),
-			]),
+			expect.arrayContaining([expect.stringContaining('"type": "module"')]),
 		);
 	});
 
@@ -357,16 +336,12 @@ describe("runInitProject", () => {
 			if (s.endsWith("package.json")) return true;
 			return false;
 		});
-		vi.mocked(readFileSync).mockReturnValue(
-			JSON.stringify({ type: "module" }),
-		);
+		vi.mocked(readFileSync).mockReturnValue(JSON.stringify({ type: "module" }));
 
 		const output = await runInitProject({ cwd: "/fake" });
 
 		expect(output.data.warnings).toEqual(
-			expect.arrayContaining([
-				expect.stringContaining("engines.node"),
-			]),
+			expect.arrayContaining([expect.stringContaining("engines.node")]),
 		);
 	});
 
@@ -378,16 +353,12 @@ describe("runInitProject", () => {
 			if (s.endsWith("package.json")) return true;
 			return false;
 		});
-		vi.mocked(readFileSync).mockReturnValue(
-			JSON.stringify({ type: "module" }),
-		);
+		vi.mocked(readFileSync).mockReturnValue(JSON.stringify({ type: "module" }));
 
 		const output = await runInitProject({ cwd: "/fake" });
 
 		expect(output.data.warnings).toEqual(
-			expect.arrayContaining([
-				expect.stringContaining("@forge-ts/cli"),
-			]),
+			expect.arrayContaining([expect.stringContaining("@forge-ts/cli")]),
 		);
 	});
 });

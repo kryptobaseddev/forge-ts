@@ -146,8 +146,7 @@ export function detectEnvironment(rootDir: string): InitProjectEnvironment {
 	if (packageJsonExists) {
 		const pkg = readJsonSafe<PackageJsonShape>(packageJsonPath);
 		if (pkg) {
-			const tsVersion =
-				pkg.devDependencies?.typescript ?? pkg.dependencies?.typescript ?? null;
+			const tsVersion = pkg.devDependencies?.typescript ?? pkg.dependencies?.typescript ?? null;
 			typescriptVersion = tsVersion;
 		}
 	}
@@ -230,8 +229,7 @@ export default defineConfig({
  */
 const DEFAULT_TSDOC_CONTENT = JSON.stringify(
 	{
-		$schema:
-			"https://developer.microsoft.com/json-schemas/tsdoc/v0/tsdoc.schema.json",
+		$schema: "https://developer.microsoft.com/json-schemas/tsdoc/v0/tsdoc.schema.json",
 		extends: ["@forge-ts/tsdoc-config/tsdoc.json"],
 	},
 	null,
@@ -283,8 +281,7 @@ export async function runInitProject(
 	if (!environment.packageJsonExists) {
 		const err: ForgeCliError = {
 			code: "INIT_NO_PACKAGE_JSON",
-			message:
-				"package.json not found. Run `npm init` or `pnpm init` first.",
+			message: "package.json not found. Run `npm init` or `pnpm init` first.",
 		};
 		return {
 			operation: "init",
@@ -306,8 +303,7 @@ export async function runInitProject(
 		warnings.push("tsconfig.json not found. forge-ts requires TypeScript.");
 		cliWarnings.push({
 			code: "INIT_NO_TSCONFIG",
-			message:
-				"tsconfig.json not found. forge-ts requires TypeScript.",
+			message: "tsconfig.json not found. forge-ts requires TypeScript.",
 		});
 	}
 
@@ -351,17 +347,11 @@ export async function runInitProject(
 		}>(tsconfigPath);
 
 		if (tsconfig) {
-			if (
-				!tsconfig.compilerOptions ||
-				tsconfig.compilerOptions.strict !== true
-			) {
-				warnings.push(
-					"tsconfig.json: 'strict' is not enabled. forge-ts recommends strict mode.",
-				);
+			if (!tsconfig.compilerOptions || tsconfig.compilerOptions.strict !== true) {
+				warnings.push("tsconfig.json: 'strict' is not enabled. forge-ts recommends strict mode.");
 				cliWarnings.push({
 					code: "INIT_TSCONFIG_NOT_STRICT",
-					message:
-						"tsconfig.json: 'strict' is not enabled. forge-ts recommends strict mode.",
+					message: "tsconfig.json: 'strict' is not enabled. forge-ts recommends strict mode.",
 				});
 			}
 		}
@@ -376,13 +366,10 @@ export async function runInitProject(
 
 	if (pkg) {
 		if (pkg.type !== "module") {
-			warnings.push(
-				'package.json: missing "type": "module". forge-ts uses ESM.',
-			);
+			warnings.push('package.json: missing "type": "module". forge-ts uses ESM.');
 			cliWarnings.push({
 				code: "INIT_NO_ESM",
-				message:
-					'package.json: missing "type": "module". forge-ts uses ESM.',
+				message: 'package.json: missing "type": "module". forge-ts uses ESM.',
 			});
 		}
 
@@ -396,13 +383,10 @@ export async function runInitProject(
 
 		const allDeps = { ...pkg.dependencies, ...pkg.devDependencies };
 		if (!("@forge-ts/cli" in allDeps)) {
-			warnings.push(
-				"package.json: @forge-ts/cli not in devDependencies (running via npx?).",
-			);
+			warnings.push("package.json: @forge-ts/cli not in devDependencies (running via npx?).");
 			cliWarnings.push({
 				code: "INIT_CLI_NOT_INSTALLED",
-				message:
-					"package.json: @forge-ts/cli not in devDependencies (running via npx?).",
+				message: "package.json: @forge-ts/cli not in devDependencies (running via npx?).",
 			});
 		}
 	}
@@ -483,15 +467,10 @@ function formatInitProjectHuman(result: InitProjectResult): string {
 	const env = result.environment;
 	lines.push("");
 	lines.push("  Environment:");
-	lines.push(
-		`    TypeScript: ${env.typescriptVersion ?? "not detected"}`,
-	);
-	lines.push(
-		`    Biome: ${env.biomeDetected ? "detected" : "not detected"}`,
-	);
+	lines.push(`    TypeScript: ${env.typescriptVersion ?? "not detected"}`);
+	lines.push(`    Biome: ${env.biomeDetected ? "detected" : "not detected"}`);
 
-	const hookLabel =
-		env.hookManager === "none" ? "not detected" : `${env.hookManager} detected`;
+	const hookLabel = env.hookManager === "none" ? "not detected" : `${env.hookManager} detected`;
 	lines.push(`    Git hooks: ${hookLabel}`);
 
 	if (env.monorepo) {

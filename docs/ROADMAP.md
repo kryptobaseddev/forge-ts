@@ -55,14 +55,13 @@ Centralized logging, package simplification, spec tooling.
 
 ---
 
-## DX Improvements (queued, no epic yet)
+## DX Improvements
 
-### Git Hooks Hardening
+### Git Hooks Hardening — DONE (v0.18.0)
 
-Current `forge-ts init hooks` writes hook files but does not verify the hook manager is functional. Issues:
+Shipped in v0.18.0. Init hooks now writes pre-commit + pre-push, adds prepare script, validates husky installation. Doctor checks husky installed + prepare script + both hooks active. `check --staged` filters to staged files only.
 
-- Writes `.husky/pre-commit` but doesn't check if husky is installed or `prepare` script is wired
-- Doctor reports `[PASS]` on hook file existence even if hooks aren't active
+Remaining DX items:
 - No lint-staged integration — runs full project check, slow on large codebases
 - No `--staged` flag on `forge-ts check` to only check changed files
 - Only wires pre-commit, not prepublish hook

@@ -74,8 +74,39 @@
 
 - Flag `@ts-ignore` additions in non-test files
 - Flag `any` type casts in public API signatures
-- **Status**: Not started (design complete in [FORGE-ARCHITECTURE-SPEC.md](./FORGE-ARCHITECTURE-SPEC.md))
+- **Status**: Not started (design complete in archived FORGE-ARCHITECTURE-SPEC)
 - **Rationale**: E016 (release tag required) is shipped in v0.13.0, but the broader anti-pattern detection for `@ts-ignore` and `any` casts is not yet implemented. These are the most common LLM agent shortcuts in TypeScript codebases.
+
+---
+
+### Centralized Logging (consola/pino)
+
+- Replace custom `createLogger()` in CLI with a standard structured logger (consola or pino)
+- Centralize all CLI output through the logger — no direct `console.log` in command files
+- Structured JSON log output for agent consumption (aligns with LAFS protocol)
+- Log levels (debug, info, warn, error) configurable via `--log-level` flag or `FORGE_LOG_LEVEL` env
+- **Status**: Not started
+- **Rationale**: The current CLI has a hand-rolled ANSI logger in `logger.ts` that some commands use and others bypass with direct `console.log`. This violates DRY/SOLID — logging behavior is inconsistent across commands. consola (from the UnJS ecosystem, same as citty) is the natural fit. This epic should: (1) add consola as a dependency, (2) create a centralized `createForgeLogger()` that respects TTY/JSON modes, (3) migrate all 13 command files to use it, (4) remove the custom `logger.ts`.
+
+---
+
+### Merge @forge-ts/tsdoc-config into @forge-ts/core
+
+- Move `tsdoc.json` preset from separate package into `@forge-ts/core`
+- Update walker.ts fallback to load bundled preset directly
+- Deprecate `@forge-ts/tsdoc-config` on npm
+- **Status**: Not started
+- **Rationale**: The separate package causes npm publish failures (CI auth issues), 404 install breakage on first publish, and adds complexity for zero user benefit. Since `@forge-ts/cli` depends on it and npm installs all dependencies transitively, every forge-ts user already gets it. The JSON file belongs in core where the walker lives.
+
+---
+
+### TSDoc Spec Sync Script
+
+- Vendor TSDoc spec data from `@microsoft/tsdoc` as machine-readable JSON
+- Script: `scripts/sync-tsdoc-spec.ts` reads StandardTags + message IDs, writes to `packages/core/spec/`
+- `forge-ts spec check` validates forge-ts preset against installed `@microsoft/tsdoc` version
+- **Status**: Not started
+- **Rationale**: Keeps the forge-ts tag system in sync with upstream TSDoc spec without hitting tsdoc.org. Machine-readable JSON is LLM-agent-friendly. Version-pinned to the installed `@microsoft/tsdoc` version so drift is visible in git.
 
 ---
 

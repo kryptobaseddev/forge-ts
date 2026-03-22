@@ -37,19 +37,19 @@ export function clearTSDocConfigCache(): void {
 }
 
 /**
- * Resolve the {@link TSDocConfiguration} to use when parsing comments in
+ * Resolve the TSDoc configuration to use when parsing comments in
  * files under `folderPath`.
  *
  * If a `tsdoc.json` file exists in or above the folder and can be loaded
- * without errors, its settings are applied to a fresh configuration via
- * {@link TSDocConfigFile.configureParser}. Otherwise the default
+ * without errors, its settings are applied to a fresh `TSDocConfiguration`
+ * via `TSDocConfigFile.configureParser()`. Otherwise the default
  * `TSDocConfiguration` is returned (backward-compatible behaviour).
  *
  * Results are cached per folder path so the file system is only consulted
  * once per unique directory.
  *
  * @param folderPath - Absolute directory path of the source file being parsed.
- * @returns A configured {@link TSDocConfiguration} instance.
+ * @returns A configured `TSDocConfiguration` instance.
  * @internal
  */
 export function loadTSDocConfiguration(folderPath: string): TSDocConfiguration {

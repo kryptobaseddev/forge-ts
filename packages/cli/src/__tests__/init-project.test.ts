@@ -389,8 +389,8 @@ describe("runInitProject", () => {
 	});
 
 	it("wires forge-ts scripts into package.json", async () => {
-		const { existsSync } = await import("node:fs");
-		const { readFile, writeFile } = await import("node:fs/promises");
+		const { existsSync, readFileSync } = await import("node:fs");
+		const { writeFile } = await import("node:fs/promises");
 
 		vi.mocked(existsSync).mockImplementation((p) => {
 			const s = String(p);
@@ -398,7 +398,7 @@ describe("runInitProject", () => {
 			return false;
 		});
 
-		vi.mocked(readFile).mockResolvedValue(
+		vi.mocked(readFileSync).mockReturnValue(
 			JSON.stringify({ name: "test-project", scripts: { test: "vitest" } }, null, 2),
 		);
 
@@ -426,8 +426,8 @@ describe("runInitProject", () => {
 	});
 
 	it("script wiring is idempotent — skips existing keys", async () => {
-		const { existsSync } = await import("node:fs");
-		const { readFile, writeFile } = await import("node:fs/promises");
+		const { existsSync, readFileSync } = await import("node:fs");
+		const { writeFile } = await import("node:fs/promises");
 
 		vi.mocked(existsSync).mockImplementation((p) => {
 			const s = String(p);
@@ -435,7 +435,7 @@ describe("runInitProject", () => {
 			return false;
 		});
 
-		vi.mocked(readFile).mockResolvedValue(
+		vi.mocked(readFileSync).mockReturnValue(
 			JSON.stringify(
 				{
 					name: "test-project",
@@ -470,8 +470,8 @@ describe("runInitProject", () => {
 	});
 
 	it("script wiring preserves indent style", async () => {
-		const { existsSync } = await import("node:fs");
-		const { readFile, writeFile } = await import("node:fs/promises");
+		const { existsSync, readFileSync } = await import("node:fs");
+		const { writeFile } = await import("node:fs/promises");
 
 		vi.mocked(existsSync).mockImplementation((p) => {
 			const s = String(p);
@@ -480,7 +480,7 @@ describe("runInitProject", () => {
 		});
 
 		// Tab-indented JSON
-		vi.mocked(readFile).mockResolvedValue('{\n\t"name": "test-project"\n}\n');
+		vi.mocked(readFileSync).mockReturnValue('{\n\t"name": "test-project"\n}\n');
 
 		await runInitProject({ cwd: "/fake" });
 
@@ -495,8 +495,8 @@ describe("runInitProject", () => {
 	});
 
 	it("script wiring does not write when all scripts already exist", async () => {
-		const { existsSync } = await import("node:fs");
-		const { readFile, writeFile } = await import("node:fs/promises");
+		const { existsSync, readFileSync } = await import("node:fs");
+		const { writeFile } = await import("node:fs/promises");
 
 		vi.mocked(existsSync).mockImplementation((p) => {
 			const s = String(p);
@@ -504,7 +504,7 @@ describe("runInitProject", () => {
 			return false;
 		});
 
-		vi.mocked(readFile).mockResolvedValue(
+		vi.mocked(readFileSync).mockReturnValue(
 			JSON.stringify(
 				{
 					name: "test-project",

@@ -24,6 +24,16 @@ vi.mock("node:fs/promises", async (importOriginal) => {
 	};
 });
 
+vi.mock("node:child_process", async (importOriginal) => {
+	const actual = await importOriginal<typeof import("node:child_process")>();
+	return {
+		...actual,
+		execSync: vi.fn().mockImplementation(() => {
+			throw new Error("git config not set");
+		}),
+	};
+});
+
 // ---------------------------------------------------------------------------
 // Helper: build a "complete project" existsSync mock
 // ---------------------------------------------------------------------------
@@ -47,7 +57,10 @@ async function mockCompleteProject(): Promise<void> {
 		if (s.endsWith(".forge-audit.jsonl")) return true;
 		if (s.endsWith(".forge-bypass.json")) return true;
 		if (s.endsWith("pre-commit")) return true;
+		if (s.endsWith("pre-push")) return true;
 		if (s.endsWith(".husky")) return true;
+		if (s.includes(".bin/husky")) return true;
+		if (s.endsWith("package.json")) return true;
 		return false;
 	});
 
@@ -82,10 +95,16 @@ async function mockCompleteProject(): Promise<void> {
 			return "[]";
 		}
 		if (s.endsWith("pre-commit")) {
-			return "#!/usr/bin/env sh\nnpx forge-ts check\n";
+			return "npx forge-ts check\n";
+		}
+		if (s.endsWith("pre-push")) {
+			return "npx forge-ts prepublish\n";
 		}
 		if (s.endsWith("package.json")) {
-			return JSON.stringify({});
+			return JSON.stringify({
+				scripts: { prepare: "husky" },
+				devDependencies: { husky: "^9.0.0" },
+			});
 		}
 		return "{}";
 	});
@@ -120,7 +139,10 @@ describe("runDoctor", () => {
 		expect(checkNames).toContain(".forge-lock.json");
 		expect(checkNames).toContain(".forge-audit.jsonl");
 		expect(checkNames).toContain(".forge-bypass.json");
-		expect(checkNames).toContain("Git hooks");
+		// Git hooks check now has a more specific name
+		const hookCheck = output.data.checks.find((c) => c.name.startsWith("Git hooks"));
+		expect(hookCheck).toBeDefined();
+		expect(hookCheck?.status).toBe("pass");
 	});
 
 	it("reports missing forge-ts.config.ts as error", async () => {
@@ -286,31 +308,133 @@ describe("runDoctor", () => {
 
 		const output = await runDoctor({ cwd: "/fake" });
 
-		const hookCheck = output.data.checks.find((c) => c.name === "Git hooks");
+		const hookCheck = output.data.checks.find((c) => c.name.startsWith("Git hooks"));
 		expect(hookCheck).toBeDefined();
 		expect(hookCheck?.status).toBe("warn");
-		expect(hookCheck?.message).toContain("not in pre-commit");
+		expect(hookCheck?.message).toContain("no hook manager detected");
 	});
 
-	it("reports git hooks configured in husky", async () => {
+	it("reports fully configured husky (installed + prepare + both hooks)", async () => {
+		await mockCompleteProject();
+
+		const output = await runDoctor({ cwd: "/fake" });
+
+		const hookCheck = output.data.checks.find((c) => c.name.startsWith("Git hooks"));
+		expect(hookCheck).toBeDefined();
+		expect(hookCheck?.status).toBe("pass");
+		expect(hookCheck?.message).toContain("husky installed");
+		expect(hookCheck?.message).toContain("prepare script wired");
+		expect(hookCheck?.message).toContain("pre-commit and pre-push configured");
+	});
+
+	it("warns when husky hook files exist but husky is not installed", async () => {
 		const { existsSync, readFileSync } = await import("node:fs");
 
 		vi.mocked(existsSync).mockImplementation((p) => {
 			const s = String(p);
 			if (s.endsWith("pre-commit")) return true;
+			if (s.endsWith("pre-push")) return true;
+			// No .bin/husky, no package.json with husky
 			return false;
 		});
-		vi.mocked(readFileSync).mockReturnValue("#!/usr/bin/env sh\nnpx forge-ts check\n");
+		vi.mocked(readFileSync).mockImplementation((p) => {
+			const s = String(p);
+			if (s.endsWith("pre-commit")) return "npx forge-ts check\n";
+			if (s.endsWith("pre-push")) return "npx forge-ts prepublish\n";
+			return "{}";
+		});
 
 		const output = await runDoctor({ cwd: "/fake" });
 
-		const hookCheck = output.data.checks.find((c) => c.name === "Git hooks");
+		const hookCheck = output.data.checks.find((c) => c.name.startsWith("Git hooks"));
 		expect(hookCheck).toBeDefined();
-		expect(hookCheck?.status).toBe("pass");
-		expect(hookCheck?.message).toContain("husky pre-commit");
+		expect(hookCheck?.status).toBe("warn");
+		expect(hookCheck?.message).toContain("husky is not installed");
 	});
 
-	it("reports git hooks configured in lefthook", async () => {
+	it("warns when husky installed but prepare script missing", async () => {
+		const { existsSync, readFileSync } = await import("node:fs");
+
+		vi.mocked(existsSync).mockImplementation((p) => {
+			const s = String(p);
+			if (s.endsWith("pre-commit")) return true;
+			if (s.endsWith("pre-push")) return true;
+			if (s.includes(".bin/husky")) return true;
+			if (s.endsWith("package.json")) return true;
+			return false;
+		});
+		vi.mocked(readFileSync).mockImplementation((p) => {
+			const s = String(p);
+			if (s.endsWith("pre-commit")) return "npx forge-ts check\n";
+			if (s.endsWith("pre-push")) return "npx forge-ts prepublish\n";
+			if (s.endsWith("package.json")) {
+				return JSON.stringify({ scripts: { test: "vitest" } });
+			}
+			return "{}";
+		});
+
+		const output = await runDoctor({ cwd: "/fake" });
+
+		const hookCheck = output.data.checks.find((c) => c.name.startsWith("Git hooks"));
+		expect(hookCheck).toBeDefined();
+		expect(hookCheck?.status).toBe("warn");
+		expect(hookCheck?.message).toContain("prepare");
+		expect(hookCheck?.message).toContain("missing");
+	});
+
+	it("warns when pre-push hook is missing", async () => {
+		const { existsSync, readFileSync } = await import("node:fs");
+
+		vi.mocked(existsSync).mockImplementation((p) => {
+			const s = String(p);
+			if (s.endsWith("pre-commit")) return true;
+			if (s.includes(".bin/husky")) return true;
+			if (s.endsWith("package.json")) return true;
+			// No pre-push file
+			return false;
+		});
+		vi.mocked(readFileSync).mockImplementation((p) => {
+			const s = String(p);
+			if (s.endsWith("pre-commit")) return "npx forge-ts check\n";
+			if (s.endsWith("package.json")) {
+				return JSON.stringify({
+					scripts: { prepare: "husky" },
+					devDependencies: { husky: "^9.0.0" },
+				});
+			}
+			return "{}";
+		});
+
+		const output = await runDoctor({ cwd: "/fake" });
+
+		const hookCheck = output.data.checks.find((c) => c.name.startsWith("Git hooks"));
+		expect(hookCheck).toBeDefined();
+		expect(hookCheck?.status).toBe("warn");
+		expect(hookCheck?.message).toContain("pre-push");
+	});
+
+	it("reports git hooks configured in lefthook (both pre-commit and pre-push)", async () => {
+		const { existsSync, readFileSync } = await import("node:fs");
+
+		vi.mocked(existsSync).mockImplementation((p) => {
+			const s = String(p);
+			if (s.endsWith("lefthook.yml")) return true;
+			return false;
+		});
+		vi.mocked(readFileSync).mockReturnValue(
+			"pre-commit:\n  commands:\n    forge-ts-check:\n      run: npx forge-ts check\npre-push:\n  commands:\n    forge-ts-prepublish:\n      run: npx forge-ts prepublish\n",
+		);
+
+		const output = await runDoctor({ cwd: "/fake" });
+
+		const hookCheck = output.data.checks.find((c) => c.name.startsWith("Git hooks"));
+		expect(hookCheck).toBeDefined();
+		expect(hookCheck?.status).toBe("pass");
+		expect(hookCheck?.message).toContain("lefthook");
+		expect(hookCheck?.message).toContain("pre-commit and pre-push configured");
+	});
+
+	it("warns when lefthook has pre-commit but no pre-push", async () => {
 		const { existsSync, readFileSync } = await import("node:fs");
 
 		vi.mocked(existsSync).mockImplementation((p) => {
@@ -324,10 +448,10 @@ describe("runDoctor", () => {
 
 		const output = await runDoctor({ cwd: "/fake" });
 
-		const hookCheck = output.data.checks.find((c) => c.name === "Git hooks");
+		const hookCheck = output.data.checks.find((c) => c.name.startsWith("Git hooks"));
 		expect(hookCheck).toBeDefined();
-		expect(hookCheck?.status).toBe("pass");
-		expect(hookCheck?.message).toContain("lefthook");
+		expect(hookCheck?.status).toBe("warn");
+		expect(hookCheck?.message).toContain("pre-push");
 	});
 
 	it("LAFS envelope structure is correct", async () => {

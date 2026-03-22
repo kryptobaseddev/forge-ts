@@ -1,3 +1,4 @@
+import { execSync } from "node:child_process";
 import { type ForgeError, type ForgeWarning, loadConfig } from "@forge-ts/core";
 import { enforce } from "@forge-ts/enforcer";
 import { defineCommand } from "citty";
@@ -20,6 +21,8 @@ export interface CheckArgs {
 	rule?: string;
 	/** Filter errors to a specific file path (substring match). */
 	file?: string;
+	/** Only check symbols from git-staged .ts/.tsx files. */
+	staged?: boolean;
 	/** Maximum number of file groups to return in byFile (default: 20). */
 	limit?: number;
 	/** Offset into the byFile list for pagination (default: 0). */
@@ -151,6 +154,38 @@ export interface CheckResult {
 	filters?: { rule?: string; file?: string };
 	/** CLI command hint for the agent to run next. */
 	nextCommand?: string;
+}
+
+// ---------------------------------------------------------------------------
+// Git staged files helper
+// ---------------------------------------------------------------------------
+
+/**
+ * Returns the list of staged .ts/.tsx files (relative paths) by querying git.
+ * Returns `null` when git is unavailable or the working directory is not a
+ * git repository. Deleted files are excluded.
+ *
+ * The command is a fixed string with no interpolated user input, so shell
+ * injection is not a concern here.
+ *
+ * @param cwd - Working directory for the git command.
+ * @returns Array of relative file paths, or `null` on failure.
+ * @internal
+ */
+export function getStagedFiles(cwd: string): string[] | null {
+	try {
+		const output = execSync("git diff --cached --name-only --diff-filter=d", {
+			cwd,
+			encoding: "utf8",
+			stdio: ["pipe", "pipe", "pipe"],
+		});
+		return output
+			.split("\n")
+			.map((f) => f.trim())
+			.filter((f) => f.length > 0 && (f.endsWith(".ts") || f.endsWith(".tsx")));
+	} catch {
+		return null;
+	}
 }
 
 // ---------------------------------------------------------------------------
@@ -430,22 +465,68 @@ export async function runCheck(args: CheckArgs): Promise<CommandOutput<CheckResu
 		config.enforce.strict = args.strict;
 	}
 
+	// --staged: resolve staged .ts/.tsx files and merge into the file filter
+	const fileFilter = args.file;
+	let stagedPaths: string[] | undefined;
+	if (args.staged) {
+		const rootDir = config.rootDir;
+		const staged = getStagedFiles(rootDir);
+		if (staged !== null && staged.length > 0) {
+			stagedPaths = staged;
+		} else {
+			// No staged .ts files — return an instant success result
+			const data: CheckResult = {
+				success: true,
+				summary: { errors: 0, warnings: 0, files: 0, symbols: 0, duration: 0 },
+			};
+			return { operation: "check", success: true, data, duration: 0 };
+		}
+	}
+
 	const result = await enforce(config);
 	// Default to "standard" MVI — gives triage + paginated overview.
 	// Agents drill into specific rules/files with --mvi full.
 	const mviLevel = args.mvi ?? "standard";
 	const limit = args.limit ?? 20;
 	const offset = args.offset ?? 0;
-	const filters = { rule: args.rule, file: args.file };
+	const filters = { rule: args.rule, file: fileFilter };
+
+	// When --staged is active, filter per-symbol diagnostics to staged files.
+	// Cross-file rules (E005, E008, E009-E012, W007, W008, W009) still run on
+	// the full project to catch project-wide regressions.
+	const CROSS_FILE_RULES = new Set([
+		"E005",
+		"E008",
+		"E009",
+		"E010",
+		"E011",
+		"E012",
+		"W007",
+		"W008",
+		"W009",
+	]);
+	let filteredErrors = result.errors;
+	let filteredWarnings = result.warnings;
+	if (stagedPaths && stagedPaths.length > 0) {
+		const stagedSet = new Set(stagedPaths);
+		const matchesStaged = (filePath: string): boolean =>
+			stagedPaths?.some((sp) => filePath.endsWith(sp)) ?? false;
+		filteredErrors = result.errors.filter(
+			(e) => CROSS_FILE_RULES.has(e.code) || stagedSet.has(e.filePath) || matchesStaged(e.filePath),
+		);
+		filteredWarnings = result.warnings.filter(
+			(w) => CROSS_FILE_RULES.has(w.code) || stagedSet.has(w.filePath) || matchesStaged(w.filePath),
+		);
+	}
 
 	const exportedSymbolCount = result.symbols.filter((s) => s.exported).length;
 
 	const data = buildCheckResult(
-		result.errors,
-		result.warnings,
+		filteredErrors,
+		filteredWarnings,
 		exportedSymbolCount,
 		result.duration,
-		result.success,
+		filteredErrors.length === 0,
 		mviLevel,
 		filters,
 		limit,
@@ -453,12 +534,13 @@ export async function runCheck(args: CheckArgs): Promise<CommandOutput<CheckResu
 	);
 
 	// Populate top-level errors so the LAFS envelope error code is actionable.
-	const cliErrors = result.success
+	const checkSuccess = filteredErrors.length === 0;
+	const cliErrors = checkSuccess
 		? undefined
 		: [
 				{
 					code: "FORGE_CHECK_FAILED",
-					message: `TSDoc coverage check failed: ${result.errors.length} error(s), ${result.warnings.length} warning(s) across ${data.summary.files} file(s)`,
+					message: `TSDoc coverage check failed: ${filteredErrors.length} error(s), ${filteredWarnings.length} warning(s) across ${data.summary.files} file(s)`,
 				},
 			];
 
@@ -473,7 +555,7 @@ export async function runCheck(args: CheckArgs): Promise<CommandOutput<CheckResu
 
 	return {
 		operation: "check",
-		success: result.success,
+		success: checkSuccess,
 		data,
 		errors: cliErrors,
 		warnings: cliWarnings,
@@ -603,6 +685,11 @@ export const checkCommand = defineCommand({
 			type: "string",
 			description: "Filter by file path (substring match)",
 		},
+		staged: {
+			type: "boolean",
+			description: "Only check symbols from git-staged .ts/.tsx files",
+			default: false,
+		},
 		limit: {
 			type: "string",
 			description: "Max file groups in output (default: 20)",
@@ -639,6 +726,7 @@ export const checkCommand = defineCommand({
 			mvi: args.mvi,
 			rule: args.rule,
 			file: args.file,
+			staged: args.staged,
 			limit: args.limit ? parseInt(args.limit, 10) : undefined,
 			offset: args.offset ? parseInt(args.offset, 10) : undefined,
 		});

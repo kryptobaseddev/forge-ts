@@ -20,6 +20,7 @@ import {
 	type OutputFlags,
 	resolveExitCode,
 } from "../output.js";
+import { addScripts, readPkgJson, writePkgJson } from "../pkg-json.js";
 
 // ---------------------------------------------------------------------------
 // Public types
@@ -125,20 +126,34 @@ export function detectHookManager(rootDir: string): HookManager {
 // Hook content generators
 // ---------------------------------------------------------------------------
 
-const HUSKY_PRE_COMMIT = `#!/usr/bin/env sh
-. "$(dirname -- "$0")/_/husky.sh"
+/**
+ * Modern husky v9+ pre-commit hook content.
+ * No shebang or husky.sh source line needed — just the command.
+ * @internal
+ */
+const HUSKY_PRE_COMMIT = `npx forge-ts check
+`;
 
-npx forge-ts check
+/**
+ * Modern husky v9+ pre-push hook content.
+ * @internal
+ */
+const HUSKY_PRE_PUSH = `npx forge-ts prepublish
 `;
 
 const LEFTHOOK_BLOCK = `pre-commit:
   commands:
     forge-ts-check:
       run: npx forge-ts check
+
+pre-push:
+  commands:
+    forge-ts-prepublish:
+      run: npx forge-ts prepublish
 `;
 
 /**
- * Generates the husky pre-commit hook file content.
+ * Generates the husky pre-commit hook file content (modern husky v9+).
  * @internal
  */
 export function generateHuskyHook(): string {
@@ -146,7 +161,15 @@ export function generateHuskyHook(): string {
 }
 
 /**
- * Generates the lefthook pre-commit block.
+ * Generates the husky pre-push hook file content (modern husky v9+).
+ * @internal
+ */
+export function generateHuskyPrePushHook(): string {
+	return HUSKY_PRE_PUSH;
+}
+
+/**
+ * Generates the lefthook block with both pre-commit and pre-push sections.
  * @internal
  */
 export function generateLefthookBlock(): string {
@@ -184,39 +207,100 @@ export async function runInitHooks(args: InitHooksArgs): Promise<CommandOutput<I
 	const instructions: string[] = [];
 
 	if (hookManager === "husky" || hookManager === "none") {
-		// Write husky pre-commit hook
-		const huskyDir = join(rootDir, ".husky");
-		const hookPath = join(huskyDir, "pre-commit");
-		const relativePath = ".husky/pre-commit";
+		// -----------------------------------------------------------------
+		// Check if husky is installed
+		// -----------------------------------------------------------------
+		const huskyBin = join(rootDir, "node_modules", ".bin", "husky");
+		const pkg = readPkgJson(rootDir);
+		const huskyInDeps =
+			pkg !== null &&
+			("husky" in ((pkg.obj.devDependencies as Record<string, string>) ?? {}) ||
+				"husky" in ((pkg.obj.dependencies as Record<string, string>) ?? {}));
+		const huskyInstalled = existsSync(huskyBin) || huskyInDeps;
 
-		if (existsSync(hookPath) && !args.force) {
-			// Check if our command is already in the file
-			const existing = await readFile(hookPath, "utf8");
+		if (!huskyInstalled) {
+			warnings.push({
+				code: "HOOKS_HUSKY_NOT_INSTALLED",
+				message: "husky not installed. Run: npm install -D husky",
+			});
+			instructions.push("husky is not installed. Run: npm install -D husky (or pnpm add -D husky)");
+		}
+
+		// -----------------------------------------------------------------
+		// Write pre-commit hook (.husky/pre-commit)
+		// -----------------------------------------------------------------
+		const huskyDir = join(rootDir, ".husky");
+		const preCommitPath = join(huskyDir, "pre-commit");
+		const preCommitRel = ".husky/pre-commit";
+
+		if (existsSync(preCommitPath) && !args.force) {
+			const existing = await readFile(preCommitPath, "utf8");
 			if (existing.includes("forge-ts check")) {
-				skippedFiles.push(relativePath);
+				skippedFiles.push(preCommitRel);
 				warnings.push({
 					code: "HOOKS_ALREADY_EXISTS",
-					message: `${relativePath} already contains forge-ts check — skipping. Use --force to overwrite.`,
+					message: `${preCommitRel} already contains forge-ts check — skipping. Use --force to overwrite.`,
 				});
 			} else {
 				// Append to existing hook
 				const appended = `${existing.trimEnd()}\n\nnpx forge-ts check\n`;
-				await writeFile(hookPath, appended, { mode: 0o755 });
-				writtenFiles.push(relativePath);
+				await writeFile(preCommitPath, appended, { mode: 0o755 });
+				writtenFiles.push(preCommitRel);
 			}
 		} else {
 			await mkdir(huskyDir, { recursive: true });
-			await writeFile(hookPath, HUSKY_PRE_COMMIT, { mode: 0o755 });
-			writtenFiles.push(relativePath);
+			await writeFile(preCommitPath, HUSKY_PRE_COMMIT, { mode: 0o755 });
+			writtenFiles.push(preCommitRel);
+		}
+
+		// -----------------------------------------------------------------
+		// Write pre-push hook (.husky/pre-push)
+		// -----------------------------------------------------------------
+		const prePushPath = join(huskyDir, "pre-push");
+		const prePushRel = ".husky/pre-push";
+
+		if (existsSync(prePushPath) && !args.force) {
+			const existing = await readFile(prePushPath, "utf8");
+			if (existing.includes("forge-ts prepublish")) {
+				skippedFiles.push(prePushRel);
+				warnings.push({
+					code: "HOOKS_ALREADY_EXISTS",
+					message: `${prePushRel} already contains forge-ts prepublish — skipping. Use --force to overwrite.`,
+				});
+			} else {
+				const appended = `${existing.trimEnd()}\n\nnpx forge-ts prepublish\n`;
+				await writeFile(prePushPath, appended, { mode: 0o755 });
+				writtenFiles.push(prePushRel);
+			}
+		} else {
+			await mkdir(huskyDir, { recursive: true });
+			await writeFile(prePushPath, HUSKY_PRE_PUSH, { mode: 0o755 });
+			writtenFiles.push(prePushRel);
+		}
+
+		// -----------------------------------------------------------------
+		// Add `prepare` script to package.json (idempotent)
+		// -----------------------------------------------------------------
+		const pkgData = readPkgJson(rootDir);
+		if (pkgData) {
+			const added = addScripts(pkgData, { prepare: "husky" });
+			if (added.length > 0) {
+				await writePkgJson(pkgData);
+				writtenFiles.push("package.json (prepare script)");
+				instructions.push('Added "prepare": "husky" script to package.json.');
+			} else {
+				skippedFiles.push("package.json (prepare script already exists)");
+			}
 		}
 
 		if (hookManager === "none") {
 			instructions.push(
-				"No hook manager detected. Wrote .husky/pre-commit as a starting point.",
-				"Install husky to activate: npx husky-init && npm install (or pnpm dlx husky-init && pnpm install)",
+				"No hook manager detected. Wrote .husky/pre-commit and .husky/pre-push as a starting point.",
+				"Install husky to activate: npm install -D husky && npx husky (or pnpm add -D husky && pnpm exec husky)",
 			);
 		} else {
 			instructions.push("Husky pre-commit hook configured to run forge-ts check.");
+			instructions.push("Husky pre-push hook configured to run forge-ts prepublish.");
 		}
 	} else if (hookManager === "lefthook") {
 		const lefthookPath = join(rootDir, "lefthook.yml");
@@ -224,15 +308,33 @@ export async function runInitHooks(args: InitHooksArgs): Promise<CommandOutput<I
 
 		if (existsSync(lefthookPath)) {
 			const existing = await readFile(lefthookPath, "utf8");
-			if (existing.includes("forge-ts check") && !args.force) {
+			const hasCheck = existing.includes("forge-ts check");
+			const hasPrepublish = existing.includes("forge-ts prepublish");
+
+			if (hasCheck && hasPrepublish && !args.force) {
 				skippedFiles.push(relativePath);
 				warnings.push({
 					code: "HOOKS_ALREADY_EXISTS",
-					message: `${relativePath} already contains forge-ts check — skipping. Use --force to overwrite.`,
+					message: `${relativePath} already contains forge-ts check and prepublish — skipping. Use --force to overwrite.`,
 				});
+			} else if (hasCheck && !hasPrepublish && !args.force) {
+				// Add pre-push block
+				const prePushBlock = `\npre-push:\n  commands:\n    forge-ts-prepublish:\n      run: npx forge-ts prepublish\n`;
+				const appended = `${existing.trimEnd()}\n${prePushBlock}`;
+				await writeFile(lefthookPath, appended, "utf8");
+				writtenFiles.push(relativePath);
 			} else if (existing.includes("pre-commit:") && !args.force) {
-				// Append our command under the existing pre-commit section
-				const appended = `${existing.trimEnd()}\n    forge-ts-check:\n      run: npx forge-ts check\n`;
+				// Append our commands under the existing sections
+				let appended = existing.trimEnd();
+				if (!hasCheck) {
+					appended += "\n    forge-ts-check:\n      run: npx forge-ts check";
+				}
+				if (!existing.includes("pre-push:")) {
+					appended += `\n\npre-push:\n  commands:\n    forge-ts-prepublish:\n      run: npx forge-ts prepublish\n`;
+				} else if (!hasPrepublish) {
+					appended += "\n    forge-ts-prepublish:\n      run: npx forge-ts prepublish";
+				}
+				appended += "\n";
 				await writeFile(lefthookPath, appended, "utf8");
 				writtenFiles.push(relativePath);
 			} else {
@@ -247,6 +349,7 @@ export async function runInitHooks(args: InitHooksArgs): Promise<CommandOutput<I
 		}
 
 		instructions.push("Lefthook pre-commit hook configured to run forge-ts check.");
+		instructions.push("Lefthook pre-push hook configured to run forge-ts prepublish.");
 	}
 
 	const data: InitHooksResult = {

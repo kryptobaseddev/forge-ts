@@ -9,6 +9,7 @@
  * @internal
  */
 
+import { execSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import { mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
@@ -496,53 +497,168 @@ export async function runDoctor(args: DoctorArgs): Promise<CommandOutput<DoctorR
 	}
 
 	// -----------------------------------------------------------------------
-	// Check 10: Git hooks
+	// Check 10: Git hooks (husky installation, prepare script, hooks)
 	// -----------------------------------------------------------------------
 
 	const huskyPreCommit = join(rootDir, ".husky", "pre-commit");
+	const huskyPrePush = join(rootDir, ".husky", "pre-push");
 	const lefthookYml = join(rootDir, "lefthook.yml");
 
-	let hookConfigured = false;
-	let hookLocation = "";
+	// 10a: Detect which hook manager is in use
+	let hookManagerType: "husky" | "lefthook" | "none" = "none";
+	let preCommitConfigured = false;
+	let prePushConfigured = false;
 
 	if (existsSync(huskyPreCommit)) {
+		hookManagerType = "husky";
 		try {
 			const content = readFileSync(huskyPreCommit, "utf8");
 			if (content.includes("forge-ts check")) {
-				hookConfigured = true;
-				hookLocation = "husky pre-commit";
+				preCommitConfigured = true;
 			}
 		} catch {
 			// Ignore read errors
 		}
 	}
 
-	if (!hookConfigured && existsSync(lefthookYml)) {
+	if (hookManagerType === "husky" && existsSync(huskyPrePush)) {
+		try {
+			const content = readFileSync(huskyPrePush, "utf8");
+			if (content.includes("forge-ts prepublish")) {
+				prePushConfigured = true;
+			}
+		} catch {
+			// Ignore read errors
+		}
+	}
+
+	if (hookManagerType === "none" && existsSync(lefthookYml)) {
+		hookManagerType = "lefthook";
 		try {
 			const content = readFileSync(lefthookYml, "utf8");
 			if (content.includes("forge-ts check")) {
-				hookConfigured = true;
-				hookLocation = "lefthook";
+				preCommitConfigured = true;
+			}
+			if (content.includes("forge-ts prepublish")) {
+				prePushConfigured = true;
 			}
 		} catch {
 			// Ignore read errors
 		}
 	}
 
-	if (hookConfigured) {
-		checks.push({
-			name: "Git hooks",
-			status: "pass",
-			message: `Git hooks — forge-ts check in ${hookLocation}`,
-			fixable: false,
-		});
-	} else {
+	// 10b: Check if husky is installed (binary or package.json)
+	let huskyInstalled = false;
+	if (hookManagerType === "husky" || hookManagerType === "none") {
+		const huskyBin = join(rootDir, "node_modules", ".bin", "husky");
+		if (existsSync(huskyBin)) {
+			huskyInstalled = true;
+		} else {
+			// Check package.json devDependencies
+			const pkgPathHooks = join(rootDir, "package.json");
+			const hooksPkg = readJsonSafe<{
+				devDependencies?: Record<string, string>;
+				dependencies?: Record<string, string>;
+			}>(pkgPathHooks);
+			if (hooksPkg) {
+				const allDeps = { ...hooksPkg.dependencies, ...hooksPkg.devDependencies };
+				if ("husky" in allDeps) {
+					huskyInstalled = true;
+				}
+			}
+		}
+	}
+
+	// 10c: Check if prepare script exists in package.json
+	let prepareScriptExists = false;
+	{
+		const pkgPathPrep = join(rootDir, "package.json");
+		const prepPkg = readJsonSafe<{ scripts?: Record<string, string> }>(pkgPathPrep);
+		if (prepPkg?.scripts?.prepare) {
+			prepareScriptExists = true;
+		}
+	}
+
+	// 10d: Check if hooks directory is active via git config
+	// Uses a fixed command string — no user input interpolation.
+	// Modern husky v9 relies on the `prepare` script rather than
+	// core.hooksPath, so this value is informational only and does not
+	// gate the pass/warn decision below.
+	if (hookManagerType === "husky") {
+		try {
+			execSync("git config core.hooksPath", {
+				cwd: rootDir,
+				encoding: "utf8",
+				stdio: ["pipe", "pipe", "pipe"],
+			});
+		} catch {
+			// git config not set — expected for modern husky v9
+		}
+	}
+
+	// Emit the checks
+	if (hookManagerType === "none" && !preCommitConfigured && !prePushConfigured) {
 		checks.push({
 			name: "Git hooks",
 			status: "warn",
-			message: "Git hooks — forge-ts check not in pre-commit (run forge-ts init hooks)",
+			message: "Git hooks — no hook manager detected (run forge-ts init hooks)",
 			fixable: false,
 		});
+	} else if (hookManagerType === "husky") {
+		// Husky installed?
+		if (!huskyInstalled) {
+			checks.push({
+				name: "Git hooks (husky)",
+				status: "warn",
+				message:
+					"Git hooks — hook files exist but husky is not installed (run: npm install -D husky)",
+				fixable: false,
+			});
+		} else if (!prepareScriptExists) {
+			checks.push({
+				name: "Git hooks (husky)",
+				status: "warn",
+				message: 'Git hooks — husky installed but "prepare" script missing in package.json',
+				fixable: false,
+			});
+		} else if (preCommitConfigured && prePushConfigured) {
+			checks.push({
+				name: "Git hooks (husky)",
+				status: "pass",
+				message:
+					"Git hooks — husky installed, prepare script wired, pre-commit and pre-push configured",
+				fixable: false,
+			});
+		} else {
+			const missing: string[] = [];
+			if (!preCommitConfigured) missing.push("pre-commit (forge-ts check)");
+			if (!prePushConfigured) missing.push("pre-push (forge-ts prepublish)");
+			checks.push({
+				name: "Git hooks (husky)",
+				status: "warn",
+				message: `Git hooks — husky installed but missing: ${missing.join(", ")}`,
+				fixable: false,
+			});
+		}
+	} else if (hookManagerType === "lefthook") {
+		if (preCommitConfigured && prePushConfigured) {
+			checks.push({
+				name: "Git hooks (lefthook)",
+				status: "pass",
+				message: "Git hooks — lefthook pre-commit and pre-push configured",
+				fixable: false,
+			});
+		} else {
+			const missing: string[] = [];
+			if (!preCommitConfigured) missing.push("pre-commit (forge-ts check)");
+			if (!prePushConfigured) missing.push("pre-push (forge-ts prepublish)");
+			checks.push({
+				name: "Git hooks (lefthook)",
+				status: "warn",
+				message: `Git hooks — lefthook detected but missing: ${missing.join(", ")}`,
+				fixable: false,
+			});
+		}
 	}
 
 	// -----------------------------------------------------------------------

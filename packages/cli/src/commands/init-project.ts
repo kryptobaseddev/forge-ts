@@ -9,7 +9,7 @@
  */
 
 import { existsSync, readFileSync } from "node:fs";
-import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { defineCommand } from "citty";
 import { forgeLogger } from "../forge-logger.js";
@@ -21,6 +21,7 @@ import {
 	type OutputFlags,
 	resolveExitCode,
 } from "../output.js";
+import { addScripts, readPkgJson, writePkgJson } from "../pkg-json.js";
 
 // ---------------------------------------------------------------------------
 // Public types
@@ -248,17 +249,6 @@ const FORGE_SCRIPTS: Record<string, string> = {
 	prepublishOnly: "forge-ts prepublish",
 };
 
-/**
- * Detects the indentation style of a JSON file by inspecting the
- * first indented line.  Returns the indent string (tabs or spaces).
- * Falls back to two spaces when detection fails.
- * @internal
- */
-function detectJsonIndent(raw: string): string {
-	const match = raw.match(/\n(\s+)"/);
-	return match ? match[1] : "  ";
-}
-
 // ---------------------------------------------------------------------------
 // Public API
 // ---------------------------------------------------------------------------
@@ -365,39 +355,22 @@ export async function runInitProject(
 	// Step 4: Wire package.json scripts (idempotent)
 	// -----------------------------------------------------------------------
 
-	const scriptsAdded: string[] = [];
-	const pkgPathForScripts = join(rootDir, "package.json");
+	let scriptsAdded: string[] = [];
 	if (environment.packageJsonExists) {
-		try {
-			const pkgRaw = await readFile(pkgPathForScripts, "utf8");
-			const pkgObj = JSON.parse(pkgRaw) as Record<string, unknown>;
-			const existingScripts = (pkgObj.scripts ?? {}) as Record<string, string>;
-			let modified = false;
-
-			for (const [key, value] of Object.entries(FORGE_SCRIPTS)) {
-				if (!(key in existingScripts)) {
-					existingScripts[key] = value;
-					scriptsAdded.push(key);
-					modified = true;
+		const pkg = readPkgJson(rootDir);
+		if (pkg) {
+			scriptsAdded = addScripts(pkg, FORGE_SCRIPTS);
+			if (scriptsAdded.length > 0) {
+				try {
+					await writePkgJson(pkg);
+				} catch {
+					warnings.push("package.json: failed to wire scripts — file may be malformed.");
+					cliWarnings.push({
+						code: "INIT_SCRIPTS_FAILED",
+						message: "package.json: failed to wire scripts — file may be malformed.",
+					});
 				}
 			}
-
-			if (modified) {
-				pkgObj.scripts = existingScripts;
-				const indent = detectJsonIndent(pkgRaw);
-				const trailingNewline = pkgRaw.endsWith("\n") ? "\n" : "";
-				await writeFile(
-					pkgPathForScripts,
-					JSON.stringify(pkgObj, null, indent) + trailingNewline,
-					"utf8",
-				);
-			}
-		} catch {
-			warnings.push("package.json: failed to wire scripts — file may be malformed.");
-			cliWarnings.push({
-				code: "INIT_SCRIPTS_FAILED",
-				message: "package.json: failed to wire scripts — file may be malformed.",
-			});
 		}
 	}
 

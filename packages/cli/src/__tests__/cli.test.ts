@@ -2,7 +2,7 @@ import type { ForgeConfig, ForgeResult, ForgeSymbol } from "@forge-ts/core";
 import { Visibility } from "@forge-ts/core";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { runBuild } from "../commands/build.js";
-import { runCheck } from "../commands/check.js";
+import { getStagedFiles, runCheck } from "../commands/check.js";
 import { runTest } from "../commands/test.js";
 import { configureLogger, forgeLogger } from "../forge-logger.js";
 import { type CommandOutput, emitResult, resolveExitCode } from "../output.js";
@@ -40,6 +40,14 @@ vi.mock("@forge-ts/api", async (importOriginal) => {
 	return {
 		...actual,
 		generateApi: vi.fn(),
+	};
+});
+
+vi.mock("node:child_process", async (importOriginal) => {
+	const actual = await importOriginal<typeof import("node:child_process")>();
+	return {
+		...actual,
+		execSync: vi.fn().mockReturnValue(""),
 	};
 });
 
@@ -323,6 +331,150 @@ describe("runCheck", () => {
 		const err = fileGroup?.errors[0];
 		expect(err?.suggestedFix).toBe("@example\n * add(1, 2); // 3");
 		expect(err?.agentAction).toBe("retry_modified");
+	});
+});
+
+// ---------------------------------------------------------------------------
+// getStagedFiles tests
+// ---------------------------------------------------------------------------
+
+describe("getStagedFiles", () => {
+	afterEach(() => {
+		vi.clearAllMocks();
+	});
+
+	it("returns .ts and .tsx files from git diff output", async () => {
+		const { execSync } = await import("node:child_process");
+		vi.mocked(execSync).mockReturnValue("src/index.ts\nsrc/app.tsx\nREADME.md\nsrc/style.css\n");
+
+		const files = getStagedFiles("/fake");
+		expect(files).toEqual(["src/index.ts", "src/app.tsx"]);
+	});
+
+	it("returns empty array when no staged .ts files", async () => {
+		const { execSync } = await import("node:child_process");
+		vi.mocked(execSync).mockReturnValue("README.md\npackage.json\n");
+
+		const files = getStagedFiles("/fake");
+		expect(files).toEqual([]);
+	});
+
+	it("returns null when git command fails", async () => {
+		const { execSync } = await import("node:child_process");
+		vi.mocked(execSync).mockImplementation(() => {
+			throw new Error("not a git repository");
+		});
+
+		const files = getStagedFiles("/fake");
+		expect(files).toBeNull();
+	});
+
+	it("handles empty git output", async () => {
+		const { execSync } = await import("node:child_process");
+		vi.mocked(execSync).mockReturnValue("");
+
+		const files = getStagedFiles("/fake");
+		expect(files).toEqual([]);
+	});
+});
+
+// ---------------------------------------------------------------------------
+// runCheck --staged tests
+// ---------------------------------------------------------------------------
+
+describe("runCheck --staged", () => {
+	afterEach(() => {
+		vi.clearAllMocks();
+	});
+
+	it("returns instant success when no staged files", async () => {
+		const { loadConfig } = await import("@forge-ts/core");
+		const { enforce } = await import("@forge-ts/enforcer");
+		const { execSync } = await import("node:child_process");
+
+		vi.mocked(loadConfig).mockResolvedValue(makeConfig());
+		vi.mocked(execSync).mockReturnValue("");
+
+		const output = await runCheck({ cwd: "/fake", staged: true });
+
+		expect(output.success).toBe(true);
+		expect(output.data.summary.errors).toBe(0);
+		expect(output.data.summary.symbols).toBe(0);
+		// enforce should NOT have been called
+		expect(enforce).not.toHaveBeenCalled();
+	});
+
+	it("filters errors to staged files only", async () => {
+		const { loadConfig } = await import("@forge-ts/core");
+		const { enforce } = await import("@forge-ts/enforcer");
+		const { execSync } = await import("node:child_process");
+
+		vi.mocked(loadConfig).mockResolvedValue(makeConfig());
+		vi.mocked(execSync).mockReturnValue("src/staged.ts\n");
+		vi.mocked(enforce).mockResolvedValue(
+			makeResult({
+				success: false,
+				symbols: [makeSymbol("stagedFn", { filePath: "/fake/src/staged.ts" })],
+				errors: [
+					{
+						code: "E001",
+						message: "Missing summary on stagedFn",
+						filePath: "/fake/src/staged.ts",
+						line: 1,
+						column: 0,
+					},
+					{
+						code: "E001",
+						message: "Missing summary on otherFn",
+						filePath: "/fake/src/other.ts",
+						line: 5,
+						column: 0,
+					},
+				],
+			}),
+		);
+
+		const output = await runCheck({ cwd: "/fake", staged: true });
+
+		// Only the error from the staged file should remain
+		expect(output.data.summary.errors).toBe(1);
+		expect(output.success).toBe(false);
+	});
+
+	it("preserves cross-file rule diagnostics even when not in staged files", async () => {
+		const { loadConfig } = await import("@forge-ts/core");
+		const { enforce } = await import("@forge-ts/enforcer");
+		const { execSync } = await import("node:child_process");
+
+		vi.mocked(loadConfig).mockResolvedValue(makeConfig());
+		vi.mocked(execSync).mockReturnValue("src/staged.ts\n");
+		vi.mocked(enforce).mockResolvedValue(
+			makeResult({
+				success: false,
+				symbols: [makeSymbol("stagedFn", { filePath: "/fake/src/staged.ts" })],
+				errors: [
+					{
+						code: "E005",
+						message: "Missing @packageDocumentation",
+						filePath: "/fake/src/index.ts",
+						line: 1,
+						column: 0,
+					},
+					{
+						code: "E009",
+						message: "tsconfig strictness regression",
+						filePath: "/fake/tsconfig.json",
+						line: 1,
+						column: 0,
+					},
+				],
+			}),
+		);
+
+		const output = await runCheck({ cwd: "/fake", staged: true });
+
+		// Cross-file rules should be preserved
+		expect(output.data.summary.errors).toBe(2);
 	});
 });
 

@@ -5,6 +5,30 @@ import { pathToFileURL } from "node:url";
 import { type ForgeConfig, Visibility } from "./types.js";
 
 /**
+ * Type-safe helper for defining a partial forge-ts configuration.
+ *
+ * Only include the settings you want to override — everything else
+ * inherits sensible defaults via `loadConfig()`.
+ *
+ * @param config - Partial configuration overrides.
+ * @returns The same object (identity function for type checking).
+ * @example
+ * ```typescript
+ * import { defineConfig } from "@forge-ts/core";
+ *
+ * export default defineConfig({
+ *   outDir: "docs",
+ *   enforce: { strict: true },
+ *   gen: { ssgTarget: "mintlify" },
+ * });
+ * ```
+ * @public
+ */
+export function defineConfig(config: Partial<ForgeConfig>): Partial<ForgeConfig> {
+	return config;
+}
+
+/**
  * Constructs a sensible default {@link ForgeConfig} rooted at `rootDir`.
  *
  * @param rootDir - Absolute path to the project root.

@@ -121,8 +121,14 @@ export interface ForgeConfig {
 	/** Enforce TSDoc on all public exports. */
 	enforce: {
 		enabled: boolean;
-		/** Minimum visibility level to enforce documentation on. */
-		minVisibility: Visibility;
+		/**
+		 * Minimum visibility level to enforce documentation on.
+		 *
+		 * Accepts either a {@link Visibility} enum value or the equivalent
+		 * string literal (`"public"`, `"beta"`, `"internal"`, `"private"`).
+		 * String literals are resolved to enum values internally.
+		 */
+		minVisibility: Visibility | "public" | "beta" | "internal" | "private";
 		/** Fail on warnings rather than only on errors. */
 		strict: boolean;
 		/** Per-rule severity overrides. When strict is true, all "warn" become "error". */

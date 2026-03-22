@@ -21,6 +21,7 @@ vi.mock("node:fs/promises", async (importOriginal) => {
 		...actual,
 		mkdir: vi.fn().mockResolvedValue(undefined),
 		writeFile: vi.fn().mockResolvedValue(undefined),
+		readFile: vi.fn().mockResolvedValue("{}"),
 	};
 });
 
@@ -325,6 +326,7 @@ describe("runInitProject", () => {
 		expect(output.data).toHaveProperty("warnings");
 		expect(output.data).toHaveProperty("environment");
 		expect(output.data).toHaveProperty("nextSteps");
+		expect(output.data).toHaveProperty("scriptsAdded");
 		expect(output).toHaveProperty("duration");
 	});
 
@@ -360,5 +362,219 @@ describe("runInitProject", () => {
 		expect(output.data.warnings).toEqual(
 			expect.arrayContaining([expect.stringContaining("@forge-ts/cli")]),
 		);
+	});
+
+	it("config template does not include incomplete enforce block", async () => {
+		const { existsSync } = await import("node:fs");
+		const { writeFile } = await import("node:fs/promises");
+
+		vi.mocked(existsSync).mockImplementation((p) => {
+			const s = String(p);
+			if (s.endsWith("package.json")) return true;
+			return false;
+		});
+
+		await runInitProject({ cwd: "/fake" });
+
+		const writeCalls = vi.mocked(writeFile).mock.calls;
+		const configCall = writeCalls.find((c) => String(c[0]).endsWith("forge-ts.config.ts"));
+		expect(configCall).toBeDefined();
+		const written = configCall?.[1] as string;
+		expect(written).toContain("defineConfig");
+		// Should NOT contain the enforce block (defaults handle it)
+		expect(written).not.toContain("enforce:");
+		expect(written).not.toContain("minVisibility");
+		// Should contain the gen.ssgTarget override
+		expect(written).toContain("ssgTarget");
+	});
+
+	it("wires forge-ts scripts into package.json", async () => {
+		const { existsSync } = await import("node:fs");
+		const { readFile, writeFile } = await import("node:fs/promises");
+
+		vi.mocked(existsSync).mockImplementation((p) => {
+			const s = String(p);
+			if (s.endsWith("package.json")) return true;
+			return false;
+		});
+
+		vi.mocked(readFile).mockResolvedValue(
+			JSON.stringify({ name: "test-project", scripts: { test: "vitest" } }, null, 2),
+		);
+
+		const output = await runInitProject({ cwd: "/fake" });
+
+		expect(output.success).toBe(true);
+		expect(output.data.scriptsAdded).toContain("forge:check");
+		expect(output.data.scriptsAdded).toContain("forge:test");
+		expect(output.data.scriptsAdded).toContain("forge:build");
+		expect(output.data.scriptsAdded).toContain("forge:doctor");
+		expect(output.data.scriptsAdded).toContain("prepublishOnly");
+
+		// Verify package.json was written back with scripts
+		const writeCalls = vi.mocked(writeFile).mock.calls;
+		const pkgCall = writeCalls.find((c) => String(c[0]).endsWith("package.json"));
+		expect(pkgCall).toBeDefined();
+		const writtenPkg = JSON.parse(pkgCall?.[1] as string);
+		expect(writtenPkg.scripts["forge:check"]).toBe("forge-ts check");
+		expect(writtenPkg.scripts["forge:test"]).toBe("forge-ts test");
+		expect(writtenPkg.scripts["forge:build"]).toBe("forge-ts build");
+		expect(writtenPkg.scripts["forge:doctor"]).toBe("forge-ts doctor");
+		expect(writtenPkg.scripts.prepublishOnly).toBe("forge-ts prepublish");
+		// Pre-existing scripts preserved
+		expect(writtenPkg.scripts.test).toBe("vitest");
+	});
+
+	it("script wiring is idempotent — skips existing keys", async () => {
+		const { existsSync } = await import("node:fs");
+		const { readFile, writeFile } = await import("node:fs/promises");
+
+		vi.mocked(existsSync).mockImplementation((p) => {
+			const s = String(p);
+			if (s.endsWith("package.json")) return true;
+			return false;
+		});
+
+		vi.mocked(readFile).mockResolvedValue(
+			JSON.stringify(
+				{
+					name: "test-project",
+					scripts: {
+						"forge:check": "custom-check-command",
+						prepublishOnly: "my-custom-prepublish",
+					},
+				},
+				null,
+				2,
+			),
+		);
+
+		const output = await runInitProject({ cwd: "/fake" });
+
+		expect(output.success).toBe(true);
+		// Should NOT include keys that already exist
+		expect(output.data.scriptsAdded).not.toContain("forge:check");
+		expect(output.data.scriptsAdded).not.toContain("prepublishOnly");
+		// Should include keys that are new
+		expect(output.data.scriptsAdded).toContain("forge:test");
+		expect(output.data.scriptsAdded).toContain("forge:build");
+		expect(output.data.scriptsAdded).toContain("forge:doctor");
+
+		// Verify existing scripts are NOT overwritten
+		const writeCalls = vi.mocked(writeFile).mock.calls;
+		const pkgCall = writeCalls.find((c) => String(c[0]).endsWith("package.json"));
+		expect(pkgCall).toBeDefined();
+		const writtenPkg = JSON.parse(pkgCall?.[1] as string);
+		expect(writtenPkg.scripts["forge:check"]).toBe("custom-check-command");
+		expect(writtenPkg.scripts.prepublishOnly).toBe("my-custom-prepublish");
+	});
+
+	it("script wiring preserves indent style", async () => {
+		const { existsSync } = await import("node:fs");
+		const { readFile, writeFile } = await import("node:fs/promises");
+
+		vi.mocked(existsSync).mockImplementation((p) => {
+			const s = String(p);
+			if (s.endsWith("package.json")) return true;
+			return false;
+		});
+
+		// Tab-indented JSON
+		vi.mocked(readFile).mockResolvedValue('{\n\t"name": "test-project"\n}\n');
+
+		await runInitProject({ cwd: "/fake" });
+
+		const writeCalls = vi.mocked(writeFile).mock.calls;
+		const pkgCall = writeCalls.find((c) => String(c[0]).endsWith("package.json"));
+		expect(pkgCall).toBeDefined();
+		const written = pkgCall?.[1] as string;
+		// Should use tab indentation
+		expect(written).toContain('\t"name"');
+		// Should preserve trailing newline
+		expect(written).toMatch(/\n$/);
+	});
+
+	it("script wiring does not write when all scripts already exist", async () => {
+		const { existsSync } = await import("node:fs");
+		const { readFile, writeFile } = await import("node:fs/promises");
+
+		vi.mocked(existsSync).mockImplementation((p) => {
+			const s = String(p);
+			if (s.endsWith("package.json")) return true;
+			return false;
+		});
+
+		vi.mocked(readFile).mockResolvedValue(
+			JSON.stringify(
+				{
+					name: "test-project",
+					scripts: {
+						"forge:check": "forge-ts check",
+						"forge:test": "forge-ts test",
+						"forge:build": "forge-ts build",
+						"forge:doctor": "forge-ts doctor",
+						prepublishOnly: "forge-ts prepublish",
+					},
+				},
+				null,
+				2,
+			),
+		);
+
+		const output = await runInitProject({ cwd: "/fake" });
+
+		expect(output.data.scriptsAdded).toHaveLength(0);
+
+		// package.json should NOT be rewritten
+		const writeCalls = vi.mocked(writeFile).mock.calls;
+		const pkgCall = writeCalls.find((c) => String(c[0]).endsWith("package.json"));
+		expect(pkgCall).toBeUndefined();
+	});
+});
+
+// ---------------------------------------------------------------------------
+// defineConfig tests
+// ---------------------------------------------------------------------------
+
+describe("defineConfig", () => {
+	it("returns the same object (identity function)", async () => {
+		const { defineConfig } = await import("@forge-ts/core");
+		const input = { outDir: "docs", enforce: { strict: true } };
+		const result = defineConfig(input);
+		expect(result).toBe(input);
+	});
+
+	it("accepts string literals for minVisibility", async () => {
+		const { defineConfig } = await import("@forge-ts/core");
+		const config = defineConfig({
+			enforce: {
+				enabled: true,
+				minVisibility: "public",
+				strict: false,
+				rules: {
+					"require-summary": "error",
+					"require-param": "error",
+					"require-returns": "error",
+					"require-example": "error",
+					"require-package-doc": "warn",
+					"require-class-member-doc": "error",
+					"require-interface-member-doc": "error",
+					"require-tsdoc-syntax": "warn",
+					"require-remarks": "error",
+					"require-default-value": "warn",
+					"require-type-param": "error",
+					"require-see": "warn",
+					"require-release-tag": "error",
+					"require-fresh-guides": "warn",
+					"require-guide-coverage": "warn",
+					"require-internal-boundary": "error",
+					"require-route-response": "warn",
+					"require-inheritdoc-source": "warn",
+					"require-migration-path": "warn",
+					"require-since": "warn",
+				},
+			},
+		});
+		expect(config.enforce?.minVisibility).toBe("public");
 	});
 });

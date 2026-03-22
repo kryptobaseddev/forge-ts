@@ -9,7 +9,7 @@
  */
 
 import { existsSync, readFileSync } from "node:fs";
-import { mkdir, writeFile } from "node:fs/promises";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { defineCommand } from "citty";
 import { forgeLogger } from "../forge-logger.js";
@@ -72,6 +72,8 @@ export interface InitProjectResult {
 	environment: InitProjectEnvironment;
 	/** Next steps for the user. */
 	nextSteps: string[];
+	/** Scripts that were added to package.json (empty if none were added). */
+	scriptsAdded: string[];
 }
 
 /**
@@ -98,6 +100,7 @@ interface PackageJsonShape {
 	engines?: { node?: string };
 	dependencies?: Record<string, string>;
 	devDependencies?: Record<string, string>;
+	scripts?: Record<string, string>;
 	workspaces?: string[] | { packages: string[] };
 }
 
@@ -200,24 +203,18 @@ export function detectEnvironment(rootDir: string): InitProjectEnvironment {
 
 /**
  * Default forge-ts.config.ts content for new projects.
+ *
+ * Only overrides that differ from built-in defaults are included.
+ * The full defaults (enforce rules, doctest, etc.) are merged
+ * automatically by `loadConfig()` → `mergeWithDefaults()`.
  * @internal
  */
 const DEFAULT_CONFIG_CONTENT = `import { defineConfig } from "@forge-ts/core";
 
 export default defineConfig({
   rootDir: ".",
-  tsconfig: "tsconfig.json",
   outDir: "docs/generated",
-  enforce: {
-    enabled: true,
-    minVisibility: "public",
-    strict: false,
-  },
   gen: {
-    enabled: true,
-    formats: ["mdx"],
-    llmsTxt: true,
-    readmeSync: false,
     ssgTarget: "mintlify",
   },
 });
@@ -236,6 +233,32 @@ const DEFAULT_TSDOC_CONTENT = JSON.stringify(
 	"\t",
 );
 
+/**
+ * Default npm scripts wired by `forge-ts init`.
+ *
+ * Each entry is only added when the key does **not** already exist in
+ * the user's `package.json`, making the operation idempotent.
+ * @internal
+ */
+const FORGE_SCRIPTS: Record<string, string> = {
+	"forge:check": "forge-ts check",
+	"forge:test": "forge-ts test",
+	"forge:build": "forge-ts build",
+	"forge:doctor": "forge-ts doctor",
+	prepublishOnly: "forge-ts prepublish",
+};
+
+/**
+ * Detects the indentation style of a JSON file by inspecting the
+ * first indented line.  Returns the indent string (tabs or spaces).
+ * Falls back to two spaces when detection fails.
+ * @internal
+ */
+function detectJsonIndent(raw: string): string {
+	const match = raw.match(/\n(\s+)"/);
+	return match ? match[1] : "  ";
+}
+
 // ---------------------------------------------------------------------------
 // Public API
 // ---------------------------------------------------------------------------
@@ -247,9 +270,10 @@ const DEFAULT_TSDOC_CONTENT = JSON.stringify(
  * 1. Detect project environment
  * 2. Write forge-ts.config.ts (if not exists)
  * 3. Write tsdoc.json (if not exists)
- * 4. Validate tsconfig.json strictness
- * 5. Validate package.json
- * 6. Report summary
+ * 4. Wire package.json scripts (idempotent)
+ * 5. Validate tsconfig.json strictness
+ * 6. Validate package.json
+ * 7. Report summary
  *
  * @param args - CLI arguments for the init command.
  * @returns A typed `CommandOutput<InitProjectResult>`.
@@ -293,6 +317,7 @@ export async function runInitProject(
 				warnings: [],
 				environment,
 				nextSteps: [],
+				scriptsAdded: [],
 			},
 			errors: [err],
 			duration: Date.now() - start,
@@ -337,7 +362,47 @@ export async function runInitProject(
 	}
 
 	// -----------------------------------------------------------------------
-	// Step 4: Validate tsconfig.json strictness
+	// Step 4: Wire package.json scripts (idempotent)
+	// -----------------------------------------------------------------------
+
+	const scriptsAdded: string[] = [];
+	const pkgPathForScripts = join(rootDir, "package.json");
+	if (environment.packageJsonExists) {
+		try {
+			const pkgRaw = await readFile(pkgPathForScripts, "utf8");
+			const pkgObj = JSON.parse(pkgRaw) as Record<string, unknown>;
+			const existingScripts = (pkgObj.scripts ?? {}) as Record<string, string>;
+			let modified = false;
+
+			for (const [key, value] of Object.entries(FORGE_SCRIPTS)) {
+				if (!(key in existingScripts)) {
+					existingScripts[key] = value;
+					scriptsAdded.push(key);
+					modified = true;
+				}
+			}
+
+			if (modified) {
+				pkgObj.scripts = existingScripts;
+				const indent = detectJsonIndent(pkgRaw);
+				const trailingNewline = pkgRaw.endsWith("\n") ? "\n" : "";
+				await writeFile(
+					pkgPathForScripts,
+					JSON.stringify(pkgObj, null, indent) + trailingNewline,
+					"utf8",
+				);
+			}
+		} catch {
+			warnings.push("package.json: failed to wire scripts — file may be malformed.");
+			cliWarnings.push({
+				code: "INIT_SCRIPTS_FAILED",
+				message: "package.json: failed to wire scripts — file may be malformed.",
+			});
+		}
+	}
+
+	// -----------------------------------------------------------------------
+	// Step 5: Validate tsconfig.json strictness
 	// -----------------------------------------------------------------------
 
 	if (environment.tsconfigExists) {
@@ -358,7 +423,7 @@ export async function runInitProject(
 	}
 
 	// -----------------------------------------------------------------------
-	// Step 5: Validate package.json
+	// Step 6: Validate package.json
 	// -----------------------------------------------------------------------
 
 	const pkgPath = join(rootDir, "package.json");
@@ -392,7 +457,7 @@ export async function runInitProject(
 	}
 
 	// -----------------------------------------------------------------------
-	// Step 6: Build result
+	// Step 7: Build result
 	// -----------------------------------------------------------------------
 
 	const nextSteps: string[] = [
@@ -409,6 +474,7 @@ export async function runInitProject(
 		warnings,
 		environment,
 		nextSteps,
+		scriptsAdded,
 	};
 
 	return {
@@ -452,6 +518,15 @@ function formatInitProjectHuman(result: InitProjectResult): string {
 		lines.push("");
 		lines.push("  Already exists (skipped):");
 		lines.push("    (none)");
+	}
+
+	// Scripts added
+	if (result.scriptsAdded.length > 0) {
+		lines.push("");
+		lines.push("  Scripts added to package.json:");
+		for (const script of result.scriptsAdded) {
+			lines.push(`    ${script}`);
+		}
 	}
 
 	// Warnings

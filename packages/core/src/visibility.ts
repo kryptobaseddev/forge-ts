@@ -47,6 +47,9 @@ const VISIBILITY_RANK: Record<Visibility, number> = {
  * "Meets" means the symbol is at least as visible as `minVisibility`.
  * For example, `Public` meets a minimum of `Public`, but `Internal` does not.
  *
+ * Both parameters accept either a {@link Visibility} enum value or the
+ * equivalent string literal (`"public"`, `"beta"`, `"internal"`, `"private"`).
+ *
  * @param candidate - The visibility of the symbol being tested.
  * @param minVisibility - The minimum visibility threshold.
  * @returns `true` if `candidate` is at least as visible as `minVisibility`.
@@ -55,11 +58,15 @@ const VISIBILITY_RANK: Record<Visibility, number> = {
  * import { meetsVisibility, Visibility } from "@forge-ts/core";
  * meetsVisibility(Visibility.Public, Visibility.Public); // true
  * meetsVisibility(Visibility.Internal, Visibility.Public); // false
+ * meetsVisibility("public", "beta"); // true (string literals also accepted)
  * ```
  * @public
  */
-export function meetsVisibility(candidate: Visibility, minVisibility: Visibility): boolean {
-	return VISIBILITY_RANK[candidate] <= VISIBILITY_RANK[minVisibility];
+export function meetsVisibility(
+	candidate: Visibility | "public" | "beta" | "internal" | "private",
+	minVisibility: Visibility | "public" | "beta" | "internal" | "private",
+): boolean {
+	return VISIBILITY_RANK[candidate as Visibility] <= VISIBILITY_RANK[minVisibility as Visibility];
 }
 
 /**
@@ -78,7 +85,7 @@ export function meetsVisibility(candidate: Visibility, minVisibility: Visibility
  */
 export function filterByVisibility(
 	symbols: ForgeSymbol[],
-	minVisibility: Visibility,
+	minVisibility: Visibility | "public" | "beta" | "internal" | "private",
 ): ForgeSymbol[] {
 	return symbols.filter((s) => meetsVisibility(s.visibility, minVisibility));
 }

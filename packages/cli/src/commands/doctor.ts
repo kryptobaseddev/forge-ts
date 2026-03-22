@@ -103,24 +103,18 @@ function readJsonSafe<T>(filePath: string): T | null {
 
 /**
  * Default forge-ts.config.ts content for --fix generation.
+ *
+ * Only overrides that differ from built-in defaults are included.
+ * The full defaults (enforce rules, doctest, etc.) are merged
+ * automatically by `loadConfig()` → `mergeWithDefaults()`.
  * @internal
  */
 const DEFAULT_CONFIG_CONTENT = `import { defineConfig } from "@forge-ts/core";
 
 export default defineConfig({
   rootDir: ".",
-  tsconfig: "tsconfig.json",
   outDir: "docs/generated",
-  enforce: {
-    enabled: true,
-    minVisibility: "public",
-    strict: false,
-  },
   gen: {
-    enabled: true,
-    formats: ["mdx"],
-    llmsTxt: true,
-    readmeSync: false,
     ssgTarget: "mintlify",
   },
 });

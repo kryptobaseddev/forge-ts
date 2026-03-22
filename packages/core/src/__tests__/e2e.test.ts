@@ -14,6 +14,7 @@ import {
 	filterByVisibility,
 	loadConfig,
 	loadTSDocConfiguration,
+	RULE_GROUP_MAP,
 	Visibility,
 } from "../index.js";
 
@@ -845,5 +846,201 @@ export function apiHandler(): void {}
 		expect(sym?.documentation?.tags?.concept).toEqual(["Architecture"]);
 		expect(sym?.documentation?.tags?.guide).toEqual(["api-design"]);
 		expect(sym?.documentation?.tags?.public).toEqual([]);
+	});
+});
+
+// ---------------------------------------------------------------------------
+// RULE_GROUP_MAP tests
+// ---------------------------------------------------------------------------
+
+describe("RULE_GROUP_MAP", () => {
+	it("maps core rules correctly", () => {
+		expect(RULE_GROUP_MAP["require-param"]).toBe("core");
+		expect(RULE_GROUP_MAP["require-returns"]).toBe("core");
+		expect(RULE_GROUP_MAP["require-package-doc"]).toBe("core");
+		expect(RULE_GROUP_MAP["require-remarks"]).toBe("core");
+		expect(RULE_GROUP_MAP["require-type-param"]).toBe("core");
+		expect(RULE_GROUP_MAP["require-summary"]).toBe("core");
+		expect(RULE_GROUP_MAP["require-class-member-doc"]).toBe("core");
+		expect(RULE_GROUP_MAP["require-interface-member-doc"]).toBe("core");
+	});
+
+	it("maps extended rules correctly", () => {
+		expect(RULE_GROUP_MAP["require-example"]).toBe("extended");
+		expect(RULE_GROUP_MAP["require-default-value"]).toBe("extended");
+		expect(RULE_GROUP_MAP["require-see"]).toBe("extended");
+		expect(RULE_GROUP_MAP["require-tsdoc-syntax"]).toBe("extended");
+		expect(RULE_GROUP_MAP["require-inheritdoc-source"]).toBe("extended");
+		expect(RULE_GROUP_MAP["require-fresh-examples"]).toBe("extended");
+	});
+
+	it("maps discretionary rules correctly", () => {
+		expect(RULE_GROUP_MAP["require-release-tag"]).toBe("discretionary");
+	});
+
+	it("does not include guard rules in any group", () => {
+		// Guard rules should be undefined in the map
+		expect(RULE_GROUP_MAP["require-no-ts-ignore" as keyof typeof RULE_GROUP_MAP]).toBeUndefined();
+		expect(RULE_GROUP_MAP["require-no-any-in-api" as keyof typeof RULE_GROUP_MAP]).toBeUndefined();
+		expect(RULE_GROUP_MAP["require-fresh-guides" as keyof typeof RULE_GROUP_MAP]).toBeUndefined();
+		expect(RULE_GROUP_MAP["require-guide-coverage" as keyof typeof RULE_GROUP_MAP]).toBeUndefined();
+		expect(
+			RULE_GROUP_MAP["require-internal-boundary" as keyof typeof RULE_GROUP_MAP],
+		).toBeUndefined();
+		expect(RULE_GROUP_MAP["require-migration-path" as keyof typeof RULE_GROUP_MAP]).toBeUndefined();
+		expect(RULE_GROUP_MAP["require-since" as keyof typeof RULE_GROUP_MAP]).toBeUndefined();
+		expect(
+			RULE_GROUP_MAP["require-fresh-link-text" as keyof typeof RULE_GROUP_MAP],
+		).toBeUndefined();
+	});
+});
+
+// ---------------------------------------------------------------------------
+// tsdoc.enforce group severity propagation via loadConfig
+// ---------------------------------------------------------------------------
+
+describe("loadConfig — group severity propagation", () => {
+	const TMP_ROOT = join(tmpdir(), "forge-ts-group-sev-test");
+
+	afterEach(() => {
+		try {
+			rmSync(TMP_ROOT, { recursive: true, force: true });
+		} catch {
+			// Ignore cleanup errors
+		}
+	});
+
+	it("core group 'warn' sets core rules to 'warn' by default", async () => {
+		mkdirSync(TMP_ROOT, { recursive: true });
+		// Minimal package.json to satisfy loadConfig
+		writeFileSync(
+			join(TMP_ROOT, "package.json"),
+			JSON.stringify({
+				name: "test-group-sev",
+				type: "module",
+				"forge-ts": {
+					tsdoc: {
+						enforce: { core: "warn" },
+					},
+				},
+			}),
+		);
+
+		const config = await loadConfig(TMP_ROOT);
+		// Core rules should default to "warn"
+		expect(config.enforce.rules["require-param"]).toBe("warn");
+		expect(config.enforce.rules["require-returns"]).toBe("warn");
+		expect(config.enforce.rules["require-summary"]).toBe("warn");
+		expect(config.enforce.rules["require-remarks"]).toBe("warn");
+		expect(config.enforce.rules["require-type-param"]).toBe("warn");
+		expect(config.enforce.rules["require-package-doc"]).toBe("warn");
+	});
+
+	it("extended group 'error' promotes extended rules to 'error'", async () => {
+		mkdirSync(TMP_ROOT, { recursive: true });
+		writeFileSync(
+			join(TMP_ROOT, "package.json"),
+			JSON.stringify({
+				name: "test-group-sev",
+				type: "module",
+				"forge-ts": {
+					tsdoc: {
+						enforce: { extended: "error" },
+					},
+				},
+			}),
+		);
+
+		const config = await loadConfig(TMP_ROOT);
+		// Extended rules should be "error"
+		expect(config.enforce.rules["require-see"]).toBe("error");
+		expect(config.enforce.rules["require-example"]).toBe("error");
+		expect(config.enforce.rules["require-default-value"]).toBe("error");
+		expect(config.enforce.rules["require-tsdoc-syntax"]).toBe("error");
+	});
+
+	it("individual rule override takes precedence over group", async () => {
+		mkdirSync(TMP_ROOT, { recursive: true });
+		writeFileSync(
+			join(TMP_ROOT, "package.json"),
+			JSON.stringify({
+				name: "test-group-sev",
+				type: "module",
+				"forge-ts": {
+					tsdoc: {
+						enforce: { core: "off" },
+					},
+					enforce: {
+						rules: {
+							"require-param": "error",
+						},
+					},
+				},
+			}),
+		);
+
+		const config = await loadConfig(TMP_ROOT);
+		// Group says "off" but individual override says "error"
+		expect(config.enforce.rules["require-param"]).toBe("error");
+		// Other core rules should still be "off"
+		expect(config.enforce.rules["require-returns"]).toBe("off");
+		expect(config.enforce.rules["require-summary"]).toBe("off");
+	});
+
+	it("guard rules are unaffected by group settings", async () => {
+		mkdirSync(TMP_ROOT, { recursive: true });
+		writeFileSync(
+			join(TMP_ROOT, "package.json"),
+			JSON.stringify({
+				name: "test-group-sev",
+				type: "module",
+				"forge-ts": {
+					tsdoc: {
+						enforce: { core: "off", extended: "off", discretionary: "off" },
+					},
+				},
+			}),
+		);
+
+		const config = await loadConfig(TMP_ROOT);
+		// Guard rules (not in any group) should keep hardcoded defaults
+		expect(config.enforce.rules["require-no-ts-ignore"]).toBe("error");
+		expect(config.enforce.rules["require-no-any-in-api"]).toBe("warn");
+		expect(config.enforce.rules["require-fresh-guides"]).toBe("warn");
+		expect(config.enforce.rules["require-guide-coverage"]).toBe("warn");
+		expect(config.enforce.rules["require-internal-boundary"]).toBe("error");
+	});
+
+	it("discretionary group 'error' promotes E016 to error", async () => {
+		mkdirSync(TMP_ROOT, { recursive: true });
+		writeFileSync(
+			join(TMP_ROOT, "package.json"),
+			JSON.stringify({
+				name: "test-group-sev",
+				type: "module",
+				"forge-ts": {
+					tsdoc: {
+						enforce: { discretionary: "error" },
+					},
+				},
+			}),
+		);
+
+		const config = await loadConfig(TMP_ROOT);
+		expect(config.enforce.rules["require-release-tag"]).toBe("error");
+	});
+
+	it("defaultConfig without group changes keeps standard defaults", async () => {
+		mkdirSync(TMP_ROOT, { recursive: true });
+		writeFileSync(
+			join(TMP_ROOT, "package.json"),
+			JSON.stringify({ name: "test-group-sev", type: "module" }),
+		);
+
+		const config = await loadConfig(TMP_ROOT);
+		// Standard defaults: core="error", extended="warn", discretionary="off"
+		expect(config.enforce.rules["require-param"]).toBe("error");
+		expect(config.enforce.rules["require-see"]).toBe("warn");
+		expect(config.enforce.rules["require-release-tag"]).toBe("off");
 	});
 });

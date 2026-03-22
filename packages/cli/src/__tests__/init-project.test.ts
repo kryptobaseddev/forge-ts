@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { detectEnvironment, runInitProject } from "../commands/init-project.js";
+import { buildTsdocContent, detectEnvironment, runInitProject } from "../commands/init-project.js";
 import { resolveExitCode } from "../output.js";
 
 // ---------------------------------------------------------------------------
@@ -576,5 +576,51 @@ describe("defineConfig", () => {
 			},
 		});
 		expect(config.enforce?.minVisibility).toBe("public");
+	});
+});
+
+// ---------------------------------------------------------------------------
+// buildTsdocContent tests
+// ---------------------------------------------------------------------------
+
+describe("buildTsdocContent", () => {
+	it("with no customTags writes basic extends-only tsdoc.json", () => {
+		const content = buildTsdocContent();
+		const parsed = JSON.parse(content);
+		expect(parsed.$schema).toBe(
+			"https://developer.microsoft.com/json-schemas/tsdoc/v0/tsdoc.schema.json",
+		);
+		expect(parsed.extends).toEqual(["@forge-ts/core/tsdoc-preset/tsdoc.json"]);
+		expect(parsed.tagDefinitions).toBeUndefined();
+		expect(parsed.supportForTags).toBeUndefined();
+	});
+
+	it("with empty customTags array writes basic extends-only tsdoc.json", () => {
+		const content = buildTsdocContent([]);
+		const parsed = JSON.parse(content);
+		expect(parsed.tagDefinitions).toBeUndefined();
+		expect(parsed.supportForTags).toBeUndefined();
+	});
+
+	it("with customTags includes tagDefinitions and supportForTags", () => {
+		const customTags = [
+			{ tagName: "@myTag", syntaxKind: "block" as const },
+			{ tagName: "@myInline", syntaxKind: "inline" as const },
+		];
+		const content = buildTsdocContent(customTags);
+		const parsed = JSON.parse(content);
+		expect(parsed.extends).toEqual(["@forge-ts/core/tsdoc-preset/tsdoc.json"]);
+		expect(parsed.tagDefinitions).toEqual(customTags);
+		expect(parsed.supportForTags).toEqual({
+			"@myTag": true,
+			"@myInline": true,
+		});
+	});
+
+	it("preserves tag syntaxKind in tagDefinitions", () => {
+		const customTags = [{ tagName: "@modifier", syntaxKind: "modifier" as const }];
+		const content = buildTsdocContent(customTags);
+		const parsed = JSON.parse(content);
+		expect(parsed.tagDefinitions[0].syntaxKind).toBe("modifier");
 	});
 });

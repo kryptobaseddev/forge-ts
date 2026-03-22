@@ -11,6 +11,7 @@
 import { existsSync, readFileSync } from "node:fs";
 import { mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
+import { loadConfig } from "@forge-ts/core";
 import { defineCommand } from "citty";
 import { forgeLogger } from "../forge-logger.js";
 import {
@@ -222,17 +223,35 @@ export default defineConfig({
 `;
 
 /**
- * Default tsdoc.json content.
+ * Builds tsdoc.json content, merging in customTags from the forge config.
+ *
+ * When `customTags` is non-empty, the written tsdoc.json includes both
+ * `tagDefinitions` and `supportForTags` entries so that the TSDoc parser
+ * (and any editor extensions) recognise the custom tags.
+ *
+ * @param customTags - Custom tag definitions from `ForgeConfig.tsdoc.customTags`.
+ * @returns A JSON string for tsdoc.json.
  * @internal
  */
-const DEFAULT_TSDOC_CONTENT = JSON.stringify(
-	{
+export function buildTsdocContent(
+	customTags: Array<{ tagName: string; syntaxKind: "block" | "inline" | "modifier" }> = [],
+): string {
+	const tsdoc: Record<string, unknown> = {
 		$schema: "https://developer.microsoft.com/json-schemas/tsdoc/v0/tsdoc.schema.json",
 		extends: ["@forge-ts/core/tsdoc-preset/tsdoc.json"],
-	},
-	null,
-	"\t",
-);
+	};
+
+	if (customTags.length > 0) {
+		tsdoc.tagDefinitions = customTags;
+		const supportForTags: Record<string, boolean> = {};
+		for (const tag of customTags) {
+			supportForTags[tag.tagName] = true;
+		}
+		tsdoc.supportForTags = supportForTags;
+	}
+
+	return JSON.stringify(tsdoc, null, "\t");
+}
 
 /**
  * Default npm scripts wired by `forge-ts init`.
@@ -340,14 +359,25 @@ export async function runInitProject(
 	}
 
 	// -----------------------------------------------------------------------
-	// Step 3: Write tsdoc.json
+	// Step 3: Write tsdoc.json (with customTags from config if available)
 	// -----------------------------------------------------------------------
+
+	// Attempt to load config to pick up customTags. If config loading fails
+	// (e.g. the config was just created above), fall back to empty customTags.
+	let customTags: Array<{ tagName: string; syntaxKind: "block" | "inline" | "modifier" }> = [];
+	try {
+		const config = await loadConfig(rootDir);
+		customTags = config.tsdoc.customTags;
+	} catch {
+		// Config not loadable yet — use empty customTags
+	}
 
 	const tsdocPath = join(rootDir, "tsdoc.json");
 	if (existsSync(tsdocPath)) {
 		skipped.push("tsdoc.json");
 	} else {
-		await writeFile(tsdocPath, `${DEFAULT_TSDOC_CONTENT}\n`, "utf8");
+		const tsdocContent = buildTsdocContent(customTags);
+		await writeFile(tsdocPath, `${tsdocContent}\n`, "utf8");
 		created.push("tsdoc.json");
 	}
 

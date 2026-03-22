@@ -13,8 +13,10 @@ import { execSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import { mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
+import { loadConfig } from "@forge-ts/core";
 import { defineCommand } from "citty";
 import { type CommandOutput, emitResult, type OutputFlags, resolveExitCode } from "../output.js";
+import { buildTsdocContent } from "./init-project.js";
 
 // ---------------------------------------------------------------------------
 // Public types
@@ -121,18 +123,8 @@ export default defineConfig({
 });
 `;
 
-/**
- * Default tsdoc.json content for --fix generation.
- * @internal
- */
-const DEFAULT_TSDOC_CONTENT = JSON.stringify(
-	{
-		$schema: "https://developer.microsoft.com/json-schemas/tsdoc/v0/tsdoc.schema.json",
-		extends: ["@forge-ts/core/tsdoc-preset/tsdoc.json"],
-	},
-	null,
-	"\t",
-);
+// tsdoc.json content is built via buildTsdocContent() from init-project.ts
+// to merge customTags from the forge config.
 
 // ---------------------------------------------------------------------------
 // Public API
@@ -229,7 +221,15 @@ export async function runDoctor(args: DoctorArgs): Promise<CommandOutput<DoctorR
 			});
 		}
 	} else if (fix) {
-		await writeFile(tsdocPath, `${DEFAULT_TSDOC_CONTENT}\n`, "utf8");
+		// Load config to pick up customTags for tsdoc.json generation.
+		let customTags: Array<{ tagName: string; syntaxKind: "block" | "inline" | "modifier" }> = [];
+		try {
+			const config = await loadConfig(rootDir);
+			customTags = config.tsdoc.customTags;
+		} catch {
+			// Config not loadable — use empty customTags
+		}
+		await writeFile(tsdocPath, `${buildTsdocContent(customTags)}\n`, "utf8");
 		fixed.push("tsdoc.json");
 		checks.push({
 			name: "tsdoc.json",

@@ -138,7 +138,16 @@ async function runEnforceWithConfig(
 	const merged: ForgeConfig = {
 		...base,
 		...configOverrides,
-		enforce: { ...base.enforce, ...configOverrides.enforce },
+		enforce: {
+			...base.enforce,
+			...configOverrides.enforce,
+			rules: { ...base.enforce.rules, ...configOverrides.enforce?.rules },
+		},
+		tsdoc: {
+			...base.tsdoc,
+			...configOverrides.tsdoc,
+			enforce: { ...base.tsdoc.enforce, ...configOverrides.tsdoc?.enforce },
+		},
 		guards: {
 			...base.guards,
 			...configOverrides.guards,
@@ -4763,5 +4772,128 @@ describe("enforce — W012 orphaned link display text", () => {
 		});
 		const w012 = [...result.errors, ...result.warnings].filter((d) => d.code === "W012");
 		expect(w012).toHaveLength(0);
+	});
+});
+
+// ---------------------------------------------------------------------------
+// tsdoc.enforce per-group severity
+// ---------------------------------------------------------------------------
+
+describe("enforce — tsdoc.enforce per-group severity", () => {
+	it("setting core group to 'off' suppresses E002 (a core rule)", async () => {
+		const sym = makeSymbol({
+			name: "doThing",
+			kind: "function",
+			signature: "(x: string) => void",
+			documentation: {
+				summary: "Does a thing.",
+				examples: [{ code: "doThing('a');", language: "typescript", line: 5 }],
+				tags: { remarks: ["Details."] },
+			},
+		});
+		// Simulate what mergeWithDefaults produces when tsdoc.enforce.core = "off":
+		// All core rules get "off" as their severity.
+		const result = await runEnforce([sym], {
+			rules: {
+				"require-param": "off",
+				"require-returns": "off",
+				"require-summary": "off",
+				"require-package-doc": "off",
+				"require-remarks": "off",
+				"require-type-param": "off",
+				"require-class-member-doc": "off",
+				"require-interface-member-doc": "off",
+			},
+		});
+		const e002 = [...result.errors, ...result.warnings].filter((d) => d.code === "E002");
+		expect(e002).toHaveLength(0);
+	});
+
+	it("setting extended group to 'error' promotes W005 (an extended rule) to error", async () => {
+		const sym = makeSymbol({
+			name: "doThing",
+			kind: "function",
+			documentation: {
+				summary: "Does a thing.",
+				links: [{ target: "otherSymbol", line: 5 }],
+				examples: [{ code: "doThing();", language: "typescript", line: 5 }],
+				tags: { remarks: ["Details."] },
+			},
+			signature: "() => void",
+		});
+		const otherSym = makeSymbol({
+			name: "otherSymbol",
+			kind: "variable",
+			documentation: { summary: "Other." },
+		});
+		// Extended group set to "error" → W005 (require-see) becomes an error
+		const result = await runEnforce([sym, otherSym], {
+			rules: { "require-see": "error" },
+		});
+		const w005errors = result.errors.filter((d) => d.code === "W005");
+		expect(w005errors.length).toBeGreaterThan(0);
+	});
+
+	it("individual rule override takes precedence over group setting", async () => {
+		const sym = makeSymbol({
+			name: "doThing",
+			kind: "function",
+			signature: "(x: string) => void",
+			documentation: {
+				summary: "Does a thing.",
+				examples: [{ code: "doThing('a');", language: "typescript", line: 5 }],
+				tags: { remarks: ["Details."] },
+			},
+		});
+		// Simulate: tsdoc.enforce.core = "off" (all core rules off)
+		// BUT individual rule override: require-param = "error" (explicit override wins)
+		const result = await runEnforce([sym], {
+			rules: {
+				"require-param": "error",
+				"require-returns": "off",
+				"require-summary": "off",
+				"require-package-doc": "off",
+				"require-remarks": "off",
+				"require-type-param": "off",
+				"require-class-member-doc": "off",
+				"require-interface-member-doc": "off",
+			},
+		});
+		const e002 = result.errors.filter((d) => d.code === "E002");
+		expect(e002.length).toBeGreaterThan(0);
+	});
+
+	it("guard rules (E009-E012) are unaffected by group settings", async () => {
+		// E009 is a guard rule (tsconfig strictness). Setting all groups to "off"
+		// should not suppress it — guard rules are not in any group.
+		vi.mocked(existsSync).mockImplementation((p) => {
+			const s = String(p);
+			if (s.endsWith("tsconfig.json")) return true;
+			return false;
+		});
+		vi.mocked(readFileSync).mockImplementation((p) => {
+			const s = String(p);
+			if (s.endsWith("tsconfig.json")) {
+				// Missing the "strict" flag
+				return JSON.stringify({ compilerOptions: {} });
+			}
+			return "{}";
+		});
+
+		const result = await runEnforceWithConfig([], {
+			guards: {
+				tsconfig: { enabled: true, requiredFlags: ["strict"] },
+				biome: { enabled: false, lockedRules: [] },
+				packageJson: { enabled: false, minNodeVersion: "22.0.0", requiredFields: [] },
+			},
+			// All groups off — should NOT suppress E009
+			tsdoc: {
+				writeConfig: true,
+				customTags: [],
+				enforce: { core: "off", extended: "off", discretionary: "off" },
+			},
+		});
+		const e009 = result.errors.filter((d) => d.code === "E009");
+		expect(e009.length).toBeGreaterThan(0);
 	});
 });

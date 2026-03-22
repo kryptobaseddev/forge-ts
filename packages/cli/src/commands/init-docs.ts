@@ -18,6 +18,7 @@ import {
 	type OutputFlags,
 	resolveExitCode,
 } from "../output.js";
+import { buildTsdocContent } from "./init-project.js";
 
 // ---------------------------------------------------------------------------
 // Public types
@@ -193,14 +194,7 @@ export async function runInitDocs(args: InitDocsArgs): Promise<CommandOutput<Ini
 				message: "tsdoc.json already exists — skipping. Remove it and re-run to regenerate.",
 			});
 		} else {
-			const tsdocContent = JSON.stringify(
-				{
-					$schema: "https://developer.microsoft.com/json-schemas/tsdoc/v0/tsdoc.schema.json",
-					extends: ["@forge-ts/core/tsdoc-preset/tsdoc.json"],
-				},
-				null,
-				"\t",
-			);
+			const tsdocContent = buildTsdocContent(config.tsdoc.customTags);
 			await mkdir(config.rootDir, { recursive: true });
 			await writeFile(tsdocPath, `${tsdocContent}\n`, "utf8");
 			writtenFiles.push("tsdoc.json");

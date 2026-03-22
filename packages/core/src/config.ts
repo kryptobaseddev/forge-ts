@@ -2,7 +2,45 @@ import { existsSync } from "node:fs";
 import { readFile } from "node:fs/promises";
 import { join, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
-import { type ForgeConfig, Visibility } from "./types.js";
+import { type EnforceRules, type ForgeConfig, type RuleSeverity, Visibility } from "./types.js";
+
+// ---------------------------------------------------------------------------
+// TSDoc standardisation group → rule mapping
+// ---------------------------------------------------------------------------
+
+/**
+ * Maps each rule key in {@link EnforceRules} to its TSDoc standardisation group.
+ *
+ * - **core**: Tags defined in the TSDoc core standard (`@param`, `@returns`, etc.).
+ * - **extended**: Tags from the extended standard (`@example`, `@defaultValue`, etc.).
+ * - **discretionary**: Release-tag family (`@public`, `@beta`, `@internal`).
+ * - Rules not listed here are **guard rules** and are not affected by group settings.
+ *
+ * @public
+ */
+export const RULE_GROUP_MAP: Partial<
+	Record<keyof EnforceRules, "core" | "extended" | "discretionary">
+> = {
+	// Core rules
+	"require-param": "core",
+	"require-returns": "core",
+	"require-package-doc": "core",
+	"require-remarks": "core",
+	"require-type-param": "core",
+	// E001/E006/E007 enforce summary presence — a core TSDoc requirement
+	"require-summary": "core",
+	"require-class-member-doc": "core",
+	"require-interface-member-doc": "core",
+	// Extended rules
+	"require-example": "extended",
+	"require-default-value": "extended",
+	"require-see": "extended",
+	"require-tsdoc-syntax": "extended",
+	"require-inheritdoc-source": "extended",
+	"require-fresh-examples": "extended",
+	// Discretionary rules
+	"require-release-tag": "discretionary",
+};
 
 /**
  * Type-safe helper for defining a partial forge-ts configuration.
@@ -128,6 +166,32 @@ export function defaultConfig(rootDir: string): ForgeConfig {
 		},
 		project: {},
 	};
+}
+
+/**
+ * Builds a rules object whose defaults are derived from the TSDoc group
+ * severities instead of the hardcoded defaults.
+ *
+ * For every rule that belongs to a group, the severity is set to the
+ * group's configured severity. Rules that do not belong to any group
+ * keep the hardcoded defaults from {@link defaultConfig}.
+ *
+ * @param hardcodedRules - The hardcoded default rules from `defaultConfig`.
+ * @param groupEnforce - The resolved `tsdoc.enforce` group severities.
+ * @returns A new rules object with group-level defaults applied.
+ * @internal
+ */
+function applyGroupSeverities(
+	hardcodedRules: EnforceRules,
+	groupEnforce: ForgeConfig["tsdoc"]["enforce"],
+): EnforceRules {
+	const result = { ...hardcodedRules };
+	for (const [ruleKey, group] of Object.entries(RULE_GROUP_MAP)) {
+		if (group) {
+			result[ruleKey as keyof EnforceRules] = groupEnforce[group] as RuleSeverity;
+		}
+	}
+	return result;
 }
 
 /**
@@ -337,13 +401,25 @@ function collectUnknownKeyWarnings(partial: Partial<ForgeConfig>): string[] {
 function mergeWithDefaults(rootDir: string, partial: Partial<ForgeConfig>): ForgeConfig {
 	const warnings = collectUnknownKeyWarnings(partial);
 	const defaults = defaultConfig(rootDir);
+
+	// Resolve tsdoc.enforce group severities first (user overrides on top of defaults).
+	const resolvedGroupEnforce = {
+		...defaults.tsdoc.enforce,
+		...partial.tsdoc?.enforce,
+	};
+
+	// Apply group severities as the base for rules, then overlay user's explicit rule overrides.
+	// This ensures `tsdoc.enforce.core: "warn"` sets all core rules to "warn" by default,
+	// but individual `enforce.rules["require-param"]: "error"` still wins.
+	const groupDefaultRules = applyGroupSeverities(defaults.enforce.rules, resolvedGroupEnforce);
+
 	const config: ForgeConfig = {
 		...defaults,
 		...partial,
 		enforce: {
 			...defaults.enforce,
 			...partial.enforce,
-			rules: { ...defaults.enforce.rules, ...partial.enforce?.rules },
+			rules: { ...groupDefaultRules, ...partial.enforce?.rules },
 		},
 		doctest: { ...defaults.doctest, ...partial.doctest },
 		api: { ...defaults.api, ...partial.api },
@@ -354,7 +430,7 @@ function mergeWithDefaults(rootDir: string, partial: Partial<ForgeConfig>): Forg
 		tsdoc: {
 			...defaults.tsdoc,
 			...partial.tsdoc,
-			enforce: { ...defaults.tsdoc.enforce, ...partial.tsdoc?.enforce },
+			enforce: resolvedGroupEnforce,
 		},
 		guards: {
 			...defaults.guards,
@@ -495,13 +571,11 @@ export async function loadConfig(rootDir?: string): Promise<ForgeConfig> {
 		const pkgPath = join(root, "package.json");
 		if (existsSync(pkgPath)) {
 			const partial = await loadPackageJsonConfig(pkgPath);
-			if (partial) {
-				config = mergeWithDefaults(root, partial);
-			} else {
-				config = defaultConfig(root);
-			}
+			// Always merge with defaults so group severities are applied,
+			// even when no explicit "forge-ts" key is found.
+			config = mergeWithDefaults(root, partial ?? {});
 		} else {
-			config = defaultConfig(root);
+			config = mergeWithDefaults(root, {});
 		}
 	} else {
 		// biome-ignore lint: config is always set when found=true

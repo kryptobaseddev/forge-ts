@@ -1,5 +1,13 @@
 # @forge-ts/core
 
+## 0.19.1
+
+### Patch Changes
+
+- fix: E005 @packageDocumentation now detects tags on first statement
+
+  The walker now checks both the sourceFile node AND sourceFile.statements[0] for @packageDocumentation tags, matching the TSDoc spec behavior where file-level comments attach to the first statement.
+
 ## 0.19.0
 
 ### Minor Changes

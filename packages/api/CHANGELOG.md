@@ -1,5 +1,22 @@
 # @forge-ts/api
 
+## 0.19.3
+
+### Patch Changes
+
+- a1db045: fix: rename @forge-ignore to @forgeIgnore — hyphen violated TSDoc tag name spec
+
+  The hyphen in @forge-ignore caused TSDocConfigFile to report hasErrors:true,
+  poisoning config loading for ALL projects. Custom tags (@since, @route, etc.)
+  were silently unrecognized, causing false W006 "tag not defined" and W011
+  "missing @since" warnings even when tags were correctly used.
+
+  Also relaxed the hasErrors guard in walker.ts — configureParser is tolerant
+  and should always be called when a tsdoc.json exists.
+
+- Updated dependencies [a1db045]
+  - @forge-ts/core@0.19.3
+
 ## 0.19.2
 
 ### Patch Changes

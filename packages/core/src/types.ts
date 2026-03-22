@@ -1,6 +1,7 @@
 /**
  * Visibility levels for exported symbols.
- * Derived from TSDoc release tags (@public, @beta, @internal).
+ * Derived from TSDoc release tags (`@public`, `@beta`, `@internal`).
+ * @since 0.1.0
  * @public
  */
 export enum Visibility {
@@ -12,6 +13,7 @@ export enum Visibility {
 
 /**
  * A single extracted and annotated symbol from the TypeScript AST.
+ * @since 0.1.0
  * @public
  */
 export interface ForgeSymbol {
@@ -36,7 +38,10 @@ export interface ForgeSymbol {
 	line: number;
 	/** 0-based column of the declaration. */
 	column: number;
-	/** Parsed TSDoc documentation, if present. */
+	/**
+	 * Parsed TSDoc documentation, if present.
+	 * @defaultValue undefined
+	 */
 	documentation?: {
 		summary?: string;
 		params?: Array<{ name: string; description: string; type?: string }>;
@@ -50,9 +55,15 @@ export interface ForgeSymbol {
 		/** TSDoc parser messages (syntax warnings/errors) from @microsoft/tsdoc. */
 		parseMessages?: Array<{ messageId: string; text: string; line: number }>;
 	};
-	/** Human-readable type signature of the symbol. */
+	/**
+	 * Human-readable type signature of the symbol.
+	 * @defaultValue undefined
+	 */
 	signature?: string;
-	/** Child symbols (e.g., class members, enum values). */
+	/**
+	 * Child symbols (e.g., class members, enum values).
+	 * @defaultValue undefined
+	 */
 	children?: ForgeSymbol[];
 	/** Whether this symbol is part of the public module exports. */
 	exported: boolean;
@@ -63,6 +74,7 @@ export interface ForgeSymbol {
  * - `"error"` — violation fails the build.
  * - `"warn"`  — violation is reported but does not fail the build.
  * - `"off"`   — rule is disabled entirely.
+ * @since 0.1.0
  * @public
  */
 export type RuleSeverity = "error" | "warn" | "off";
@@ -70,18 +82,19 @@ export type RuleSeverity = "error" | "warn" | "off";
 /**
  * Per-rule severity configuration for the TSDoc enforcer.
  * Each key corresponds to one of the E001–E007 rule codes.
+ * @since 0.1.0
  * @public
  */
 export interface EnforceRules {
 	/** E001: Exported symbol missing TSDoc summary. */
 	"require-summary": RuleSeverity;
-	/** E002: Function parameter missing @param tag. */
+	/** E002: Function parameter missing `\@param` tag. */
 	"require-param": RuleSeverity;
-	/** E003: Non-void function missing @returns tag. */
+	/** E003: Non-void function missing `\@returns` tag. */
 	"require-returns": RuleSeverity;
-	/** E004: Exported function missing @example block. */
+	/** E004: Exported function missing `\@example` block. */
 	"require-example": RuleSeverity;
-	/** E005: Entry point missing @packageDocumentation. */
+	/** E005: Entry point missing `\@packageDocumentation`. */
 	"require-package-doc": RuleSeverity;
 	/** E006: Class member missing documentation. */
 	"require-class-member-doc": RuleSeverity;
@@ -89,43 +102,44 @@ export interface EnforceRules {
 	"require-interface-member-doc": RuleSeverity;
 	/** W006: TSDoc syntax parse error (invalid tag, malformed block, etc.). */
 	"require-tsdoc-syntax": RuleSeverity;
-	/** E013: Exported function/class is missing a @remarks block. */
+	/** E013: Exported function/class is missing a `\@remarks` block. */
 	"require-remarks": RuleSeverity;
-	/** E014: Optional property with default is missing @defaultValue. */
+	/** E014: Optional property with default is missing `\@defaultValue`. */
 	"require-default-value": RuleSeverity;
-	/** E015: Generic symbol is missing @typeParam for its type parameters. */
+	/** E015: Generic symbol is missing `\@typeParam` for its type parameters. */
 	"require-type-param": RuleSeverity;
-	/** W005: Symbol references other symbols via {@link} but has no @see tags. */
+	/** W005: Symbol references other symbols via `\@link` but has no `\@see` tags. */
 	"require-see": RuleSeverity;
-	/** E016: Exported symbol is missing a release tag (@public, @beta, @internal). */
+	/** E016: Exported symbol is missing a release tag (`\@public`, `\@beta`, `\@internal`). */
 	"require-release-tag": RuleSeverity;
 	/** W007: Guide FORGE:AUTO section references a symbol that no longer exists or has changed. */
 	"require-fresh-guides": RuleSeverity;
 	/** W008: Exported public symbol is not mentioned in any guide page. */
 	"require-guide-coverage": RuleSeverity;
-	/** E017: @internal symbol re-exported through public barrel (index.ts). */
+	/** E017: `\@internal` symbol re-exported through public barrel (index.ts). */
 	"require-internal-boundary": RuleSeverity;
-	/** E018: @route-tagged function missing @response tag. */
+	/** E018: `\@route`-tagged function missing `\@response` tag. */
 	"require-route-response": RuleSeverity;
-	/** W009: {@inheritDoc} references a symbol that does not exist. */
+	/** W009: `\@inheritDoc` references a symbol that does not exist. */
 	"require-inheritdoc-source": RuleSeverity;
-	/** W010: @breaking without @migration path. */
+	/** W010: `\@breaking` without `\@migration` path. */
 	"require-migration-path": RuleSeverity;
-	/** W011: New public export missing @since version tag. */
+	/** W011: New public export missing `\@since` version tag. */
 	"require-since": RuleSeverity;
-	/** W013: @example block may be stale — function call arg count mismatches parameter count. */
+	/** W013: `\@example` block may be stale — function call arg count mismatches parameter count. */
 	"require-fresh-examples": RuleSeverity;
 	/** E019: Non-test file contains ts-ignore or ts-expect-error directive. */
 	"require-no-ts-ignore": RuleSeverity;
 	/** E020: Exported symbol has `any` in its public API signature. */
 	"require-no-any-in-api": RuleSeverity;
-	/** W012: {@link} display text appears stale relative to target summary. */
+	/** W012: `\@link` display text appears stale relative to target summary. */
 	"require-fresh-link-text": RuleSeverity;
 }
 
 /**
  * Full configuration for a forge-ts run.
  * Loaded from forge-ts.config.ts or the "forge-ts" key in package.json.
+ * @since 0.1.0
  * @public
  */
 export interface ForgeConfig {
@@ -280,6 +294,7 @@ export interface ForgeConfig {
 	/**
 	 * Warnings generated during config loading (e.g., unknown keys).
 	 * Populated by loadConfig(). Agents should surface these in output.
+	 * @defaultValue undefined
 	 * @internal
 	 */
 	_configWarnings?: string[];
@@ -306,6 +321,7 @@ export interface ForgeConfig {
 
 /**
  * The result of a forge-ts compilation pass.
+ * @since 0.1.0
  * @public
  */
 export interface ForgeResult {
@@ -319,12 +335,16 @@ export interface ForgeResult {
 	warnings: ForgeWarning[];
 	/** Wall-clock duration of the run in milliseconds. */
 	duration: number;
-	/** Absolute paths of files written during this run (populated by gen). */
+	/**
+	 * Absolute paths of files written during this run (populated by gen).
+	 * @defaultValue undefined
+	 */
 	writtenFiles?: string[];
 }
 
 /**
  * A diagnostic error produced during a forge-ts run.
+ * @since 0.1.0
  * @public
  */
 export interface ForgeError {
@@ -338,16 +358,26 @@ export interface ForgeError {
 	line: number;
 	/** 0-based column. */
 	column: number;
-	/** Suggested fix for the agent — exact TSDoc block to add. */
+	/**
+	 * Suggested fix for the agent — exact TSDoc block to add.
+	 * @defaultValue undefined
+	 */
 	suggestedFix?: string;
-	/** The symbol name that needs fixing. */
+	/**
+	 * The symbol name that needs fixing.
+	 * @defaultValue undefined
+	 */
 	symbolName?: string;
-	/** The symbol kind (function, class, interface, etc.). */
+	/**
+	 * The symbol kind (function, class, interface, etc.).
+	 * @defaultValue undefined
+	 */
 	symbolKind?: string;
 }
 
 /**
  * A diagnostic warning produced during a forge-ts run.
+ * @since 0.1.0
  * @public
  */
 export interface ForgeWarning {

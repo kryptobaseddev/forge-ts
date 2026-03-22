@@ -25,6 +25,7 @@ import { appendAuditEvent } from "./audit.js";
 /**
  * Configuration for the bypass budget system.
  *
+ * @since 0.10.0
  * @public
  */
 export interface BypassConfig {
@@ -37,6 +38,7 @@ export interface BypassConfig {
 /**
  * A single bypass record stored in `.forge-bypass.json`.
  *
+ * @since 0.10.0
  * @public
  */
 export interface BypassRecord {
@@ -151,7 +153,9 @@ function startOfToday(): Date {
  * Creates a new bypass record, writes it to `.forge-bypass.json`, and appends
  * an audit event.
  *
- * Throws an error if the daily budget is exhausted.
+ * @remarks
+ * Throws an error if the daily budget is exhausted. Each bypass is recorded
+ * in the audit trail for governance traceability.
  *
  * @param rootDir - Absolute path to the project root directory.
  * @param reason - Mandatory justification for the bypass.
@@ -162,9 +166,10 @@ function startOfToday(): Date {
  * @example
  * ```typescript
  * import { createBypass } from "@forge-ts/core";
- * const bypass = createBypass("/path/to/project", "hotfix for release", "E009");
- * console.log(bypass.id); // unique bypass ID
+ * const bypass = createBypass("/path/to/project", "hotfix for release", "E009", { dailyBudget: 5, durationHours: 12 });
+ * console.log(bypass.id);
  * ```
+ * @since 0.10.0
  * @public
  */
 export function createBypass(
@@ -220,6 +225,10 @@ export function createBypass(
 /**
  * Returns all currently active (non-expired) bypass records.
  *
+ * @remarks
+ * Filters bypass records by comparing their `expiresAt` timestamp against
+ * the current time. Expired records are not removed by this function.
+ *
  * @param rootDir - Absolute path to the project root directory.
  * @returns Array of active bypass records.
  * @example
@@ -228,6 +237,7 @@ export function createBypass(
  * const active = getActiveBypasses("/path/to/project");
  * console.log(`${active.length} active bypass(es)`);
  * ```
+ * @since 0.10.0
  * @public
  */
 export function getActiveBypasses(rootDir: string): BypassRecord[] {
@@ -239,6 +249,7 @@ export function getActiveBypasses(rootDir: string): BypassRecord[] {
 /**
  * Checks whether a specific rule has an active bypass.
  *
+ * @remarks
  * A rule is considered bypassed if there is an active bypass with the exact
  * rule code or an "all" bypass.
  *
@@ -252,6 +263,7 @@ export function getActiveBypasses(rootDir: string): BypassRecord[] {
  *   console.log("E009 is currently bypassed");
  * }
  * ```
+ * @since 0.10.0
  * @public
  */
 export function isRuleBypassed(rootDir: string, ruleCode: string): boolean {
@@ -262,7 +274,9 @@ export function isRuleBypassed(rootDir: string, ruleCode: string): boolean {
 /**
  * Returns the number of bypass budget slots remaining for today.
  *
+ * @remarks
  * Counts bypasses created today (UTC) against the configured daily budget.
+ * When no config override is provided, the default budget of 3 is used.
  *
  * @param rootDir - Absolute path to the project root directory.
  * @param config - Optional bypass budget configuration overrides.
@@ -270,9 +284,10 @@ export function isRuleBypassed(rootDir: string, ruleCode: string): boolean {
  * @example
  * ```typescript
  * import { getRemainingBudget } from "@forge-ts/core";
- * const remaining = getRemainingBudget("/path/to/project");
+ * const remaining = getRemainingBudget("/path/to/project", { dailyBudget: 5, durationHours: 24 });
  * console.log(`${remaining} bypass(es) remaining today`);
  * ```
+ * @since 0.10.0
  * @public
  */
 export function getRemainingBudget(rootDir: string, config?: Partial<BypassConfig>): number {
@@ -288,7 +303,9 @@ export function getRemainingBudget(rootDir: string, config?: Partial<BypassConfi
 /**
  * Removes expired bypass records from `.forge-bypass.json`.
  *
+ * @remarks
  * Also appends a `bypass.expire` audit event for each expired record removed.
+ * Returns 0 without writing the file when no records have expired.
  *
  * @param rootDir - Absolute path to the project root directory.
  * @returns The number of expired records removed.
@@ -298,6 +315,7 @@ export function getRemainingBudget(rootDir: string, config?: Partial<BypassConfi
  * const removed = expireOldBypasses("/path/to/project");
  * console.log(`${removed} expired bypass(es) removed`);
  * ```
+ * @since 0.10.0
  * @public
  */
 export function expireOldBypasses(rootDir: string): number {

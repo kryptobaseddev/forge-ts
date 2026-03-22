@@ -16,6 +16,8 @@ import { type EnforceRules, type ForgeConfig, type RuleSeverity, Visibility } fr
  * - **discretionary**: Release-tag family (`@public`, `@beta`, `@internal`).
  * - Rules not listed here are **guard rules** and are not affected by group settings.
  *
+ * @see {@link EnforceRules}
+ * @since 0.1.0
  * @public
  */
 export const RULE_GROUP_MAP: Partial<
@@ -45,6 +47,7 @@ export const RULE_GROUP_MAP: Partial<
 /**
  * Type-safe helper for defining a partial forge-ts configuration.
  *
+ * @remarks
  * Only include the settings you want to override — everything else
  * inherits sensible defaults via `loadConfig()`.
  *
@@ -54,12 +57,10 @@ export const RULE_GROUP_MAP: Partial<
  * ```typescript
  * import { defineConfig } from "@forge-ts/core";
  *
- * export default defineConfig({
- *   outDir: "docs",
- *   enforce: { strict: true },
- *   gen: { ssgTarget: "mintlify" },
- * });
+ * const config = { outDir: "docs", enforce: { strict: true } };
+ * export default defineConfig(config);
  * ```
+ * @since 0.1.0
  * @public
  */
 export function defineConfig(config: Partial<ForgeConfig>): Partial<ForgeConfig> {
@@ -69,14 +70,21 @@ export function defineConfig(config: Partial<ForgeConfig>): Partial<ForgeConfig>
 /**
  * Constructs a sensible default {@link ForgeConfig} rooted at `rootDir`.
  *
+ * @remarks
+ * All configuration fields receive production-ready defaults. The returned
+ * object is fully populated and can be used without any further merging.
+ *
  * @param rootDir - Absolute path to the project root.
  * @returns A fully-populated default configuration.
+ * @see {@link ForgeConfig}
+ * @see {@link loadConfig}
  * @example
  * ```typescript
  * import { defaultConfig } from "@forge-ts/core";
  * const config = defaultConfig("/path/to/project");
  * console.log(config.enforce.enabled); // true
  * ```
+ * @since 0.1.0
  * @public
  */
 export function defaultConfig(rootDir: string): ForgeConfig {
@@ -527,20 +535,24 @@ async function loadPackageJsonConfig(pkgPath: string): Promise<Partial<ForgeConf
 /**
  * Loads the forge-ts configuration for a project.
  *
+ * @remarks
  * Resolution order:
- * 1. `<rootDir>/forge-ts.config.ts`
- * 2. `<rootDir>/forge-ts.config.js`
- * 3. `"forge-ts"` key inside `<rootDir>/package.json`
+ * 1. `\<rootDir\>/forge-ts.config.ts`
+ * 2. `\<rootDir\>/forge-ts.config.js`
+ * 3. `"forge-ts"` key inside `\<rootDir\>/package.json`
  * 4. Built-in defaults (returned when none of the above is found)
  *
  * @param rootDir - The project root to search for config.  Defaults to `process.cwd()`.
  * @returns A fully-resolved {@link ForgeConfig}.
+ * @see {@link ForgeConfig}
+ * @see {@link defaultConfig}
  * @example
  * ```typescript
  * import { loadConfig } from "@forge-ts/core";
  * const config = await loadConfig("/path/to/project");
  * // config is fully resolved with defaults
  * ```
+ * @since 0.1.0
  * @public
  */
 export async function loadConfig(rootDir?: string): Promise<ForgeConfig> {

@@ -19,6 +19,7 @@ import { join } from "node:path";
 /**
  * Discriminated event types recorded in the audit trail.
  *
+ * @since 0.10.0
  * @public
  */
 export type AuditEventType =
@@ -32,6 +33,7 @@ export type AuditEventType =
 /**
  * A single audit event recorded in the forge-ts audit trail.
  *
+ * @since 0.10.0
  * @public
  */
 export interface AuditEvent {
@@ -41,7 +43,10 @@ export interface AuditEvent {
 	event: AuditEventType;
 	/** OS username of the actor (falls back to "unknown"). */
 	user: string;
-	/** Mandatory for lock/unlock/bypass events; optional otherwise. */
+	/**
+	 * Mandatory for lock/unlock/bypass events; optional otherwise.
+	 * @defaultValue undefined
+	 */
 	reason?: string;
 	/** Event-specific payload. */
 	details: Record<string, unknown>;
@@ -80,6 +85,7 @@ export function getCurrentUser(): string {
 /**
  * Appends a single audit event to the `.forge-audit.jsonl` file.
  *
+ * @remarks
  * Creates the file if it does not exist. The file is strictly append-only —
  * existing content is never modified or truncated.
  *
@@ -88,14 +94,10 @@ export function getCurrentUser(): string {
  * @example
  * ```typescript
  * import { appendAuditEvent } from "@forge-ts/core";
- * appendAuditEvent("/path/to/project", {
- *   timestamp: new Date().toISOString(),
- *   event: "config.lock",
- *   user: "alice",
- *   reason: "Stabilize v2 config",
- *   details: { hash: "abc123" },
- * });
+ * const event = { timestamp: new Date().toISOString(), event: "config.lock" as const, user: "alice", reason: "Stabilize", details: {} };
+ * appendAuditEvent("/path/to/project", event);
  * ```
+ * @since 0.10.0
  * @public
  */
 export function appendAuditEvent(rootDir: string, event: AuditEvent): void {
@@ -106,20 +108,28 @@ export function appendAuditEvent(rootDir: string, event: AuditEvent): void {
 /**
  * Options for reading the audit log.
  *
+ * @since 0.10.0
  * @public
  */
 export interface ReadAuditOptions {
-	/** Maximum number of events to return. */
+	/**
+	 * Maximum number of events to return.
+	 * @defaultValue undefined
+	 */
 	limit?: number;
-	/** Filter to a single event type. */
+	/**
+	 * Filter to a single event type.
+	 * @defaultValue undefined
+	 */
 	eventType?: AuditEventType;
 }
 
 /**
  * Reads the `.forge-audit.jsonl` file and returns parsed audit events.
  *
+ * @remarks
  * Returns newest events first. If the file does not exist, returns an empty
- * array.
+ * array. Invalid JSON lines are silently skipped.
  *
  * @param rootDir - Absolute path to the project root directory.
  * @param options - Optional limit and event type filter.
@@ -130,6 +140,7 @@ export interface ReadAuditOptions {
  * const events = readAuditLog("/path/to/project", { limit: 10 });
  * console.log(events.length); // up to 10
  * ```
+ * @since 0.10.0
  * @public
  */
 export function readAuditLog(rootDir: string, options?: ReadAuditOptions): AuditEvent[] {
@@ -162,21 +173,20 @@ export function readAuditLog(rootDir: string, options?: ReadAuditOptions): Audit
 /**
  * Formats a single audit event as a human-readable string.
  *
+ * @remarks
+ * Produces a single-line representation suitable for terminal output or
+ * log files. Includes the timestamp, event type, user, reason, and details.
+ *
  * @param event - The audit event to format.
  * @returns A single-line human-readable representation.
  * @example
  * ```typescript
  * import { formatAuditEvent } from "@forge-ts/core";
- * const line = formatAuditEvent({
- *   timestamp: "2026-03-21T12:00:00.000Z",
- *   event: "config.lock",
- *   user: "alice",
- *   reason: "Stabilize v2 config",
- *   details: { hash: "abc123" },
- * });
+ * const event = { timestamp: "2026-03-21T12:00:00.000Z", event: "config.lock" as const, user: "alice", reason: "Stabilize", details: {} };
+ * const line = formatAuditEvent(event);
  * console.log(line);
- * // "[2026-03-21T12:00:00.000Z] config.lock by alice — Stabilize v2 config  {hash: abc123}"
  * ```
+ * @since 0.10.0
  * @public
  */
 export function formatAuditEvent(event: AuditEvent): string {

@@ -31,6 +31,7 @@ const LOCK_FILE_NAME = ".forge-lock.json";
  * Captures a point-in-time snapshot of the project's forge-ts configuration
  * so that future runs can detect when settings have been weakened.
  *
+ * @since 0.10.0
  * @public
  */
 export interface ForgeLockManifest {
@@ -54,6 +55,7 @@ export interface ForgeLockManifest {
 /**
  * A single violation found when comparing current config against the lock.
  *
+ * @since 0.10.0
  * @public
  */
 export interface LockViolation {
@@ -74,6 +76,10 @@ export interface LockViolation {
 /**
  * Reads the `.forge-lock.json` file from the given project root.
  *
+ * @remarks
+ * Returns `null` when the file does not exist or contains invalid JSON,
+ * so callers can safely use a null check to determine lock state.
+ *
  * @param rootDir - Absolute path to the project root.
  * @returns The parsed lock manifest, or `null` if no lock file exists or is invalid.
  * @example
@@ -84,6 +90,7 @@ export interface LockViolation {
  *   console.log(`Locked at ${lock.lockedAt} by ${lock.lockedBy}`);
  * }
  * ```
+ * @since 0.10.0
  * @public
  */
 export function readLockFile(rootDir: string): ForgeLockManifest | null {
@@ -102,15 +109,22 @@ export function readLockFile(rootDir: string): ForgeLockManifest | null {
 /**
  * Writes a {@link ForgeLockManifest} to `.forge-lock.json` in the project root.
  *
+ * @remarks
+ * Overwrites any existing lock file. The manifest is serialised as
+ * pretty-printed JSON with a trailing newline.
+ *
  * @param rootDir - Absolute path to the project root.
  * @param manifest - The lock manifest to write.
+ * @see {@link ForgeLockManifest}
+ * @see {@link createLockManifest}
  * @example
  * ```typescript
  * import { writeLockFile, createLockManifest, loadConfig } from "@forge-ts/core";
  * const config = await loadConfig("/path/to/project");
- * const manifest = createLockManifest(config);
+ * const manifest = createLockManifest(config, "alice");
  * writeLockFile("/path/to/project", manifest);
  * ```
+ * @since 0.10.0
  * @public
  */
 export function writeLockFile(rootDir: string, manifest: ForgeLockManifest): void {
@@ -121,6 +135,10 @@ export function writeLockFile(rootDir: string, manifest: ForgeLockManifest): voi
 /**
  * Removes the `.forge-lock.json` file from the project root.
  *
+ * @remarks
+ * Safe to call even when no lock file exists — returns `false` in that case
+ * rather than throwing.
+ *
  * @param rootDir - Absolute path to the project root.
  * @returns `true` if the file existed and was removed, `false` otherwise.
  * @example
@@ -129,6 +147,7 @@ export function writeLockFile(rootDir: string, manifest: ForgeLockManifest): voi
  * const removed = removeLockFile("/path/to/project");
  * console.log(removed ? "Lock removed" : "No lock file found");
  * ```
+ * @since 0.10.0
  * @public
  */
 export function removeLockFile(rootDir: string): boolean {
@@ -147,19 +166,23 @@ export function removeLockFile(rootDir: string): boolean {
 /**
  * Creates a {@link ForgeLockManifest} from the current project config.
  *
+ * @remarks
  * Snapshots the enforce rule severities and guard settings so they can
  * be compared on future runs to detect weakening.
  *
  * @param config - The fully-resolved {@link ForgeConfig} to snapshot.
  * @param lockedBy - Identifier of the user or agent creating the lock. Defaults to `"forge-ts lock"`.
  * @returns A new lock manifest ready to be written with {@link writeLockFile}.
+ * @see {@link ForgeLockManifest}
+ * @see {@link writeLockFile}
  * @example
  * ```typescript
  * import { createLockManifest, loadConfig } from "@forge-ts/core";
  * const config = await loadConfig();
- * const manifest = createLockManifest(config);
- * console.log(manifest.config.rules); // { "require-summary": "error", ... }
+ * const manifest = createLockManifest(config, "alice");
+ * console.log(manifest.config.rules);
  * ```
+ * @since 0.10.0
  * @public
  */
 export function createLockManifest(
@@ -200,6 +223,7 @@ export function createLockManifest(
 /**
  * Validates the current config against a locked manifest.
  *
+ * @remarks
  * Returns an array of violations where the current config has weakened
  * settings relative to the locked state. Weakening means:
  * - A rule severity changed from `"error"` to `"warn"` or `"off"`
@@ -212,6 +236,8 @@ export function createLockManifest(
  * @param config - The current fully-resolved {@link ForgeConfig}.
  * @param lock - The lock manifest to validate against.
  * @returns An array of {@link LockViolation} entries. Empty means no weakening detected.
+ * @see {@link LockViolation}
+ * @see {@link ForgeLockManifest}
  * @example
  * ```typescript
  * import { validateAgainstLock, readLockFile, loadConfig } from "@forge-ts/core";
@@ -224,6 +250,7 @@ export function createLockManifest(
  *   }
  * }
  * ```
+ * @since 0.10.0
  * @public
  */
 export function validateAgainstLock(config: ForgeConfig, lock: ForgeLockManifest): LockViolation[] {

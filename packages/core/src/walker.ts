@@ -107,6 +107,8 @@ function loadBundledPreset(configuration: TSDocConfiguration): void {
 
 /**
  * The return type of {@link createWalker}.
+ * @see {@link createWalker}
+ * @since 0.1.0
  * @public
  */
 export interface ASTWalker {
@@ -770,6 +772,7 @@ function extractSymbolsFromFile(sourceFile: ts.SourceFile, checker: ts.TypeCheck
 /**
  * Creates an {@link ASTWalker} configured for the given forge config.
  *
+ * @remarks
  * The walker uses the TypeScript Compiler API to create a `ts.Program` from
  * the project's tsconfig, then visits every source file to extract exported
  * declarations.  TSDoc comments are parsed with `@microsoft/tsdoc` to
@@ -777,6 +780,9 @@ function extractSymbolsFromFile(sourceFile: ts.SourceFile, checker: ts.TypeCheck
  *
  * @param config - The resolved {@link ForgeConfig} for the project.
  * @returns An {@link ASTWalker} instance whose `walk()` method performs the extraction.
+ * @see {@link ASTWalker}
+ * @see {@link ForgeConfig}
+ * @see {@link ForgeSymbol}
  * @example
  * ```typescript
  * import { loadConfig, createWalker } from "@forge-ts/core";
@@ -785,6 +791,7 @@ function extractSymbolsFromFile(sourceFile: ts.SourceFile, checker: ts.TypeCheck
  * const symbols = walker.walk();
  * console.log(`Found ${symbols.length} symbols`);
  * ```
+ * @since 0.1.0
  * @public
  */
 export function createWalker(config: ForgeConfig): ASTWalker {

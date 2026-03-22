@@ -12,7 +12,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { defineCommand } from "citty";
-import { createLogger } from "../logger.js";
+import { forgeLogger } from "../forge-logger.js";
 import {
 	type CommandOutput,
 	emitResult,
@@ -230,7 +230,7 @@ export default defineConfig({
 const DEFAULT_TSDOC_CONTENT = JSON.stringify(
 	{
 		$schema: "https://developer.microsoft.com/json-schemas/tsdoc/v0/tsdoc.schema.json",
-		extends: ["@forge-ts/tsdoc-config/tsdoc.json"],
+		extends: ["@forge-ts/core/tsdoc-preset/tsdoc.json"],
 	},
 	null,
 	"\t",
@@ -555,9 +555,8 @@ export const initProjectCommand = defineCommand({
 
 		emitResult(output, flags, (data, cmd) => {
 			if (!cmd.success) {
-				const logger = createLogger();
 				const msg = cmd.errors?.[0]?.message ?? "Init failed";
-				logger.error(msg);
+				forgeLogger.error(msg);
 				return "";
 			}
 			return formatInitProjectHuman(data);

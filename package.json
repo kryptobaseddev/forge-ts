@@ -25,7 +25,8 @@
 		"forge:check": "forge-ts check --cwd packages/core",
 		"forge:build": "forge-ts build",
 		"forge:test": "forge-ts test --cwd packages/core",
-		"docs:generate": "pnpm build && node packages/cli/dist/index.js build"
+		"docs:generate": "pnpm build && node packages/cli/dist/index.js build",
+		"sync:tsdoc-spec": "tsx scripts/sync-tsdoc-spec.ts"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "^2.4.0",

@@ -17,6 +17,7 @@ import {
 	removeLockFile,
 } from "@forge-ts/core";
 import { defineCommand } from "citty";
+import { forgeLogger } from "../forge-logger.js";
 import { type CommandOutput, emitResult, type OutputFlags, resolveExitCode } from "../output.js";
 
 // ---------------------------------------------------------------------------
@@ -202,9 +203,7 @@ export const unlockCommand = defineCommand({
 	},
 	async run({ args }) {
 		if (!args.reason) {
-			console.error(
-				"[forge-ts] error: --reason is required. Provide a reason for unlocking the config.",
-			);
+			forgeLogger.error("--reason is required. Provide a reason for unlocking the config.");
 			process.exit(1);
 		}
 

@@ -1,0 +1,181 @@
+{
+	"source": "@microsoft/tsdoc",
+	"version": "0.16.0",
+	"generatedAt": "2026-03-22T02:09:18.339Z",
+	"tags": [
+		{
+			"tagName": "@alpha",
+			"syntaxKind": "modifier",
+			"standardization": "Discretionary",
+			"allowMultiple": false
+		},
+		{
+			"tagName": "@beta",
+			"syntaxKind": "modifier",
+			"standardization": "Discretionary",
+			"allowMultiple": false
+		},
+		{
+			"tagName": "@decorator",
+			"syntaxKind": "block",
+			"standardization": "Extended",
+			"allowMultiple": true
+		},
+		{
+			"tagName": "@defaultValue",
+			"syntaxKind": "block",
+			"standardization": "Extended",
+			"allowMultiple": false
+		},
+		{
+			"tagName": "@deprecated",
+			"syntaxKind": "block",
+			"standardization": "Core",
+			"allowMultiple": false
+		},
+		{
+			"tagName": "@eventProperty",
+			"syntaxKind": "modifier",
+			"standardization": "Extended",
+			"allowMultiple": false
+		},
+		{
+			"tagName": "@example",
+			"syntaxKind": "block",
+			"standardization": "Extended",
+			"allowMultiple": true
+		},
+		{
+			"tagName": "@experimental",
+			"syntaxKind": "modifier",
+			"standardization": "Discretionary",
+			"allowMultiple": false
+		},
+		{
+			"tagName": "@inheritDoc",
+			"syntaxKind": "inline",
+			"standardization": "Extended",
+			"allowMultiple": false
+		},
+		{
+			"tagName": "@internal",
+			"syntaxKind": "modifier",
+			"standardization": "Discretionary",
+			"allowMultiple": false
+		},
+		{
+			"tagName": "@jsx",
+			"syntaxKind": "block",
+			"standardization": "Extended",
+			"allowMultiple": false
+		},
+		{
+			"tagName": "@jsxFrag",
+			"syntaxKind": "block",
+			"standardization": "Extended",
+			"allowMultiple": false
+		},
+		{
+			"tagName": "@jsxImportSource",
+			"syntaxKind": "block",
+			"standardization": "Extended",
+			"allowMultiple": false
+		},
+		{
+			"tagName": "@jsxRuntime",
+			"syntaxKind": "block",
+			"standardization": "Extended",
+			"allowMultiple": false
+		},
+		{
+			"tagName": "@label",
+			"syntaxKind": "inline",
+			"standardization": "Core",
+			"allowMultiple": false
+		},
+		{
+			"tagName": "@link",
+			"syntaxKind": "inline",
+			"standardization": "Core",
+			"allowMultiple": true
+		},
+		{
+			"tagName": "@override",
+			"syntaxKind": "modifier",
+			"standardization": "Extended",
+			"allowMultiple": false
+		},
+		{
+			"tagName": "@packageDocumentation",
+			"syntaxKind": "modifier",
+			"standardization": "Core",
+			"allowMultiple": false
+		},
+		{
+			"tagName": "@param",
+			"syntaxKind": "block",
+			"standardization": "Core",
+			"allowMultiple": true
+		},
+		{
+			"tagName": "@privateRemarks",
+			"syntaxKind": "block",
+			"standardization": "Core",
+			"allowMultiple": false
+		},
+		{
+			"tagName": "@public",
+			"syntaxKind": "modifier",
+			"standardization": "Discretionary",
+			"allowMultiple": false
+		},
+		{
+			"tagName": "@readonly",
+			"syntaxKind": "modifier",
+			"standardization": "Extended",
+			"allowMultiple": false
+		},
+		{
+			"tagName": "@remarks",
+			"syntaxKind": "block",
+			"standardization": "Core",
+			"allowMultiple": false
+		},
+		{
+			"tagName": "@returns",
+			"syntaxKind": "block",
+			"standardization": "Core",
+			"allowMultiple": false
+		},
+		{
+			"tagName": "@sealed",
+			"syntaxKind": "modifier",
+			"standardization": "Extended",
+			"allowMultiple": false
+		},
+		{
+			"tagName": "@see",
+			"syntaxKind": "block",
+			"standardization": "Extended",
+			"allowMultiple": false
+		},
+		{
+			"tagName": "@throws",
+			"syntaxKind": "block",
+			"standardization": "Extended",
+			"allowMultiple": true
+		},
+		{
+			"tagName": "@typeParam",
+			"syntaxKind": "block",
+			"standardization": "Core",
+			"allowMultiple": true
+		},
+		{
+			"tagName": "@virtual",
+			"syntaxKind": "modifier",
+			"standardization": "Extended",
+			"allowMultiple": false
+		}
+	]
+}

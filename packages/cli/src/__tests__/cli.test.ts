@@ -4,7 +4,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { runBuild } from "../commands/build.js";
 import { runCheck } from "../commands/check.js";
 import { runTest } from "../commands/test.js";
-import { createLogger } from "../logger.js";
+import { configureLogger, forgeLogger } from "../forge-logger.js";
 import { type CommandOutput, emitResult, resolveExitCode } from "../output.js";
 
 // ---------------------------------------------------------------------------
@@ -729,87 +729,62 @@ describe("resolveExitCode", () => {
 });
 
 // ---------------------------------------------------------------------------
-// createLogger tests
+// forgeLogger / configureLogger tests
 // ---------------------------------------------------------------------------
 
-describe("createLogger", () => {
-	it("respects color: false (no ANSI codes in output)", () => {
-		const logger = createLogger({ colors: false });
-		const lines: string[] = [];
-		vi.spyOn(console, "log").mockImplementation((...args: unknown[]) => {
-			lines.push(args.join(" "));
-		});
-
-		logger.success("it worked");
-		logger.info("just info");
-
-		const joined = lines.join("\n");
-		expect(joined).not.toContain("\x1b[");
-		vi.restoreAllMocks();
+describe("forgeLogger", () => {
+	afterEach(() => {
+		// Reset to default info level after each test
+		forgeLogger.level = 3;
 	});
 
-	it("emits ANSI codes when colors: true", () => {
-		const logger = createLogger({ colors: true });
-		const lines: string[] = [];
-		vi.spyOn(console, "log").mockImplementation((...args: unknown[]) => {
-			lines.push(args.join(" "));
-		});
-
-		logger.success("it worked");
-
-		const joined = lines.join("\n");
-		expect(joined).toContain("\x1b[");
-		vi.restoreAllMocks();
+	it("exposes info, warn, error, success methods", () => {
+		expect(typeof forgeLogger.info).toBe("function");
+		expect(typeof forgeLogger.warn).toBe("function");
+		expect(typeof forgeLogger.error).toBe("function");
+		expect(typeof forgeLogger.success).toBe("function");
+		expect(typeof forgeLogger.debug).toBe("function");
 	});
 
-	it("formats step output with label, detail and duration", () => {
-		const logger = createLogger({ colors: false });
-		const lines: string[] = [];
-		vi.spyOn(console, "log").mockImplementation((...args: unknown[]) => {
-			lines.push(args.join(" "));
-		});
+	it("has forge-ts tag in defaults", () => {
+		expect(forgeLogger.options.defaults?.tag).toBe("forge-ts");
+	});
+});
 
-		logger.step("API", "Generated OpenAPI spec", 123);
-
-		expect(lines).toHaveLength(1);
-		expect(lines[0]).toContain("API");
-		expect(lines[0]).toContain("Generated OpenAPI spec");
-		expect(lines[0]).toContain("123ms");
-		vi.restoreAllMocks();
+describe("configureLogger", () => {
+	afterEach(() => {
+		// Reset to default info level after each test
+		forgeLogger.level = 3;
 	});
 
-	it("formats step output without duration when omitted", () => {
-		const logger = createLogger({ colors: false });
-		const lines: string[] = [];
-		vi.spyOn(console, "log").mockImplementation((...args: unknown[]) => {
-			lines.push(args.join(" "));
-		});
-
-		logger.step("Gen", "Wrote llms.txt");
-
-		expect(lines[0]).toContain("Gen");
-		expect(lines[0]).toContain("Wrote llms.txt");
-		// No duration parenthetical should appear
-		expect(lines[0]).not.toMatch(/\(\d+ms\)/);
-		vi.restoreAllMocks();
+	it("sets level to 0 (silent) when quiet is true", () => {
+		configureLogger({ quiet: true });
+		expect(forgeLogger.level).toBe(0);
 	});
 
-	it("logs warn to console.warn and error to console.error", () => {
-		const logger = createLogger({ colors: false });
-		const warnLines: string[] = [];
-		const errorLines: string[] = [];
-		vi.spyOn(console, "warn").mockImplementation((...args: unknown[]) => {
-			warnLines.push(args.join(" "));
-		});
-		vi.spyOn(console, "error").mockImplementation((...args: unknown[]) => {
-			errorLines.push(args.join(" "));
-		});
+	it("sets level to 0 (silent) when json is true", () => {
+		configureLogger({ json: true });
+		expect(forgeLogger.level).toBe(0);
+	});
 
-		logger.warn("something might be wrong");
-		logger.error("something broke");
+	it("sets level to 4 (debug) when verbose is true", () => {
+		configureLogger({ verbose: true });
+		expect(forgeLogger.level).toBe(4);
+	});
 
-		expect(warnLines[0]).toContain("something might be wrong");
-		expect(errorLines[0]).toContain("something broke");
-		vi.restoreAllMocks();
+	it("sets level to 3 (info) by default", () => {
+		forgeLogger.level = 0; // set to something else first
+		configureLogger({});
+		expect(forgeLogger.level).toBe(3);
+	});
+
+	it("quiet takes precedence over verbose", () => {
+		configureLogger({ quiet: true, verbose: true });
+		expect(forgeLogger.level).toBe(0);
+	});
+
+	it("json takes precedence over verbose", () => {
+		configureLogger({ json: true, verbose: true });
+		expect(forgeLogger.level).toBe(0);
 	});
 });

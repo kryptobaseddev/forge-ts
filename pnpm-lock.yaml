@@ -78,12 +78,12 @@ importers:
       '@forge-ts/gen':
         specifier: workspace:*
         version: link:../gen
-      '@forge-ts/tsdoc-config':
-        specifier: workspace:*
-        version: link:../tsdoc-config
       citty:
         specifier: ^0.2.1
         version: 0.2.1
+      consola:
+        specifier: ^3.4.2
+        version: 3.4.2
     devDependencies:
       tsup:
         specifier: ^8.3.5
@@ -185,8 +185,6 @@ importers:
       typescript:
         specifier: ^5.8.2
         version: 5.9.3
-
-  packages/tsdoc-config: {}
 
 packages:
 

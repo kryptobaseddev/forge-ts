@@ -194,7 +194,7 @@ describe("runInitProject", () => {
 		expect(tsdocCall).toBeDefined();
 		const written = tsdocCall?.[1] as string;
 		const parsed = JSON.parse(written);
-		expect(parsed.extends).toEqual(["@forge-ts/tsdoc-config/tsdoc.json"]);
+		expect(parsed.extends).toEqual(["@forge-ts/core/tsdoc-preset/tsdoc.json"]);
 	});
 
 	it("skips existing files (idempotent)", async () => {

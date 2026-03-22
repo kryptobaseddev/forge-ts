@@ -13,6 +13,8 @@
 	},
 	"files": [
 		"dist",
+		"spec",
+		"tsdoc-preset",
 		"README.md"
 	],
 	"main": "./dist/index.js",
@@ -21,7 +23,8 @@
 		".": {
 			"import": "./dist/index.js",
 			"types": "./dist/index.d.ts"
-		}
+		},
+		"./tsdoc-preset/tsdoc.json": "./tsdoc-preset/tsdoc.json"
 	},
 	"scripts": {
 		"build": "tsup",

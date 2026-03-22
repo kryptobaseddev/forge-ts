@@ -1,0 +1,299 @@
+{
+	"source": "@microsoft/tsdoc",
+	"version": "0.16.0",
+	"generatedAt": "2026-03-22T02:09:18.339Z",
+	"messageIds": [
+		{
+			"id": "tsdoc-at-sign-in-word",
+			"enumKey": "AtSignInWord"
+		},
+		{
+			"id": "tsdoc-at-sign-without-tag-name",
+			"enumKey": "AtSignWithoutTagName"
+		},
+		{
+			"id": "tsdoc-characters-after-block-tag",
+			"enumKey": "CharactersAfterBlockTag"
+		},
+		{
+			"id": "tsdoc-characters-after-inline-tag",
+			"enumKey": "CharactersAfterInlineTag"
+		},
+		{
+			"id": "tsdoc-code-fence-closing-indent",
+			"enumKey": "CodeFenceClosingIndent"
+		},
+		{
+			"id": "tsdoc-code-fence-closing-syntax",
+			"enumKey": "CodeFenceClosingSyntax"
+		},
+		{
+			"id": "tsdoc-code-fence-missing-delimiter",
+			"enumKey": "CodeFenceMissingDelimiter"
+		},
+		{
+			"id": "tsdoc-code-fence-opening-indent",
+			"enumKey": "CodeFenceOpeningIndent"
+		},
+		{
+			"id": "tsdoc-code-fence-specifier-syntax",
+			"enumKey": "CodeFenceSpecifierSyntax"
+		},
+		{
+			"id": "tsdoc-code-span-empty",
+			"enumKey": "CodeSpanEmpty"
+		},
+		{
+			"id": "tsdoc-code-span-missing-delimiter",
+			"enumKey": "CodeSpanMissingDelimiter"
+		},
+		{
+			"id": "tsdoc-comment-missing-closing-delimiter",
+			"enumKey": "CommentMissingClosingDelimiter"
+		},
+		{
+			"id": "tsdoc-comment-missing-opening-delimiter",
+			"enumKey": "CommentOpeningDelimiterSyntax"
+		},
+		{
+			"id": "tsdoc-comment-not-found",
+			"enumKey": "CommentNotFound"
+		},
+		{
+			"id": "tsdoc-config-cyclic-extends",
+			"enumKey": "ConfigFileCyclicExtends"
+		},
+		{
+			"id": "tsdoc-config-duplicate-tag-name",
+			"enumKey": "ConfigFileDuplicateTagName"
+		},
+		{
+			"id": "tsdoc-config-file-not-found",
+			"enumKey": "ConfigFileNotFound"
+		},
+		{
+			"id": "tsdoc-config-invalid-json",
+			"enumKey": "ConfigInvalidJson"
+		},
+		{
+			"id": "tsdoc-config-invalid-tag-name",
+			"enumKey": "ConfigFileInvalidTagName"
+		},
+		{
+			"id": "tsdoc-config-schema-error",
+			"enumKey": "ConfigFileSchemaError"
+		},
+		{
+			"id": "tsdoc-config-undefined-tag",
+			"enumKey": "ConfigFileUndefinedTag"
+		},
+		{
+			"id": "tsdoc-config-unresolved-extends",
+			"enumKey": "ConfigFileUnresolvedExtends"
+		},
+		{
+			"id": "tsdoc-config-unsupported-schema",
+			"enumKey": "ConfigFileUnsupportedSchema"
+		},
+		{
+			"id": "tsdoc-escape-greater-than",
+			"enumKey": "EscapeGreaterThan"
+		},
+		{
+			"id": "tsdoc-escape-right-brace",
+			"enumKey": "EscapeRightBrace"
+		},
+		{
+			"id": "tsdoc-extra-inheritdoc-tag",
+			"enumKey": "ExtraInheritDocTag"
+		},
+		{
+			"id": "tsdoc-html-string-missing-quote",
+			"enumKey": "HtmlStringMissingQuote"
+		},
+		{
+			"id": "tsdoc-html-tag-missing-equals",
+			"enumKey": "HtmlTagMissingEquals"
+		},
+		{
+			"id": "tsdoc-html-tag-missing-greater-than",
+			"enumKey": "HtmlTagMissingGreaterThan"
+		},
+		{
+			"id": "tsdoc-html-tag-missing-string",
+			"enumKey": "HtmlTagMissingString"
+		},
+		{
+			"id": "tsdoc-inheritdoc-incompatible-summary",
+			"enumKey": "InheritDocIncompatibleSummary"
+		},
+		{
+			"id": "tsdoc-inheritdoc-incompatible-tag",
+			"enumKey": "InheritDocIncompatibleTag"
+		},
+		{
+			"id": "tsdoc-inheritdoc-tag-syntax",
+			"enumKey": "InheritDocTagSyntax"
+		},
+		{
+			"id": "tsdoc-inline-tag-missing-braces",
+			"enumKey": "InlineTagMissingBraces"
+		},
+		{
+			"id": "tsdoc-inline-tag-missing-right-brace",
+			"enumKey": "InlineTagMissingRightBrace"
+		},
+		{
+			"id": "tsdoc-inline-tag-unescaped-brace",
+			"enumKey": "InlineTagUnescapedBrace"
+		},
+		{
+			"id": "tsdoc-link-tag-destination-syntax",
+			"enumKey": "LinkTagDestinationSyntax"
+		},
+		{
+			"id": "tsdoc-link-tag-empty",
+			"enumKey": "LinkTagEmpty"
+		},
+		{
+			"id": "tsdoc-link-tag-invalid-url",
+			"enumKey": "LinkTagInvalidUrl"
+		},
+		{
+			"id": "tsdoc-link-tag-unescaped-text",
+			"enumKey": "LinkTagUnescapedText"
+		},
+		{
+			"id": "tsdoc-malformed-html-name",
+			"enumKey": "MalformedHtmlName"
+		},
+		{
+			"id": "tsdoc-malformed-inline-tag",
+			"enumKey": "MalformedInlineTag"
+		},
+		{
+			"id": "tsdoc-malformed-tag-name",
+			"enumKey": "MalformedTagName"
+		},
+		{
+			"id": "tsdoc-missing-deprecation-message",
+			"enumKey": "MissingDeprecationMessage"
+		},
+		{
+			"id": "tsdoc-missing-html-end-tag",
+			"enumKey": "MissingHtmlEndTag"
+		},
+		{
+			"id": "tsdoc-missing-reference",
+			"enumKey": "MissingReference"
+		},
+		{
+			"id": "tsdoc-missing-tag",
+			"enumKey": "MissingTag"
+		},
+		{
+			"id": "tsdoc-param-tag-missing-hyphen",
+			"enumKey": "ParamTagMissingHyphen"
+		},
+		{
+			"id": "tsdoc-param-tag-with-invalid-name",
+			"enumKey": "ParamTagWithInvalidName"
+		},
+		{
+			"id": "tsdoc-param-tag-with-invalid-optional-name",
+			"enumKey": "ParamTagWithInvalidOptionalName"
+		},
+		{
+			"id": "tsdoc-param-tag-with-invalid-type",
+			"enumKey": "ParamTagWithInvalidType"
+		},
+		{
+			"id": "tsdoc-reference-empty-identifier",
+			"enumKey": "ReferenceEmptyIdentifier"
+		},
+		{
+			"id": "tsdoc-reference-hash-syntax",
+			"enumKey": "ReferenceHashSyntax"
+		},
+		{
+			"id": "tsdoc-reference-malformed-import-path",
+			"enumKey": "ReferenceMalformedImportPath"
+		},
+		{
+			"id": "tsdoc-reference-malformed-package-name",
+			"enumKey": "ReferenceMalformedPackageName"
+		},
+		{
+			"id": "tsdoc-reference-missing-colon",
+			"enumKey": "ReferenceMissingColon"
+		},
+		{
+			"id": "tsdoc-reference-missing-dot",
+			"enumKey": "ReferenceMissingDot"
+		},
+		{
+			"id": "tsdoc-reference-missing-hash",
+			"enumKey": "ReferenceMissingHash"
+		},
+		{
+			"id": "tsdoc-reference-missing-identifier",
+			"enumKey": "ReferenceMissingIdentifier"
+		},
+		{
+			"id": "tsdoc-reference-missing-label",
+			"enumKey": "ReferenceMissingLabel"
+		},
+		{
+			"id": "tsdoc-reference-missing-quote",
+			"enumKey": "ReferenceMissingQuote"
+		},
+		{
+			"id": "tsdoc-reference-missing-right-bracket",
+			"enumKey": "ReferenceMissingRightBracket"
+		},
+		{
+			"id": "tsdoc-reference-missing-right-paren",
+			"enumKey": "ReferenceMissingRightParen"
+		},
+		{
+			"id": "tsdoc-reference-selector-missing-parens",
+			"enumKey": "ReferenceSelectorMissingParens"
+		},
+		{
+			"id": "tsdoc-reference-selector-syntax",
+			"enumKey": "ReferenceSelectorSyntax"
+		},
+		{
+			"id": "tsdoc-reference-symbol-syntax",
+			"enumKey": "ReferenceSymbolSyntax"
+		},
+		{
+			"id": "tsdoc-reference-unquoted-identifier",
+			"enumKey": "ReferenceUnquotedIdentifier"
+		},
+		{
+			"id": "tsdoc-tag-should-not-have-braces",
+			"enumKey": "TagShouldNotHaveBraces"
+		},
+		{
+			"id": "tsdoc-text-after-html-string",
+			"enumKey": "TextAfterHtmlString"
+		},
+		{
+			"id": "tsdoc-undefined-tag",
+			"enumKey": "UndefinedTag"
+		},
+		{
+			"id": "tsdoc-unnecessary-backslash",
+			"enumKey": "UnnecessaryBackslash"
+		},
+		{
+			"id": "tsdoc-unsupported-html-name",
+			"enumKey": "UnsupportedHtmlElementName"
+		},
+		{
+			"id": "tsdoc-unsupported-tag",
+			"enumKey": "UnsupportedTag"
+		}
+	]
+}

@@ -9,8 +9,7 @@
 			"@forge-ts/doctest",
 			"@forge-ts/api",
 			"@forge-ts/gen",
-			"@forge-ts/cli",
-			"@forge-ts/tsdoc-config"
+			"@forge-ts/cli"
 		]
 	],
 	"linked": [],

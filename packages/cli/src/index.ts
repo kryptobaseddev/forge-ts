@@ -92,7 +92,7 @@ export {
 } from "./commands/prepublish.js";
 export { type TestFailure, type TestResult, testCommand } from "./commands/test.js";
 export { runUnlock, type UnlockResult, unlockCommand } from "./commands/unlock.js";
-export { createLogger, type Logger } from "./logger.js";
+export { configureLogger, type ForgeLoggerOptions, forgeLogger } from "./forge-logger.js";
 export {
 	type CommandOutput,
 	emitResult,
@@ -189,7 +189,7 @@ const initCommand = defineCommand({
 		// Bare `forge-ts init` (no subcommand) — run full project setup
 		const { runInitProject } = await import("./commands/init-project.js");
 		const { emitResult, resolveExitCode } = await import("./output.js");
-		const { createLogger } = await import("./logger.js");
+		const { forgeLogger } = await import("./forge-logger.js");
 
 		const output = await runInitProject({
 			cwd: args.cwd,
@@ -205,9 +205,8 @@ const initCommand = defineCommand({
 
 		emitResult(output, flags, (data, cmd) => {
 			if (!cmd.success) {
-				const logger = createLogger();
 				const msg = cmd.errors?.[0]?.message ?? "Init failed";
-				logger.error(msg);
+				forgeLogger.error(msg);
 				return "";
 			}
 

@@ -22,6 +22,7 @@ import {
 	loadConfig,
 } from "@forge-ts/core";
 import { defineCommand } from "citty";
+import { forgeLogger } from "../forge-logger.js";
 import { type CommandOutput, emitResult, type OutputFlags, resolveExitCode } from "../output.js";
 
 // ---------------------------------------------------------------------------
@@ -286,9 +287,7 @@ export const bypassCommand = defineCommand({
 
 		// Create mode: --reason is required
 		if (!args.reason) {
-			console.error(
-				"[forge-ts] error: --reason is required. Provide a justification for the bypass.",
-			);
+			forgeLogger.error("--reason is required. Provide a justification for the bypass.");
 			process.exit(1);
 		}
 

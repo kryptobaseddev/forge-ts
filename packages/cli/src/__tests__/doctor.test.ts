@@ -39,7 +39,7 @@ async function mockCompleteProject(): Promise<void> {
 		const s = String(p);
 		if (s.endsWith("forge-ts.config.ts")) return true;
 		if (s.endsWith("tsdoc.json")) return true;
-		if (s.includes("@forge-ts/tsdoc-config/package.json")) return true;
+		if (s.includes("@forge-ts/core/package.json")) return true;
 		if (s.includes("typescript/package.json")) return true;
 		if (s.endsWith("tsconfig.json")) return true;
 		if (s.endsWith("biome.json")) return true;
@@ -56,10 +56,10 @@ async function mockCompleteProject(): Promise<void> {
 		if (s.endsWith("tsdoc.json")) {
 			return JSON.stringify({
 				$schema: "https://developer.microsoft.com/json-schemas/tsdoc/v0/tsdoc.schema.json",
-				extends: ["@forge-ts/tsdoc-config/tsdoc.json"],
+				extends: ["@forge-ts/core/tsdoc-preset/tsdoc.json"],
 			});
 		}
-		if (s.includes("@forge-ts/tsdoc-config/package.json")) {
+		if (s.includes("@forge-ts/core/package.json")) {
 			return JSON.stringify({ version: "0.14.0" });
 		}
 		if (s.includes("typescript/package.json")) {
@@ -113,7 +113,7 @@ describe("runDoctor", () => {
 		const checkNames = output.data.checks.map((c) => c.name);
 		expect(checkNames).toContain("forge-ts.config");
 		expect(checkNames).toContain("tsdoc.json");
-		expect(checkNames).toContain("@forge-ts/tsdoc-config");
+		expect(checkNames).toContain("@forge-ts/core");
 		expect(checkNames).toContain("TypeScript");
 		expect(checkNames).toContain("tsconfig.json");
 		expect(checkNames).toContain("biome.json");
@@ -150,7 +150,7 @@ describe("runDoctor", () => {
 		expect(tsdocCheck?.fixable).toBe(true);
 	});
 
-	it("reports tsdoc.json that does not extend @forge-ts/tsdoc-config", async () => {
+	it("reports tsdoc.json that does not extend @forge-ts/core/tsdoc-preset", async () => {
 		const { existsSync, readFileSync } = await import("node:fs");
 
 		vi.mocked(existsSync).mockImplementation((p) => {
@@ -213,7 +213,7 @@ describe("runDoctor", () => {
 		expect(tsdocCall).toBeDefined();
 		const written = tsdocCall?.[1] as string;
 		const parsed = JSON.parse(written);
-		expect(parsed.extends).toEqual(["@forge-ts/tsdoc-config/tsdoc.json"]);
+		expect(parsed.extends).toEqual(["@forge-ts/core/tsdoc-preset/tsdoc.json"]);
 	});
 
 	it("--fix is idempotent (running twice produces same result)", async () => {

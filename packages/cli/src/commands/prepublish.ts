@@ -10,7 +10,7 @@
  */
 
 import { defineCommand } from "citty";
-import { createLogger } from "../logger.js";
+import { forgeLogger } from "../forge-logger.js";
 import {
 	type CommandOutput,
 	emitResult,
@@ -312,8 +312,7 @@ export const prepublishCommand = defineCommand({
 
 		emitResult(output, flags, (data, cmd) => {
 			if (!cmd.success) {
-				const logger = createLogger();
-				logger.error("Prepublish gate failed");
+				forgeLogger.error("Prepublish gate failed");
 			}
 			return formatPrepublishHuman(data);
 		});

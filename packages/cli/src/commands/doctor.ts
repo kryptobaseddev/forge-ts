@@ -133,7 +133,7 @@ export default defineConfig({
 const DEFAULT_TSDOC_CONTENT = JSON.stringify(
 	{
 		$schema: "https://developer.microsoft.com/json-schemas/tsdoc/v0/tsdoc.schema.json",
-		extends: ["@forge-ts/tsdoc-config/tsdoc.json"],
+		extends: ["@forge-ts/core/tsdoc-preset/tsdoc.json"],
 	},
 	null,
 	"\t",
@@ -148,8 +148,8 @@ const DEFAULT_TSDOC_CONTENT = JSON.stringify(
  *
  * Checks:
  * 1. forge-ts.config.ts — exists and loadable
- * 2. tsdoc.json — exists and extends @forge-ts/tsdoc-config
- * 3. @forge-ts/tsdoc-config — installed in node_modules
+ * 2. tsdoc.json — exists and extends @forge-ts/core/tsdoc-preset
+ * 3. @forge-ts/core — installed in node_modules
  * 4. TypeScript — installed
  * 5. tsconfig.json — exists and has strict mode
  * 6. biome.json — exists (informational)
@@ -218,18 +218,18 @@ export async function runDoctor(args: DoctorArgs): Promise<CommandOutput<DoctorR
 		const tsdoc = readJsonSafe<{
 			extends?: string[];
 		}>(tsdocPath);
-		if (tsdoc?.extends?.includes("@forge-ts/tsdoc-config/tsdoc.json")) {
+		if (tsdoc?.extends?.includes("@forge-ts/core/tsdoc-preset/tsdoc.json")) {
 			checks.push({
 				name: "tsdoc.json",
 				status: "pass",
-				message: "tsdoc.json — extends @forge-ts/tsdoc-config",
+				message: "tsdoc.json — extends @forge-ts/core/tsdoc-preset",
 				fixable: false,
 			});
 		} else {
 			checks.push({
 				name: "tsdoc.json",
 				status: "warn",
-				message: "tsdoc.json — does not extend @forge-ts/tsdoc-config",
+				message: "tsdoc.json — does not extend @forge-ts/core/tsdoc-preset",
 				fixable: false,
 			});
 		}
@@ -252,30 +252,25 @@ export async function runDoctor(args: DoctorArgs): Promise<CommandOutput<DoctorR
 	}
 
 	// -----------------------------------------------------------------------
-	// Check 3: @forge-ts/tsdoc-config installed
+	// Check 3: @forge-ts/core installed (provides tsdoc-preset)
 	// -----------------------------------------------------------------------
 
-	const tsdocConfigModulePath = join(
-		rootDir,
-		"node_modules",
-		"@forge-ts",
-		"tsdoc-config",
-		"package.json",
-	);
-	if (existsSync(tsdocConfigModulePath)) {
-		const tsdocPkg = readJsonSafe<{ version?: string }>(tsdocConfigModulePath);
-		const version = tsdocPkg?.version ?? "unknown";
+	const coreModulePath = join(rootDir, "node_modules", "@forge-ts", "core", "package.json");
+
+	if (existsSync(coreModulePath)) {
+		const corePkg = readJsonSafe<{ version?: string }>(coreModulePath);
+		const version = corePkg?.version ?? "unknown";
 		checks.push({
-			name: "@forge-ts/tsdoc-config",
+			name: "@forge-ts/core",
 			status: "pass",
-			message: `@forge-ts/tsdoc-config — installed (${version})`,
+			message: `@forge-ts/core — installed (${version})`,
 			fixable: false,
 		});
 	} else {
 		checks.push({
-			name: "@forge-ts/tsdoc-config",
+			name: "@forge-ts/core",
 			status: "warn",
-			message: "@forge-ts/tsdoc-config — MISSING (run npm install @forge-ts/tsdoc-config)",
+			message: "@forge-ts/core — MISSING (run npm install @forge-ts/core)",
 			fixable: false,
 		});
 	}

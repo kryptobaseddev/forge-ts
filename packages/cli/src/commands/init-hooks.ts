@@ -12,7 +12,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { defineCommand } from "citty";
-import { createLogger } from "../logger.js";
+import { forgeLogger } from "../forge-logger.js";
 import {
 	type CommandOutput,
 	emitResult,
@@ -371,9 +371,8 @@ export const initHooksCommand = defineCommand({
 
 		emitResult(output, flags, (data, cmd) => {
 			if (!cmd.success) {
-				const logger = createLogger();
 				const msg = cmd.errors?.[0]?.message ?? "Hook scaffolding failed";
-				logger.error(msg);
+				forgeLogger.error(msg);
 				return "";
 			}
 			return formatInitHooksHuman(data);

@@ -10,7 +10,7 @@ import {
 	type SSGTarget,
 } from "@forge-ts/gen";
 import { defineCommand } from "citty";
-import { createLogger } from "../logger.js";
+import { forgeLogger } from "../forge-logger.js";
 import {
 	type CommandOutput,
 	emitResult,
@@ -184,7 +184,7 @@ export async function runInitDocs(args: InitDocsArgs): Promise<CommandOutput<Ini
 		writtenFiles.push(file.path);
 	}
 
-	// 8. Write tsdoc.json to project root (extends @forge-ts/tsdoc-config preset)
+	// 8. Write tsdoc.json to project root (extends @forge-ts/core/tsdoc-preset)
 	if (config.tsdoc.writeConfig) {
 		const tsdocPath = join(config.rootDir, "tsdoc.json");
 		if (existsSync(tsdocPath)) {
@@ -196,7 +196,7 @@ export async function runInitDocs(args: InitDocsArgs): Promise<CommandOutput<Ini
 			const tsdocContent = JSON.stringify(
 				{
 					$schema: "https://developer.microsoft.com/json-schemas/tsdoc/v0/tsdoc.schema.json",
-					extends: ["@forge-ts/tsdoc-config/tsdoc.json"],
+					extends: ["@forge-ts/core/tsdoc-preset/tsdoc.json"],
 				},
 				null,
 				"\t",
@@ -363,9 +363,8 @@ export const initDocsCommand = defineCommand({
 
 		emitResult(output, flags, (data, cmd) => {
 			if (!cmd.success) {
-				const logger = createLogger();
 				const msg = cmd.errors?.[0]?.message ?? "Scaffold failed";
-				logger.error(msg);
+				forgeLogger.error(msg);
 				return "";
 			}
 			return formatInitDocsHuman(data);

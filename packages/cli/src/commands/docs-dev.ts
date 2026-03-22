@@ -13,7 +13,7 @@ import { resolve } from "node:path";
 import { loadConfig } from "@forge-ts/core";
 import { DEFAULT_TARGET, getAdapter, type SSGTarget } from "@forge-ts/gen";
 import { defineCommand } from "citty";
-import { createLogger } from "../logger.js";
+import { forgeLogger } from "../forge-logger.js";
 
 /**
  * Starts the local dev server for the configured SSG target.
@@ -39,18 +39,16 @@ export async function runDocsDev(args: {
 	/** Port to run the dev server on. */
 	port?: string;
 }): Promise<void> {
-	const logger = createLogger();
 	const config = await loadConfig(args.cwd);
 	const target = (args.target ?? config.gen.ssgTarget ?? DEFAULT_TARGET) as SSGTarget;
 	const adapter = getAdapter(target);
 	const outDir = resolve(config.outDir);
 	const devCmd = adapter.getDevCommand(outDir);
 
-	logger.info(`Starting ${devCmd.label}...`);
-	logger.info(`  Target: ${target}`);
-	logger.info(`  Directory: ${outDir}`);
-	logger.info(`  URL: ${devCmd.url}`);
-	logger.info("");
+	forgeLogger.info(`Starting ${devCmd.label}...`);
+	forgeLogger.info(`  Target: ${target}`);
+	forgeLogger.info(`  Directory: ${outDir}`);
+	forgeLogger.info(`  URL: ${devCmd.url}`);
 
 	const spawnArgs = [...devCmd.args];
 	if (args.port) {

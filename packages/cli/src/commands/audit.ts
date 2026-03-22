@@ -15,6 +15,7 @@ import {
 	readAuditLog,
 } from "@forge-ts/core";
 import { defineCommand } from "citty";
+import { forgeLogger } from "../forge-logger.js";
 import { type CommandOutput, emitResult, type OutputFlags, resolveExitCode } from "../output.js";
 
 // ---------------------------------------------------------------------------
@@ -172,8 +173,8 @@ export const auditCommand = defineCommand({
 		// Validate --type if provided
 		const eventType = args.type as AuditEventType | undefined;
 		if (eventType && !VALID_EVENT_TYPES.includes(eventType)) {
-			console.error(
-				`Error: invalid event type "${eventType}". Valid types: ${VALID_EVENT_TYPES.join(", ")}`,
+			forgeLogger.error(
+				`Invalid event type "${eventType}". Valid types: ${VALID_EVENT_TYPES.join(", ")}`,
 			);
 			process.exit(1);
 		}

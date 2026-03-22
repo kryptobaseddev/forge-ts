@@ -431,7 +431,7 @@ describe("runInitDocs", () => {
 		expect(writtenContent.$schema).toBe(
 			"https://developer.microsoft.com/json-schemas/tsdoc/v0/tsdoc.schema.json",
 		);
-		expect(writtenContent.extends).toEqual(["@forge-ts/tsdoc-config/tsdoc.json"]);
+		expect(writtenContent.extends).toEqual(["@forge-ts/core/tsdoc-preset/tsdoc.json"]);
 	});
 
 	it("skips tsdoc.json when file already exists", async () => {

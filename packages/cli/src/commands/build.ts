@@ -2,7 +2,7 @@ import { generateApi } from "@forge-ts/api";
 import { loadConfig } from "@forge-ts/core";
 import { generate } from "@forge-ts/gen";
 import { defineCommand } from "citty";
-import { createLogger } from "../logger.js";
+import { forgeLogger } from "../forge-logger.js";
 import {
 	type CommandOutput,
 	emitResult,
@@ -269,18 +269,18 @@ export const buildCommand = defineCommand({
 		};
 
 		emitResult(output, flags, (data) => {
-			const logger = createLogger();
 			for (const step of data.steps) {
 				if (step.status === "failed") {
 					for (const err of step.errors ?? []) {
-						logger.error(`[${step.name}] ${err.message}`);
+						forgeLogger.error(`[${step.name}] ${err.message}`);
 					}
 				} else if (step.status === "success") {
 					const detail =
 						step.name === "api" && step.outputPath != null
 							? `Generated OpenAPI spec \u2192 ${step.outputPath}`
 							: `Step complete`;
-					logger.step(step.name.toUpperCase(), detail, step.duration);
+					const durationStr = step.duration !== undefined ? ` (${step.duration}ms)` : "";
+					forgeLogger.success(`${step.name.toUpperCase()}: ${detail}${durationStr}`);
 				}
 			}
 			if (output.success) {

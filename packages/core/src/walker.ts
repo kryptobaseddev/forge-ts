@@ -1,4 +1,5 @@
 import { readFileSync } from "node:fs";
+import { createRequire } from "node:module";
 import { dirname, resolve } from "node:path";
 import {
 	type DocBlock,
@@ -62,13 +63,39 @@ export function loadTSDocConfiguration(folderPath: string): TSDocConfiguration {
 		const configFile = TSDocConfigFile.loadForFolder(folderPath);
 		if (!configFile.fileNotFound && !configFile.hasErrors) {
 			configFile.configureParser(configuration);
+		} else {
+			// No project-level tsdoc.json found — load the bundled preset so
+			// forge-ts custom tags (@route, @category, etc.) are still recognised.
+			loadBundledPreset(configuration);
 		}
 	} catch {
-		// If loading fails for any reason, fall back to the default configuration.
+		// If loading fails for any reason, fall back to the bundled preset.
+		try {
+			loadBundledPreset(configuration);
+		} catch {
+			// Last resort: bare TSDocConfiguration (no custom tags).
+		}
 	}
 
 	tsdocConfigCache.set(folderPath, configuration);
 	return configuration;
+}
+
+/**
+ * Loads the forge-ts bundled tsdoc.json preset from
+ * `@forge-ts/core/tsdoc-preset/tsdoc.json` and applies it to the given
+ * configuration via `TSDocConfigFile.configureParser()`.
+ *
+ * @param configuration - The `TSDocConfiguration` instance to configure.
+ * @internal
+ */
+function loadBundledPreset(configuration: TSDocConfiguration): void {
+	const require = createRequire(import.meta.url);
+	const presetPath = require.resolve("@forge-ts/core/tsdoc-preset/tsdoc.json");
+	const presetFile = TSDocConfigFile.loadFile(presetPath);
+	if (!presetFile.hasErrors) {
+		presetFile.configureParser(configuration);
+	}
 }
 
 // ---------------------------------------------------------------------------

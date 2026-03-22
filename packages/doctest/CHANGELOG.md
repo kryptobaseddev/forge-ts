@@ -1,5 +1,19 @@
 # @forge-ts/doctest
 
+## 0.19.4
+
+### Patch Changes
+
+- cf8c3d0: fix: E020 false positives — interfaces/types no longer reported as containing `any`
+
+  The walker's buildSignature() used getTypeOfSymbolAtLocation() which returns
+  `any` for interface and type alias symbols. Changed to getDeclaredTypeOfSymbol()
+  for interfaces, type aliases, and enums. Also added NoTruncation flag to prevent
+  TypeScript from collapsing complex types to `any`.
+
+- Updated dependencies [cf8c3d0]
+  - @forge-ts/core@0.19.4
+
 ## 0.19.3
 
 ### Patch Changes

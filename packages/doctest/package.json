@@ -1,6 +1,6 @@
 {
 	"name": "@forge-ts/doctest",
-	"version": "0.19.3",
+	"version": "0.19.4",
 	"type": "module",
 	"description": "TSDoc @example block extractor and test runner for forge-ts",
 	"license": "MIT",

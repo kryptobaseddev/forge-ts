@@ -1,9 +1,9 @@
-# forge-ts Feature Inventory (v0.13.0)
+# forge-ts Feature Inventory (v0.16.0)
 
 > Canonical reference for every implemented feature in forge-ts.
 > No roadmap. No vision. Every item listed here exists in the codebase and passes tests.
 >
-> **730 tests | 18 test files | 7 packages | All v0.13.0**
+> **790 tests | 20 test files | 6 packages | All v0.16.0**
 
 ---
 

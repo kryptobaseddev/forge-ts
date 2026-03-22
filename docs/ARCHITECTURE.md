@@ -14,17 +14,16 @@ inventory, see `FEATURES.md`.
 
 ## 1. Package Architecture
 
-forge-ts is a pnpm monorepo comprising 8 packages. Fixed versioning via
+forge-ts is a pnpm monorepo comprising 6 packages. Fixed versioning via
 `@changesets/cli` means all packages share the same version number.
 
 ```
-@forge-ts/tsdoc-config  JSON-only package; opinionated tsdoc.json preset
-        |
 @forge-ts/core          TS Compiler API walker, ForgeSymbol graph,
         |               TSDoc parsing via @microsoft/tsdoc-config,
-        |               config loading, lock/audit/bypass systems
+        |               config loading, lock/audit/bypass systems,
+        |               bundled tsdoc-preset/tsdoc.json
         |
-        +-- @forge-ts/enforcer    22 rules across 4 enforcement layers
+        +-- @forge-ts/enforcer    27 rules across 4 enforcement layers
         |
         +-- @forge-ts/doctest     @example extraction + node:test runner
         |
@@ -34,14 +33,13 @@ forge-ts is a pnpm monorepo comprising 8 packages. Fixed versioning via
         |                         FORGE:AUTO/STUB zones, SSG adapters,
         |                         llms.txt, SKILL packages
         |
-        +-- @forge-ts/cli         citty CLI, 10 commands, LAFS protocol output;
-                                  depends on all packages above
+        +-- @forge-ts/cli         citty + consola CLI, 12 commands, LAFS protocol
+                                  output; depends on all packages above
 ```
 
-Every runtime package depends on `@forge-ts/core` for the walker and config
-loader. `@forge-ts/cli` is the user-facing entry point and depends on every
-other runtime package. `@forge-ts/tsdoc-config` is a data-only package consumed
-at TSDoc parse time.
+Every runtime package depends on `@forge-ts/core` for the walker, config loader,
+and bundled TSDoc preset. `@forge-ts/cli` is the user-facing entry point and
+depends on every other package.
 
 ---
 

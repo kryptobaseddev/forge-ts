@@ -59,19 +59,18 @@ By centralizing API specs, Dev Docs, and Consumer Docs into a single AST-travers
 
 ---
 
-## Current State: v0.13.0
+## Current State: v0.16.0
 
-**8 packages**, all at v0.13.0 with fixed versioning:
+**6 packages**, all at v0.16.0 with fixed versioning:
 
 | Package | Role |
 |---------|------|
-| `@forge-ts/core` | TypeScript Compiler API traversal, ForgeSymbol graph, TSDoc parsing via @microsoft/tsdoc-config |
-| `@forge-ts/enforcer` | 22 rules (E001-E016, W001-W008) across 4 layers with per-rule severity config |
+| `@forge-ts/core` | TypeScript Compiler API traversal, ForgeSymbol graph, TSDoc parsing, config, lock/audit/bypass, bundled tsdoc-preset |
+| `@forge-ts/enforcer` | 27 rules (E001-E018, W001-W011) across 4 layers with per-rule severity config |
 | `@forge-ts/doctest` | `@example` extraction + Node.js `node:test` runner integration |
 | `@forge-ts/api` | OpenAPI 3.2.0 spec generation with `@route` tag extraction |
 | `@forge-ts/gen` | Markdown/MDX generation, SSG adapters, intelligent guide generation, llms.txt, SKILL packages, README sync |
-| `@forge-ts/cli` | CLI entry point (citty), 10 commands: check, test, build, init, lock, unlock, audit, prepublish, generate-guides, site |
-| `@forge-ts/tsdoc-config` | Opinionated tsdoc.json preset with custom tags (@route, @category, @since, @guide, @concept) |
+| `@forge-ts/cli` | CLI entry point (citty + consola), 12 commands: check, test, build, init, docs, lock, unlock, bypass, audit, prepublish, doctor |
 | `@forge-ts/site` | Static site generation orchestration |
 
 **730 tests** across all packages, all passing. CI pipeline: lint + typecheck + test + dogfood.

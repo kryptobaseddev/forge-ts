@@ -1,5 +1,23 @@
 # @forge-ts/cli
 
+## 0.19.5
+
+### Patch Changes
+
+- eba8a15: fix: forge-ts passes its own check — 167 violations fixed across 10 files
+
+  forge-ts now dogfoods cleanly: `forge-ts check` reports 0 errors and 0 warnings
+  on its own codebase. Fixed: @since on all exported types, @remarks on all
+  exported functions, @defaultValue on all optional properties, TSDoc syntax
+  escaping, stale @example blocks, tsconfig strict flags, package.json engines.
+
+- Updated dependencies [eba8a15]
+  - @forge-ts/core@0.19.5
+  - @forge-ts/enforcer@0.19.5
+  - @forge-ts/gen@0.19.5
+  - @forge-ts/doctest@0.19.5
+  - @forge-ts/api@0.19.5
+
 ## 0.19.4
 
 ### Patch Changes

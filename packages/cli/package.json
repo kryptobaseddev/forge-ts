@@ -1,6 +1,6 @@
 {
 	"name": "@forge-ts/cli",
-	"version": "0.19.4",
+	"version": "0.19.5",
 	"type": "module",
 	"description": "CLI entry point for forge-ts",
 	"license": "MIT",

@@ -55,6 +55,34 @@ Centralized logging, package simplification, spec tooling.
 
 ---
 
+## DX Improvements (queued, no epic yet)
+
+### Git Hooks Hardening
+
+Current `forge-ts init hooks` writes hook files but does not verify the hook manager is functional. Issues:
+
+- Writes `.husky/pre-commit` but doesn't check if husky is installed or `prepare` script is wired
+- Doctor reports `[PASS]` on hook file existence even if hooks aren't active
+- No lint-staged integration — runs full project check, slow on large codebases
+- No `--staged` flag on `forge-ts check` to only check changed files
+- Only wires pre-commit, not prepublish hook
+- Fallback creates husky files without husky installed — file exists but never runs
+
+Planned fixes:
+- Doctor should verify husky is actually installed (not just that the file exists)
+- `forge-ts init hooks` should offer to install husky if missing (`npx husky-init`)
+- Add `"prepare": "husky install"` to package.json scripts during init hooks
+- Add `forge-ts check --staged` for lint-staged integration
+- Wire both pre-commit (`forge-ts check`) and pre-push (`forge-ts prepublish`) hooks
+
+### Init Script Improvements
+
+- Detect user's package manager (npm/pnpm/yarn/bun) and use correct commands in suggestions
+- Validate that `forge-ts.config.ts` is included in tsconfig `include` array (common miss)
+- Offer to add `@forge-ts/cli` to devDependencies if running via npx
+
+---
+
 ## T078: v0.17.0 — Advanced Enforcement
 
 Knip integration, enhanced DocTest, LLM anti-pattern detection.
@@ -67,6 +95,7 @@ Knip integration, enhanced DocTest, LLM anti-pattern detection.
 | — | LLM anti-pattern: flag `any` casts in public API | Pending |
 | — | @inheritDoc validation: verify source exists | Pending |
 | — | Orphaned {@link} description detection | Pending |
+| — | Git hooks hardening (from DX improvements above) | Pending |
 | — | v0.17.0 integration tests and release | Pending |
 
 ### Knip Integration

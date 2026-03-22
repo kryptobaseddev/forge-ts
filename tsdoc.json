@@ -1,6 +1,4 @@
 {
 	"$schema": "https://developer.microsoft.com/json-schemas/tsdoc/v0/tsdoc.schema.json",
-	"extends": [
-		"@forge-ts/tsdoc-config/tsdoc.json"
-	]
+	"extends": ["@forge-ts/tsdoc-config/tsdoc.json"]
 }

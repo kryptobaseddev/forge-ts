@@ -36,6 +36,10 @@ const DEFAULT_RULES: EnforceRules = {
 	"require-inheritdoc-source": "warn",
 	"require-migration-path": "warn",
 	"require-since": "warn",
+	"require-fresh-examples": "warn",
+	"require-no-ts-ignore": "error",
+	"require-no-any-in-api": "warn",
+	"require-fresh-link-text": "warn",
 };
 
 /**
@@ -51,6 +55,10 @@ function makeConfig(overrides?: Partial<ForgeConfig["enforce"]>): ForgeConfig {
 		...DEFAULT_RULES,
 		"require-release-tag": "off",
 		"require-since": "off",
+		"require-fresh-examples": "off",
+		"require-no-ts-ignore": "off",
+		"require-no-any-in-api": "off",
+		"require-fresh-link-text": "off",
 		...ruleOverrides,
 	};
 	return {
@@ -4060,5 +4068,700 @@ describe("enforce — W011 new public export missing @since", () => {
 		});
 		const w011 = [...result.errors, ...result.warnings].filter((d) => d.code === "W011");
 		expect(w011).toHaveLength(0);
+	});
+});
+
+// ---------------------------------------------------------------------------
+// Knip integration: ignore file and @forge-ignore tag
+// ---------------------------------------------------------------------------
+
+describe("enforce — Knip ignore file integration", () => {
+	afterEach(() => {
+		vi.mocked(readFileSync).mockRestore();
+		vi.mocked(existsSync).mockRestore();
+	});
+
+	it("skips enforcement on symbols listed in the ignore file", async () => {
+		const sym = makeSymbol({
+			name: "deadExport",
+			kind: "function",
+			documentation: undefined, // Would normally trigger E001
+		});
+
+		vi.mocked(existsSync).mockImplementation((p: unknown) => {
+			if (String(p) === "/fake/.forge-ignore") return true;
+			return false;
+		});
+		vi.mocked(readFileSync).mockImplementation((p: unknown) => {
+			if (String(p) === "/fake/.forge-ignore") {
+				return "# Dead exports from Knip\ndeadExport\n";
+			}
+			throw new Error(`Unexpected readFileSync: ${p}`);
+		});
+
+		const { createWalker } = await import("@forge-ts/core");
+		vi.mocked(createWalker).mockReturnValue({ walk: () => [sym] });
+		const config = makeConfig();
+		config.enforce.ignoreFile = ".forge-ignore";
+		const result = await enforce(config);
+
+		const e001 = result.errors.filter((e) => e.code === "E001");
+		expect(e001).toHaveLength(0);
+	});
+
+	it("enforces symbols NOT in the ignore file", async () => {
+		const sym = makeSymbol({
+			name: "liveExport",
+			kind: "function",
+			documentation: undefined, // Triggers E001
+		});
+
+		vi.mocked(existsSync).mockImplementation((p: unknown) => {
+			if (String(p) === "/fake/.forge-ignore") return true;
+			return false;
+		});
+		vi.mocked(readFileSync).mockImplementation((p: unknown) => {
+			if (String(p) === "/fake/.forge-ignore") {
+				return "otherSymbol\n";
+			}
+			throw new Error(`Unexpected readFileSync: ${p}`);
+		});
+
+		const { createWalker } = await import("@forge-ts/core");
+		vi.mocked(createWalker).mockReturnValue({ walk: () => [sym] });
+		const config = makeConfig();
+		config.enforce.ignoreFile = ".forge-ignore";
+		const result = await enforce(config);
+
+		const e001 = result.errors.filter((e) => e.code === "E001");
+		expect(e001).toHaveLength(1);
+	});
+
+	it("handles missing ignore file gracefully", async () => {
+		const sym = makeSymbol({
+			name: "someExport",
+			kind: "function",
+			documentation: undefined,
+		});
+
+		vi.mocked(existsSync).mockImplementation((p: unknown) => {
+			if (String(p) === "/fake/.forge-ignore") return false;
+			return false;
+		});
+
+		const { createWalker } = await import("@forge-ts/core");
+		vi.mocked(createWalker).mockReturnValue({ walk: () => [sym] });
+		const config = makeConfig();
+		config.enforce.ignoreFile = ".forge-ignore";
+		const result = await enforce(config);
+
+		// Should still enforce since the file doesn't exist
+		const e001 = result.errors.filter((e) => e.code === "E001");
+		expect(e001).toHaveLength(1);
+	});
+
+	it("ignores comment lines in the ignore file", async () => {
+		const sym = makeSymbol({
+			name: "myFunc",
+			kind: "function",
+			documentation: undefined,
+		});
+
+		vi.mocked(existsSync).mockImplementation((p: unknown) => {
+			if (String(p) === "/fake/.forge-ignore") return true;
+			return false;
+		});
+		vi.mocked(readFileSync).mockImplementation((p: unknown) => {
+			if (String(p) === "/fake/.forge-ignore") {
+				return "# This is a comment\nmyFunc\n# Another comment\n";
+			}
+			throw new Error(`Unexpected readFileSync: ${p}`);
+		});
+
+		const { createWalker } = await import("@forge-ts/core");
+		vi.mocked(createWalker).mockReturnValue({ walk: () => [sym] });
+		const config = makeConfig();
+		config.enforce.ignoreFile = ".forge-ignore";
+		const result = await enforce(config);
+
+		const e001 = result.errors.filter((e) => e.code === "E001");
+		expect(e001).toHaveLength(0);
+	});
+});
+
+describe("enforce — @forge-ignore tag", () => {
+	it("skips all enforcement for a symbol with @forge-ignore", async () => {
+		const sym = makeSymbol({
+			name: "ignoredFunc",
+			kind: "function",
+			signature: "(x: number) => string",
+			documentation: {
+				summary: "", // Would trigger E001
+				tags: { "forge-ignore": [] },
+			},
+		});
+		const result = await runEnforce([sym]);
+		const allDiags = [...result.errors, ...result.warnings];
+		const forSymbol = allDiags.filter((d) => d.symbolName === "ignoredFunc");
+		expect(forSymbol).toHaveLength(0);
+	});
+
+	it("still enforces symbols without @forge-ignore", async () => {
+		const sym = makeSymbol({
+			name: "normalFunc",
+			kind: "function",
+			documentation: undefined,
+		});
+		const result = await runEnforce([sym]);
+		const e001 = result.errors.filter((e) => e.code === "E001");
+		expect(e001).toHaveLength(1);
+	});
+});
+
+// ---------------------------------------------------------------------------
+// W013: Stale @example detection
+// ---------------------------------------------------------------------------
+
+describe("enforce — W013 stale @example detection", () => {
+	it("emits W013 when example call has wrong number of arguments", async () => {
+		const sym = makeSymbol({
+			name: "greet",
+			kind: "function",
+			signature: "(name: string, age: number) => void",
+			documentation: {
+				summary: "Greets someone.",
+				params: [
+					{ name: "name", description: "The name." },
+					{ name: "age", description: "The age." },
+				],
+				examples: [{ code: 'greet("Alice")', language: "typescript", line: 5 }],
+				tags: { remarks: ["Details."] },
+			},
+		});
+		const result = await runEnforce([sym], {
+			rules: { "require-fresh-examples": "warn" },
+		});
+		const w013 = result.warnings.filter((w) => w.code === "W013");
+		expect(w013).toHaveLength(1);
+		expect(w013[0].message).toContain("2 parameter(s)");
+		expect(w013[0].message).toContain("1 argument(s)");
+	});
+
+	it("does not emit W013 when example call arg count matches param count", async () => {
+		const sym = makeSymbol({
+			name: "add",
+			kind: "function",
+			signature: "(a: number, b: number) => number",
+			documentation: {
+				summary: "Adds two numbers.",
+				params: [
+					{ name: "a", description: "First number." },
+					{ name: "b", description: "Second number." },
+				],
+				returns: { description: "The sum." },
+				examples: [{ code: "add(1, 2)", language: "typescript", line: 5 }],
+				tags: { remarks: ["Details."] },
+			},
+		});
+		const result = await runEnforce([sym], {
+			rules: { "require-fresh-examples": "warn" },
+		});
+		const w013 = result.warnings.filter((w) => w.code === "W013");
+		expect(w013).toHaveLength(0);
+	});
+
+	it("does not emit W013 when example does not call the function", async () => {
+		const sym = makeSymbol({
+			name: "myFunc",
+			kind: "function",
+			signature: "(a: number, b: number) => void",
+			documentation: {
+				summary: "Does something.",
+				params: [
+					{ name: "a", description: "First." },
+					{ name: "b", description: "Second." },
+				],
+				examples: [{ code: "const result = someOtherThing();", language: "typescript", line: 5 }],
+				tags: { remarks: ["Details."] },
+			},
+		});
+		const result = await runEnforce([sym], {
+			rules: { "require-fresh-examples": "warn" },
+		});
+		const w013 = result.warnings.filter((w) => w.code === "W013");
+		expect(w013).toHaveLength(0);
+	});
+
+	it("detects zero-arg call when function has parameters", async () => {
+		const sym = makeSymbol({
+			name: "configure",
+			kind: "function",
+			signature: "(opts: Options) => void",
+			documentation: {
+				summary: "Configures the system.",
+				params: [{ name: "opts", description: "Options." }],
+				examples: [{ code: "configure()", language: "typescript", line: 5 }],
+				tags: { remarks: ["Details."] },
+			},
+		});
+		const result = await runEnforce([sym], {
+			rules: { "require-fresh-examples": "warn" },
+		});
+		const w013 = result.warnings.filter((w) => w.code === "W013");
+		expect(w013).toHaveLength(1);
+	});
+
+	it("detects extra args when function has no parameters", async () => {
+		const sym = makeSymbol({
+			name: "reset",
+			kind: "function",
+			signature: "() => void",
+			documentation: {
+				summary: "Resets everything.",
+				examples: [{ code: 'reset("hard")', language: "typescript", line: 5 }],
+				tags: { remarks: ["Details."] },
+			},
+		});
+		const result = await runEnforce([sym], {
+			rules: { "require-fresh-examples": "warn" },
+		});
+		const w013 = result.warnings.filter((w) => w.code === "W013");
+		expect(w013).toHaveLength(1);
+		expect(w013[0].message).toContain("0 parameter(s)");
+		expect(w013[0].message).toContain("1 argument(s)");
+	});
+
+	it('respects require-fresh-examples set to "off"', async () => {
+		const sym = makeSymbol({
+			name: "greet",
+			kind: "function",
+			signature: "(name: string, age: number) => void",
+			documentation: {
+				summary: "Greets someone.",
+				params: [
+					{ name: "name", description: "The name." },
+					{ name: "age", description: "The age." },
+				],
+				examples: [{ code: 'greet("Alice")', language: "typescript", line: 5 }],
+				tags: { remarks: ["Details."] },
+			},
+		});
+		const result = await runEnforce([sym], {
+			rules: { "require-fresh-examples": "off" },
+		});
+		const w013 = [...result.errors, ...result.warnings].filter((d) => d.code === "W013");
+		expect(w013).toHaveLength(0);
+	});
+
+	it("W013 is also skipped for @forge-ignore symbols", async () => {
+		const sym = makeSymbol({
+			name: "ignoredFunc",
+			kind: "function",
+			signature: "(a: number, b: number) => void",
+			documentation: {
+				summary: "Ignored function.",
+				params: [
+					{ name: "a", description: "First." },
+					{ name: "b", description: "Second." },
+				],
+				examples: [{ code: "ignoredFunc()", language: "typescript", line: 5 }],
+				tags: { "forge-ignore": [], remarks: ["Details."] },
+			},
+		});
+		const result = await runEnforce([sym], {
+			rules: { "require-fresh-examples": "warn" },
+		});
+		const w013 = result.warnings.filter((w) => w.code === "W013");
+		expect(w013).toHaveLength(0);
+	});
+});
+
+// ---------------------------------------------------------------------------
+// E019 — TS suppression directives (ts-ignore / ts-expect-error) in non-test files
+// ---------------------------------------------------------------------------
+
+describe("enforce — E019 @ts-ignore in non-test files", () => {
+	afterEach(() => {
+		vi.mocked(readFileSync).mockRestore();
+	});
+
+	it("emits E019 when a non-test file contains @ts-ignore", async () => {
+		const sym = makeSymbol({
+			name: "doThing",
+			filePath: "/fake/src/module.ts",
+			documentation: {
+				summary: "Does a thing.",
+				examples: [{ code: "doThing();", language: "typescript", line: 5 }],
+				tags: { remarks: ["Details."] },
+			},
+		});
+		vi.mocked(readFileSync).mockImplementation((p: unknown, _opts?: unknown) => {
+			if (String(p) === "/fake/src/module.ts") {
+				return "const x = 1;\n// @ts-ignore\nconst y: any = x;\n";
+			}
+			throw Object.assign(new Error("ENOENT"), { code: "ENOENT" });
+		});
+		const result = await runEnforce([sym], {
+			rules: { "require-no-ts-ignore": "error" },
+		});
+		const e019 = result.errors.filter((e) => e.code === "E019");
+		expect(e019).toHaveLength(1);
+		expect(e019[0].message).toContain("@ts-ignore");
+		expect(e019[0].line).toBe(2);
+	});
+
+	it("does not emit E019 for clean non-test files", async () => {
+		const sym = makeSymbol({
+			name: "doThing",
+			filePath: "/fake/src/module.ts",
+			documentation: {
+				summary: "Does a thing.",
+				examples: [{ code: "doThing();", language: "typescript", line: 5 }],
+				tags: { remarks: ["Details."] },
+			},
+		});
+		vi.mocked(readFileSync).mockImplementation((p: unknown, _opts?: unknown) => {
+			if (String(p) === "/fake/src/module.ts") {
+				return "const x = 1;\nconst y = x + 1;\n";
+			}
+			throw Object.assign(new Error("ENOENT"), { code: "ENOENT" });
+		});
+		const result = await runEnforce([sym], {
+			rules: { "require-no-ts-ignore": "error" },
+		});
+		const e019 = [...result.errors, ...result.warnings].filter((d) => d.code === "E019");
+		expect(e019).toHaveLength(0);
+	});
+
+	it('respects require-no-ts-ignore set to "off"', async () => {
+		const sym = makeSymbol({
+			name: "doThing",
+			filePath: "/fake/src/module.ts",
+			documentation: {
+				summary: "Does a thing.",
+				examples: [{ code: "doThing();", language: "typescript", line: 5 }],
+				tags: { remarks: ["Details."] },
+			},
+		});
+		vi.mocked(readFileSync).mockImplementation((p: unknown, _opts?: unknown) => {
+			if (String(p) === "/fake/src/module.ts") {
+				return "// @ts-ignore\nconst x: any = 1;\n";
+			}
+			throw Object.assign(new Error("ENOENT"), { code: "ENOENT" });
+		});
+		const result = await runEnforce([sym], {
+			rules: { "require-no-ts-ignore": "off" },
+		});
+		const e019 = [...result.errors, ...result.warnings].filter((d) => d.code === "E019");
+		expect(e019).toHaveLength(0);
+	});
+
+	it("does not emit E019 for @ts-ignore in test files", async () => {
+		const sym = makeSymbol({
+			name: "doThing",
+			filePath: "/fake/src/__tests__/module.test.ts",
+			documentation: {
+				summary: "Does a thing.",
+				examples: [{ code: "doThing();", language: "typescript", line: 5 }],
+				tags: { remarks: ["Details."] },
+			},
+		});
+		vi.mocked(readFileSync).mockImplementation((p: unknown, _opts?: unknown) => {
+			if (String(p) === "/fake/src/__tests__/module.test.ts") {
+				return "// @ts-ignore\nconst x: any = 1;\n";
+			}
+			throw Object.assign(new Error("ENOENT"), { code: "ENOENT" });
+		});
+		const result = await runEnforce([sym], {
+			rules: { "require-no-ts-ignore": "error" },
+		});
+		const e019 = [...result.errors, ...result.warnings].filter((d) => d.code === "E019");
+		expect(e019).toHaveLength(0);
+	});
+
+	it("emits E019 for @ts-expect-error as well", async () => {
+		const sym = makeSymbol({
+			name: "doThing",
+			filePath: "/fake/src/module.ts",
+			documentation: {
+				summary: "Does a thing.",
+				examples: [{ code: "doThing();", language: "typescript", line: 5 }],
+				tags: { remarks: ["Details."] },
+			},
+		});
+		vi.mocked(readFileSync).mockImplementation((p: unknown, _opts?: unknown) => {
+			if (String(p) === "/fake/src/module.ts") {
+				return "const x = 1;\n// @ts-expect-error\nconst y = x;\n";
+			}
+			throw Object.assign(new Error("ENOENT"), { code: "ENOENT" });
+		});
+		const result = await runEnforce([sym], {
+			rules: { "require-no-ts-ignore": "error" },
+		});
+		const e019 = result.errors.filter((e) => e.code === "E019");
+		expect(e019).toHaveLength(1);
+		expect(e019[0].message).toContain("@ts-ignore");
+		expect(e019[0].line).toBe(2);
+	});
+
+	it("does not scan .spec.ts files", async () => {
+		const sym = makeSymbol({
+			name: "doThing",
+			filePath: "/fake/src/module.spec.ts",
+			documentation: {
+				summary: "Does a thing.",
+				examples: [{ code: "doThing();", language: "typescript", line: 5 }],
+				tags: { remarks: ["Details."] },
+			},
+		});
+		vi.mocked(readFileSync).mockImplementation((p: unknown, _opts?: unknown) => {
+			if (String(p) === "/fake/src/module.spec.ts") {
+				return "// @ts-ignore\nconst x: any = 1;\n";
+			}
+			throw Object.assign(new Error("ENOENT"), { code: "ENOENT" });
+		});
+		const result = await runEnforce([sym], {
+			rules: { "require-no-ts-ignore": "error" },
+		});
+		const e019 = [...result.errors, ...result.warnings].filter((d) => d.code === "E019");
+		expect(e019).toHaveLength(0);
+	});
+});
+
+// ---------------------------------------------------------------------------
+// E020 — `any` casts in public API
+// ---------------------------------------------------------------------------
+
+describe("enforce — E020 any in public API signature", () => {
+	it("emits E020 for exported symbol with `any` in signature", async () => {
+		const sym = makeSymbol({
+			name: "processData",
+			kind: "function",
+			signature: "(data: any) => void",
+			documentation: {
+				summary: "Processes data.",
+				params: [{ name: "data", description: "The data." }],
+				examples: [{ code: "processData({});", language: "typescript", line: 5 }],
+				tags: { remarks: ["Details."] },
+			},
+		});
+		const result = await runEnforce([sym], {
+			rules: { "require-no-any-in-api": "warn" },
+		});
+		const e020 = result.warnings.filter((w) => w.code === "E020");
+		expect(e020).toHaveLength(1);
+		expect(e020[0].message).toContain("processData");
+		expect(e020[0].message).toContain("any");
+	});
+
+	it("does not emit E020 for clean signatures", async () => {
+		const sym = makeSymbol({
+			name: "processData",
+			kind: "function",
+			signature: "(data: string) => void",
+			documentation: {
+				summary: "Processes data.",
+				params: [{ name: "data", description: "The data." }],
+				examples: [{ code: 'processData("");', language: "typescript", line: 5 }],
+				tags: { remarks: ["Details."] },
+			},
+		});
+		const result = await runEnforce([sym], {
+			rules: { "require-no-any-in-api": "warn" },
+		});
+		const e020 = [...result.errors, ...result.warnings].filter((d) => d.code === "E020");
+		expect(e020).toHaveLength(0);
+	});
+
+	it('respects require-no-any-in-api set to "off"', async () => {
+		const sym = makeSymbol({
+			name: "processData",
+			kind: "function",
+			signature: "(data: any) => void",
+			documentation: {
+				summary: "Processes data.",
+				params: [{ name: "data", description: "The data." }],
+				examples: [{ code: "processData({});", language: "typescript", line: 5 }],
+				tags: { remarks: ["Details."] },
+			},
+		});
+		const result = await runEnforce([sym], {
+			rules: { "require-no-any-in-api": "off" },
+		});
+		const e020 = [...result.errors, ...result.warnings].filter((d) => d.code === "E020");
+		expect(e020).toHaveLength(0);
+	});
+
+	it("does not emit E020 for @internal symbols", async () => {
+		const sym = makeSymbol({
+			name: "internalHelper",
+			kind: "function",
+			signature: "(data: any) => void",
+			documentation: {
+				summary: "Internal helper.",
+				params: [{ name: "data", description: "The data." }],
+				examples: [{ code: "internalHelper({});", language: "typescript", line: 5 }],
+				tags: { internal: [], remarks: ["Details."] },
+			},
+		});
+		const result = await runEnforce([sym], {
+			rules: { "require-no-any-in-api": "warn" },
+		});
+		const e020 = [...result.errors, ...result.warnings].filter((d) => d.code === "E020");
+		expect(e020).toHaveLength(0);
+	});
+
+	it("does not false-positive on 'many' or 'company' in signature", async () => {
+		const sym = makeSymbol({
+			name: "getCompany",
+			kind: "function",
+			signature: "(company: string) => string",
+			documentation: {
+				summary: "Gets company.",
+				params: [{ name: "company", description: "The company." }],
+				returns: { description: "The company name." },
+				examples: [{ code: 'getCompany("acme");', language: "typescript", line: 5 }],
+				tags: { remarks: ["Details."] },
+			},
+		});
+		const result = await runEnforce([sym], {
+			rules: { "require-no-any-in-api": "warn" },
+		});
+		const e020 = [...result.errors, ...result.warnings].filter((d) => d.code === "E020");
+		expect(e020).toHaveLength(0);
+	});
+});
+
+// ---------------------------------------------------------------------------
+// W012 — Orphaned {@link} display text
+// ---------------------------------------------------------------------------
+
+describe("enforce — W012 orphaned link display text", () => {
+	it("emits W012 when link display text has no word overlap with target summary", async () => {
+		const targetSym = makeSymbol({
+			name: "generateOutput",
+			kind: "function",
+			documentation: {
+				summary: "Generates output files from templates.",
+				examples: [{ code: "generateOutput();", language: "typescript", line: 5 }],
+				tags: { remarks: ["Details."] },
+			},
+		});
+		const sourceSym = makeSymbol({
+			name: "runPipeline",
+			kind: "function",
+			documentation: {
+				summary: "Runs the pipeline.",
+				links: [{ target: "generateOutput", line: 10, text: "Validates config" }],
+				examples: [{ code: "runPipeline();", language: "typescript", line: 5 }],
+				tags: { remarks: ["Details."] },
+			},
+		});
+		const result = await runEnforce([targetSym, sourceSym], {
+			rules: { "require-fresh-link-text": "warn" },
+		});
+		const w012 = result.warnings.filter((w) => w.code === "W012");
+		expect(w012).toHaveLength(1);
+		expect(w012[0].message).toContain("generateOutput");
+		expect(w012[0].message).toContain("stale");
+	});
+
+	it("does not emit W012 when link display text overlaps with target summary", async () => {
+		const targetSym = makeSymbol({
+			name: "generateOutput",
+			kind: "function",
+			documentation: {
+				summary: "Generates output files from templates.",
+				examples: [{ code: "generateOutput();", language: "typescript", line: 5 }],
+				tags: { remarks: ["Details."] },
+			},
+		});
+		const sourceSym = makeSymbol({
+			name: "runPipeline",
+			kind: "function",
+			documentation: {
+				summary: "Runs the pipeline.",
+				links: [{ target: "generateOutput", line: 10, text: "Generates output" }],
+				examples: [{ code: "runPipeline();", language: "typescript", line: 5 }],
+				tags: { remarks: ["Details."] },
+			},
+		});
+		const result = await runEnforce([targetSym, sourceSym], {
+			rules: { "require-fresh-link-text": "warn" },
+		});
+		const w012 = [...result.errors, ...result.warnings].filter((d) => d.code === "W012");
+		expect(w012).toHaveLength(0);
+	});
+
+	it('respects require-fresh-link-text set to "off"', async () => {
+		const targetSym = makeSymbol({
+			name: "generateOutput",
+			kind: "function",
+			documentation: {
+				summary: "Generates output files from templates.",
+				examples: [{ code: "generateOutput();", language: "typescript", line: 5 }],
+				tags: { remarks: ["Details."] },
+			},
+		});
+		const sourceSym = makeSymbol({
+			name: "runPipeline",
+			kind: "function",
+			documentation: {
+				summary: "Runs the pipeline.",
+				links: [{ target: "generateOutput", line: 10, text: "Validates config" }],
+				examples: [{ code: "runPipeline();", language: "typescript", line: 5 }],
+				tags: { remarks: ["Details."] },
+			},
+		});
+		const result = await runEnforce([targetSym, sourceSym], {
+			rules: { "require-fresh-link-text": "off" },
+		});
+		const w012 = [...result.errors, ...result.warnings].filter((d) => d.code === "W012");
+		expect(w012).toHaveLength(0);
+	});
+
+	it("does not emit W012 when link has no display text", async () => {
+		const targetSym = makeSymbol({
+			name: "generateOutput",
+			kind: "function",
+			documentation: {
+				summary: "Generates output files from templates.",
+				examples: [{ code: "generateOutput();", language: "typescript", line: 5 }],
+				tags: { remarks: ["Details."] },
+			},
+		});
+		const sourceSym = makeSymbol({
+			name: "runPipeline",
+			kind: "function",
+			documentation: {
+				summary: "Runs the pipeline.",
+				links: [{ target: "generateOutput", line: 10 }],
+				examples: [{ code: "runPipeline();", language: "typescript", line: 5 }],
+				tags: { remarks: ["Details."] },
+			},
+		});
+		const result = await runEnforce([targetSym, sourceSym], {
+			rules: { "require-fresh-link-text": "warn" },
+		});
+		const w012 = [...result.errors, ...result.warnings].filter((d) => d.code === "W012");
+		expect(w012).toHaveLength(0);
+	});
+
+	it("does not emit W012 when target symbol does not exist", async () => {
+		const sourceSym = makeSymbol({
+			name: "runPipeline",
+			kind: "function",
+			documentation: {
+				summary: "Runs the pipeline.",
+				links: [{ target: "nonExistent", line: 10, text: "Validates config" }],
+				examples: [{ code: "runPipeline();", language: "typescript", line: 5 }],
+				tags: { remarks: ["Details."] },
+			},
+		});
+		const result = await runEnforce([sourceSym], {
+			rules: { "require-fresh-link-text": "warn" },
+		});
+		const w012 = [...result.errors, ...result.warnings].filter((d) => d.code === "W012");
+		expect(w012).toHaveLength(0);
 	});
 });

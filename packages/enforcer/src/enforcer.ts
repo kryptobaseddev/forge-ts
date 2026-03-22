@@ -1,5 +1,5 @@
 import { existsSync, readdirSync, readFileSync } from "node:fs";
-import { join } from "node:path";
+import { join, resolve } from "node:path";
 import {
 	createWalker,
 	type EnforceRules,
@@ -287,6 +287,10 @@ const RULE_MAP: Record<string, keyof EnforceRules> = {
 	W009: "require-inheritdoc-source",
 	W010: "require-migration-path",
 	W011: "require-since",
+	E019: "require-no-ts-ignore",
+	E020: "require-no-any-in-api",
+	W012: "require-fresh-link-text",
+	W013: "require-fresh-examples",
 };
 
 // ---------------------------------------------------------------------------
@@ -353,6 +357,27 @@ export async function enforce(config: ForgeConfig): Promise<ForgeResult> {
 	const allSymbols = walker.walk();
 	const symbols = filterByVisibility(allSymbols, config.enforce.minVisibility);
 
+	// ---------------------------------------------------------------------------
+	// Ignore file: read symbol names to skip enforcement on (Knip integration)
+	// ---------------------------------------------------------------------------
+	const ignoreSet = new Set<string>();
+	if (config.enforce.ignoreFile) {
+		const ignoreFilePath = resolve(config.rootDir, config.enforce.ignoreFile);
+		if (existsSync(ignoreFilePath)) {
+			try {
+				const content = readFileSync(ignoreFilePath, "utf-8");
+				for (const rawLine of content.split("\n")) {
+					const trimmed = rawLine.trim();
+					if (trimmed.length > 0 && !trimmed.startsWith("#")) {
+						ignoreSet.add(trimmed);
+					}
+				}
+			} catch {
+				// Ignore read errors gracefully
+			}
+		}
+	}
+
 	/**
 	 * Emit a diagnostic.  The configured per-rule severity determines whether
 	 * the diagnostic is an error or warning; "off" suppresses it entirely.
@@ -395,6 +420,12 @@ export async function enforce(config: ForgeConfig): Promise<ForgeResult> {
 
 	for (const symbol of symbols) {
 		if (!symbol.exported) continue;
+
+		// Skip enforcement for symbols in the ignore file (Knip dead-export integration)
+		if (ignoreSet.has(symbol.name)) continue;
+
+		// Skip enforcement for symbols with @forge-ignore tag
+		if (symbol.documentation?.tags?.["forge-ignore"] !== undefined) continue;
 
 		const isFunctionLike = symbol.kind === "function" || symbol.kind === "method";
 
@@ -677,6 +708,24 @@ export async function enforce(config: ForgeConfig): Promise<ForgeResult> {
 			}
 		}
 
+		// E020 — `any` type in public API signature
+		if (symbol.documentation?.tags?.internal === undefined && symbol.signature) {
+			const anyRegex = /\bany\b/g;
+			if (anyRegex.test(symbol.signature)) {
+				emit(
+					"E020",
+					`Exported symbol "${symbol.name}" has \`any\` in its signature. Use a specific type or generic.`,
+					symbol.filePath,
+					symbol.line,
+					symbol.column,
+					{
+						symbolName: symbol.name,
+						symbolKind: symbol.kind,
+					},
+				);
+			}
+		}
+
 		// W003 — @deprecated without reason
 		if (deprecatedWithoutReason(symbol)) {
 			emit(
@@ -727,6 +776,116 @@ export async function enforce(config: ForgeConfig): Promise<ForgeResult> {
 						);
 					}
 				}
+			}
+		}
+	}
+
+	// W013 — Stale @example blocks (arg count mismatch with function signature)
+	for (const symbol of symbols) {
+		if (!symbol.exported) continue;
+		if (ignoreSet.has(symbol.name)) continue;
+		if (symbol.documentation?.tags?.["forge-ignore"] !== undefined) continue;
+
+		const isFn = symbol.kind === "function" || symbol.kind === "method";
+		if (!isFn) continue;
+
+		const examples = symbol.documentation?.examples ?? [];
+		if (examples.length === 0) continue;
+
+		// Extract parameter count from signature
+		const sig = symbol.signature;
+		if (!sig) continue;
+
+		const parenMatch = sig.match(/^\(([^)]*)\)/);
+		if (!parenMatch) continue;
+
+		const rawParamStr = parenMatch[1].trim();
+		let paramCount = 0;
+		if (rawParamStr.length > 0) {
+			const params = splitParams(rawParamStr)
+				.map((p) =>
+					p
+						.trim()
+						.split(":")[0]
+						.trim()
+						.replace(/^\.{3}/, "")
+						.replace(/\?$/, "")
+						.trim(),
+				)
+				.filter((p) => p.length > 0 && p !== "this");
+			paramCount = params.length;
+		}
+
+		// Build a regex to find calls to this function in example code
+		const funcCallRegex = new RegExp(`\\b${symbol.name}\\s*\\(`, "g");
+
+		for (const example of examples) {
+			funcCallRegex.lastIndex = 0;
+			let callMatch = funcCallRegex.exec(example.code);
+			while (callMatch) {
+				// Count arguments by finding the matching closing paren
+				const startIdx = callMatch.index + callMatch[0].length;
+				let depth = 1;
+				let idx = startIdx;
+				while (idx < example.code.length && depth > 0) {
+					const ch = example.code[idx];
+					if (ch === "(" || ch === "<" || ch === "[" || ch === "{") depth++;
+					else if (ch === ")" || ch === ">" || ch === "]" || ch === "}") depth--;
+					idx++;
+				}
+				// Extract the arguments substring
+				const argsStr = example.code.slice(startIdx, idx - 1).trim();
+				let argCount = 0;
+				if (argsStr.length > 0) {
+					// Split on top-level commas
+					argCount = splitParams(argsStr).length;
+				}
+
+				if (argCount !== paramCount) {
+					emit(
+						"W013",
+						`@example in "${symbol.name}" may be stale — function signature has ${paramCount} parameter(s) but example call has ${argCount} argument(s).`,
+						symbol.filePath,
+						example.line,
+						symbol.column,
+						{
+							symbolName: symbol.name,
+							symbolKind: symbol.kind,
+						},
+					);
+				}
+				callMatch = funcCallRegex.exec(example.code);
+			}
+		}
+	}
+
+	// E019 — ts-ignore / ts-expect-error in non-test files
+	// Scan each unique non-test source file that contains symbols for suppression directives.
+	{
+		const tsIgnoreRegex = /\/\/\s*@ts-(ignore|expect-error)/g;
+		const testPathRegex = /(\.(test|spec)\.ts$|__tests__[/\\])/;
+		const scannedFiles = new Set<string>();
+		for (const symbol of allSymbols) {
+			if (scannedFiles.has(symbol.filePath)) continue;
+			scannedFiles.add(symbol.filePath);
+			if (testPathRegex.test(symbol.filePath)) continue;
+			try {
+				const fileContent = readFileSync(symbol.filePath, "utf-8");
+				const lines = fileContent.split("\n");
+				for (let i = 0; i < lines.length; i++) {
+					tsIgnoreRegex.lastIndex = 0;
+					if (tsIgnoreRegex.test(lines[i])) {
+						emit(
+							"E019",
+							`Non-test file "${symbol.filePath}" contains @ts-ignore at line ${i + 1}. Remove the suppression or move the code to a test file.`,
+							symbol.filePath,
+							i + 1,
+							0,
+						);
+					}
+				}
+			} catch {
+				// Skip unreadable files
 			}
 		}
 	}
@@ -789,6 +948,148 @@ export async function enforce(config: ForgeConfig): Promise<ForgeResult> {
 						symbolKind: symbol.kind,
 					},
 				);
+			}
+		}
+	}
+
+	// W012 — Orphaned {@link} display text detection
+	// Build a map of symbol name → summary for comparison with link display text.
+	{
+		const COMMON_WORDS = new Set([
+			"the",
+			"a",
+			"an",
+			"is",
+			"are",
+			"was",
+			"were",
+			"be",
+			"been",
+			"being",
+			"have",
+			"has",
+			"had",
+			"do",
+			"does",
+			"did",
+			"will",
+			"would",
+			"could",
+			"should",
+			"may",
+			"might",
+			"shall",
+			"can",
+			"need",
+			"must",
+			"to",
+			"of",
+			"in",
+			"for",
+			"on",
+			"with",
+			"at",
+			"by",
+			"from",
+			"as",
+			"into",
+			"through",
+			"during",
+			"before",
+			"after",
+			"above",
+			"below",
+			"between",
+			"out",
+			"off",
+			"over",
+			"under",
+			"and",
+			"but",
+			"or",
+			"nor",
+			"not",
+			"so",
+			"yet",
+			"both",
+			"either",
+			"neither",
+			"each",
+			"every",
+			"all",
+			"any",
+			"few",
+			"more",
+			"most",
+			"other",
+			"some",
+			"such",
+			"no",
+			"only",
+			"own",
+			"same",
+			"than",
+			"too",
+			"very",
+			"this",
+			"that",
+			"these",
+			"those",
+			"it",
+			"its",
+		]);
+
+		const symbolSummaryMap = new Map<string, string>();
+		for (const s of allSymbols) {
+			if (s.documentation?.summary) {
+				symbolSummaryMap.set(s.name, s.documentation.summary);
+			}
+			if (s.children) {
+				for (const child of s.children) {
+					if (child.documentation?.summary) {
+						symbolSummaryMap.set(child.name, child.documentation.summary);
+						symbolSummaryMap.set(`${s.name}.${child.name}`, child.documentation.summary);
+					}
+				}
+			}
+		}
+
+		function extractSignificantWords(text: string): Set<string> {
+			return new Set(
+				text
+					.toLowerCase()
+					.split(/\W+/)
+					.filter((w) => w.length > 0 && !COMMON_WORDS.has(w)),
+			);
+		}
+
+		for (const symbol of allSymbols) {
+			const docLinks = symbol.documentation?.links ?? [];
+			for (const link of docLinks) {
+				if (!link.text) continue;
+				if (!knownSymbols.has(link.target)) continue;
+				const targetSummary = symbolSummaryMap.get(link.target);
+				if (!targetSummary) continue;
+				const linkWords = extractSignificantWords(link.text);
+				const summaryWords = extractSignificantWords(targetSummary);
+				if (linkWords.size === 0 || summaryWords.size === 0) continue;
+				let overlap = 0;
+				for (const word of linkWords) {
+					if (summaryWords.has(word)) overlap++;
+				}
+				if (overlap === 0) {
+					emit(
+						"W012",
+						`{@link ${link.target} | ${link.text}} in "${symbol.name}" has display text that appears stale relative to target summary "${targetSummary}".`,
+						symbol.filePath,
+						link.line,
+						symbol.column,
+						{
+							symbolName: symbol.name,
+							symbolKind: symbol.kind,
+						},
+					);
+				}
 			}
 		}
 	}

@@ -443,7 +443,7 @@ function parseTSDoc(
 	const examples = extractExamples(comment, startLine);
 
 	// Extract {@link} references
-	const links: Array<{ target: string; line: number }> = [];
+	const links: Array<{ target: string; line: number; text?: string }> = [];
 	function walkForLinks(node: DocNode): void {
 		if (node.kind === DocNodeKind.LinkTag) {
 			const linkTag = node as DocLinkTag;
@@ -453,7 +453,8 @@ function parseTSDoc(
 					.filter(Boolean)
 					.join(".");
 				if (target) {
-					links.push({ target, line: startLine });
+					const text = linkTag.linkText?.trim() || undefined;
+					links.push({ target, line: startLine, text });
 				}
 			}
 		}

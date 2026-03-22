@@ -15,7 +15,8 @@
 		{ "tagName": "@faq", "syntaxKind": "block" },
 		{ "tagName": "@breaking", "syntaxKind": "block" },
 		{ "tagName": "@migration", "syntaxKind": "block" },
-		{ "tagName": "@complexity", "syntaxKind": "block" }
+		{ "tagName": "@complexity", "syntaxKind": "block" },
+		{ "tagName": "@forge-ignore", "syntaxKind": "modifier" }
 	],
 	"supportForTags": {
 		"@alpha": true,
@@ -55,6 +56,7 @@
 		"@faq": true,
 		"@breaking": true,
 		"@migration": true,
-		"@complexity": true
+		"@complexity": true,
+		"@forge-ignore": true
 	}
 }

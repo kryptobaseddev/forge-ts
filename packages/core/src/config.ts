@@ -71,6 +71,10 @@ export function defaultConfig(rootDir: string): ForgeConfig {
 				"require-inheritdoc-source": "warn",
 				"require-migration-path": "warn",
 				"require-since": "warn",
+				"require-fresh-examples": "warn",
+				"require-no-ts-ignore": "error",
+				"require-no-any-in-api": "warn",
+				"require-fresh-link-text": "warn",
 			},
 		},
 		doctest: {
@@ -172,6 +176,10 @@ const KNOWN_RULE_KEYS = new Set([
 	"require-inheritdoc-source",
 	"require-migration-path",
 	"require-since",
+	"require-fresh-examples",
+	"require-no-ts-ignore",
+	"require-no-any-in-api",
+	"require-fresh-link-text",
 ]);
 
 /**

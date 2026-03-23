@@ -1,4 +1,4 @@
-# forge-ts TSDoc Tag Reference (v0.19.4)
+# forge-ts TSDoc Tag Reference (v0.19.5)
 
 Quick reference for LLM agents. 15 custom tags, 33 enforcement rules.
 Canonical source: `docs/FORGE-TSDOC-TAGS.md`

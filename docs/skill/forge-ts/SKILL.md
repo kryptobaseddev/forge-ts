@@ -21,7 +21,7 @@ description: >
 
 The documentation compiler for TypeScript. Enforces TSDoc as a build gate,
 then generates everything from your documented source code in one pass.
-33 enforcement rules across 4 layers. 6 packages at v0.19.4.
+33 enforcement rules across 4 layers. 6 packages at v0.19.5.
 
 ## Quick Start
 

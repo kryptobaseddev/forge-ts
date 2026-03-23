@@ -1,4 +1,4 @@
-# forge-ts Enforcer Rules (v0.19.4)
+# forge-ts Enforcer Rules (v0.19.5)
 
 33 rules across 4 enforcement layers. Configurable rules accept
 `"error"` | `"warn"` | `"off"` in `enforce.rules`. Guard rules (E009-E012)

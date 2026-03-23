@@ -124,3 +124,4 @@ We need to add official plugin/adapters for static site generators that deeply i
 | v0.19.2 | — | Per-Group Enforcement | tsdoc.enforce (core/extended/discretionary), customTags written to tsdoc.json |
 | v0.19.3 | — | @forgeIgnore Fix | @forgeIgnore tag enforcement suppression fix |
 | v0.19.4 | — | E020 Fix | getDeclaredTypeOfSymbol for interfaces/types, fixes E020 false positives |
+| v0.19.5 | — | Cooperative Hooks | --staged, --no-install, versionguard detection, auto-scaffold in init |

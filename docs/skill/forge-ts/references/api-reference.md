@@ -1,4 +1,4 @@
-# forge-ts Programmatic API (v0.19.4)
+# forge-ts Programmatic API (v0.19.5)
 
 ## Table of Contents
 

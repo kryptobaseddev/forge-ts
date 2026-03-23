@@ -1,12 +1,12 @@
-# forge-ts: System Architecture (v0.19.4)
+# forge-ts: System Architecture (v0.19.5)
 
 This document describes how forge-ts works technically. It covers the package
 structure, data flow, subsystems, and technology choices that make up the system
-as of v0.19.4. For the project vision, see `VISION.md`. For the feature
+as of v0.19.5. For the project vision, see `VISION.md`. For the feature
 inventory, see `FEATURES.md`.
 
 > **Note:** The former `FORGE-ARCHITECTURE-SPEC.md` in this directory served as
-> the working design spec during the v0.9.0 through v0.19.4 development cycle.
+> the working design spec during the v0.9.0 through v0.19.5 development cycle.
 > Its content has been absorbed into this document and the spec file is now
 > deprecated. It remains in the repository for historical reference only.
 

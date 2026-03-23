@@ -1,6 +1,6 @@
 # Feature Gap Analysis: ferrous-forge -> forge-ts
 
-> **ferrous-forge** v1.9.0 (Rust) | **forge-ts** v0.19.4 (TypeScript)
+> **ferrous-forge** v1.9.0 (Rust) | **forge-ts** v0.19.5 (TypeScript)
 >
 > This document maps every significant ferrous-forge feature to forge-ts with a clear recommendation:
 > **SHOULD port**, **SHOULD NOT port**, or **CANNOT port** (language-specific).

@@ -3,7 +3,7 @@
 ## The Premise
 As of 2026, the TypeScript ecosystem has matured incredibly in type safety, build tooling (esbuild, swc), and runtime engines (Node 24 LTS "Krypton", Deno). Yet, the documentation and API specification layer remains a fractured relic of the past. Teams currently stitch together ESLint plugins, TypeDoc, Zod schemas, and Swagger generators just to achieve what the Rust ecosystem gets out-of-the-box with a single command: `cargo doc`.
 
-> **Status (v0.19.4):** forge-ts v0.19.4 delivers the complete vision: 33 enforcement rules across 4 layers, intelligent guide generation, agent-proof guardrails, and full ecosystem integration. A single `npx forge-ts build` compiles TSDoc into OpenAPI specs, consumer-ready MDX, llms.txt artifacts, and SKILL packages -- all from one AST traversal pass.
+> **Status (v0.19.5):** forge-ts v0.19.5 delivers the complete vision: 33 enforcement rules across 4 layers, intelligent guide generation, agent-proof guardrails, cooperative git hooks with versionguard detection, and full ecosystem integration. A single `npx forge-ts build` compiles TSDoc into OpenAPI specs, consumer-ready MDX, llms.txt artifacts, and SKILL packages -- all from one AST traversal pass.
 
 Worse, in the era of AI-driven development, documentation isn't just for humans anymore. LLM agents need dense, high-signal context (`llms.txt`), and existing HTML-heavy documentation generators fail to deliver this natively.
 
@@ -59,9 +59,9 @@ By centralizing API specs, Dev Docs, and Consumer Docs into a single AST-travers
 
 ---
 
-## Current State: v0.19.4
+## Current State: v0.19.5
 
-**6 packages**, all at v0.19.4 with fixed versioning:
+**6 packages**, all at v0.19.5 with fixed versioning:
 
 | Package | Role |
 |---------|------|
@@ -297,9 +297,9 @@ Guide discovery via 5 heuristics, FORGE:STUB zone support, code-derived guide st
 
 `forge-ts init --hooks` (husky/lefthook scaffolding), `forge-ts prepublish` gate, E011 (Biome config guard), E012 (engine guard), E016 (release tag requirement).
 
-### Phase 9-12: DX Polish, Init, Husky, Advanced Enforcement -- COMPLETE (v0.14.0 - v0.19.4)
+### Phase 9-12: DX Polish, Init, Husky, Advanced Enforcement -- COMPLETE (v0.14.0 - v0.19.5)
 
-Complete tag system (15 custom tags), init setup + doctor commands, defineConfig(), Husky v9 integration, check --staged, shared pkg-json.ts, Knip integration via ignoreFile + @forgeIgnore, E017-E020, W009-W013, per-group TSDoc enforcement, customTags written to tsdoc.json, getDeclaredTypeOfSymbol fix for E020 false positives.
+Complete tag system (15 custom tags), init setup + doctor commands, defineConfig(), Husky v9 integration, check --staged, shared pkg-json.ts, Knip integration via ignoreFile + @forgeIgnore, E017-E020, W009-W013, per-group TSDoc enforcement, customTags written to tsdoc.json, getDeclaredTypeOfSymbol fix for E020 false positives, cooperative git hooks with --staged for pre-commit performance, --no-install for supply chain safety, versionguard detection, and auto-scaffold hooks during forge-ts init.
 
 ### What's Next
 

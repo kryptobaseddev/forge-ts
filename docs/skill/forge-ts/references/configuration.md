@@ -1,4 +1,4 @@
-# forge-ts Configuration Reference (v0.19.4)
+# forge-ts Configuration Reference (v0.19.5)
 
 ## Config File Resolution
 

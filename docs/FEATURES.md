@@ -1,9 +1,9 @@
-# forge-ts Feature Inventory (v0.19.4)
+# forge-ts Feature Inventory (v0.19.5)
 
 > Canonical reference for every implemented feature in forge-ts.
 > No roadmap. No vision. Every item listed here exists in the codebase and passes tests.
 >
-> **859 tests | 20 test files | 6 packages | All v0.19.4**
+> **859 tests | 20 test files | 6 packages | All v0.19.5**
 
 ---
 
@@ -23,7 +23,7 @@
 
 ## Packages
 
-All packages are published under the `@forge-ts` scope at version **0.19.4**.
+All packages are published under the `@forge-ts` scope at version **0.19.5**.
 
 | Package | Responsibility |
 |---------|---------------|
@@ -47,7 +47,7 @@ All commands are invoked as `forge-ts <command>`. Output supports both human-rea
 | `forge-ts build` | Generate API reference, documentation site, llms.txt, SKILL.md, and README sync. |
 | `forge-ts init setup` | Initial project setup: scaffold config, tsdoc.json, and recommended scripts. |
 | `forge-ts init docs` | Scaffold a documentation site for the configured SSG target. |
-| `forge-ts init hooks` | Scaffold pre-commit hook configuration (Husky v9) with `forge-ts check` as the gate. Adds `prepare` script. |
+| `forge-ts init hooks` | Scaffold pre-commit hook configuration (Husky v9) with `forge-ts check --staged` as the gate. Cooperative hook protocol with versionguard detection, `--no-install` for supply chain safety. Adds `prepare` script. |
 | `forge-ts docs dev` | Start a local dev server for the configured SSG target. Reads `gen.ssgTarget` from config and spawns the correct platform dev server. |
 | `forge-ts lock` | Snapshot current config to `.forge-lock.json` to prevent silent weakening. |
 | `forge-ts unlock --reason` | Remove config lock. Requires a justification string. |
@@ -221,6 +221,20 @@ Three files form the agent-proof infrastructure. All are designed to prevent AI 
 - **Budget**: Configurable daily limit (default: 3 bypasses per day)
 - **Expiry**: Configurable duration (default: 24 hours)
 - **Scope**: Per-rule temporary exemptions that auto-expire
+
+---
+
+## Git Hooks Integration
+
+forge-ts provides cooperative git hook integration for pre-commit enforcement.
+
+| Feature | Description |
+|---------|-------------|
+| Cooperative hook protocol | Detects and cooperates with versionguard hooks -- both tools run in the same pre-commit hook without conflict |
+| `--staged` flag | `forge-ts check --staged` runs enforcement only on staged files for fast pre-commit performance |
+| `--no-install` flag | Hook templates use `--no-install` to prevent supply chain attacks via transitive dependency installation |
+| Auto-scaffold | `forge-ts init hooks` scaffolds Husky v9 hooks with the correct flags pre-configured |
+| Versionguard detection | Detects `.versionguard.yml` and appends `versionguard validate` to Husky hooks so both tools enforce cooperatively |
 
 ---
 

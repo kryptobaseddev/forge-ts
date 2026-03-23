@@ -128,23 +128,43 @@ export function detectHookManager(rootDir: string): HookManager {
 
 /**
  * Modern husky v9+ pre-commit hook content.
- * No shebang or husky.sh source line needed — just the command.
+ * Uses --staged for performance (only checks files being committed).
+ * Comment marker identifies forge-ts lines for cooperative hook management.
  * @internal
  */
-const HUSKY_PRE_COMMIT = `npx forge-ts check
+const HUSKY_PRE_COMMIT = `# forge-ts
+npx forge-ts check --staged
 `;
 
 /**
  * Modern husky v9+ pre-push hook content.
+ * Comment marker identifies forge-ts lines for cooperative hook management.
  * @internal
  */
-const HUSKY_PRE_PUSH = `npx forge-ts prepublish
+const HUSKY_PRE_PUSH = `# forge-ts
+npx forge-ts prepublish
+`;
+
+/**
+ * Versionguard pre-commit hook line, appended when `.versionguard.yml` is detected.
+ * @internal
+ */
+const VG_PRE_COMMIT = `# versionguard
+npx versionguard validate --hook=pre-commit
+`;
+
+/**
+ * Versionguard pre-push hook line, appended when `.versionguard.yml` is detected.
+ * @internal
+ */
+const VG_PRE_PUSH = `# versionguard
+npx versionguard validate --hook=pre-push
 `;
 
 const LEFTHOOK_BLOCK = `pre-commit:
   commands:
     forge-ts-check:
-      run: npx forge-ts check
+      run: npx forge-ts check --staged
 
 pre-push:
   commands:
@@ -177,6 +197,35 @@ export function generateLefthookBlock(): string {
 }
 
 // ---------------------------------------------------------------------------
+// Cooperative detection helpers
+// ---------------------------------------------------------------------------
+
+/**
+ * Config file names that indicate versionguard is configured in the project.
+ * @internal
+ */
+const VG_CONFIG_FILES = [
+	".versionguard.yml",
+	".versionguard.yaml",
+	"versionguard.yml",
+	"versionguard.yaml",
+];
+
+/**
+ * Checks whether a versionguard config file exists in the project root.
+ *
+ * When detected, forge-ts appends versionguard's hook lines to the
+ * generated hook files so both tools run cooperatively.
+ *
+ * @param rootDir - Absolute path to the project root.
+ * @returns True when a versionguard config file is found.
+ * @public
+ */
+export function detectVersionGuard(rootDir: string): boolean {
+	return VG_CONFIG_FILES.some((name) => existsSync(join(rootDir, name)));
+}
+
+// ---------------------------------------------------------------------------
 // Public API
 // ---------------------------------------------------------------------------
 
@@ -201,6 +250,7 @@ export async function runInitHooks(args: InitHooksArgs): Promise<CommandOutput<I
 	const rootDir = args.cwd ?? process.cwd();
 
 	const hookManager = detectHookManager(rootDir);
+	const hasVersionGuard = detectVersionGuard(rootDir);
 	const writtenFiles: string[] = [];
 	const skippedFiles: string[] = [];
 	const warnings: ForgeCliWarning[] = [];
@@ -226,6 +276,14 @@ export async function runInitHooks(args: InitHooksArgs): Promise<CommandOutput<I
 			instructions.push("husky is not installed. Run: npm install -D husky (or pnpm add -D husky)");
 		}
 
+		// Build hook content — forge-ts lines + versionguard lines if detected
+		const preCommitContent = hasVersionGuard
+			? `${HUSKY_PRE_COMMIT}${VG_PRE_COMMIT}`
+			: HUSKY_PRE_COMMIT;
+		const prePushContent = hasVersionGuard
+			? `${HUSKY_PRE_PUSH}${VG_PRE_PUSH}`
+			: HUSKY_PRE_PUSH;
+
 		// -----------------------------------------------------------------
 		// Write pre-commit hook (.husky/pre-commit)
 		// -----------------------------------------------------------------
@@ -235,21 +293,28 @@ export async function runInitHooks(args: InitHooksArgs): Promise<CommandOutput<I
 
 		if (existsSync(preCommitPath) && !args.force) {
 			const existing = await readFile(preCommitPath, "utf8");
-			if (existing.includes("forge-ts check")) {
+			// Accept both marker-based (# forge-ts) and legacy (forge-ts check) detection
+			if (existing.includes("# forge-ts") || existing.includes("forge-ts check")) {
 				skippedFiles.push(preCommitRel);
 				warnings.push({
 					code: "HOOKS_ALREADY_EXISTS",
-					message: `${preCommitRel} already contains forge-ts check — skipping. Use --force to overwrite.`,
+					message: `${preCommitRel} already contains forge-ts hooks — skipping. Use --force to overwrite.`,
 				});
+				// Still check if we need to append versionguard
+				if (hasVersionGuard && !existing.includes("# versionguard")) {
+					const appended = `${existing.trimEnd()}\n${VG_PRE_COMMIT}`;
+					await writeFile(preCommitPath, appended, { mode: 0o755 });
+					writtenFiles.push(`${preCommitRel} (added versionguard)`);
+				}
 			} else {
-				// Append to existing hook
-				const appended = `${existing.trimEnd()}\n\nnpx forge-ts check\n`;
+				// Append forge-ts (and optionally VG) to existing hook
+				const appended = `${existing.trimEnd()}\n\n${preCommitContent}`;
 				await writeFile(preCommitPath, appended, { mode: 0o755 });
 				writtenFiles.push(preCommitRel);
 			}
 		} else {
 			await mkdir(huskyDir, { recursive: true });
-			await writeFile(preCommitPath, HUSKY_PRE_COMMIT, { mode: 0o755 });
+			await writeFile(preCommitPath, preCommitContent, { mode: 0o755 });
 			writtenFiles.push(preCommitRel);
 		}
 
@@ -261,20 +326,27 @@ export async function runInitHooks(args: InitHooksArgs): Promise<CommandOutput<I
 
 		if (existsSync(prePushPath) && !args.force) {
 			const existing = await readFile(prePushPath, "utf8");
-			if (existing.includes("forge-ts prepublish")) {
+			// Accept both marker-based (# forge-ts) and legacy (forge-ts prepublish) detection
+			if (existing.includes("# forge-ts") || existing.includes("forge-ts prepublish")) {
 				skippedFiles.push(prePushRel);
 				warnings.push({
 					code: "HOOKS_ALREADY_EXISTS",
-					message: `${prePushRel} already contains forge-ts prepublish — skipping. Use --force to overwrite.`,
+					message: `${prePushRel} already contains forge-ts hooks — skipping. Use --force to overwrite.`,
 				});
+				// Still check if we need to append versionguard
+				if (hasVersionGuard && !existing.includes("# versionguard")) {
+					const appended = `${existing.trimEnd()}\n${VG_PRE_PUSH}`;
+					await writeFile(prePushPath, appended, { mode: 0o755 });
+					writtenFiles.push(`${prePushRel} (added versionguard)`);
+				}
 			} else {
-				const appended = `${existing.trimEnd()}\n\nnpx forge-ts prepublish\n`;
+				const appended = `${existing.trimEnd()}\n\n${prePushContent}`;
 				await writeFile(prePushPath, appended, { mode: 0o755 });
 				writtenFiles.push(prePushRel);
 			}
 		} else {
 			await mkdir(huskyDir, { recursive: true });
-			await writeFile(prePushPath, HUSKY_PRE_PUSH, { mode: 0o755 });
+			await writeFile(prePushPath, prePushContent, { mode: 0o755 });
 			writtenFiles.push(prePushRel);
 		}
 
@@ -299,8 +371,12 @@ export async function runInitHooks(args: InitHooksArgs): Promise<CommandOutput<I
 				"Install husky to activate: npm install -D husky && npx husky (or pnpm add -D husky && pnpm exec husky)",
 			);
 		} else {
-			instructions.push("Husky pre-commit hook configured to run forge-ts check.");
+			instructions.push("Husky pre-commit hook configured to run forge-ts check --staged.");
 			instructions.push("Husky pre-push hook configured to run forge-ts prepublish.");
+		}
+
+		if (hasVersionGuard) {
+			instructions.push("Detected .versionguard.yml — added versionguard validate to hooks.");
 		}
 	} else if (hookManager === "lefthook") {
 		const lefthookPath = join(rootDir, "lefthook.yml");
@@ -348,8 +424,12 @@ export async function runInitHooks(args: InitHooksArgs): Promise<CommandOutput<I
 			writtenFiles.push(relativePath);
 		}
 
-		instructions.push("Lefthook pre-commit hook configured to run forge-ts check.");
+		instructions.push("Lefthook pre-commit hook configured to run forge-ts check --staged.");
 		instructions.push("Lefthook pre-push hook configured to run forge-ts prepublish.");
+
+		if (hasVersionGuard) {
+			instructions.push("Detected .versionguard.yml — add versionguard validate commands to lefthook.yml manually.");
+		}
 	}
 
 	const data: InitHooksResult = {

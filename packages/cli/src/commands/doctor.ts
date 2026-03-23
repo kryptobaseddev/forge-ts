@@ -513,7 +513,8 @@ export async function runDoctor(args: DoctorArgs): Promise<CommandOutput<DoctorR
 		hookManagerType = "husky";
 		try {
 			const content = readFileSync(huskyPreCommit, "utf8");
-			if (content.includes("forge-ts check")) {
+			// Accept both marker-based (# forge-ts) and legacy (npx forge-ts check) detection
+			if (content.includes("# forge-ts") || content.includes("forge-ts check")) {
 				preCommitConfigured = true;
 			}
 		} catch {
@@ -524,7 +525,7 @@ export async function runDoctor(args: DoctorArgs): Promise<CommandOutput<DoctorR
 	if (hookManagerType === "husky" && existsSync(huskyPrePush)) {
 		try {
 			const content = readFileSync(huskyPrePush, "utf8");
-			if (content.includes("forge-ts prepublish")) {
+			if (content.includes("# forge-ts") || content.includes("forge-ts prepublish")) {
 				prePushConfigured = true;
 			}
 		} catch {

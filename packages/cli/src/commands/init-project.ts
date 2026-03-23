@@ -23,6 +23,7 @@ import {
 	resolveExitCode,
 } from "../output.js";
 import { addScripts, readPkgJson, writePkgJson } from "../pkg-json.js";
+import { runInitHooks } from "./init-hooks.js";
 
 // ---------------------------------------------------------------------------
 // Public types
@@ -460,13 +461,33 @@ export async function runInitProject(
 	}
 
 	// -----------------------------------------------------------------------
+	// Step 6b: Auto-scaffold git hooks
+	// -----------------------------------------------------------------------
+
+	let hooksScaffolded = false;
+	try {
+		const hooksResult = await runInitHooks({ cwd: rootDir });
+		if (hooksResult.success && hooksResult.data.summary.filesWritten > 0) {
+			hooksScaffolded = true;
+			for (const file of hooksResult.data.files) {
+				created.push(file);
+			}
+			for (const inst of hooksResult.data.instructions) {
+				warnings.push(inst);
+			}
+		}
+	} catch {
+		// Hook scaffolding failed — non-critical, continue
+	}
+
+	// -----------------------------------------------------------------------
 	// Step 7: Build result
 	// -----------------------------------------------------------------------
 
 	const nextSteps: string[] = [
 		"Run: forge-ts check      (lint TSDoc coverage)",
 		"Run: forge-ts init docs   (scaffold documentation site)",
-		"Run: forge-ts init hooks  (scaffold pre-commit hooks)",
+		...(hooksScaffolded ? [] : ["Run: forge-ts init hooks  (scaffold pre-commit hooks)"]),
 		"Run: forge-ts lock        (lock config to prevent drift)",
 	];
 

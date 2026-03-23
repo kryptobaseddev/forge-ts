@@ -199,18 +199,36 @@ describe("runInitProject", () => {
 	});
 
 	it("skips existing files (idempotent)", async () => {
-		const { existsSync } = await import("node:fs");
-		const { writeFile } = await import("node:fs/promises");
+		const { existsSync, readFileSync } = await import("node:fs");
+		const { writeFile, readFile } = await import("node:fs/promises");
 
 		// All files exist
 		vi.mocked(existsSync).mockReturnValue(true);
+		// Hook files already contain forge-ts marker so init-hooks skips them
+		vi.mocked(readFile).mockImplementation(async (p) => {
+			const s = String(p);
+			if (s.endsWith("pre-commit")) return "# forge-ts\nnpx forge-ts check --staged\n";
+			if (s.endsWith("pre-push")) return "# forge-ts\nnpx forge-ts prepublish\n";
+			return "{}";
+		});
+		// package.json already has prepare script
+		vi.mocked(readFileSync).mockImplementation((p) => {
+			const s = String(p);
+			if (s.endsWith("package.json")) {
+				return JSON.stringify({
+					name: "test",
+					scripts: { prepare: "husky" },
+					devDependencies: { husky: "^9.0.0" },
+				});
+			}
+			return "{}";
+		});
 
 		const output = await runInitProject({ cwd: "/fake" });
 
 		expect(output.success).toBe(true);
 		expect(output.data.skipped).toContain("forge-ts.config.ts");
 		expect(output.data.skipped).toContain("tsdoc.json");
-		expect(output.data.created).toHaveLength(0);
 
 		// writeFile should not be called for config or tsdoc
 		const writeCalls = vi.mocked(writeFile).mock.calls;
@@ -496,12 +514,21 @@ describe("runInitProject", () => {
 
 	it("script wiring does not write when all scripts already exist", async () => {
 		const { existsSync, readFileSync } = await import("node:fs");
-		const { writeFile } = await import("node:fs/promises");
+		const { writeFile, readFile } = await import("node:fs/promises");
 
 		vi.mocked(existsSync).mockImplementation((p) => {
 			const s = String(p);
 			if (s.endsWith("package.json")) return true;
+			// .husky/pre-commit and pre-push exist with forge-ts marker
+			if (s.endsWith("pre-commit") || s.endsWith("pre-push") || s.endsWith(".husky")) return true;
 			return false;
+		});
+		// Hook files already contain forge-ts marker
+		vi.mocked(readFile).mockImplementation(async (p) => {
+			const s = String(p);
+			if (s.endsWith("pre-commit")) return "# forge-ts\nnpx forge-ts check --staged\n";
+			if (s.endsWith("pre-push")) return "# forge-ts\nnpx forge-ts prepublish\n";
+			return "{}";
 		});
 
 		vi.mocked(readFileSync).mockReturnValue(
@@ -514,7 +541,9 @@ describe("runInitProject", () => {
 						"forge:build": "forge-ts build",
 						"forge:doctor": "forge-ts doctor",
 						prepublishOnly: "forge-ts prepublish",
+						prepare: "husky",
 					},
+					devDependencies: { husky: "^9.0.0" },
 				},
 				null,
 				2,

@@ -133,7 +133,7 @@ export function detectHookManager(rootDir: string): HookManager {
  * @internal
  */
 const HUSKY_PRE_COMMIT = `# forge-ts
-npx forge-ts check --staged
+npx --no-install forge-ts check --staged
 `;
 
 /**
@@ -142,7 +142,7 @@ npx forge-ts check --staged
  * @internal
  */
 const HUSKY_PRE_PUSH = `# forge-ts
-npx forge-ts prepublish
+npx --no-install forge-ts prepublish
 `;
 
 /**
@@ -150,7 +150,7 @@ npx forge-ts prepublish
  * @internal
  */
 const VG_PRE_COMMIT = `# versionguard
-npx versionguard validate --hook=pre-commit
+npx --no-install versionguard validate --hook=pre-commit
 `;
 
 /**
@@ -158,18 +158,18 @@ npx versionguard validate --hook=pre-commit
  * @internal
  */
 const VG_PRE_PUSH = `# versionguard
-npx versionguard validate --hook=pre-push
+npx --no-install versionguard validate --hook=pre-push
 `;
 
 const LEFTHOOK_BLOCK = `pre-commit:
   commands:
     forge-ts-check:
-      run: npx forge-ts check --staged
+      run: npx --no-install forge-ts check --staged
 
 pre-push:
   commands:
     forge-ts-prepublish:
-      run: npx forge-ts prepublish
+      run: npx --no-install forge-ts prepublish
 `;
 
 /**
@@ -395,7 +395,7 @@ export async function runInitHooks(args: InitHooksArgs): Promise<CommandOutput<I
 				});
 			} else if (hasCheck && !hasPrepublish && !args.force) {
 				// Add pre-push block
-				const prePushBlock = `\npre-push:\n  commands:\n    forge-ts-prepublish:\n      run: npx forge-ts prepublish\n`;
+				const prePushBlock = `\npre-push:\n  commands:\n    forge-ts-prepublish:\n      run: npx --no-install forge-ts prepublish\n`;
 				const appended = `${existing.trimEnd()}\n${prePushBlock}`;
 				await writeFile(lefthookPath, appended, "utf8");
 				writtenFiles.push(relativePath);
@@ -406,9 +406,9 @@ export async function runInitHooks(args: InitHooksArgs): Promise<CommandOutput<I
 					appended += "\n    forge-ts-check:\n      run: npx forge-ts check";
 				}
 				if (!existing.includes("pre-push:")) {
-					appended += `\n\npre-push:\n  commands:\n    forge-ts-prepublish:\n      run: npx forge-ts prepublish\n`;
+					appended += `\n\npre-push:\n  commands:\n    forge-ts-prepublish:\n      run: npx --no-install forge-ts prepublish\n`;
 				} else if (!hasPrepublish) {
-					appended += "\n    forge-ts-prepublish:\n      run: npx forge-ts prepublish";
+					appended += "\n    forge-ts-prepublish:\n      run: npx --no-install forge-ts prepublish";
 				}
 				appended += "\n";
 				await writeFile(lefthookPath, appended, "utf8");

@@ -122,9 +122,10 @@ describe("detectHookManager", () => {
 // ---------------------------------------------------------------------------
 
 describe("generateHuskyHook", () => {
-	it("includes forge-ts check command (modern husky v9 — no shebang)", () => {
+	it("includes forge-ts check command with --no-install (modern husky v9 — no shebang)", () => {
 		const content = generateHuskyHook();
-		expect(content).toContain("npx forge-ts check");
+		expect(content).toContain("npx --no-install forge-ts check --staged");
+		expect(content).toContain("# forge-ts");
 		// Modern husky v9+ does not need a shebang or husky.sh source line
 		expect(content).not.toContain("#!/usr/bin/env sh");
 		expect(content).not.toContain("husky.sh");
@@ -132,22 +133,23 @@ describe("generateHuskyHook", () => {
 });
 
 describe("generateHuskyPrePushHook", () => {
-	it("includes forge-ts prepublish command (modern husky v9 — no shebang)", () => {
+	it("includes forge-ts prepublish command with --no-install (modern husky v9 — no shebang)", () => {
 		const content = generateHuskyPrePushHook();
-		expect(content).toContain("npx forge-ts prepublish");
+		expect(content).toContain("npx --no-install forge-ts prepublish");
+		expect(content).toContain("# forge-ts");
 		expect(content).not.toContain("#!/usr/bin/env sh");
 	});
 });
 
 describe("generateLefthookBlock", () => {
-	it("includes pre-commit and pre-push sections", () => {
+	it("includes pre-commit and pre-push sections with --no-install", () => {
 		const content = generateLefthookBlock();
 		expect(content).toContain("pre-commit:");
 		expect(content).toContain("forge-ts-check:");
-		expect(content).toContain("npx forge-ts check");
+		expect(content).toContain("npx --no-install forge-ts check --staged");
 		expect(content).toContain("pre-push:");
 		expect(content).toContain("forge-ts-prepublish:");
-		expect(content).toContain("npx forge-ts prepublish");
+		expect(content).toContain("npx --no-install forge-ts prepublish");
 	});
 });
 
@@ -247,7 +249,7 @@ describe("runInitHooks", () => {
 		expect(hookWriteCall).toBeDefined();
 		const written = hookWriteCall?.[1] as string;
 		expect(written).toContain("npx lint-staged");
-		expect(written).toContain("npx forge-ts check");
+		expect(written).toContain("npx --no-install forge-ts check");
 	});
 
 	it("overwrites existing hook files when --force is set", async () => {

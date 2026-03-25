@@ -29,7 +29,7 @@
 		"sync:tsdoc-spec": "tsx scripts/sync-tsdoc-spec.ts"
 	},
 	"devDependencies": {
-		"@biomejs/biome": "^2.4.0",
+		"@biomejs/biome": "^2.4.9",
 		"@changesets/changelog-github": "^0.6.0",
 		"@changesets/cli": "^2.30.0",
 		"@cleocode/lafs-protocol": "^1.8.0",
@@ -38,7 +38,7 @@
 		"@types/node": "^25.5.0",
 		"tsup": "^8.5.0",
 		"typescript": "6.0.1-rc",
-		"vite": "^8.0.0",
-		"vitest": "^4.1.0"
+		"vite": "^8.0.2",
+		"vitest": "^4.1.1"
 	}
 }

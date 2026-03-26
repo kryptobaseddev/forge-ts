@@ -64,6 +64,7 @@ export interface GenerateOptions {
 	 * are only created on the first build to preserve manual edits.
 	 * Use this to reset stubs to their scaffolding state.
 	 *
+	 * @defaultValue false
 	 * @example
 	 * ```typescript
 	 * await generate(config, { forceStubs: true });

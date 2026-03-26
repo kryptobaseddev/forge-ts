@@ -29,47 +29,47 @@ A guide discovered from the symbol graph by code analysis heuristics.
 
 Inline leaf node: literal text.
 
-| Property | Type     | Required | Description |
-| -------- | -------- | -------- | ----------- |
-| `type`   | `"text"` | Yes      | type        |
-| `value`  | `string` | Yes      | value       |
+| Property | Type     | Required | Description                          |
+| -------- | -------- | -------- | ------------------------------------ |
+| `type`   | `"text"` | Yes      | Node discriminant — always `"text"`. |
+| `value`  | `string` | Yes      | The raw text content.                |
 
 ## MdInlineCode
 
 Inline leaf node: code span.
 
-| Property | Type           | Required | Description |
-| -------- | -------------- | -------- | ----------- |
-| `type`   | `"inlineCode"` | Yes      | type        |
-| `value`  | `string`       | Yes      | value       |
+| Property | Type           | Required | Description                                            |
+| -------- | -------------- | -------- | ------------------------------------------------------ |
+| `type`   | `"inlineCode"` | Yes      | Node discriminant — always `"inlineCode"`.             |
+| `value`  | `string`       | Yes      | The code span content (without surrounding backticks). |
 
 ## MdStrong
 
 Inline container: strong emphasis (bold).
 
-| Property   | Type           | Required | Description |
-| ---------- | -------------- | -------- | ----------- |
-| `type`     | `"strong"`     | Yes      | type        |
-| `children` | `MdPhrasing[]` | Yes      | children    |
+| Property   | Type           | Required | Description                            |
+| ---------- | -------------- | -------- | -------------------------------------- |
+| `type`     | `"strong"`     | Yes      | Node discriminant — always `"strong"`. |
+| `children` | `MdPhrasing[]` | Yes      | Inline content rendered in bold.       |
 
 ## MdEmphasis
 
 Inline container: emphasis (italic).
 
-| Property   | Type           | Required | Description |
-| ---------- | -------------- | -------- | ----------- |
-| `type`     | `"emphasis"`   | Yes      | type        |
-| `children` | `MdPhrasing[]` | Yes      | children    |
+| Property   | Type           | Required | Description                              |
+| ---------- | -------------- | -------- | ---------------------------------------- |
+| `type`     | `"emphasis"`   | Yes      | Node discriminant — always `"emphasis"`. |
+| `children` | `MdPhrasing[]` | Yes      | Inline content rendered in italic.       |
 
 ## MdLink
 
 Inline container: hyperlink.
 
-| Property   | Type           | Required | Description |
-| ---------- | -------------- | -------- | ----------- |
-| `type`     | `"link"`       | Yes      | type        |
-| `url`      | `string`       | Yes      | url         |
-| `children` | `MdPhrasing[]` | Yes      | children    |
+| Property   | Type           | Required | Description                               |
+| ---------- | -------------- | -------- | ----------------------------------------- |
+| `type`     | `"link"`       | Yes      | Node discriminant — always `"link"`.      |
+| `url`      | `string`       | Yes      | The link destination URL.                 |
+| `children` | `MdPhrasing[]` | Yes      | Inline content rendered as the link text. |
 
 ## MdPhrasing
 
@@ -83,105 +83,105 @@ MdPhrasing
 
 Block node: heading (depth 1-6).
 
-| Property   | Type                         | Required | Description |
-| ---------- | ---------------------------- | -------- | ----------- |
-| `type`     | `"heading"`                  | Yes      | type        |
-| `depth`    | `1 \| 2 \| 3 \| 4 \| 5 \| 6` | Yes      | depth       |
-| `children` | `MdPhrasing[]`               | Yes      | children    |
+| Property   | Type                         | Required | Description                                                 |
+| ---------- | ---------------------------- | -------- | ----------------------------------------------------------- |
+| `type`     | `"heading"`                  | Yes      | Node discriminant — always `"heading"`.                     |
+| `depth`    | `1 \| 2 \| 3 \| 4 \| 5 \| 6` | Yes      | Heading level: 1 for `#`, 2 for `##`, up to 6 for `######`. |
+| `children` | `MdPhrasing[]`               | Yes      | Inline content of the heading.                              |
 
 ## MdParagraph
 
 Block node: paragraph.
 
-| Property   | Type           | Required | Description |
-| ---------- | -------------- | -------- | ----------- |
-| `type`     | `"paragraph"`  | Yes      | type        |
-| `children` | `MdPhrasing[]` | Yes      | children    |
+| Property   | Type           | Required | Description                               |
+| ---------- | -------------- | -------- | ----------------------------------------- |
+| `type`     | `"paragraph"`  | Yes      | Node discriminant — always `"paragraph"`. |
+| `children` | `MdPhrasing[]` | Yes      | Inline content of the paragraph.          |
 
 ## MdCode
 
 Block node: fenced code block.
 
-| Property | Type                          | Required | Description |
-| -------- | ----------------------------- | -------- | ----------- |
-| `type`   | `"code"`                      | Yes      | type        |
-| `lang`   | `string \| null \| undefined` | No       | lang        |
-| `value`  | `string`                      | Yes      | value       |
+| Property | Type                          | Required | Description                                      |
+| -------- | ----------------------------- | -------- | ------------------------------------------------ |
+| `type`   | `"code"`                      | Yes      | Node discriminant — always `"code"`.             |
+| `lang`   | `string \| null \| undefined` | No       | Language tag for syntax highlighting.            |
+| `value`  | `string`                      | Yes      | The code content (without the fence delimiters). |
 
 ## MdBlockquote
 
 Block node: blockquote.
 
-| Property   | Type           | Required | Description |
-| ---------- | -------------- | -------- | ----------- |
-| `type`     | `"blockquote"` | Yes      | type        |
-| `children` | `MdBlock[]`    | Yes      | children    |
+| Property   | Type           | Required | Description                                |
+| ---------- | -------------- | -------- | ------------------------------------------ |
+| `type`     | `"blockquote"` | Yes      | Node discriminant — always `"blockquote"`. |
+| `children` | `MdBlock[]`    | Yes      | Block-level content inside the quote.      |
 
 ## MdHtml
 
 Block node: raw HTML (including comments).
 
-| Property | Type     | Required | Description |
-| -------- | -------- | -------- | ----------- |
-| `type`   | `"html"` | Yes      | type        |
-| `value`  | `string` | Yes      | value       |
+| Property | Type     | Required | Description                          |
+| -------- | -------- | -------- | ------------------------------------ |
+| `type`   | `"html"` | Yes      | Node discriminant — always `"html"`. |
+| `value`  | `string` | Yes      | The raw HTML string.                 |
 
 ## MdThematicBreak
 
 Block node: horizontal rule.
 
-| Property | Type              | Required | Description |
-| -------- | ----------------- | -------- | ----------- |
-| `type`   | `"thematicBreak"` | Yes      | type        |
+| Property | Type              | Required | Description                                   |
+| -------- | ----------------- | -------- | --------------------------------------------- |
+| `type`   | `"thematicBreak"` | Yes      | Node discriminant — always `"thematicBreak"`. |
 
 ## MdListItem
 
 List item container.
 
-| Property   | Type                   | Required | Description |
-| ---------- | ---------------------- | -------- | ----------- |
-| `type`     | `"listItem"`           | Yes      | type        |
-| `spread`   | `boolean \| undefined` | No       | spread      |
-| `children` | `MdBlock[]`            | Yes      | children    |
+| Property   | Type                   | Required | Description                                        |
+| ---------- | ---------------------- | -------- | -------------------------------------------------- |
+| `type`     | `"listItem"`           | Yes      | Node discriminant — always `"listItem"`.           |
+| `spread`   | `boolean \| undefined` | No       | Whether blank lines separate this item's children. |
+| `children` | `MdBlock[]`            | Yes      | Block-level content of the list item.              |
 
 ## MdList
 
 Block node: ordered or unordered list.
 
-| Property   | Type                   | Required | Description |
-| ---------- | ---------------------- | -------- | ----------- |
-| `type`     | `"list"`               | Yes      | type        |
-| `ordered`  | `boolean \| undefined` | No       | ordered     |
-| `spread`   | `boolean \| undefined` | No       | spread      |
-| `children` | `MdListItem[]`         | Yes      | children    |
+| Property   | Type                   | Required | Description                                          |
+| ---------- | ---------------------- | -------- | ---------------------------------------------------- |
+| `type`     | `"list"`               | Yes      | Node discriminant — always `"list"`.                 |
+| `ordered`  | `boolean \| undefined` | No       | `true` for numbered lists, `false` for bullet lists. |
+| `spread`   | `boolean \| undefined` | No       | Whether blank lines separate list items.             |
+| `children` | `MdListItem[]`         | Yes      | The list items.                                      |
 
 ## MdTableCell
 
 GFM table cell.
 
-| Property   | Type           | Required | Description |
-| ---------- | -------------- | -------- | ----------- |
-| `type`     | `"tableCell"`  | Yes      | type        |
-| `children` | `MdPhrasing[]` | Yes      | children    |
+| Property   | Type           | Required | Description                               |
+| ---------- | -------------- | -------- | ----------------------------------------- |
+| `type`     | `"tableCell"`  | Yes      | Node discriminant — always `"tableCell"`. |
+| `children` | `MdPhrasing[]` | Yes      | Inline content of the cell.               |
 
 ## MdTableRow
 
 GFM table row.
 
-| Property   | Type            | Required | Description |
-| ---------- | --------------- | -------- | ----------- |
-| `type`     | `"tableRow"`    | Yes      | type        |
-| `children` | `MdTableCell[]` | Yes      | children    |
+| Property   | Type            | Required | Description                              |
+| ---------- | --------------- | -------- | ---------------------------------------- |
+| `type`     | `"tableRow"`    | Yes      | Node discriminant — always `"tableRow"`. |
+| `children` | `MdTableCell[]` | Yes      | Cells in this row.                       |
 
 ## MdTable
 
 GFM table.
 
-| Property   | Type                                                     | Required | Description |
-| ---------- | -------------------------------------------------------- | -------- | ----------- |
-| `type`     | `"table"`                                                | Yes      | type        |
-| `align`    | `("left" \| "center" \| "right" \| null)[] \| undefined` | No       | align       |
-| `children` | `MdTableRow[]`                                           | Yes      | children    |
+| Property   | Type                                                     | Required | Description                                  |
+| ---------- | -------------------------------------------------------- | -------- | -------------------------------------------- |
+| `type`     | `"table"`                                                | Yes      | Node discriminant — always `"table"`.        |
+| `align`    | `("left" \| "center" \| "right" \| null)[] \| undefined` | No       | Column alignment directives for each column. |
+| `children` | `MdTableRow[]`                                           | Yes      | Rows of the table (first row is the header). |
 
 ## MdBlock
 
@@ -195,10 +195,10 @@ MdBlock
 
 Document root.
 
-| Property   | Type        | Required | Description |
-| ---------- | ----------- | -------- | ----------- |
-| `type`     | `"root"`    | Yes      | type        |
-| `children` | `MdBlock[]` | Yes      | children    |
+| Property   | Type        | Required | Description                              |
+| ---------- | ----------- | -------- | ---------------------------------------- |
+| `type`     | `"root"`    | Yes      | Node discriminant — always `"root"`.     |
+| `children` | `MdBlock[]` | Yes      | Top-level block content of the document. |
 
 ## FrontmatterResult
 
@@ -227,9 +227,9 @@ Options controlling the doc site generator.
 | Property             | Type                                                                 | Required | Description                                       |
 | -------------------- | -------------------------------------------------------------------- | -------- | ------------------------------------------------- |
 | `format`             | `"markdown" \| "mdx"`                                                | Yes      | Output format                                     |
-| `ssgTarget`          | `"docusaurus" \| "mintlify" \| "nextra" \| "vitepress" \| undefined` | No       | SSG target for frontmatter                        |
+| `ssgTarget`          | `"docusaurus" \| "mintlify" \| "nextra" \| "vitepress" \| undefined` | No       | SSG target for frontmatter.                       |
 | `projectName`        | `string`                                                             | Yes      | Project name                                      |
-| `projectDescription` | `string \| undefined`                                                | No       | Project description                               |
+| `projectDescription` | `string \| undefined`                                                | No       | Project description.                              |
 | `repositoryUrl`      | `string \| undefined`                                                | No       | Repository URL (auto-detected from package.json). |
 | `packageName`        | `string \| undefined`                                                | No       | npm package name for install commands.            |
 

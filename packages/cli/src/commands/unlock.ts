@@ -46,6 +46,9 @@ export interface UnlockResult {
 /**
  * Runs the unlock command: removes `.forge-lock.json` with a mandatory reason.
  *
+ * @remarks
+ * Loads config, verifies a lock file exists, deletes `.forge-lock.json`, and appends an audit event recording who unlocked and why.
+ *
  * @param args - CLI arguments for the unlock command.
  * @returns A typed `CommandOutput<UnlockResult>`.
  * @example

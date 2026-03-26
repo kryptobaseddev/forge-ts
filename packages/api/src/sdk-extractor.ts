@@ -48,6 +48,9 @@ export interface SDKType {
  * Only exported symbols whose visibility is not {@link Visibility.Internal} or
  * {@link Visibility.Private} are included.
  *
+ * @remarks
+ * Filters symbols to exported interfaces, type aliases, classes, and enums with public/beta visibility, then maps each to an {@link SDKType} with extracted child properties.
+ *
  * @param symbols - The symbols produced by the core AST walker.
  * @returns An array of {@link SDKType} objects for public-facing type definitions.
  * @example

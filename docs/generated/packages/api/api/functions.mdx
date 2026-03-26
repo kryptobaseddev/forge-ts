@@ -137,3 +137,136 @@ import { generateApi } from "@forge-ts/api";
 const result = await generateApi(config);
 console.log(result.success); // true if spec was written successfully
 ```
+
+## signatureToSchema(signature)
+
+Maps a TypeScript type signature string to an OpenAPI 3.2 schema object.  Handles common primitives, arrays, unions, `Record<K, V>`, and falls back to `{ type: "object" }` for anything it cannot parse.
+
+**Signature**
+
+```typescript
+(signature: string) => OpenAPISchemaObject
+```
+
+**Parameters**
+
+| Name        | Type     | Description                                                                                                             |
+| ----------- | -------- | ----------------------------------------------------------------------------------------------------------------------- |
+| `signature` | `string` | A TypeScript type signature string, e.g. `"string"`, `"number[]"`,   `"string \| number"`, `"Record<string, boolean>"`. |
+
+**Returns** — An OpenAPI schema object.
+
+**Example**
+
+```typescript
+import { signatureToSchema } from "@forge-ts/api";
+const schema = signatureToSchema("string[]");
+// { type: "array", items: { type: "string" } }
+```
+
+## extractSDKTypes(symbols)
+
+Extracts SDK-relevant types (interfaces, type aliases, classes, enums) from a list of `ForgeSymbol` objects.  Only exported symbols whose visibility is not `Visibility.Internal` or `Visibility.Private` are included.
+
+**Signature**
+
+```typescript
+(symbols: ForgeSymbol[]) => SDKType[]
+```
+
+**Parameters**
+
+| Name      | Type            | Description                                  |
+| --------- | --------------- | -------------------------------------------- |
+| `symbols` | `ForgeSymbol[]` | The symbols produced by the core AST walker. |
+
+**Returns** — An array of `SDKType` objects for public-facing type definitions.
+
+**Example**
+
+```typescript
+import { extractSDKTypes } from "@forge-ts/api";
+const sdkTypes = extractSDKTypes(symbols);
+console.log(sdkTypes.length); // number of public SDK types
+```
+
+## generateOpenAPISpec(config, sdkTypes, symbols)
+
+Generates a production-quality OpenAPI 3.2 document from the extracted SDK types.  The document is populated with: - An `info` block sourced from the config or reasonable defaults. - A `components.schemas` section with one schema per exported type. - `tags` derived from unique source file paths (grouping by file). - Visibility filtering: `@internal` symbols are never emitted. - HTTP paths are extracted from `@route` tags and appropriately mapped.
+
+**Signature**
+
+```typescript
+(config: ForgeConfig, sdkTypes: SDKType[], symbols?: ForgeSymbol[]) => OpenAPIDocument
+```
+
+**Parameters**
+
+| Name       | Type              | Description                                                      |
+| ---------- | ----------------- | ---------------------------------------------------------------- |
+| `config`   | `ForgeConfig`     | The resolved `ForgeConfig`.                                      |
+| `sdkTypes` | `SDKType[]`       | SDK types to include as component schemas.                       |
+| `symbols`  | `: ForgeSymbol[]` | Raw symbols used to extract HTTP route paths from `@route` tags. |
+
+**Returns** — An `OpenAPIDocument` object.
+
+**Example**
+
+```typescript
+import { generateOpenAPISpec } from "@forge-ts/api";
+import { extractSDKTypes } from "@forge-ts/api";
+const spec = generateOpenAPISpec(config, extractSDKTypes(symbols), symbols);
+console.log(spec.openapi); // "3.2.0"
+```
+
+## buildReference(symbols)
+
+Builds a structured API reference from a list of exported symbols.  Unlike the minimal stub, this version includes nested children (class methods, interface properties) and all available TSDoc metadata.  Symbols with `Visibility.Internal` or `Visibility.Private` are excluded from the top-level results. Children with private/internal visibility are also filtered out.
+
+**Signature**
+
+```typescript
+(symbols: ForgeSymbol[]) => ReferenceEntry[]
+```
+
+**Parameters**
+
+| Name      | Type            | Description                      |
+| --------- | --------------- | -------------------------------- |
+| `symbols` | `ForgeSymbol[]` | All symbols from the AST walker. |
+
+**Returns** — An array of `ReferenceEntry` objects sorted by name.
+
+**Example**
+
+```typescript
+import { buildReference } from "@forge-ts/api";
+const entries = buildReference(symbols);
+console.log(entries[0].name); // first symbol name, alphabetically
+```
+
+## generateApi(config)
+
+Runs the API generation pipeline: walk → extract → generate → write.
+
+**Signature**
+
+```typescript
+(config: ForgeConfig) => Promise<ForgeResult>
+```
+
+**Parameters**
+
+| Name     | Type          | Description                                 |
+| -------- | ------------- | ------------------------------------------- |
+| `config` | `ForgeConfig` | The resolved `ForgeConfig` for the project. |
+
+**Returns** — A `ForgeResult` with success/failure and any diagnostics.
+
+**Example**
+
+```typescript
+import { generateApi } from "@forge-ts/api";
+const result = await generateApi(config);
+console.log(result.success); // true if spec was written successfully
+```

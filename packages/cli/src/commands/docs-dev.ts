@@ -21,6 +21,9 @@ import { forgeLogger } from "../forge-logger.js";
  * Reads `gen.ssgTarget` from the forge-ts config, resolves the adapter,
  * and spawns the platform's dev server in the output directory.
  *
+ * @remarks
+ * Resolves the SSG adapter from config, constructs the dev command, and spawns the child process with inherited stdio.
+ *
  * @param args - Command arguments.
  * @returns A promise that resolves when the server exits.
  *

@@ -23,6 +23,9 @@ import { runTests } from "./runner.js";
 /**
  * Runs the full doctest pipeline: extract → generate → run.
  *
+ * @remarks
+ * Creates an AST walker, extracts `@example` blocks, generates virtual `node:test` files, and executes them via the native Node test runner.
+ *
  * @param config - The resolved {@link ForgeConfig} for the project.
  * @returns A {@link ForgeResult} with success/failure and any diagnostics.
  * @example

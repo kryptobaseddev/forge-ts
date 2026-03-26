@@ -67,9 +67,9 @@ Options controlling the doc site generator.
 | Property             | Type                                                                 | Description                                       |
 | -------------------- | -------------------------------------------------------------------- | ------------------------------------------------- |
 | `format`             | `"markdown" \| "mdx"`                                                | Output format                                     |
-| `ssgTarget`          | `"docusaurus" \| "mintlify" \| "nextra" \| "vitepress" \| undefined` | SSG target for frontmatter                        |
+| `ssgTarget`          | `"docusaurus" \| "mintlify" \| "nextra" \| "vitepress" \| undefined` | SSG target for frontmatter.                       |
 | `projectName`        | `string`                                                             | Project name                                      |
-| `projectDescription` | `string \| undefined`                                                | Project description                               |
+| `projectDescription` | `string \| undefined`                                                | Project description.                              |
 | `repositoryUrl`      | `string \| undefined`                                                | Repository URL (auto-detected from package.json). |
 | `packageName`        | `string \| undefined`                                                | npm package name for install commands.            |
 
@@ -115,6 +115,23 @@ Options that control how `formatResults` renders its output.
 | --------- | --------- | --------------------------------------------------------------------------------------------------------------- |
 | `colors`  | `boolean` | Emit ANSI colour escape sequences when `true`.                                                                  |
 | `verbose` | `boolean` | When `true`, include the symbol's type signature alongside each diagnostic so the reader has immediate context. |
+
+### `FormatOptions`
+
+Options that control how `formatResults` renders its output.
+
+| Property  | Type      | Description                                                                                                     |
+| --------- | --------- | --------------------------------------------------------------------------------------------------------------- |
+| `colors`  | `boolean` | Emit ANSI colour escape sequences when `true`.                                                                  |
+| `verbose` | `boolean` | When `true`, include the symbol's type signature alongside each diagnostic so the reader has immediate context. |
+
+### `GeneratorOptions`
+
+Options for virtual test file generation.
+
+| Property   | Type     | Description                                         |
+| ---------- | -------- | --------------------------------------------------- |
+| `cacheDir` | `string` | Directory where virtual test files will be written. |
 
 ### `GeneratorOptions`
 

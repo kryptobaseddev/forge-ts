@@ -13,6 +13,9 @@ export type { OpenAPISchemaObject };
  * Handles common primitives, arrays, unions, `Record<K, V>`, and falls back
  * to `{ type: "object" }` for anything it cannot parse.
  *
+ * @remarks
+ * Strips trailing `| undefined` and `| null`, then pattern-matches union, array shorthand, generic Array, and Record types recursively before falling back to primitive or object schemas.
+ *
  * @param signature - A TypeScript type signature string, e.g. `"string"`, `"number[]"`,
  *   `"string | number"`, `"Record<string, boolean>"`.
  * @returns An OpenAPI schema object.

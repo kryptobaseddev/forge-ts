@@ -133,6 +133,9 @@ export default defineConfig({
 /**
  * Runs the doctor integrity check flow.
  *
+ * @remarks
+ * Validates 10 project health checks (config, tsdoc.json, dependencies, tsconfig, biome, lock, audit trail, bypasses, git hooks) and optionally auto-fixes resolvable issues.
+ *
  * Checks:
  * 1. forge-ts.config.ts — exists and loadable
  * 2. tsdoc.json — exists and extends @forge-ts/core/tsdoc-preset

@@ -467,7 +467,7 @@ Builds tsdoc.json content, merging in customTags from the forge config.  When `c
 
 ## runInitProject(args)
 
-Runs the full project init flow.  Steps: 1. Detect project environment 2. Write forge-ts.config.ts (if not exists) 3. Write tsdoc.json (if not exists) 4. Wire package.json scripts (idempotent) 5. Validate tsconfig.json strictness 6. Validate package.json 7. Report summary
+Runs the full project init flow.
 
 **Signature**
 
@@ -493,7 +493,7 @@ console.log(output.data.created); // ["forge-ts.config.ts", "tsdoc.json"]
 
 ## runDoctor(args)
 
-Runs the doctor integrity check flow.  Checks: 1. forge-ts.config.ts — exists and loadable 2. tsdoc.json — exists and extends forge-ts/core/tsdoc-preset 3. forge-ts/core — installed in node\_modules 4. TypeScript — installed 5. tsconfig.json — exists and has strict mode 6. biome.json — exists (informational) 7. .forge-lock.json — exists, valid, matches config 8. .forge-audit.jsonl — exists and event count 9. .forge-bypass.json — exists and active bypasses 10. Git hooks — forge-ts check in pre-commit
+Runs the doctor integrity check flow.
 
 **Signature**
 

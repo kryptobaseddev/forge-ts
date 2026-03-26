@@ -21,6 +21,7 @@ export interface GeneratedFile {
 	 * Stub files are created only on the first build and never overwritten,
 	 * preserving manual edits across subsequent `forge-ts build` runs.
 	 * Callers should check this flag and skip writing if the file exists.
+	 * @defaultValue false
 	 */
 	stub?: boolean;
 }
@@ -72,7 +73,10 @@ export interface AdapterContext {
 	config: ForgeConfig;
 	/** Project name (from package.json or directory). */
 	projectName: string;
-	/** Project description. */
+	/**
+	 * Project description.
+	 * @defaultValue undefined
+	 */
 	projectDescription?: string;
 	/** The generated doc pages (from site-generator). */
 	pages: DocPage[];

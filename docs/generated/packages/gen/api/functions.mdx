@@ -24,6 +24,14 @@ Analyze the symbol graph and discover guides using multiple heuristics.  Each he
 
 **Returns** — An array of discovered guides, deduplicated by slug.
 
+**Example**
+
+```typescript
+import { discoverGuides } from "@forge-ts/gen";
+const guides = discoverGuides(symbolsByPackage, config);
+console.log(guides.map(g => g.slug));
+```
+
 ## serializeMarkdown(tree)
 
 Serialize an mdast tree to a well-formed markdown string.  Uses remark-stringify with GFM table support. The serializer handles all escaping (pipes in table cells, special characters in text, etc.) so callers never need manual escape functions.
@@ -42,7 +50,14 @@ Serialize an mdast tree to a well-formed markdown string.  Uses remark-stringify
 
 **Returns** — The serialized markdown string.
 
-## textP()
+**Example**
+
+```typescript
+const output = serializeMarkdown(md.root(md.heading(1, md.text("Hello"))));
+console.log(output); // "# Hello\n"
+```
+
+## textP(value)
 
 Shorthand: paragraph containing a single text node.
 
@@ -52,7 +67,22 @@ Shorthand: paragraph containing a single text node.
 (value: string) => MdParagraph
 ```
 
-## boldIntroP()
+**Parameters**
+
+| Name    | Type     | Description             |
+| ------- | -------- | ----------------------- |
+| `value` | `string` | The plain text content. |
+
+**Returns** — An MdParagraph wrapping a single MdText child.
+
+**Example**
+
+```typescript
+const node = textP("Hello world");
+// { type: "paragraph", children: [{ type: "text", value: "Hello world" }] }
+```
+
+## boldIntroP(bold, rest)
 
 Shorthand: paragraph with bold intro text followed by regular text.
 
@@ -62,7 +92,23 @@ Shorthand: paragraph with bold intro text followed by regular text.
 (bold: string, rest: string) => MdParagraph
 ```
 
-## textListItem()
+**Parameters**
+
+| Name   | Type     | Description                                 |
+| ------ | -------- | ------------------------------------------- |
+| `bold` | `string` | Text to render in bold at the start.        |
+| `rest` | `string` | Plain text appended after the bold segment. |
+
+**Returns** — An MdParagraph with a strong child followed by a text child.
+
+**Example**
+
+```typescript
+const node = boldIntroP("Note: ", "this is important.");
+// renders as **Note: **this is important.
+```
+
+## textListItem(value)
 
 Shorthand: list item containing a single text paragraph.
 
@@ -72,7 +118,22 @@ Shorthand: list item containing a single text paragraph.
 (value: string) => MdListItem
 ```
 
-## rawBlock()
+**Parameters**
+
+| Name    | Type     | Description                              |
+| ------- | -------- | ---------------------------------------- |
+| `value` | `string` | The plain text content of the list item. |
+
+**Returns** — An MdListItem wrapping a single text paragraph.
+
+**Example**
+
+```typescript
+const item = textListItem("First item");
+const list = md.list([item, textListItem("Second item")]);
+```
+
+## rawBlock(markdown)
 
 Wrap a raw markdown string as an HTML node. Use for TSDoc content that may contain markdown formatting (backticks, bold, links) which should pass through to the output verbatim rather than being escaped by the serializer.
 
@@ -82,7 +143,22 @@ Wrap a raw markdown string as an HTML node. Use for TSDoc content that may conta
 (markdown: string) => MdHtml
 ```
 
-## truncate()
+**Parameters**
+
+| Name       | Type     | Description                                             |
+| ---------- | -------- | ------------------------------------------------------- |
+| `markdown` | `string` | The raw markdown/HTML string to pass through unescaped. |
+
+**Returns** — An MdHtml node wrapping the raw content.
+
+**Example**
+
+```typescript
+const badge = rawBlock("![badge](https://img.shields.io/badge/ok-green)");
+const tree = md.root(badge);
+```
+
+## truncate(text, maxLen)
 
 Truncate a string to at most maxLen chars. Avoids cutting inside backtick-delimited code spans to prevent broken inline code that would cause escaping issues.
 
@@ -92,7 +168,23 @@ Truncate a string to at most maxLen chars. Avoids cutting inside backtick-delimi
 (text: string, maxLen?: number) => string
 ```
 
-## toAnchor()
+**Parameters**
+
+| Name     | Type       | Description                                            |
+| -------- | ---------- | ------------------------------------------------------ |
+| `text`   | `string`   | The string to truncate.                                |
+| `maxLen` | `: number` | Maximum allowed length (including the trailing `...`). |
+
+**Returns** — The original string if within maxLen, or a truncated version with `...`.
+
+**Example**
+
+```typescript
+truncate("A very long description of the API", 20);
+// "A very long descr..."
+```
+
+## toAnchor(text)
 
 Convert a label to a GitHub-compatible anchor slug.
 
@@ -102,7 +194,21 @@ Convert a label to a GitHub-compatible anchor slug.
 (text: string) => string
 ```
 
-## slugLink()
+**Parameters**
+
+| Name   | Type     | Description                           |
+| ------ | -------- | ------------------------------------- |
+| `text` | `string` | The heading or label text to slugify. |
+
+**Returns** — A lowercase, hyphen-separated anchor string.
+
+**Example**
+
+```typescript
+toAnchor("My Function()"); // "my-function"
+```
+
+## slugLink(path)
 
 Strip extension from a link path and normalize to a slug. Produces bare slug links compatible with Mintlify and most SSGs.
 
@@ -110,6 +216,20 @@ Strip extension from a link path and normalize to a slug. Produces bare slug lin
 
 ```typescript
 (path: string) => string
+```
+
+**Parameters**
+
+| Name   | Type     | Description                                                  |
+| ------ | -------- | ------------------------------------------------------------ |
+| `path` | `string` | The relative file path (e.g., `"./packages/core/index.md"`). |
+
+**Returns** — An absolute slug path (e.g., `"/packages/core/index"`).
+
+**Example**
+
+```typescript
+slugLink("./packages/core/index.md"); // "/packages/core/index"
 ```
 
 ## parseFrontmatter(content)

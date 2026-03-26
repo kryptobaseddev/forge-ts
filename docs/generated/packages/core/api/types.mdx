@@ -98,7 +98,7 @@ RuleSeverity
 
 ## EnforceRules
 
-Per-rule severity configuration for the TSDoc enforcer. 33 rules across 4 layers: API (E001-E008, W003-W004), Dev (E013-E015, E017-E018, W005-W006, W009), Consumer (E016, W007-W008, W010-W011), LLM Anti-Pattern (E019-E020, W012-W013).
+Per-rule severity configuration for the TSDoc enforcer. 37 rules across 4 layers: API (E001-E008, W003-W004), Dev (E013-E015, E017-E018, W005-W006, W009), Consumer (E016, W007-W008, W010-W011), LLM Anti-Pattern (E019-E020, W012-W013), Staleness (W014-W017).
 
 | Property                         | Type           | Required | Description                                                                                |
 | -------------------------------- | -------------- | -------- | ------------------------------------------------------------------------------------------ |
@@ -126,6 +126,10 @@ Per-rule severity configuration for the TSDoc enforcer. 33 rules across 4 layers
 | `"require-no-ts-ignore"`         | `RuleSeverity` | Yes      | E019: Non-test file contains ts-ignore or ts-expect-error directive.                       |
 | `"require-no-any-in-api"`        | `RuleSeverity` | Yes      | E020: Exported symbol has `any` in its public API signature.                               |
 | `"require-fresh-link-text"`      | `RuleSeverity` | Yes      | W012: `\@link` display text appears stale relative to target summary.                      |
+| `"require-fresh-params"`         | `RuleSeverity` | Yes      | W014: `\@param` name in TSDoc does not match actual parameter name in signature.           |
+| `"require-param-count"`          | `RuleSeverity` | Yes      | W015: `\@param` count in TSDoc does not match actual parameter count in signature.         |
+| `"require-fresh-returns"`        | `RuleSeverity` | Yes      | W016: `\@returns` tag present on a void/Promisevoid function.                              |
+| `"require-meaningful-remarks"`   | `RuleSeverity` | Yes      | W017: `\@remarks` block is empty or contains only placeholder text.                        |
 
 ## ForgeConfig
 

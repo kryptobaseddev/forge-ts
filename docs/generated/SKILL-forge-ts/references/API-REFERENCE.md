@@ -745,6 +745,26 @@ const output = await runAudit({ cwd: process.cwd(), limit: 10 });
 console.log(output.data.count); // number of events returned
 ```
 
+### `runBarometer`
+
+Runs the barometer generation pass.  Loads the project config, walks the symbol graph, extracts testable facts from five categories, generates questions with ground-truth answers, and writes the result to `.forge/barometer.json`.
+
+```typescript
+(args: BarometerArgs) => Promise<CommandOutput<BarometerResult>>
+```
+
+**Parameters:**
+
+- `args` — CLI arguments for the barometer command.
+
+**Returns:** A typed `CommandOutput<BarometerResult>`.
+
+```typescript
+import { runBarometer } from "@forge-ts/cli/commands/barometer";
+const output = await runBarometer({ cwd: process.cwd() });
+console.log(`Generated ${output.data.questions.length} questions`);
+```
+
 ### `discoverGuides`
 
 Analyze the symbol graph and discover guides using multiple heuristics.  Each heuristic produces zero or more `DiscoveredGuide` entries. When multiple heuristics produce a guide with the same slug, the first one wins (priority order: guide-tag, config-interface, error-types, category, entry-point).
@@ -1476,7 +1496,7 @@ console.log(usages.length); // number of deprecated cross-package imports
 
 ### `enforce`
 
-Runs the TSDoc enforcement pass against a project.  The enforcer walks all exported symbols that meet the configured minimum visibility threshold and emits diagnostics for any documentation deficiencies it finds.  ### Error codes | Code | Severity | Condition | |------|----------|-----------| | E001 | error    | Exported symbol is missing a TSDoc summary. | | E002 | error    | Function/method parameter lacks a `@param` tag. | | E003 | error    | Non-void function/method lacks a `@returns` tag. | | E004 | error    | Exported function/method is missing an `@example` block. | | E005 | error    | Package entry point (index.ts) is missing `@packageDocumentation`. | | E006 | error    | Public/protected class member is missing a TSDoc comment. | | E007 | error    | Interface/type alias property is missing a TSDoc comment. | | W001 | warning  | TSDoc comment contains parse errors. | | W002 | warning  | Function body throws but has no `@throws` tag. | | W003 | warning  | `@deprecated` tag is present without explanation. | | W006 | warning  | TSDoc parser-level syntax error (invalid tag, malformed block, etc.). | | E009 | error    | tsconfig.json required strict-mode flag is missing or disabled (guard). | | E010 | error    | Config drift: a rule severity is weaker than the locked value. | | E013 | error    | Exported function/class is missing a `@remarks` block. | | E014 | warn     | Optional property of interface/type is missing `@defaultValue`. | | E015 | error    | Generic symbol is missing `@typeParam` for a type parameter. | | W005 | warn     | Symbol references other symbols via `{@link}` but has no `@see` tags. | | W007 | warn     | Guide FORGE:AUTO section references a symbol that no longer exists. | | W008 | warn     | Exported public symbol is not mentioned in any guide page. | | E017 | error    | `@internal` symbol re-exported through public barrel (index.ts). | | E018 | warn     | `@route`-tagged function missing `@response` tag. | | W009 | warn     | `{@inheritDoc}` references a symbol that does not exist. | | W010 | warn     | `@breaking` tag present without `@migration` path. | | W011 | warn     | New public export missing `@since` version tag. | | E019 | error    | Non-test file contains `@ts-expect-error` / `@ts-expect-error`. | | E020 | error    | Exported symbol has `any` in its public API signature. | | W012 | warn     | `{@link}` display text appears stale relative to target summary. | | W013 | warn     | `@example` block may be stale (arg count mismatch). |  When `config.enforce.strict` is `true` all warnings are promoted to errors.
+Runs the TSDoc enforcement pass against a project.  The enforcer walks all exported symbols that meet the configured minimum visibility threshold and emits diagnostics for any documentation deficiencies it finds.  ### Error codes | Code | Severity | Condition | |------|----------|-----------| | E001 | error    | Exported symbol is missing a TSDoc summary. | | E002 | error    | Function/method parameter lacks a `@param` tag. | | E003 | error    | Non-void function/method lacks a `@returns` tag. | | E004 | error    | Exported function/method is missing an `@example` block. | | E005 | error    | Package entry point (index.ts) is missing `@packageDocumentation`. | | E006 | error    | Public/protected class member is missing a TSDoc comment. | | E007 | error    | Interface/type alias property is missing a TSDoc comment. | | W001 | warning  | TSDoc comment contains parse errors. | | W002 | warning  | Function body throws but has no `@throws` tag. | | W003 | warning  | `@deprecated` tag is present without explanation. | | W006 | warning  | TSDoc parser-level syntax error (invalid tag, malformed block, etc.). | | E009 | error    | tsconfig.json required strict-mode flag is missing or disabled (guard). | | E010 | error    | Config drift: a rule severity is weaker than the locked value. | | E013 | error    | Exported function/class is missing a `@remarks` block. | | E014 | warn     | Optional property of interface/type is missing `@defaultValue`. | | E015 | error    | Generic symbol is missing `@typeParam` for a type parameter. | | W005 | warn     | Symbol references other symbols via `{@link}` but has no `@see` tags. | | W007 | warn     | Guide FORGE:AUTO section references a symbol that no longer exists. | | W008 | warn     | Exported public symbol is not mentioned in any guide page. | | E017 | error    | `@internal` symbol re-exported through public barrel (index.ts). | | E018 | warn     | `@route`-tagged function missing `@response` tag. | | W009 | warn     | `{@inheritDoc}` references a symbol that does not exist. | | W010 | warn     | `@breaking` tag present without `@migration` path. | | W011 | warn     | New public export missing `@since` version tag. | | E019 | error    | Non-test file contains `@ts-expect-error` / `@ts-expect-error`. | | E020 | error    | Exported symbol has `any` in its public API signature. | | W012 | warn     | `{@link}` display text appears stale relative to target summary. | | W013 | warn     | `@example` block may be stale (arg count mismatch). | | W014 | warn     | `@param` name in TSDoc doesn't match actual parameter name. | | W015 | warn     | `@param` count in TSDoc doesn't match actual parameter count. | | W016 | warn     | `@returns` tag on a void/Promise function. | | W017 | warn     | `@remarks` block is empty or contains only placeholder text. |  When `config.enforce.strict` is `true` all warnings are promoted to errors.
 
 ```typescript
 (config: ForgeConfig) => Promise<ForgeResult>
@@ -2246,7 +2266,7 @@ RuleSeverity
 
 ### `EnforceRules`
 
-Per-rule severity configuration for the TSDoc enforcer. 33 rules across 4 layers: API (E001-E008, W003-W004), Dev (E013-E015, E017-E018, W005-W006, W009), Consumer (E016, W007-W008, W010-W011), LLM Anti-Pattern (E019-E020, W012-W013).
+Per-rule severity configuration for the TSDoc enforcer. 37 rules across 4 layers: API (E001-E008, W003-W004), Dev (E013-E015, E017-E018, W005-W006, W009), Consumer (E016, W007-W008, W010-W011), LLM Anti-Pattern (E019-E020, W012-W013), Staleness (W014-W017).
 
 ```typescript
 EnforceRules
@@ -2278,6 +2298,10 @@ EnforceRules
 - `"require-no-ts-ignore"` — E019: Non-test file contains ts-ignore or ts-expect-error directive.
 - `"require-no-any-in-api"` — E020: Exported symbol has `any` in its public API signature.
 - `"require-fresh-link-text"` — W012: `\@link` display text appears stale relative to target summary.
+- `"require-fresh-params"` — W014: `\@param` name in TSDoc does not match actual parameter name in signature.
+- `"require-param-count"` — W015: `\@param` count in TSDoc does not match actual parameter count in signature.
+- `"require-fresh-returns"` — W016: `\@returns` tag present on a void/Promisevoid function.
+- `"require-meaningful-remarks"` — W017: `\@remarks` block is empty or contains only placeholder text.
 
 ### `ForgeConfig`
 
@@ -2791,6 +2815,84 @@ AuditResult
 - `success` — Whether the audit log was read successfully.
 - `count` — Number of events returned.
 - `events` — The audit events, newest first.
+
+### `BarometerSource`
+
+Source provenance for a barometer question.
+
+```typescript
+BarometerSource
+```
+
+**Members:**
+
+- `symbol` — Symbol name the fact was extracted from.
+- `file` — Relative file path where the symbol is declared.
+- `field` — Which field on the symbol yielded the fact (e.g. "signature", "remarks").
+
+### `BarometerQuestion`
+
+A single barometer question with its ground-truth answer.
+
+```typescript
+BarometerQuestion
+```
+
+**Members:**
+
+- `id` — Unique question identifier (e.g. "Q001").
+- `category` — Fact extraction category.
+- `difficulty` — Difficulty rating.
+- `question` — The question text.
+- `answer` — Ground-truth answer derived from source code.
+- `source` — Provenance information linking back to the source.
+
+### `BarometerRatingBand`
+
+A single rating band in the barometer scoring rubric.
+
+```typescript
+BarometerRatingBand
+```
+
+**Members:**
+
+- `min` — Minimum score (inclusive) for this band.
+- `max` — Maximum score (inclusive) for this band.
+- `rating` — Short label for this band.
+- `description` — Description of what this band means.
+
+### `BarometerResult`
+
+Full barometer output written to `.forge/barometer.json`.
+
+```typescript
+BarometerResult
+```
+
+**Members:**
+
+- `$schema` — JSON schema URL.
+- `version` — Barometer format version.
+- `project` — Project name from package.json or config.
+- `generated` — ISO 8601 timestamp of when the barometer was generated.
+- `symbolCount` — Total number of exported symbols analyzed.
+- `questions` — Generated questions with ground-truth answers.
+- `rubric` — Scoring rubric for evaluating documentation effectiveness.
+
+### `BarometerArgs`
+
+Arguments for the `barometer` command.
+
+```typescript
+BarometerArgs
+```
+
+**Members:**
+
+- `cwd` — Project root directory (default: cwd).
+- `questionsOnly` — Output only questions (no answers) for test agents.
+- `mvi` — MVI verbosity level for structured output.
 
 ### `GuideSource`
 
@@ -4046,6 +4148,19 @@ Citty command definition for `forge-ts audit`.
 
 ```typescript
 import("citty").CommandDef<{ readonly cwd: { readonly type: "string"; readonly description: "Project root directory"; }; readonly limit: { readonly type: "string"; readonly description: "Maximum events to display (default: 20)"; }; readonly type: { readonly type: "string"; readonly description: "Filter by event type (config.lock, config.unlock, config.drift, bypass.create, bypass.expire, rule.change)"; }; readonly json: { readonly type: "boolean"; readonly description: "Output as LAFS JSON envelope (agent-friendly)"; readonly default: false; }; readonly human: { readonly type: "boolean"; readonly description: "Output as formatted text (default for TTY)"; readonly default: false; }; readonly quiet: { readonly type: "boolean"; readonly description: "Suppress non-essential output"; readonly default: false; }; }>
+```
+
+### `barometerCommand`
+
+Citty command definition for `forge-ts barometer`.  Generates a documentation effectiveness test (questions + answers + rubric) from the project's source code.
+
+```typescript
+import("citty").CommandDef<{ readonly cwd: { readonly type: "string"; readonly description: "Project root directory"; }; readonly questionsOnly: { readonly type: "boolean"; readonly description: "Output only questions (no answers) — for test agents"; readonly alias: "questions-only"; readonly default: false; }; readonly json: { readonly type: "boolean"; readonly description: "Output as LAFS JSON envelope"; readonly default: false; }; readonly human: { readonly type: "boolean"; readonly description: "Output as formatted text"; readonly default: false; }; readonly quiet: { readonly type: "boolean"; readonly description: "Suppress non-essential output"; readonly default: false; }; readonly mvi: { readonly type: "string"; readonly description: "MVI verbosity level: minimal, standard, full"; }; }>
+```
+
+```typescript
+import { barometerCommand } from "@forge-ts/cli/commands/barometer";
+// Registered as a top-level subcommand of `forge-ts`
 ```
 
 ### `md`

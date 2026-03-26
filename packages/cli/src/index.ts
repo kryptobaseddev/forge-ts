@@ -17,6 +17,7 @@
  *   forge-ts init hooks [--cwd <dir>] [--force] (scaffold pre-commit hooks)
  *   forge-ts prepublish [--cwd <dir>] [--strict]
  *   forge-ts doctor [--cwd <dir>] [--fix]
+ *   forge-ts barometer [--cwd <dir>] [--json] [--human] [--questions-only]
  *
  * @packageDocumentation
  * @public
@@ -25,6 +26,7 @@
 import { createRequire } from "node:module";
 import { defineCommand, runMain } from "citty";
 import { auditCommand } from "./commands/audit.js";
+import { barometerCommand } from "./commands/barometer.js";
 import { buildCommand } from "./commands/build.js";
 import { bypassCommand } from "./commands/bypass.js";
 import { checkCommand } from "./commands/check.js";
@@ -42,6 +44,14 @@ const require = createRequire(import.meta.url);
 const pkg = require("../package.json") as { version: string };
 
 export { type AuditResult, auditCommand } from "./commands/audit.js";
+export {
+	type BarometerQuestion,
+	type BarometerRatingBand,
+	type BarometerResult,
+	type BarometerSource,
+	barometerCommand,
+	runBarometer,
+} from "./commands/barometer.js";
 export { type BuildResult, type BuildStep, buildCommand } from "./commands/build.js";
 export {
 	type BypassCreateResult,
@@ -310,6 +320,7 @@ const main = defineCommand({
 		audit: auditCommand,
 		prepublish: prepublishCommand,
 		doctor: doctorCommand,
+		barometer: barometerCommand,
 		version: versionCommand,
 	},
 });

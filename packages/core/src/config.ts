@@ -121,6 +121,10 @@ export function defaultConfig(rootDir: string): ForgeConfig {
 				"require-no-ts-ignore": "error",
 				"require-no-any-in-api": "warn",
 				"require-fresh-link-text": "warn",
+				"require-fresh-params": "warn",
+				"require-param-count": "warn",
+				"require-fresh-returns": "warn",
+				"require-meaningful-remarks": "warn",
 			},
 		},
 		doctest: {
@@ -252,6 +256,10 @@ const KNOWN_RULE_KEYS = new Set([
 	"require-no-ts-ignore",
 	"require-no-any-in-api",
 	"require-fresh-link-text",
+	"require-fresh-params",
+	"require-param-count",
+	"require-fresh-returns",
+	"require-meaningful-remarks",
 ]);
 
 /**

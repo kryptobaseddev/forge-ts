@@ -98,6 +98,32 @@ const output = await runAudit({ cwd: process.cwd(), limit: 10 });
 console.log(output.data.count); // number of events returned
 ```
 
+## runBarometer(args)
+
+Runs the barometer generation pass.  Loads the project config, walks the symbol graph, extracts testable facts from five categories, generates questions with ground-truth answers, and writes the result to `.forge/barometer.json`.
+
+**Signature**
+
+```typescript
+(args: BarometerArgs) => Promise<CommandOutput<BarometerResult>>
+```
+
+**Parameters**
+
+| Name   | Type            | Description                              |
+| ------ | --------------- | ---------------------------------------- |
+| `args` | `BarometerArgs` | CLI arguments for the barometer command. |
+
+**Returns** — A typed `CommandOutput<BarometerResult>`.
+
+**Example**
+
+```typescript
+import { runBarometer } from "@forge-ts/cli/commands/barometer";
+const output = await runBarometer({ cwd: process.cwd() });
+console.log(`Generated ${output.data.questions.length} questions`);
+```
+
 ## runBuild(args)
 
 Runs the full build pipeline and returns a typed command output.

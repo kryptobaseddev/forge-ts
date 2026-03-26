@@ -83,6 +83,64 @@ Typed result for the `audit` command.
 | `count`   | `number`       | Yes      | Number of events returned.                   |
 | `events`  | `AuditEvent[]` | Yes      | The audit events, newest first.              |
 
+## BarometerSource
+
+Source provenance for a barometer question.
+
+| Property | Type     | Required | Description                                                               |
+| -------- | -------- | -------- | ------------------------------------------------------------------------- |
+| `symbol` | `string` | Yes      | Symbol name the fact was extracted from.                                  |
+| `file`   | `string` | Yes      | Relative file path where the symbol is declared.                          |
+| `field`  | `string` | Yes      | Which field on the symbol yielded the fact (e.g. "signature", "remarks"). |
+
+## BarometerQuestion
+
+A single barometer question with its ground-truth answer.
+
+| Property     | Type                                                                | Required | Description                                        |
+| ------------ | ------------------------------------------------------------------- | -------- | -------------------------------------------------- |
+| `id`         | `string`                                                            | Yes      | Unique question identifier (e.g. "Q001").          |
+| `category`   | `"signature" \| "remarks" \| "config" \| "architecture" \| "rules"` | Yes      | Fact extraction category.                          |
+| `difficulty` | `"easy" \| "medium" \| "hard"`                                      | Yes      | Difficulty rating.                                 |
+| `question`   | `string`                                                            | Yes      | The question text.                                 |
+| `answer`     | `string`                                                            | Yes      | Ground-truth answer derived from source code.      |
+| `source`     | `BarometerSource`                                                   | Yes      | Provenance information linking back to the source. |
+
+## BarometerRatingBand
+
+A single rating band in the barometer scoring rubric.
+
+| Property      | Type     | Required | Description                              |
+| ------------- | -------- | -------- | ---------------------------------------- |
+| `min`         | `number` | Yes      | Minimum score (inclusive) for this band. |
+| `max`         | `number` | Yes      | Maximum score (inclusive) for this band. |
+| `rating`      | `string` | Yes      | Short label for this band.               |
+| `description` | `string` | Yes      | Description of what this band means.     |
+
+## BarometerResult
+
+Full barometer output written to `.forge/barometer.json`.
+
+| Property      | Type                                                 | Required | Description                                                |
+| ------------- | ---------------------------------------------------- | -------- | ---------------------------------------------------------- |
+| `$schema`     | `string`                                             | Yes      | JSON schema URL.                                           |
+| `version`     | `string`                                             | Yes      | Barometer format version.                                  |
+| `project`     | `string`                                             | Yes      | Project name from package.json or config.                  |
+| `generated`   | `string`                                             | Yes      | ISO 8601 timestamp of when the barometer was generated.    |
+| `symbolCount` | `number`                                             | Yes      | Total number of exported symbols analyzed.                 |
+| `questions`   | `BarometerQuestion[]`                                | Yes      | Generated questions with ground-truth answers.             |
+| `rubric`      | `{ scale: BarometerRatingBand[]; scoring: string; }` | Yes      | Scoring rubric for evaluating documentation effectiveness. |
+
+## BarometerArgs
+
+Arguments for the `barometer` command.
+
+| Property        | Type                   | Required | Description                                         |
+| --------------- | ---------------------- | -------- | --------------------------------------------------- |
+| `cwd`           | `string \| undefined`  | No       | Project root directory (default: cwd).              |
+| `questionsOnly` | `boolean \| undefined` | No       | Output only questions (no answers) for test agents. |
+| `mvi`           | `string \| undefined`  | No       | MVI verbosity level for structured output.          |
+
 ## BuildArgs
 
 Arguments for the `build` command.

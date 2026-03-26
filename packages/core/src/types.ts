@@ -83,8 +83,9 @@ export type RuleSeverity = "error" | "warn" | "off";
 
 /**
  * Per-rule severity configuration for the TSDoc enforcer.
- * 33 rules across 4 layers: API (E001-E008, W003-W004), Dev (E013-E015, E017-E018, W005-W006, W009),
- * Consumer (E016, W007-W008, W010-W011), LLM Anti-Pattern (E019-E020, W012-W013).
+ * 37 rules across 4 layers: API (E001-E008, W003-W004), Dev (E013-E015, E017-E018, W005-W006, W009),
+ * Consumer (E016, W007-W008, W010-W011), LLM Anti-Pattern (E019-E020, W012-W013),
+ * Staleness (W014-W017).
  * @since 0.1.0
  * @public
  */
@@ -137,6 +138,14 @@ export interface EnforceRules {
 	"require-no-any-in-api": RuleSeverity;
 	/** W012: `\@link` display text appears stale relative to target summary. */
 	"require-fresh-link-text": RuleSeverity;
+	/** W014: `\@param` name in TSDoc does not match actual parameter name in signature. */
+	"require-fresh-params": RuleSeverity;
+	/** W015: `\@param` count in TSDoc does not match actual parameter count in signature. */
+	"require-param-count": RuleSeverity;
+	/** W016: `\@returns` tag present on a void/Promise\<void\> function. */
+	"require-fresh-returns": RuleSeverity;
+	/** W017: `\@remarks` block is empty or contains only placeholder text. */
+	"require-meaningful-remarks": RuleSeverity;
 }
 
 /**

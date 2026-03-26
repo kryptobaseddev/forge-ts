@@ -1,7 +1,7 @@
 ---
 name: SKILL-forge-ts
 description: >
-  Universal TypeScript documentation compiler — enforces TSDoc as a build gate, then generates all artifacts from source in one pass Use when: (1) calling its 109 API functions, (2) configuring forge-ts, (3) understanding its 122 type definitions, (4) user mentions "forge-ts" or asks about its API.
+  Universal TypeScript documentation compiler — enforces TSDoc as a build gate, then generates all artifacts from source in one pass Use when: (1) calling its 110 API functions, (2) configuring forge-ts, (3) understanding its 127 type definitions, (4) user mentions "forge-ts" or asks about its API.
 ---
 
 # forge-ts
@@ -38,7 +38,7 @@ const user = getCurrentUser(); // e.g. "alice"
 | `readLockFile()` | Reads the `.forge-lock.json` file from the given project root. |
 | `writeLockFile()` | Writes a `ForgeLockManifest` to `.forge-lock.json` in the project root. |
 | `removeLockFile()` | Removes the `.forge-lock.json` file from the project root. |
-| ... | 94 more — see API reference |
+| ... | 95 more — see API reference |
 
 ## Configuration
 
@@ -155,7 +155,7 @@ When `--json --mvi full`, each error includes `suggestedFix` with the exact TSDo
 - **`Visibility`** — Visibility levels for exported symbols. Derived from TSDoc release tags (`@public`, `@beta`, `@internal`).
 - **`ForgeSymbol`** — A single extracted and annotated symbol from the TypeScript AST.
 - **`RuleSeverity`** — Severity level for an individual enforcement rule. - `"error"` — violation fails the build. - `"warn"`  — violation is reported but does not fail the build. - `"off"`   — rule is disabled entirely.
-- **`EnforceRules`** — Per-rule severity configuration for the TSDoc enforcer. 33 rules across 4 layers: API (E001-E008, W003-W004), Dev (E013-E015, E017-E018, W005-W006, W009), Consumer (E016, W007-W008, W010-W011), LLM Anti-Pattern (E019-E020, W012-W013).
+- **`EnforceRules`** — Per-rule severity configuration for the TSDoc enforcer. 37 rules across 4 layers: API (E001-E008, W003-W004), Dev (E013-E015, E017-E018, W005-W006, W009), Consumer (E016, W007-W008, W010-W011), LLM Anti-Pattern (E019-E020, W012-W013), Staleness (W014-W017).
 - **`ForgeConfig`** — Full configuration for a forge-ts run. Loaded from forge-ts.config.ts or the "forge-ts" key in package.json.
 
 ## References

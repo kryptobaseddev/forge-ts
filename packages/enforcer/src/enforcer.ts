@@ -136,6 +136,37 @@ function deprecatedWithoutReason(symbol: ForgeSymbol): boolean {
 }
 
 /**
+ * Parses parameter names from a function/method signature string.
+ * Handles leading generics like `<T, U extends Foo>(...)`, optional params `?`,
+ * rest params `...`, and nested generics in type annotations.
+ * @internal
+ */
+function parseParamNames(signature: string | undefined): string[] {
+	if (!signature) return [];
+	// Strip leading generic: <T, U extends Foo>(...) => ...
+	const withoutGeneric = signature.replace(/^<[^>]*(?:<[^>]*>[^>]*)*>\s*/, "");
+	const match = /^\(([^)]*)\)/.exec(withoutGeneric);
+	if (!match || !match[1].trim()) return [];
+	// Split respecting nested generics: "a: string, b: Record<string, number>"
+	const params: string[] = [];
+	let depth = 0;
+	let current = "";
+	for (const ch of match[1]) {
+		if (ch === "<" || ch === "(") depth++;
+		else if (ch === ">" || ch === ")") depth--;
+		else if (ch === "," && depth === 0) {
+			params.push(current.trim());
+			current = "";
+			continue;
+		}
+		current += ch;
+	}
+	if (current.trim()) params.push(current.trim());
+	// Extract just the name (before : or ?)
+	return params.map((p) => p.replace(/^\.{3}/, "").split(/[?:]/)[0].trim()).filter((p) => p.length > 0 && p !== "this");
+}
+
+/**
  * Extracts generic type parameter names from a symbol's signature.
  * Handles patterns like `<T>`, `<T, U>`, `<T extends Record<string, unknown>>`, etc.
  * Respects nested angle brackets so constraints are not prematurely closed.
@@ -291,6 +322,10 @@ const RULE_MAP: Record<string, keyof EnforceRules> = {
 	E020: "require-no-any-in-api",
 	W012: "require-fresh-link-text",
 	W013: "require-fresh-examples",
+	W014: "require-fresh-params",
+	W015: "require-param-count",
+	W016: "require-fresh-returns",
+	W017: "require-meaningful-remarks",
 };
 
 // ---------------------------------------------------------------------------
@@ -335,6 +370,10 @@ const RULE_MAP: Record<string, keyof EnforceRules> = {
  * | E020 | error    | Exported symbol has `any` in its public API signature. |
  * | W012 | warn     | `{@link}` display text appears stale relative to target summary. |
  * | W013 | warn     | `@example` block may be stale (arg count mismatch). |
+ * | W014 | warn     | `@param` name in TSDoc doesn't match actual parameter name. |
+ * | W015 | warn     | `@param` count in TSDoc doesn't match actual parameter count. |
+ * | W016 | warn     | `@returns` tag on a void/Promise<void> function. |
+ * | W017 | warn     | `@remarks` block is empty or contains only placeholder text. |
  *
  * When `config.enforce.strict` is `true` all warnings are promoted to errors.
  *
@@ -761,6 +800,105 @@ export async function enforce(config: ForgeConfig): Promise<ForgeResult> {
 					symbolKind: symbol.kind,
 				},
 			);
+		}
+
+		// W014 — @param name mismatch (staleness)
+		if (isFunctionLike && symbol.documentation?.params && symbol.documentation.params.length > 0) {
+			const actualNames = parseParamNames(symbol.signature);
+			const docParams = symbol.documentation.params;
+			for (let i = 0; i < docParams.length; i++) {
+				if (i < actualNames.length && docParams[i].name !== actualNames[i]) {
+					if (!isRuleBypassed(config.rootDir, "W014")) {
+						emit(
+							"W014",
+							`@param "${docParams[i].name}" in "${symbol.name}" does not match actual parameter name "${actualNames[i]}" at position ${i + 1}.`,
+							symbol.filePath,
+							symbol.line,
+							symbol.column,
+							{
+								suggestedFix: `@param ${actualNames[i]} - [Description of ${actualNames[i]}]`,
+								symbolName: symbol.name,
+								symbolKind: symbol.kind,
+							},
+						);
+					}
+				}
+			}
+		}
+
+		// W015 — @param count mismatch (staleness)
+		if (isFunctionLike && symbol.documentation?.params && symbol.documentation.params.length > 0) {
+			const actualNames = parseParamNames(symbol.signature);
+			const docCount = symbol.documentation.params.length;
+			if (actualNames.length !== docCount) {
+				if (!isRuleBypassed(config.rootDir, "W015")) {
+					emit(
+						"W015",
+						`"${symbol.name}" has ${actualNames.length} parameter(s) in its signature but ${docCount} @param tag(s) in TSDoc.`,
+						symbol.filePath,
+						symbol.line,
+						symbol.column,
+						{
+							suggestedFix: `Update @param tags to match the ${actualNames.length} actual parameter(s): ${actualNames.join(", ")}`,
+							symbolName: symbol.name,
+							symbolKind: symbol.kind,
+						},
+					);
+				}
+			}
+		}
+
+		// W016 — @returns on void function (staleness)
+		if (isFunctionLike && symbol.documentation?.returns && symbol.signature) {
+			const arrowIdx = symbol.signature.lastIndexOf("=>");
+			if (arrowIdx !== -1) {
+				const returnType = symbol.signature.slice(arrowIdx + 2).trim();
+				const isVoidReturn =
+					returnType === "void" ||
+					returnType.startsWith("Promise<void>");
+				if (isVoidReturn) {
+					if (!isRuleBypassed(config.rootDir, "W016")) {
+						emit(
+							"W016",
+							`"${symbol.name}" returns void but has a @returns tag. Remove the stale @returns.`,
+							symbol.filePath,
+							symbol.line,
+							symbol.column,
+							{
+								suggestedFix: "Remove the @returns tag — this function returns void.",
+								symbolName: symbol.name,
+								symbolKind: symbol.kind,
+							},
+						);
+					}
+				}
+			}
+		}
+
+		// W017 — @remarks empty or placeholder (staleness)
+		if (symbol.documentation?.remarks !== undefined) {
+			const remarks = symbol.documentation.remarks.trim();
+			const isPlaceholder =
+				remarks.length === 0 ||
+				/^\[.*\.\.\.\]$/.test(remarks) ||
+				/^TODO\b/i.test(remarks) ||
+				/^\[Detailed description of /i.test(remarks);
+			if (isPlaceholder) {
+				if (!isRuleBypassed(config.rootDir, "W017")) {
+					emit(
+						"W017",
+						`@remarks in "${symbol.name}" is empty or contains placeholder text. Provide meaningful documentation.`,
+						symbol.filePath,
+						symbol.line,
+						symbol.column,
+						{
+							suggestedFix: `@remarks [Provide meaningful implementation details for ${symbol.name}]`,
+							symbolName: symbol.name,
+							symbolKind: symbol.kind,
+						},
+					);
+				}
+			}
 		}
 
 		// W006 — TSDoc parser syntax messages

@@ -2,12 +2,15 @@
   "openapi": "3.2.0",
   "info": {
     "title": "forge-ts",
-    "version": "0.19.5",
+    "version": "0.20.0",
     "description": "Universal TypeScript documentation compiler — enforces TSDoc as a build gate, then generates all artifacts from source in one pass"
   },
   "tags": [
     {
       "name": "audit"
+    },
+    {
+      "name": "barometer"
     },
     {
       "name": "build"
@@ -321,7 +324,7 @@
         "type": "object"
       },
       "EnforceRules": {
-        "description": "Per-rule severity configuration for the TSDoc enforcer. 33 rules across 4 layers: API (E001-E008, W003-W004), Dev (E013-E015, E017-E018, W005-W006, W009), Consumer (E016, W007-W008, W010-W011), LLM Anti-Pattern (E019-E020, W012-W013).",
+        "description": "Per-rule severity configuration for the TSDoc enforcer. 37 rules across 4 layers: API (E001-E008, W003-W004), Dev (E013-E015, E017-E018, W005-W006, W009), Consumer (E016, W007-W008, W010-W011), LLM Anti-Pattern (E019-E020, W012-W013), Staleness (W014-W017).",
         "type": "object",
         "properties": {
           "\"require-summary\"": {
@@ -419,6 +422,22 @@
           "\"require-fresh-link-text\"": {
             "type": "object",
             "description": "W012: `\\@link` display text appears stale relative to target summary."
+          },
+          "\"require-fresh-params\"": {
+            "type": "object",
+            "description": "W014: `\\@param` name in TSDoc does not match actual parameter name in signature."
+          },
+          "\"require-param-count\"": {
+            "type": "object",
+            "description": "W015: `\\@param` count in TSDoc does not match actual parameter count in signature."
+          },
+          "\"require-fresh-returns\"": {
+            "type": "object",
+            "description": "W016: `\\@returns` tag present on a void/Promisevoid function."
+          },
+          "\"require-meaningful-remarks\"": {
+            "type": "object",
+            "description": "W017: `\\@remarks` block is empty or contains only placeholder text."
           }
         },
         "required": [
@@ -445,7 +464,11 @@
           "\"require-fresh-examples\"",
           "\"require-no-ts-ignore\"",
           "\"require-no-any-in-api\"",
-          "\"require-fresh-link-text\""
+          "\"require-fresh-link-text\"",
+          "\"require-fresh-params\"",
+          "\"require-param-count\"",
+          "\"require-fresh-returns\"",
+          "\"require-meaningful-remarks\""
         ]
       },
       "ForgeConfig": {
@@ -1591,6 +1614,167 @@
           "success",
           "count",
           "events"
+        ]
+      },
+      "BarometerSource": {
+        "description": "Source provenance for a barometer question.",
+        "type": "object",
+        "properties": {
+          "symbol": {
+            "type": "string",
+            "description": "Symbol name the fact was extracted from."
+          },
+          "file": {
+            "type": "string",
+            "description": "Relative file path where the symbol is declared."
+          },
+          "field": {
+            "type": "string",
+            "description": "Which field on the symbol yielded the fact (e.g. \"signature\", \"remarks\")."
+          }
+        },
+        "required": [
+          "symbol",
+          "file",
+          "field"
+        ]
+      },
+      "BarometerQuestion": {
+        "description": "A single barometer question with its ground-truth answer.",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique question identifier (e.g. \"Q001\")."
+          },
+          "category": {
+            "oneOf": [
+              {
+                "type": "object"
+              },
+              {
+                "type": "object"
+              },
+              {
+                "type": "object"
+              },
+              {
+                "type": "object"
+              },
+              {
+                "type": "object"
+              }
+            ],
+            "description": "Fact extraction category."
+          },
+          "difficulty": {
+            "oneOf": [
+              {
+                "type": "object"
+              },
+              {
+                "type": "object"
+              },
+              {
+                "type": "object"
+              }
+            ],
+            "description": "Difficulty rating."
+          },
+          "question": {
+            "type": "string",
+            "description": "The question text."
+          },
+          "answer": {
+            "type": "string",
+            "description": "Ground-truth answer derived from source code."
+          },
+          "source": {
+            "type": "object",
+            "description": "Provenance information linking back to the source."
+          }
+        },
+        "required": [
+          "id",
+          "category",
+          "difficulty",
+          "question",
+          "answer",
+          "source"
+        ]
+      },
+      "BarometerRatingBand": {
+        "description": "A single rating band in the barometer scoring rubric.",
+        "type": "object",
+        "properties": {
+          "min": {
+            "type": "number",
+            "description": "Minimum score (inclusive) for this band."
+          },
+          "max": {
+            "type": "number",
+            "description": "Maximum score (inclusive) for this band."
+          },
+          "rating": {
+            "type": "string",
+            "description": "Short label for this band."
+          },
+          "description": {
+            "type": "string",
+            "description": "Description of what this band means."
+          }
+        },
+        "required": [
+          "min",
+          "max",
+          "rating",
+          "description"
+        ]
+      },
+      "BarometerResult": {
+        "description": "Full barometer output written to `.forge/barometer.json`.",
+        "type": "object",
+        "properties": {
+          "$schema": {
+            "type": "string",
+            "description": "JSON schema URL."
+          },
+          "version": {
+            "type": "string",
+            "description": "Barometer format version."
+          },
+          "project": {
+            "type": "string",
+            "description": "Project name from package.json or config."
+          },
+          "generated": {
+            "type": "string",
+            "description": "ISO 8601 timestamp of when the barometer was generated."
+          },
+          "symbolCount": {
+            "type": "number",
+            "description": "Total number of exported symbols analyzed."
+          },
+          "questions": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            },
+            "description": "Generated questions with ground-truth answers."
+          },
+          "rubric": {
+            "type": "object",
+            "description": "Scoring rubric for evaluating documentation effectiveness."
+          }
+        },
+        "required": [
+          "$schema",
+          "version",
+          "project",
+          "generated",
+          "symbolCount",
+          "questions",
+          "rubric"
         ]
       },
       "GuideSource": {

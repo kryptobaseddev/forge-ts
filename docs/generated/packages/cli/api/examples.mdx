@@ -55,6 +55,29 @@ const output = await runAudit({ cwd: process.cwd(), limit: 10 });
 console.log(output.data.count); // number of events returned
 ```
 
+## `runBarometer()`
+
+*Runs the barometer generation pass.  Loads the project config, walks the symbol graph, extracts testable facts from five categories, generates questions with ground-truth answers, and writes the result to `.forge/barometer.json`.*
+
+[View in API reference](/packages/cli/api/functions#runbarometer)
+
+```typescript
+import { runBarometer } from "@forge-ts/cli/commands/barometer";
+const output = await runBarometer({ cwd: process.cwd() });
+console.log(`Generated ${output.data.questions.length} questions`);
+```
+
+## `barometerCommand`
+
+*Citty command definition for `forge-ts barometer`.  Generates a documentation effectiveness test (questions + answers + rubric) from the project's source code.*
+
+[View in API reference](/packages/cli/api/functions#barometercommand)
+
+```typescript
+import { barometerCommand } from "@forge-ts/cli/commands/barometer";
+// Registered as a top-level subcommand of `forge-ts`
+```
+
 ## `runBuild()`
 
 *Runs the full build pipeline and returns a typed command output.*

@@ -127,6 +127,13 @@ export interface ASTWalker {
  * Render inline nodes (PlainText, CodeSpan, SoftBreak, LinkTag) to a plain string.
  * `{@link Target}` references are rendered as backtick-wrapped target names
  * (e.g., `` `ForgeConfig` ``) so they appear correctly in generated Markdown.
+ *
+ * @remarks
+ * `{@link Target}` tags are formatted as `` `Target` `` (backtick-wrapped) in
+ * plain string output. If the tag includes display text (`{@link Target | text}`),
+ * the display text is used; otherwise the code destination member identifiers are
+ * joined with `.` and wrapped in backticks.
+ *
  * @internal
  */
 function renderInlineNodes(nodes: readonly DocNode[]): string {
@@ -494,8 +501,12 @@ function parseTSDoc(
 
 	const summary = renderDocSection(comment.summarySection);
 
+	// Promote @remarks from tags to a dedicated field so generators can surface it
+	const remarks = tags.remarks?.[0] || undefined;
+
 	return {
 		summary: summary || undefined,
+		remarks,
 		params: params.length > 0 ? params : undefined,
 		returns,
 		throws: throws.length > 0 ? throws : undefined,

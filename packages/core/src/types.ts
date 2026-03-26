@@ -44,6 +44,8 @@ export interface ForgeSymbol {
 	 */
 	documentation?: {
 		summary?: string;
+		/** @remarks block content — implementation details, behavioral contracts, gotchas. */
+		remarks?: string;
 		params?: Array<{ name: string; description: string; type?: string }>;
 		returns?: { description: string; type?: string };
 		throws?: Array<{ type?: string; description: string }>;

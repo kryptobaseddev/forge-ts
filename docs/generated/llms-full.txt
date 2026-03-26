@@ -3,7 +3,7 @@
 > Universal TypeScript documentation compiler — enforces TSDoc as a build gate, then generates all artifacts from source in one pass
 
 Version: 0.19.5
-Generated: 2026-03-26T05:10:46.711Z
+Generated: 2026-03-26T06:09:00.651Z
 
 ## Package: core
 
@@ -27,6 +27,8 @@ Example:
 
 Appends a single audit event to the `.forge-audit.jsonl` file.
 
+Creates the file if it does not exist. The file is strictly append-only — existing content is never modified or truncated.
+
 Parameters:
 - rootDir: Absolute path to the project root directory.
 - event: The audit event to record.
@@ -41,6 +43,8 @@ Example:
 (rootDir: string, options?: ReadAuditOptions) => AuditEvent[]
 
 Reads the `.forge-audit.jsonl` file and returns parsed audit events.
+
+Returns newest events first. If the file does not exist, returns an empty array. Invalid JSON lines are silently skipped.
 
 Parameters:
 - rootDir: Absolute path to the project root directory.
@@ -59,6 +63,8 @@ Example:
 
 Formats a single audit event as a human-readable string.
 
+Produces a single-line representation suitable for terminal output or log files. Includes the timestamp, event type, user, reason, and details.
+
 Parameters:
 - event: The audit event to format.
 
@@ -75,6 +81,8 @@ Example:
 (rootDir: string, reason: string, rule?: string, config?: Partial<BypassConfig>) => BypassRecord
 
 Creates a new bypass record, writes it to `.forge-bypass.json`, and appends an audit event.
+
+Throws an error if the daily budget is exhausted. Each bypass is recorded in the audit trail for governance traceability.
 
 Parameters:
 - rootDir: Absolute path to the project root directory.
@@ -95,6 +103,8 @@ Example:
 
 Returns all currently active (non-expired) bypass records.
 
+Filters bypass records by comparing their `expiresAt` timestamp against the current time. Expired records are not removed by this function.
+
 Parameters:
 - rootDir: Absolute path to the project root directory.
 
@@ -110,6 +120,8 @@ Example:
 (rootDir: string, ruleCode: string) => boolean
 
 Checks whether a specific rule has an active bypass.
+
+A rule is considered bypassed if there is an active bypass with the exact rule code or an "all" bypass.
 
 Parameters:
 - rootDir: Absolute path to the project root directory.
@@ -129,6 +141,8 @@ Example:
 
 Returns the number of bypass budget slots remaining for today.
 
+Counts bypasses created today (UTC) against the configured daily budget. The daily budget resets at 00:00 UTC (midnight UTC) — the `startOfToday()` helper computes the UTC day boundary using `Date.UTC(y, m, d)`, and only bypasses with `createdAt >= startOfToday()` count toward today's usage. When no config override is provided, the default budget of 3 is used.
+
 Parameters:
 - rootDir: Absolute path to the project root directory.
 - config: Optional bypass budget configuration overrides.
@@ -146,6 +160,8 @@ Example:
 
 Removes expired bypass records from `.forge-bypass.json`.
 
+Also appends a `bypass.expire` audit event for each expired record removed. Returns 0 without writing the file when no records have expired.
+
 Parameters:
 - rootDir: Absolute path to the project root directory.
 
@@ -161,6 +177,8 @@ Example:
 (config: Partial<ForgeConfig>) => Partial<ForgeConfig>
 
 Type-safe helper for defining a partial forge-ts configuration.
+
+Only include the settings you want to override — everything else inherits sensible defaults via `loadConfig()`.
 
 Parameters:
 - config: Partial configuration overrides.
@@ -179,6 +197,8 @@ Example:
 
 Constructs a sensible default `ForgeConfig` rooted at `rootDir`.
 
+All configuration fields receive production-ready defaults. The returned object is fully populated and can be used without any further merging.
+
 Parameters:
 - rootDir: Absolute path to the project root.
 
@@ -195,6 +215,8 @@ Example:
 
 Loads the forge-ts configuration for a project.
 
+Resolution order: 1. `\<rootDir\>/forge-ts.config.ts` 2. `\<rootDir\>/forge-ts.config.js` 3. `"forge-ts"` key inside `\<rootDir\>/package.json` 4. Built-in defaults (returned when none of the above is found)
+
 Parameters:
 - rootDir: The project root to search for config.  Defaults to `process.cwd()`.
 
@@ -210,6 +232,8 @@ Example:
 (rootDir: string) => ForgeLockManifest | null
 
 Reads the `.forge-lock.json` file from the given project root.
+
+Returns `null` when the file does not exist or contains invalid JSON, so callers can safely use a null check to determine lock state.
 
 Parameters:
 - rootDir: Absolute path to the project root.
@@ -229,6 +253,8 @@ Example:
 
 Writes a `ForgeLockManifest` to `.forge-lock.json` in the project root.
 
+Overwrites any existing lock file. The manifest is serialised as pretty-printed JSON with a trailing newline.
+
 Parameters:
 - rootDir: Absolute path to the project root.
 - manifest: The lock manifest to write.
@@ -245,6 +271,8 @@ Example:
 
 Removes the `.forge-lock.json` file from the project root.
 
+Safe to call even when no lock file exists — returns `false` in that case rather than throwing.
+
 Parameters:
 - rootDir: Absolute path to the project root.
 
@@ -260,6 +288,8 @@ Example:
 (config: ForgeConfig, lockedBy?: string) => ForgeLockManifest
 
 Creates a `ForgeLockManifest` from the current project config.
+
+Snapshots the enforce rule severities and guard settings so they can be compared on future runs to detect weakening.
 
 Parameters:
 - config: The fully-resolved `ForgeConfig` to snapshot.
@@ -278,6 +308,8 @@ Example:
 (config: ForgeConfig, lock: ForgeLockManifest) => LockViolation[]
 
 Validates the current config against a locked manifest.
+
+Returns an array of violations where the current config has weakened settings relative to the locked state. Weakening means: - A rule severity changed from `"error"` to `"warn"` or `"off"` - A rule severity changed from `"warn"` to `"off"` - A tsconfig guard was disabled - A required tsconfig flag was removed - A biome guard was disabled - A locked biome rule was removed
 
 Parameters:
 - config: The current fully-resolved `ForgeConfig`.
@@ -302,6 +334,8 @@ Example:
 
 Determines the visibility level of a symbol from its TSDoc release tags.
 
+The precedence order is: 1. `\@internal`  → `Visibility.Internal` 2. `\@beta`      → `Visibility.Beta` 3. `\@public`    → `Visibility.Public` 4. (no tag)     → `Visibility.Public` (default for exports)  When multiple release tags are present on the same symbol, the most restrictive tag wins because the tags are checked in descending restriction order (`@internal` first). For example, a symbol tagged with both `@public` and `@internal` resolves to `Visibility.Internal`. Internal symbols are excluded from generated documentation output.
+
 Parameters:
 - tags: The parsed `tags` map from `ForgeSymbol.documentation`.
 
@@ -317,6 +351,8 @@ Example:
 (candidate: Visibility | "public" | "beta" | "internal" | "private", minVisibility: Visibility | "public" | "beta" | "internal" | "private") => boolean
 
 Returns whether `candidate` meets or exceeds the required minimum visibility.
+
+"Meets" means the symbol is at least as visible as `minVisibility`. For example, `Public` meets a minimum of `Public`, but `Internal` does not.  Both parameters accept either a `Visibility` enum value or the equivalent string literal (`"public"`, `"beta"`, `"internal"`, `"private"`).
 
 Parameters:
 - candidate: The visibility of the symbol being tested.
@@ -335,6 +371,8 @@ Example:
 (symbols: ForgeSymbol[], minVisibility: Visibility | "public" | "beta" | "internal" | "private") => ForgeSymbol[]
 
 Filters an array of `ForgeSymbol` objects to only include symbols whose visibility meets or exceeds `minVisibility`.
+
+Returns a new array — the original is not modified.
 
 Parameters:
 - symbols: The full list of symbols to filter.
@@ -368,6 +406,8 @@ Returns: A configured `TSDocConfiguration` instance.
 (config: ForgeConfig) => ASTWalker
 
 Creates an `ASTWalker` configured for the given forge config.
+
+The walker uses the TypeScript Compiler API to create a `ts.Program` from the project's tsconfig, then visits every source file to extract exported declarations.  TSDoc comments are parsed with `@microsoft/tsdoc` to populate the `documentation` field on each `ForgeSymbol`.
 
 Parameters:
 - config: The resolved `ForgeConfig` for the project.
@@ -551,7 +591,7 @@ number
 
 ##### documentation
 
-{ summary?: string; params?: Array<{ name: string; description: string; type?: string; }>; returns?: { description: string; type?: string; }; throws?: Array<{ type?: string; description: string; }>; examples?: Array<{ code: string; language: string; line: number; }>; tags?: Record<string, string[]>; deprecated?: string; links?: Array<{ target: string; line: number; text?: string; }>; parseMessages?: Array<{ messageId: string; text: string; line: number; }>; } | undefined
+{ summary?: string; remarks?: string; params?: Array<{ name: string; description: string; type?: string; }>; returns?: { description: string; type?: string; }; throws?: Array<{ type?: string; description: string; }>; examples?: Array<{ code: string; language: string; line: number; }>; tags?: Record<string, string[]>; deprecated?: string; links?: Array<{ target: string; line: number; text?: string; }>; parseMessages?: Array<{ messageId: string; text: string; line: number; }>; } | undefined
 
 Parsed TSDoc documentation, if present.
 
@@ -1575,6 +1615,8 @@ Example:
 
 Generates a production-quality OpenAPI 3.2 document from the extracted SDK types.  The document is populated with: - An `info` block sourced from the config or reasonable defaults. - A `components.schemas` section with one schema per exported type. - `tags` derived from unique source file paths (grouping by file). - Visibility filtering: `@internal` symbols are never emitted. - HTTP paths are extracted from `@route` tags and appropriately mapped.
 
+Produces an OpenAPI 3.2.0 document. Symbols marked `@internal` or `@private` are filtered out before schema generation.  HTTP paths are extracted from `@route` tags in the format `METHOD /path`. Path template variables like `{id}` become required path parameters (`in: "path"`). Any `@param` entries whose names are NOT found in the route path template are classified as query parameters (`in: "query"`).
+
 Parameters:
 - config: The resolved `ForgeConfig`.
 - sdkTypes: SDK types to include as component schemas.
@@ -1999,6 +2041,8 @@ Returns: Array of script keys that were added (empty if all already existed).
 
 Detects which hook manager is present in the project.  Checks for: - husky: `.husky/` directory or `husky` in package.json devDependencies - lefthook: `lefthook.yml` or `lefthook` in package.json devDependencies
 
+Detection order: filesystem check first (`.husky/`, `lefthook.yml`), then falls back to checking `package.json` devDependencies/dependencies.
+
 Parameters:
 - rootDir: Absolute path to the project root.
 
@@ -2033,6 +2077,8 @@ Generates the lefthook block with both pre-commit and pre-push sections.
 
 Checks whether a versionguard config file exists in the project root.  When detected, forge-ts appends versionguard's hook lines to the generated hook files so both tools run cooperatively.
 
+Scans for `.versionguard.yml`, `.versionguard.yaml`, `versionguard.yml`, and `versionguard.yaml` in the project root directory.
+
 Parameters:
 - rootDir: Absolute path to the project root.
 
@@ -2049,6 +2095,8 @@ Example:
 (args: InitHooksArgs) => Promise<CommandOutput<InitHooksResult>>
 
 Scaffolds git hook integration for the project.  Detects the hook manager (husky or lefthook), generates appropriate hook files, and reports what was written.
+
+Supports both husky v9+ and lefthook. When versionguard is detected in the project, its hook lines are appended cooperatively. Existing hook files are preserved unless `--force` is passed.
 
 Parameters:
 - args: CLI arguments for the init hooks command.
@@ -3824,6 +3872,8 @@ Returns: Array of block-level mdast nodes.
 
 Sanitize markdown content for MDX compatibility using AST-aware processing.  Parses the document with remark to understand its structure, then applies targeted string replacements only to text and HTML comment nodes — code blocks, inline code, and frontmatter are automatically preserved.  Transformations applied outside code: - HTML comments to MDX comments - Curly braces in text escaped (prevents MDX expression parsing) - Angle brackets around word chars escaped (prevents JSX tag parsing)
 
+Replacements are applied in reverse position order (sorted by descending `start` offset) so that earlier replacements do not invalidate the character offsets of later replacements. This is the key strategy that keeps all position-based transforms correct across multiple simultaneous edits.
+
 Parameters:
 - content: The markdown content to sanitize.
 
@@ -3883,6 +3933,8 @@ Returns: The updated content with stubs inserted or refreshed as needed.
 
 Escape MDX-unsafe characters in text that appears outside code fences.  MDX parses `<Word>` as JSX tags and `{expr}` as JS expressions. In documentation content (summaries, descriptions, table cells), these come from TypeScript generics (`Array<string>`) and TSDoc inline tags (`{@link Foo}`). We escape them so MDX treats them as literal text.  This is exported so SSG adapters can apply it during page transformation.
 
+Replaces `{`, `}`, `<`, and `>` with backslash-escaped or HTML-entity equivalents. Only angle brackets adjacent to word characters are escaped to avoid over-escaping.
+
 Parameters:
 - text: Raw text that may contain MDX-unsafe characters.
 
@@ -3897,6 +3949,8 @@ Example:
 (symbols: ForgeSymbol[], rootDir: string) => Map<string, ForgeSymbol[]>
 
 Groups symbols by their package based on file path.  For monorepos (symbols under `packages/<name>/`) the package name is derived from the directory segment immediately after `packages/`. For non-monorepo projects all symbols fall under the project name.
+
+Uses relative path analysis to detect monorepo `packages/<name>/` structure. Root-level config and test files are excluded from the result.
 
 Parameters:
 - symbols: All extracted symbols.
@@ -3914,6 +3968,8 @@ Example:
 (symbolsByPackage: Map<string, ForgeSymbol[]>, config: ForgeConfig, options: SiteGeneratorOptions) => DocPage[]
 
 Generates a full multi-page documentation site from symbols grouped by package.  Follows a 5-stage information architecture: 1. ORIENT — Landing page, Getting Started 2. LEARN — Concepts (stub) 3. BUILD — Guides (stub) 4. REFERENCE — API Reference, Types, Configuration, Changelog 5. COMMUNITY — FAQ, Contributing (stubs)
+
+Auto-generated reference pages are rebuilt on every run, while stub pages (concepts, guides, FAQ, contributing) are only created if they don't exist.
 
 Parameters:
 - symbolsByPackage: Symbols grouped by package name.
@@ -3974,6 +4030,8 @@ Example:
 
 Generates an `llms.txt` routing manifest from the extracted symbols.  The file follows the llms.txt specification: a compact, structured overview designed to help large language models navigate a project's documentation. Symbols are grouped by package with  summaries.
 
+Filters out non-exported, test, config, and node_modules symbols. Groups the remaining symbols by package, renders package-level overviews, and lists key exports (functions first, then types) with one-line summaries.
+
 Parameters:
 - symbols: The symbols to include.
 - config: The resolved `ForgeConfig`.
@@ -3990,6 +4048,8 @@ Example:
 (symbols: ForgeSymbol[], config: ForgeConfig) => string
 
 Generates an `llms-full.txt` dense context file from the extracted symbols.  Unlike `llms.txt`, this file contains complete documentation for every exported symbol, intended for LLM ingestion that requires full context. Symbols are grouped by package with  summaries.
+
+Emits full signatures, descriptions, parameters, and return types for each exported symbol. Grouped by package first, then by kind within each package.
 
 Parameters:
 - symbols: The symbols to include.
@@ -4096,6 +4156,8 @@ Example:
 (config: ForgeConfig, options?: GenerateOptions) => Promise<ForgeResult>
 
 Runs the full generation pipeline: walk → render → write.  Auto-generated pages are always regenerated from source code. Stub pages (scaffolding for human/agent editing) are only created if they don't already exist, preserving manual edits across builds. Pass `{ forceStubs: true }` to overwrite stubs.
+
+Orchestrates the walker, site generator, llms.txt, and OpenAPI renderers in sequence, writing all output files to `config.outDir`.
 
 Parameters:
 - config: The resolved `ForgeConfig` for the project.
@@ -5051,7 +5113,9 @@ Returns: Array of deprecated usages found.
 
 (config: ForgeConfig) => Promise<ForgeResult>
 
-Runs the TSDoc enforcement pass against a project.  The enforcer walks all exported symbols that meet the configured minimum visibility threshold and emits diagnostics for any documentation deficiencies it finds.  ### Error codes | Code | Severity | Condition | |------|----------|-----------| | E001 | error    | Exported symbol is missing a TSDoc summary. | | E002 | error    | Function/method parameter lacks a `@param` tag. | | E003 | error    | Non-void function/method lacks a `@returns` tag. | | E004 | error    | Exported function/method is missing an `@example` block. | | E005 | error    | Package entry point (index.ts) is missing `@packageDocumentation`. | | E006 | error    | Public/protected class member is missing a TSDoc comment. | | E007 | error    | Interface/type alias property is missing a TSDoc comment. | | W001 | warning  | TSDoc comment contains parse errors. | | W002 | warning  | Function body throws but has no `@throws` tag. | | W003 | warning  | `@deprecated` tag is present without explanation. | | W006 | warning  | TSDoc parser-level syntax error (invalid tag, malformed block, etc.). | | E009 | error    | tsconfig.json required strict-mode flag is missing or disabled (guard). | | E010 | error    | Config drift: a rule severity is weaker than the locked value. | | E013 | error    | Exported function/class is missing a `@remarks` block. | | E014 | warn     | Optional property of interface/type is missing `@defaultValue`. | | E015 | error    | Generic symbol is missing `@typeParam` for a type parameter. | | W005 | warn     | Symbol references other symbols via `{@link}` but has no `@see` tags. | | W007 | warn     | Guide FORGE:AUTO section references a symbol that no longer exists. | | W008 | warn     | Exported public symbol is not mentioned in any guide page. | | E017 | error    | `@internal` symbol re-exported through public barrel (index.ts). | | E018 | warn     | `@route`-tagged function missing `@response` tag. | | W009 | warn     | `{@inheritDoc}` references a symbol that does not exist. | | W010 | warn     | `@breaking` tag present without `@migration` path. | | W011 | warn     | New public export missing `@since` version tag. |  When `config.enforce.strict` is `true` all warnings are promoted to errors.
+Runs the TSDoc enforcement pass against a project.  The enforcer walks all exported symbols that meet the configured minimum visibility threshold and emits diagnostics for any documentation deficiencies it finds.  ### Error codes | Code | Severity | Condition | |------|----------|-----------| | E001 | error    | Exported symbol is missing a TSDoc summary. | | E002 | error    | Function/method parameter lacks a `@param` tag. | | E003 | error    | Non-void function/method lacks a `@returns` tag. | | E004 | error    | Exported function/method is missing an `@example` block. | | E005 | error    | Package entry point (index.ts) is missing `@packageDocumentation`. | | E006 | error    | Public/protected class member is missing a TSDoc comment. | | E007 | error    | Interface/type alias property is missing a TSDoc comment. | | W001 | warning  | TSDoc comment contains parse errors. | | W002 | warning  | Function body throws but has no `@throws` tag. | | W003 | warning  | `@deprecated` tag is present without explanation. | | W006 | warning  | TSDoc parser-level syntax error (invalid tag, malformed block, etc.). | | E009 | error    | tsconfig.json required strict-mode flag is missing or disabled (guard). | | E010 | error    | Config drift: a rule severity is weaker than the locked value. | | E013 | error    | Exported function/class is missing a `@remarks` block. | | E014 | warn     | Optional property of interface/type is missing `@defaultValue`. | | E015 | error    | Generic symbol is missing `@typeParam` for a type parameter. | | W005 | warn     | Symbol references other symbols via `{@link}` but has no `@see` tags. | | W007 | warn     | Guide FORGE:AUTO section references a symbol that no longer exists. | | W008 | warn     | Exported public symbol is not mentioned in any guide page. | | E017 | error    | `@internal` symbol re-exported through public barrel (index.ts). | | E018 | warn     | `@route`-tagged function missing `@response` tag. | | W009 | warn     | `{@inheritDoc}` references a symbol that does not exist. | | W010 | warn     | `@breaking` tag present without `@migration` path. | | W011 | warn     | New public export missing `@since` version tag. | | E019 | error    | Non-test file contains `@ts-expect-error` / `@ts-expect-error`. | | E020 | error    | Exported symbol has `any` in its public API signature. | | W012 | warn     | `{@link}` display text appears stale relative to target summary. | | W013 | warn     | `@example` block may be stale (arg count mismatch). |  When `config.enforce.strict` is `true` all warnings are promoted to errors.
+
+E020 (`require-no-any-in-api`) uses the symbol's `signature` string — which the walker populates via `getDeclaredTypeOfSymbol` for interfaces, types, and enums — to inspect the declared API surface rather than runtime types. Only the signature type string is tested for the word `any` (via `\bany\b`); function bodies are never inspected. This avoids false positives from internal `any` usage inside implementation code that does not surface in the public API.
 
 Parameters:
 - config: The resolved `ForgeConfig` for the project.
@@ -5175,6 +5239,8 @@ Example:
 (examples: ExtractedExample[], options: GeneratorOptions) => VirtualTestFile[]
 
 Generates a virtual test file for a set of extracted examples.  Each example is wrapped in an `it()` block using the Node built-in `node:test` runner so that no additional test framework is required. Auto-imports the tested symbol from the source file, processes `// =>` assertion patterns, and appends an inline source map.
+
+Source file imports are rewritten from `.ts`/`.tsx` to `.js` for ESM compatibility using `relative(...).replace(/\.tsx?$/, ".js")`. This ensures the generated test files use valid ESM import specifiers at runtime.
 
 Parameters:
 - examples: Examples to include in the generated file.

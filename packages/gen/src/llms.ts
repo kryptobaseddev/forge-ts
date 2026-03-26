@@ -211,6 +211,11 @@ function renderFullSymbol(symbol: ForgeSymbol, depth: number): string {
 		lines.push(symbol.documentation.summary);
 	}
 
+	if (symbol.documentation?.remarks) {
+		lines.push("");
+		lines.push(symbol.documentation.remarks);
+	}
+
 	const params = symbol.documentation?.params ?? [];
 	const paramBlock = renderParams(params);
 	if (paramBlock) {

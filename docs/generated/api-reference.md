@@ -422,7 +422,7 @@ if (isRuleBypassed("/path/to/project", "E009")) {
 
 ### `getRemainingBudget()`
 
-*Defined in `packages/core/src/bypass.ts:293`*
+*Defined in `packages/core/src/bypass.ts:296`*
 
 ```typescript
 (rootDir: string, config?: Partial<BypassConfig>) => number
@@ -447,7 +447,7 @@ console.log(`${remaining} bypass(es) remaining today`);
 
 ### `expireOldBypasses()`
 
-*Defined in `packages/core/src/bypass.ts:321`*
+*Defined in `packages/core/src/bypass.ts:324`*
 
 ```typescript
 (rootDir: string) => number
@@ -675,7 +675,7 @@ if (lock) {
 
 ### `resolveVisibility()`
 
-*Defined in `packages/core/src/visibility.ts:25`*
+*Defined in `packages/core/src/visibility.ts:32`*
 
 ```typescript
 (tags: Record<string, string[]> | undefined) => Visibility
@@ -699,7 +699,7 @@ const vis = resolveVisibility({ internal: [] });
 
 ### `meetsVisibility()`
 
-*Defined in `packages/core/src/visibility.ts:71`*
+*Defined in `packages/core/src/visibility.ts:78`*
 
 ```typescript
 (candidate: Visibility | "public" | "beta" | "internal" | "private", minVisibility: Visibility | "public" | "beta" | "internal" | "private") => boolean
@@ -725,7 +725,7 @@ meetsVisibility("public", "beta"); // true (string literals also accepted)
 
 ### `filterByVisibility()`
 
-*Defined in `packages/core/src/visibility.ts:98`*
+*Defined in `packages/core/src/visibility.ts:105`*
 
 ```typescript
 (symbols: ForgeSymbol[], minVisibility: Visibility | "public" | "beta" | "internal" | "private") => ForgeSymbol[]
@@ -775,7 +775,7 @@ Resolve the TSDoc configuration to use when parsing comments in files under `fol
 
 ### `createWalker()`
 
-*Defined in `packages/core/src/walker.ts:797`*
+*Defined in `packages/core/src/walker.ts:808`*
 
 ```typescript
 (config: ForgeConfig) => ASTWalker
@@ -849,7 +849,7 @@ console.log(sdkTypes.length); // number of public SDK types
 
 ### `generateOpenAPISpec()`
 
-*Defined in `packages/api/src/openapi.ts:45`*
+*Defined in `packages/api/src/openapi.ts:50`*
 
 ```typescript
 (config: ForgeConfig, sdkTypes: SDKType[], symbols?: ForgeSymbol[]) => OpenAPIDocument
@@ -1193,7 +1193,7 @@ Parse a markdown string and extract block-level content.  Use for multi-line TSD
 
 ### `sanitizeForMdx()`
 
-*Defined in `packages/gen/src/markdown-utils.ts:282`*
+*Defined in `packages/gen/src/markdown-utils.ts:288`*
 
 ```typescript
 (content: string) => string
@@ -1209,7 +1209,7 @@ Sanitize markdown content for MDX compatibility using AST-aware processing.  Par
 
 ### `updateAutoSections()`
 
-*Defined in `packages/gen/src/markdown-utils.ts:425`*
+*Defined in `packages/gen/src/markdown-utils.ts:431`*
 
 ```typescript
 (existing: string, generated: string) => string | null
@@ -1226,7 +1226,7 @@ Updates auto-enriched sections in an existing stub file.  Uses AST-aware parsing
 
 ### `stubHash()`
 
-*Defined in `packages/gen/src/markdown-utils.ts:467`*
+*Defined in `packages/gen/src/markdown-utils.ts:473`*
 
 ```typescript
 (content: string) => string
@@ -1242,7 +1242,7 @@ Compute a short fingerprint hash for content change detection.  Uses a simple DJ
 
 ### `isStubModified()`
 
-*Defined in `packages/gen/src/markdown-utils.ts:592`*
+*Defined in `packages/gen/src/markdown-utils.ts:598`*
 
 ```typescript
 (existingContent: string, stubId: string, _generatedContent: string) => boolean
@@ -1260,7 +1260,7 @@ Checks if a FORGE:STUB section has been modified by the user.  Compares the embe
 
 ### `updateStubSections()`
 
-*Defined in `packages/gen/src/markdown-utils.ts:627`*
+*Defined in `packages/gen/src/markdown-utils.ts:633`*
 
 ```typescript
 (existingContent: string, stubs: Array<{ id: string; content: string; }>) => string
@@ -1444,7 +1444,7 @@ console.log(txt.startsWith("# ")); // true
 
 ### `generateLlmsFullTxt()`
 
-*Defined in `packages/gen/src/llms.ts:279`*
+*Defined in `packages/gen/src/llms.ts:284`*
 
 ```typescript
 (symbols: ForgeSymbol[], config: ForgeConfig) => string
@@ -1715,13 +1715,13 @@ Scans symbols for imports of deprecated exports from other packages.
 
 ### `enforce()`
 
-*Defined in `packages/enforcer/src/enforcer.ts:351`*
+*Defined in `packages/enforcer/src/enforcer.ts:364`*
 
 ```typescript
 (config: ForgeConfig) => Promise<ForgeResult>
 ```
 
-Runs the TSDoc enforcement pass against a project.  The enforcer walks all exported symbols that meet the configured minimum visibility threshold and emits diagnostics for any documentation deficiencies it finds.  ### Error codes | Code | Severity | Condition | |------|----------|-----------| | E001 | error    | Exported symbol is missing a TSDoc summary. | | E002 | error    | Function/method parameter lacks a `@param` tag. | | E003 | error    | Non-void function/method lacks a `@returns` tag. | | E004 | error    | Exported function/method is missing an `@example` block. | | E005 | error    | Package entry point (index.ts) is missing `@packageDocumentation`. | | E006 | error    | Public/protected class member is missing a TSDoc comment. | | E007 | error    | Interface/type alias property is missing a TSDoc comment. | | W001 | warning  | TSDoc comment contains parse errors. | | W002 | warning  | Function body throws but has no `@throws` tag. | | W003 | warning  | `@deprecated` tag is present without explanation. | | W006 | warning  | TSDoc parser-level syntax error (invalid tag, malformed block, etc.). | | E009 | error    | tsconfig.json required strict-mode flag is missing or disabled (guard). | | E010 | error    | Config drift: a rule severity is weaker than the locked value. | | E013 | error    | Exported function/class is missing a `@remarks` block. | | E014 | warn     | Optional property of interface/type is missing `@defaultValue`. | | E015 | error    | Generic symbol is missing `@typeParam` for a type parameter. | | W005 | warn     | Symbol references other symbols via `{@link}` but has no `@see` tags. | | W007 | warn     | Guide FORGE:AUTO section references a symbol that no longer exists. | | W008 | warn     | Exported public symbol is not mentioned in any guide page. | | E017 | error    | `@internal` symbol re-exported through public barrel (index.ts). | | E018 | warn     | `@route`-tagged function missing `@response` tag. | | W009 | warn     | `{@inheritDoc}` references a symbol that does not exist. | | W010 | warn     | `@breaking` tag present without `@migration` path. | | W011 | warn     | New public export missing `@since` version tag. |  When `config.enforce.strict` is `true` all warnings are promoted to errors.
+Runs the TSDoc enforcement pass against a project.  The enforcer walks all exported symbols that meet the configured minimum visibility threshold and emits diagnostics for any documentation deficiencies it finds.  ### Error codes | Code | Severity | Condition | |------|----------|-----------| | E001 | error    | Exported symbol is missing a TSDoc summary. | | E002 | error    | Function/method parameter lacks a `@param` tag. | | E003 | error    | Non-void function/method lacks a `@returns` tag. | | E004 | error    | Exported function/method is missing an `@example` block. | | E005 | error    | Package entry point (index.ts) is missing `@packageDocumentation`. | | E006 | error    | Public/protected class member is missing a TSDoc comment. | | E007 | error    | Interface/type alias property is missing a TSDoc comment. | | W001 | warning  | TSDoc comment contains parse errors. | | W002 | warning  | Function body throws but has no `@throws` tag. | | W003 | warning  | `@deprecated` tag is present without explanation. | | W006 | warning  | TSDoc parser-level syntax error (invalid tag, malformed block, etc.). | | E009 | error    | tsconfig.json required strict-mode flag is missing or disabled (guard). | | E010 | error    | Config drift: a rule severity is weaker than the locked value. | | E013 | error    | Exported function/class is missing a `@remarks` block. | | E014 | warn     | Optional property of interface/type is missing `@defaultValue`. | | E015 | error    | Generic symbol is missing `@typeParam` for a type parameter. | | W005 | warn     | Symbol references other symbols via `{@link}` but has no `@see` tags. | | W007 | warn     | Guide FORGE:AUTO section references a symbol that no longer exists. | | W008 | warn     | Exported public symbol is not mentioned in any guide page. | | E017 | error    | `@internal` symbol re-exported through public barrel (index.ts). | | E018 | warn     | `@route`-tagged function missing `@response` tag. | | W009 | warn     | `{@inheritDoc}` references a symbol that does not exist. | | W010 | warn     | `@breaking` tag present without `@migration` path. | | W011 | warn     | New public export missing `@since` version tag. | | E019 | error    | Non-test file contains `@ts-expect-error` / `@ts-expect-error`. | | E020 | error    | Exported symbol has `any` in its public API signature. | | W012 | warn     | `{@link}` display text appears stale relative to target summary. | | W013 | warn     | `@example` block may be stale (arg count mismatch). |  When `config.enforce.strict` is `true` all warnings are promoted to errors.
 
 **Parameters**
 
@@ -2179,7 +2179,7 @@ console.log(`Found ${examples.length} examples`);
 
 ### `generateTestFiles()`
 
-*Defined in `packages/doctest/src/generator.ts:146`*
+*Defined in `packages/doctest/src/generator.ts:151`*
 
 ```typescript
 (examples: ExtractedExample[], options: GeneratorOptions) => VirtualTestFile[]
@@ -2571,14 +2571,14 @@ number
 *Defined in `packages/core/src/types.ts:45`*
 
 ```typescript
-{ summary?: string; params?: Array<{ name: string; description: string; type?: string; }>; returns?: { description: string; type?: string; }; throws?: Array<{ type?: string; description: string; }>; examples?: Array<{ code: string; language: string; line: number; }>; tags?: Record<string, string[]>; deprecated?: string; links?: Array<{ target: string; line: number; text?: string; }>; parseMessages?: Array<{ messageId: string; text: string; line: number; }>; } | undefined
+{ summary?: string; remarks?: string; params?: Array<{ name: string; description: string; type?: string; }>; returns?: { description: string; type?: string; }; throws?: Array<{ type?: string; description: string; }>; examples?: Array<{ code: string; language: string; line: number; }>; tags?: Record<string, string[]>; deprecated?: string; links?: Array<{ target: string; line: number; text?: string; }>; parseMessages?: Array<{ messageId: string; text: string; line: number; }>; } | undefined
 ```
 
 Parsed TSDoc documentation, if present.
 
 #### `signature`
 
-*Defined in `packages/core/src/types.ts:62`*
+*Defined in `packages/core/src/types.ts:64`*
 
 ```typescript
 string | undefined
@@ -2588,7 +2588,7 @@ Human-readable type signature of the symbol.
 
 #### `children`
 
-*Defined in `packages/core/src/types.ts:67`*
+*Defined in `packages/core/src/types.ts:69`*
 
 ```typescript
 ForgeSymbol[] | undefined
@@ -2598,7 +2598,7 @@ Child symbols (e.g., class members, enum values).
 
 #### `exported`
 
-*Defined in `packages/core/src/types.ts:69`*
+*Defined in `packages/core/src/types.ts:71`*
 
 ```typescript
 boolean
@@ -2608,7 +2608,7 @@ Whether this symbol is part of the public module exports.
 
 ### `EnforceRules`
 
-*Defined in `packages/core/src/types.ts:89`*
+*Defined in `packages/core/src/types.ts:91`*
 
 ```typescript
 EnforceRules
@@ -2618,7 +2618,7 @@ Per-rule severity configuration for the TSDoc enforcer. 33 rules across 4 layers
 
 #### `"require-summary"`
 
-*Defined in `packages/core/src/types.ts:91`*
+*Defined in `packages/core/src/types.ts:93`*
 
 ```typescript
 RuleSeverity
@@ -2628,7 +2628,7 @@ E001: Exported symbol missing TSDoc summary.
 
 #### `"require-param"`
 
-*Defined in `packages/core/src/types.ts:93`*
+*Defined in `packages/core/src/types.ts:95`*
 
 ```typescript
 RuleSeverity
@@ -2638,7 +2638,7 @@ E002: Function parameter missing `\@param` tag.
 
 #### `"require-returns"`
 
-*Defined in `packages/core/src/types.ts:95`*
+*Defined in `packages/core/src/types.ts:97`*
 
 ```typescript
 RuleSeverity
@@ -2648,7 +2648,7 @@ E003: Non-void function missing `\@returns` tag.
 
 #### `"require-example"`
 
-*Defined in `packages/core/src/types.ts:97`*
+*Defined in `packages/core/src/types.ts:99`*
 
 ```typescript
 RuleSeverity
@@ -2658,7 +2658,7 @@ E004: Exported function missing `\@example` block.
 
 #### `"require-package-doc"`
 
-*Defined in `packages/core/src/types.ts:99`*
+*Defined in `packages/core/src/types.ts:101`*
 
 ```typescript
 RuleSeverity
@@ -2668,7 +2668,7 @@ E005: Entry point missing `\@packageDocumentation`.
 
 #### `"require-class-member-doc"`
 
-*Defined in `packages/core/src/types.ts:101`*
+*Defined in `packages/core/src/types.ts:103`*
 
 ```typescript
 RuleSeverity
@@ -2678,7 +2678,7 @@ E006: Class member missing documentation.
 
 #### `"require-interface-member-doc"`
 
-*Defined in `packages/core/src/types.ts:103`*
+*Defined in `packages/core/src/types.ts:105`*
 
 ```typescript
 RuleSeverity
@@ -2688,7 +2688,7 @@ E007: Interface/type member missing documentation.
 
 #### `"require-tsdoc-syntax"`
 
-*Defined in `packages/core/src/types.ts:105`*
+*Defined in `packages/core/src/types.ts:107`*
 
 ```typescript
 RuleSeverity
@@ -2698,7 +2698,7 @@ W006: TSDoc syntax parse error (invalid tag, malformed block, etc.).
 
 #### `"require-remarks"`
 
-*Defined in `packages/core/src/types.ts:107`*
+*Defined in `packages/core/src/types.ts:109`*
 
 ```typescript
 RuleSeverity
@@ -2708,7 +2708,7 @@ E013: Exported function/class is missing a `\@remarks` block.
 
 #### `"require-default-value"`
 
-*Defined in `packages/core/src/types.ts:109`*
+*Defined in `packages/core/src/types.ts:111`*
 
 ```typescript
 RuleSeverity
@@ -2718,7 +2718,7 @@ E014: Optional property with default is missing `\@defaultValue`.
 
 #### `"require-type-param"`
 
-*Defined in `packages/core/src/types.ts:111`*
+*Defined in `packages/core/src/types.ts:113`*
 
 ```typescript
 RuleSeverity
@@ -2728,7 +2728,7 @@ E015: Generic symbol is missing `\@typeParam` for its type parameters.
 
 #### `"require-see"`
 
-*Defined in `packages/core/src/types.ts:113`*
+*Defined in `packages/core/src/types.ts:115`*
 
 ```typescript
 RuleSeverity
@@ -2738,7 +2738,7 @@ W005: Symbol references other symbols via `\@link` but has no `\@see` tags.
 
 #### `"require-release-tag"`
 
-*Defined in `packages/core/src/types.ts:115`*
+*Defined in `packages/core/src/types.ts:117`*
 
 ```typescript
 RuleSeverity
@@ -2748,7 +2748,7 @@ E016: Exported symbol is missing a release tag (`\@public`, `\@beta`, `\@interna
 
 #### `"require-fresh-guides"`
 
-*Defined in `packages/core/src/types.ts:117`*
+*Defined in `packages/core/src/types.ts:119`*
 
 ```typescript
 RuleSeverity
@@ -2758,7 +2758,7 @@ W007: Guide FORGE:AUTO section references a symbol that no longer exists or has 
 
 #### `"require-guide-coverage"`
 
-*Defined in `packages/core/src/types.ts:119`*
+*Defined in `packages/core/src/types.ts:121`*
 
 ```typescript
 RuleSeverity
@@ -2768,7 +2768,7 @@ W008: Exported public symbol is not mentioned in any guide page.
 
 #### `"require-internal-boundary"`
 
-*Defined in `packages/core/src/types.ts:121`*
+*Defined in `packages/core/src/types.ts:123`*
 
 ```typescript
 RuleSeverity
@@ -2778,7 +2778,7 @@ E017: `\@internal` symbol re-exported through public barrel (index.ts).
 
 #### `"require-route-response"`
 
-*Defined in `packages/core/src/types.ts:123`*
+*Defined in `packages/core/src/types.ts:125`*
 
 ```typescript
 RuleSeverity
@@ -2788,7 +2788,7 @@ E018: `\@route`-tagged function missing `\@response` tag.
 
 #### `"require-inheritdoc-source"`
 
-*Defined in `packages/core/src/types.ts:125`*
+*Defined in `packages/core/src/types.ts:127`*
 
 ```typescript
 RuleSeverity
@@ -2798,7 +2798,7 @@ W009: `\@inheritDoc` references a symbol that does not exist.
 
 #### `"require-migration-path"`
 
-*Defined in `packages/core/src/types.ts:127`*
+*Defined in `packages/core/src/types.ts:129`*
 
 ```typescript
 RuleSeverity
@@ -2808,7 +2808,7 @@ W010: `\@breaking` without `\@migration` path.
 
 #### `"require-since"`
 
-*Defined in `packages/core/src/types.ts:129`*
+*Defined in `packages/core/src/types.ts:131`*
 
 ```typescript
 RuleSeverity
@@ -2818,7 +2818,7 @@ W011: New public export missing `\@since` version tag.
 
 #### `"require-fresh-examples"`
 
-*Defined in `packages/core/src/types.ts:131`*
+*Defined in `packages/core/src/types.ts:133`*
 
 ```typescript
 RuleSeverity
@@ -2828,7 +2828,7 @@ W013: `\@example` block may be stale — function call arg count mismatches para
 
 #### `"require-no-ts-ignore"`
 
-*Defined in `packages/core/src/types.ts:133`*
+*Defined in `packages/core/src/types.ts:135`*
 
 ```typescript
 RuleSeverity
@@ -2838,7 +2838,7 @@ E019: Non-test file contains ts-ignore or ts-expect-error directive.
 
 #### `"require-no-any-in-api"`
 
-*Defined in `packages/core/src/types.ts:135`*
+*Defined in `packages/core/src/types.ts:137`*
 
 ```typescript
 RuleSeverity
@@ -2848,7 +2848,7 @@ E020: Exported symbol has `any` in its public API signature.
 
 #### `"require-fresh-link-text"`
 
-*Defined in `packages/core/src/types.ts:137`*
+*Defined in `packages/core/src/types.ts:139`*
 
 ```typescript
 RuleSeverity
@@ -2858,7 +2858,7 @@ W012: `\@link` display text appears stale relative to target summary.
 
 ### `ForgeConfig`
 
-*Defined in `packages/core/src/types.ts:146`*
+*Defined in `packages/core/src/types.ts:148`*
 
 ```typescript
 ForgeConfig
@@ -2868,7 +2868,7 @@ Full configuration for a forge-ts run. Loaded from forge-ts.config.ts or the "fo
 
 #### `rootDir`
 
-*Defined in `packages/core/src/types.ts:148`*
+*Defined in `packages/core/src/types.ts:150`*
 
 ```typescript
 string
@@ -2878,7 +2878,7 @@ Root directory of the project.
 
 #### `tsconfig`
 
-*Defined in `packages/core/src/types.ts:150`*
+*Defined in `packages/core/src/types.ts:152`*
 
 ```typescript
 string
@@ -2888,7 +2888,7 @@ Path to the tsconfig.json to compile against.
 
 #### `outDir`
 
-*Defined in `packages/core/src/types.ts:152`*
+*Defined in `packages/core/src/types.ts:154`*
 
 ```typescript
 string
@@ -2898,7 +2898,7 @@ Output directory for generated files.
 
 #### `enforce`
 
-*Defined in `packages/core/src/types.ts:154`*
+*Defined in `packages/core/src/types.ts:156`*
 
 ```typescript
 { enabled: boolean; minVisibility: Visibility | "public" | "beta" | "internal" | "private"; strict: boolean; rules: EnforceRules; ignoreFile?: string; }
@@ -2908,7 +2908,7 @@ Enforce TSDoc on all public exports.
 
 #### `doctest`
 
-*Defined in `packages/core/src/types.ts:176`*
+*Defined in `packages/core/src/types.ts:178`*
 
 ```typescript
 { enabled: boolean; cacheDir: string; }
@@ -2918,7 +2918,7 @@ DocTest configuration.
 
 #### `api`
 
-*Defined in `packages/core/src/types.ts:182`*
+*Defined in `packages/core/src/types.ts:184`*
 
 ```typescript
 { enabled: boolean; openapi: boolean; openapiPath: string; }
@@ -2928,7 +2928,7 @@ API generation configuration.
 
 #### `gen`
 
-*Defined in `packages/core/src/types.ts:190`*
+*Defined in `packages/core/src/types.ts:192`*
 
 ```typescript
 { enabled: boolean; formats: Array<"markdown" | "mdx">; llmsTxt: boolean; readmeSync: boolean; ssgTarget?: "docusaurus" | "mintlify" | "nextra" | "vitepress"; }
@@ -2938,7 +2938,7 @@ Output generation configuration.
 
 #### `skill`
 
-*Defined in `packages/core/src/types.ts:207`*
+*Defined in `packages/core/src/types.ts:209`*
 
 ```typescript
 { enabled?: boolean; customSections?: Array<{ heading: string; content: string; }>; extraGotchas?: string[]; }
@@ -2948,7 +2948,7 @@ Skill package generation settings. Custom sections here are merged into the gene
 
 #### `tsdoc`
 
-*Defined in `packages/core/src/types.ts:231`*
+*Defined in `packages/core/src/types.ts:233`*
 
 ```typescript
 { writeConfig: boolean; customTags: Array<{ tagName: string; syntaxKind: "block" | "inline" | "modifier"; }>; enforce: { core: "error" | "warn" | "off"; extended: "error" | "warn" | "off"; discretionary: "error" | "warn" | "off"; }; }
@@ -2958,7 +2958,7 @@ TSDoc ecosystem configuration.
 
 #### `bypass`
 
-*Defined in `packages/core/src/types.ts:250`*
+*Defined in `packages/core/src/types.ts:252`*
 
 ```typescript
 { dailyBudget: number; durationHours: number; }
@@ -2968,7 +2968,7 @@ Bypass budget configuration for temporary rule overrides.
 
 #### `guides`
 
-*Defined in `packages/core/src/types.ts:257`*
+*Defined in `packages/core/src/types.ts:259`*
 
 ```typescript
 { enabled: boolean; autoDiscover: boolean; custom: Array<{ slug: string; title: string; sources: string[]; }>; }
@@ -2978,7 +2978,7 @@ Guide generation configuration.
 
 #### `guards`
 
-*Defined in `packages/core/src/types.ts:273`*
+*Defined in `packages/core/src/types.ts:275`*
 
 ```typescript
 { tsconfig: { enabled: boolean; requiredFlags: string[]; }; biome: { enabled: boolean; lockedRules: string[]; }; packageJson: { enabled: boolean; minNodeVersion: string; requiredFields: string[]; }; }
@@ -2988,7 +2988,7 @@ Downstream config drift guards.
 
 #### `_configWarnings`
 
-*Defined in `packages/core/src/types.ts:301`*
+*Defined in `packages/core/src/types.ts:303`*
 
 ```typescript
 string[] | undefined
@@ -2998,7 +2998,7 @@ Warnings generated during config loading (e.g., unknown keys). Populated by load
 
 #### `project`
 
-*Defined in `packages/core/src/types.ts:303`*
+*Defined in `packages/core/src/types.ts:305`*
 
 ```typescript
 { repository?: string; homepage?: string; packageName?: string; description?: string; version?: string; bin?: Record<string, string>; scripts?: Record<string, string>; keywords?: string[]; }
@@ -3008,7 +3008,7 @@ Project metadata — auto-detected from package.json if not provided.
 
 ### `ForgeResult`
 
-*Defined in `packages/core/src/types.ts:328`*
+*Defined in `packages/core/src/types.ts:330`*
 
 ```typescript
 ForgeResult
@@ -3018,7 +3018,7 @@ The result of a forge-ts compilation pass.
 
 #### `success`
 
-*Defined in `packages/core/src/types.ts:330`*
+*Defined in `packages/core/src/types.ts:332`*
 
 ```typescript
 boolean
@@ -3028,7 +3028,7 @@ Whether the run succeeded without errors.
 
 #### `symbols`
 
-*Defined in `packages/core/src/types.ts:332`*
+*Defined in `packages/core/src/types.ts:334`*
 
 ```typescript
 ForgeSymbol[]
@@ -3038,7 +3038,7 @@ All symbols extracted during this run.
 
 #### `errors`
 
-*Defined in `packages/core/src/types.ts:334`*
+*Defined in `packages/core/src/types.ts:336`*
 
 ```typescript
 ForgeError[]
@@ -3048,7 +3048,7 @@ Errors that caused or would cause failure.
 
 #### `warnings`
 
-*Defined in `packages/core/src/types.ts:336`*
+*Defined in `packages/core/src/types.ts:338`*
 
 ```typescript
 ForgeWarning[]
@@ -3058,7 +3058,7 @@ Non-fatal warnings.
 
 #### `duration`
 
-*Defined in `packages/core/src/types.ts:338`*
+*Defined in `packages/core/src/types.ts:340`*
 
 ```typescript
 number
@@ -3068,7 +3068,7 @@ Wall-clock duration of the run in milliseconds.
 
 #### `writtenFiles`
 
-*Defined in `packages/core/src/types.ts:343`*
+*Defined in `packages/core/src/types.ts:345`*
 
 ```typescript
 string[] | undefined
@@ -3078,7 +3078,7 @@ Absolute paths of files written during this run (populated by gen).
 
 ### `ForgeError`
 
-*Defined in `packages/core/src/types.ts:351`*
+*Defined in `packages/core/src/types.ts:353`*
 
 ```typescript
 ForgeError
@@ -3088,7 +3088,7 @@ A diagnostic error produced during a forge-ts run.
 
 #### `code`
 
-*Defined in `packages/core/src/types.ts:353`*
+*Defined in `packages/core/src/types.ts:355`*
 
 ```typescript
 string
@@ -3098,7 +3098,7 @@ Machine-readable error code (e.g. "E001").
 
 #### `message`
 
-*Defined in `packages/core/src/types.ts:355`*
+*Defined in `packages/core/src/types.ts:357`*
 
 ```typescript
 string
@@ -3108,7 +3108,7 @@ Human-readable description of the error.
 
 #### `filePath`
 
-*Defined in `packages/core/src/types.ts:357`*
+*Defined in `packages/core/src/types.ts:359`*
 
 ```typescript
 string
@@ -3118,7 +3118,7 @@ Absolute path of the file where the error occurred.
 
 #### `line`
 
-*Defined in `packages/core/src/types.ts:359`*
+*Defined in `packages/core/src/types.ts:361`*
 
 ```typescript
 number
@@ -3128,7 +3128,7 @@ number
 
 #### `column`
 
-*Defined in `packages/core/src/types.ts:361`*
+*Defined in `packages/core/src/types.ts:363`*
 
 ```typescript
 number
@@ -3138,7 +3138,7 @@ number
 
 #### `suggestedFix`
 
-*Defined in `packages/core/src/types.ts:366`*
+*Defined in `packages/core/src/types.ts:368`*
 
 ```typescript
 string | undefined
@@ -3148,7 +3148,7 @@ Suggested fix for the agent — exact TSDoc block to add.
 
 #### `symbolName`
 
-*Defined in `packages/core/src/types.ts:371`*
+*Defined in `packages/core/src/types.ts:373`*
 
 ```typescript
 string | undefined
@@ -3158,7 +3158,7 @@ The symbol name that needs fixing.
 
 #### `symbolKind`
 
-*Defined in `packages/core/src/types.ts:376`*
+*Defined in `packages/core/src/types.ts:378`*
 
 ```typescript
 string | undefined
@@ -3168,7 +3168,7 @@ The symbol kind (function, class, interface, etc.).
 
 ### `ForgeWarning`
 
-*Defined in `packages/core/src/types.ts:384`*
+*Defined in `packages/core/src/types.ts:386`*
 
 ```typescript
 ForgeWarning
@@ -3178,7 +3178,7 @@ A diagnostic warning produced during a forge-ts run.
 
 #### `code`
 
-*Defined in `packages/core/src/types.ts:386`*
+*Defined in `packages/core/src/types.ts:388`*
 
 ```typescript
 string
@@ -3188,7 +3188,7 @@ Machine-readable warning code (e.g. "W001").
 
 #### `message`
 
-*Defined in `packages/core/src/types.ts:388`*
+*Defined in `packages/core/src/types.ts:390`*
 
 ```typescript
 string
@@ -3198,7 +3198,7 @@ Human-readable description of the warning.
 
 #### `filePath`
 
-*Defined in `packages/core/src/types.ts:390`*
+*Defined in `packages/core/src/types.ts:392`*
 
 ```typescript
 string
@@ -3208,7 +3208,7 @@ Absolute path of the file where the warning occurred.
 
 #### `line`
 
-*Defined in `packages/core/src/types.ts:392`*
+*Defined in `packages/core/src/types.ts:394`*
 
 ```typescript
 number
@@ -3218,7 +3218,7 @@ number
 
 #### `column`
 
-*Defined in `packages/core/src/types.ts:394`*
+*Defined in `packages/core/src/types.ts:396`*
 
 ```typescript
 number
@@ -8121,7 +8121,7 @@ Discriminated event types recorded in the audit trail.
 
 ### `RuleSeverity`
 
-*Defined in `packages/core/src/types.ts:80`*
+*Defined in `packages/core/src/types.ts:82`*
 
 ```typescript
 RuleSeverity

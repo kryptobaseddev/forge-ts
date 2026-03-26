@@ -331,8 +331,21 @@ const RULE_MAP: Record<string, keyof EnforceRules> = {
  * | W009 | warn     | `{@inheritDoc}` references a symbol that does not exist. |
  * | W010 | warn     | `@breaking` tag present without `@migration` path. |
  * | W011 | warn     | New public export missing `@since` version tag. |
+ * | E019 | error    | Non-test file contains `@ts-expect-error` / `@ts-expect-error`. |
+ * | E020 | error    | Exported symbol has `any` in its public API signature. |
+ * | W012 | warn     | `{@link}` display text appears stale relative to target summary. |
+ * | W013 | warn     | `@example` block may be stale (arg count mismatch). |
  *
  * When `config.enforce.strict` is `true` all warnings are promoted to errors.
+ *
+ * @remarks
+ * E020 (`require-no-any-in-api`) uses the symbol's `signature` string — which
+ * the walker populates via `getDeclaredTypeOfSymbol` for interfaces, types, and
+ * enums — to inspect the declared API surface rather than runtime types. Only
+ * the signature type string is tested for the word `any` (via `\bany\b`);
+ * function bodies are never inspected. This avoids false positives from
+ * internal `any` usage inside implementation code that does not surface in the
+ * public API.
  *
  * @param config - The resolved {@link ForgeConfig} for the project.
  * @returns A {@link ForgeResult} describing which symbols passed or failed.
@@ -712,6 +725,12 @@ export async function enforce(config: ForgeConfig): Promise<ForgeResult> {
 		}
 
 		// E020 — `any` type in public API signature
+		// E020 uses the symbol's `signature` string (populated by the walker via
+		// `getDeclaredTypeOfSymbol` for interfaces/types/enums) to check the
+		// declared API surface, not runtime types. Only the signature type string
+		// is tested for the word "any" — function bodies are never inspected.
+		// This avoids false positives from internal `any` usage inside
+		// implementation code that doesn't surface in the public API.
 		if (symbol.documentation?.tags?.internal === undefined && symbol.signature) {
 			const anyRegex = /\bany\b/g;
 			if (anyRegex.test(symbol.signature)) {

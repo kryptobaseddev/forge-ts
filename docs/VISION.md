@@ -1,32 +1,33 @@
 # VISION: Forge (`forge-ts`)
 
 ## The Premise
-As of 2026, the TypeScript ecosystem has matured incredibly in type safety, build tooling (esbuild, swc), and runtime engines (Node 24 LTS "Krypton", Deno). Yet, the documentation and API specification layer remains a fractured relic of the past. Teams currently stitch together ESLint plugins, TypeDoc, Zod schemas, and Swagger generators just to achieve what the Rust ecosystem gets out-of-the-box with a single command: `cargo doc`.
+As of 2026, the TypeScript ecosystem has matured incredibly in type safety, build tooling (esbuild, swc), and runtime engines (Node 24 LTS "Krypton", Deno). Yet, the documentation layer remains a fractured, optional relic. In an era where **LLM agents are primary contributors**, "optional" documentation is a liability. Agents cannot guess intent; they can only hallucinate based on messy, inconsistent code.
 
-> **Status (v0.19.5):** forge-ts v0.19.5 delivers the complete vision: 33 enforcement rules across 4 layers, intelligent guide generation, agent-proof guardrails, cooperative git hooks with versionguard detection, and full ecosystem integration. A single `npx forge-ts build` compiles TSDoc into OpenAPI specs, consumer-ready MDX, llms.txt artifacts, and SKILL packages -- all from one AST traversal pass.
+Teams currently stitch together ESLint plugins, TypeDoc, Zod schemas, and Swagger generators just to achieve what the Rust ecosystem gets out-of-the-box with a single command: `cargo doc`. `forge-ts` changes the game by treating documentation as a **Compiled Requirement**. If it isn't documented, it isn't finished. If the docs are stale, the build is broken.
 
-Worse, in the era of AI-driven development, documentation isn't just for humans anymore. LLM agents need dense, high-signal context (`llms.txt`), and existing HTML-heavy documentation generators fail to deliver this natively.
+> **Status (v0.19.5):** forge-ts v0.19.5 delivers the complete vision: 33 enforcement rules across 4 layers, acting as the **Hallucination Killer** for AI-driven development. A single `npx forge-ts build` compiles TSDoc into a **Deterministic Layer** for agents—OpenAPI specs, consumer-ready MDX, llms.txt artifacts, and SKILL packages—all from one AST traversal pass.
 
 ## The Vision
-**To build `forge-ts` (Forge): The universal documentation compiler for *any* TypeScript project.**
+**To build `forge-ts` (Forge): The universal documentation compiler that FORCES structural clarity.**
 
-Whether you are building a React frontend, a Node.js REST API, a CLI tool, or a utility SDK, `forge-ts` acts as the uncompromising Single Source of Truth (SSoT). Built natively on the **TypeScript 6.0 Compiler API** -- the last JavaScript-based release before the Go rewrite in TS 7.0 -- it captures and dynamically generates documentation across three distinct layers:
+Whether you are building a React frontend, a Node.js REST API, a CLI tool, or a utility SDK, `forge-ts` acts as the uncompromising Single Source of Truth (SSoT). Built natively on the **TypeScript 6.0 Compiler API**—the last JavaScript-based release before the Go rewrite in TS 7.0—it captures and dynamically generates documentation across three distinct layers:
 
 ### 1. API Docs (The Contract Layer) -- COMPLETE
-For REST/GraphQL APIs and SDKs, `forge-ts` crawls your routing controllers and exported symbols. It emits perfect, strictly-typed `openapi.json` (Swagger) specs and API References without runtime reflection. It strictly respects tags like `@public`, `@beta`, and `@internal` so you never leak private APIs.
+For REST/GraphQL APIs and SDKs, `forge-ts` crawls your routing controllers and exported symbols. It extracts the contract directly from source and emits perfect, strictly-typed `openapi.json` (Swagger) specs and API References without runtime reflection. It **forces** developers to declare visibility via `@public`, `@beta`, and `@internal`, ensuring private APIs are never leaked to external agents.
 
 > **Implemented:** OpenAPI 3.2.0 generation with `@route`/`@get`/`@post`/`@put`/`@delete`/`@patch` tag extraction. Visibility filtering via `@public`, `@beta`, `@internal` controls which symbols appear in output.
 
-### 2. Dev Docs & AI Context (The Contributor Layer) -- COMPLETE
-Documentation must be trusted by developers and instantly understood by AI.
-- **DocTests:** Code examples in comments (`@example`) are extracted and run natively via Node 24.14.0 LTS's `node:test` runner (now stable with automatic subtest awaiting, per-test timeouts, and `--test-rerun-failures`). If an example rots, the test suite fails. Documentation is executable code.
-- **AI Context:** Natively generates token-optimized `llms.txt` and `llms-full.txt` artifacts. It aggregates OpenAPI specs, TSDoc comments, and repository guidelines into a dense format, ensuring that AI agents (Cursor, Copilot, Claude) instantly understand the codebase.
-- **Build Gate:** Acts as a strict, zero-config linter during `npm run build`, powered by **Biome 2.4** (replacing the ESLint + Prettier combination), aggressively failing the build if developers try to push new public features without TSDoc comments.
+### 2. Dev Docs & AI Context (The Deterministic Bridge) -- COMPLETE
+Documentation is the "header file" for the AI era. LLM agents need dense, high-signal context, not prose.
+- **The Hallucination Killer:** By forcing explicit `@params`, `@returns`, and `@remarks`, we eliminate the need for AI to "infer" what code does. Extraction > Inference.
+- **DocTests:** Code examples (`@example`) are extracted and run natively via **Node 24.14.0 LTS's `node:test` runner** (stable with automatic subtest awaiting, per-test timeouts, and `--test-rerun-failures`). If an example rots, the test suite fails. Forge-TS forces your documentation to be **executable code**.
+- **AI-Agent First:** Generates token-optimized `llms.txt` and `llms-full.txt` artifacts. It aggregates OpenAPI specs, TSDoc comments, and repository guidelines into a format that lets agents (Cursor, Copilot, Claude) understand the codebase with **Zero Context**.
+- **Build Gate:** Acts as a strict, zero-config linter powered by **Biome 2.4** (replacing ESLint + Prettier). If an agent or human tries to push a public feature without TSDoc comments, Forge-TS aggressively fails the build.
 
 > **Implemented:** 33 enforcement rules (E001-E020, W001-W013) across 4 layers with per-rule severity configuration (error/warn/off). `--strict` mode promotes all warnings to errors. Non-zero exit code on violations ensures CI integration as a build gate.
 
 ### 3. Consumer Docs (The User-Facing Layer) -- COMPLETE
-Instead of dumping raw JSON, `forge-ts` outputs clean, beautifully formatted Markdown/MDX files ready to be dropped into static site generators like Docusaurus, Mintlify, Nextra, or VitePress. It dynamically injects your primary code examples and API summaries directly into the project's `README.md` (similar to `cargo-rdme`), ensuring your GitHub front page is always perfectly synchronized with your actual code.
+Instead of dumping raw JSON, `forge-ts` outputs clean, beautifully formatted Markdown/MDX files ready for static site generators like **Docusaurus, Mintlify, Nextra, or VitePress**. It dynamically injects examples into the project's `README.md` (similar to `cargo-rdme`), ensuring your GitHub front page is **never stale** and perfectly synchronized with your actual code.
 
 > **Implemented:** 4 SSG adapters (Mintlify as default, plus Docusaurus, Nextra, VitePress). FORGE:AUTO progressive enrichment for stub pages with AST-aware protected ranges. FORGE:STUB zones for intelligent guide generation. SKILL package generation via LAFS protocol. README sync from TSDoc.
 
@@ -37,14 +38,14 @@ The validated tooling stack (as of March 2026):
 | Tool | Version | Role |
 |------|---------|------|
 | Node.js | 24.14.0 LTS ("Krypton") | Runtime -- native TS stripping, stable `node:test`, `node:sqlite` RC |
-| TypeScript | 6.0 (beta/RC) | Compiler API -- last JS-based release; new defaults: `strict=true`, `target=es2025`, `module=esnext` |
+| TypeScript | 6.0.2 | Compiler API -- last JS-based release; new defaults: `strict=true`, `target=es2025`, `module=esnext` |
 | pnpm | 10.x | Monorepo workspaces with topological build ordering |
 | Vitest | 4.1.0 | Unit test layer (28M weekly downloads, stable browser mode) |
 | Biome | 2.4 | Linting + formatting -- replaces ESLint + Prettier, 10-100x faster, 423+ rules |
 | @microsoft/tsdoc | 0.16.0 | TSDoc comment parsing |
 | @microsoft/tsdoc-config | 0.17.x | TSDoc configuration file loading (`TSDocConfigFile.loadForFolder()`) |
 | citty | 0.2.1 | Type-safe CLI framework (zero deps, 2.9kB) |
-| @cleocode/lafs-protocol | 1.8.0 | LLM-Agent-First output layer |
+| @cleocode/lafs | 2026.3.x | LLM-Agent-First output layer (LAFS envelope protocol) |
 | unified + remark | 11.x / 15.x | AST-based markdown pipeline: remark-parse, remark-stringify, remark-mdx, remark-gfm, remark-frontmatter, unist-util-visit |
 | gray-matter | 4.x | Frontmatter parsing/serialization |
 | @changesets/cli | 2.x | Monorepo versioning with fixed version strategy |
@@ -74,13 +75,13 @@ By centralizing API specs, Dev Docs, and Consumer Docs into a single AST-travers
 
 **859 tests** across 20 test files, all passing. CI pipeline: lint + typecheck + test + dogfood.
 
-## The Five Pillars
+## The Five Pillars: Enforced Excellence
 
-Inspired by the battle-tested patterns in [ferrous-forge](https://github.com/kryptobaseddev/ferrous-forge) (Rust sister project, v1.9.0), adapted for the TypeScript ecosystem. forge-ts sits **on top of** best-practice tools like Biome, LSP, and linting tools -- it does not replace them, it adds strict opinionated guardrails.
+Inspired by the battle-tested patterns in [ferrous-forge](https://github.com/kryptobaseddev/ferrous-forge) (Rust sister project, v1.9.0), adapted for the TypeScript ecosystem. forge-ts sits **on top of** best-practice tools like Biome, LSP, and linting tools -- it does not replace them, it adds documentation as a compiled requirement.
 
-### Pillar 1: Enforcement -- COMPLETE
+### Pillar 1: The Hallucination Killer (Enforcement) -- COMPLETE
 
-Strict TSDoc quality enforcement across all three documentation layers, plus config guards.
+Forge-TS is built on the philosophy that **undocumented code is broken code.** It provides strict TSDoc quality enforcement across all three documentation layers, plus config guards.
 
 **API Layer:**
 
@@ -103,7 +104,7 @@ Strict TSDoc quality enforcement across all three documentation layers, plus con
 |------|-------------|----------|
 | E013 | Missing `@remarks` on public function/class | error |
 | E014 | Missing `@defaultValue` on optional property with default | warn |
-| E015 | Missing `@typeParam` on generic symbol | error |
+| E015 | Symbols missing generic `@typeParam` documentation | error |
 | W005 | Missing `@see` for referenced symbols | warn |
 | W006 | TSDoc parse errors (surfaces 70+ parser-level messages) | warn |
 | W009 | `{@inheritDoc}` references non-existent symbol | warn |
@@ -143,9 +144,9 @@ Strict TSDoc quality enforcement across all three documentation layers, plus con
 - Visibility filtering: `@public`, `@beta`, `@internal` control which symbols are enforced
 - Non-zero exit code on errors ensures CI build gate integration
 
-### Pillar 2: Generation -- COMPLETE
+### Pillar 2: The Deterministic Layer (Generation) -- COMPLETE
 
-All three documentation layers from the original vision, plus intelligent guide generation.
+All three documentation layers from the original vision, plus intelligent guide generation. We turn the AST into a structured dataset for agents.
 
 - **API Docs**: OpenAPI 3.2.0 with `@route` tag path extraction, visibility-filtered
 - **Dev Docs**: DocTests via `@example` + `node:test`, llms.txt/llms-full.txt for AI context
@@ -180,7 +181,7 @@ forge-ts is the central authority for TSDoc standards in a project.
 
 ### Pillar 3: Agent-Proof Guardrails -- COMPLETE
 
-> *"LLM agents like to take the easy way out and downgrade or switch versions."*
+> *"Agents will take the easy way out. Forge-TS blocks the exit."*
 
 Every bypass is explicit, justified, and audited.
 
@@ -202,7 +203,7 @@ Every bypass is explicit, justified, and audited.
 **Tiered Violations**: Not all violations are equal.
 - Locked settings (tsconfig strict, forge-ts rules): ALWAYS block, no auto-fix
 - Documentation coverage (E001-E008): configurable severity, auto-stub allowed
-- Style warnings (W001-W004): configurable, auto-fix permitted
+- Style warnings (W001-W013): configurable, auto-fix permitted
 
 **LLM Anti-Pattern Detection**: Flags common agent shortcuts in monitored files.
 - E019: `@ts-ignore` / `@ts-expect-error` additions in non-test files

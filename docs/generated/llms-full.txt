@@ -1,0 +1,5319 @@
+# . - Full Context
+
+Root: .
+Generated: 2026-03-26T04:32:03.902Z
+
+## Functions
+
+### getCurrentUser()
+
+() => string
+
+Returns the current OS username, or "unknown" if unavailable.
+
+Returns: The OS username string.
+
+Example:
+  import { getCurrentUser } from "@forge-ts/core/audit";
+  const user = getCurrentUser(); // e.g. "alice"
+
+### appendAuditEvent()
+
+(rootDir: string, event: AuditEvent) => void
+
+Appends a single audit event to the `.forge-audit.jsonl` file.
+
+Parameters:
+- rootDir: Absolute path to the project root directory.
+- event: The audit event to record.
+
+Example:
+  import { appendAuditEvent } from "@forge-ts/core";
+  const event = { timestamp: new Date().toISOString(), event: "config.lock" as const, user: "alice", reason: "Stabilize", details: {} };
+  appendAuditEvent("/path/to/project", event);
+
+### readAuditLog()
+
+(rootDir: string, options?: ReadAuditOptions) => AuditEvent[]
+
+Reads the `.forge-audit.jsonl` file and returns parsed audit events.
+
+Parameters:
+- rootDir: Absolute path to the project root directory.
+- options: Optional limit and event type filter.
+
+Returns: Array of audit events, newest first.
+
+Example:
+  import { readAuditLog } from "@forge-ts/core";
+  const events = readAuditLog("/path/to/project", { limit: 10 });
+  console.log(events.length); // up to 10
+
+### formatAuditEvent()
+
+(event: AuditEvent) => string
+
+Formats a single audit event as a human-readable string.
+
+Parameters:
+- event: The audit event to format.
+
+Returns: A single-line human-readable representation.
+
+Example:
+  import { formatAuditEvent } from "@forge-ts/core";
+  const event = { timestamp: "2026-03-21T12:00:00.000Z", event: "config.lock" as const, user: "alice", reason: "Stabilize", details: {} };
+  const line = formatAuditEvent(event);
+  console.log(line);
+
+### createBypass()
+
+(rootDir: string, reason: string, rule?: string, config?: Partial<BypassConfig>) => BypassRecord
+
+Creates a new bypass record, writes it to `.forge-bypass.json`, and appends an audit event.
+
+Parameters:
+- rootDir: Absolute path to the project root directory.
+- reason: Mandatory justification for the bypass.
+- rule: Specific rule code to bypass (e.g., "E009"), or "all". Defaults to "all".
+- config: Optional bypass budget configuration overrides.
+
+Returns: The created bypass record.
+
+Example:
+  import { createBypass } from "@forge-ts/core";
+  const bypass = createBypass("/path/to/project", "hotfix for release", "E009", { dailyBudget: 5, durationHours: 12 });
+  console.log(bypass.id);
+
+### getActiveBypasses()
+
+(rootDir: string) => BypassRecord[]
+
+Returns all currently active (non-expired) bypass records.
+
+Parameters:
+- rootDir: Absolute path to the project root directory.
+
+Returns: Array of active bypass records.
+
+Example:
+  import { getActiveBypasses } from "@forge-ts/core";
+  const active = getActiveBypasses("/path/to/project");
+  console.log(`${active.length} active bypass(es)`);
+
+### isRuleBypassed()
+
+(rootDir: string, ruleCode: string) => boolean
+
+Checks whether a specific rule has an active bypass.
+
+Parameters:
+- rootDir: Absolute path to the project root directory.
+- ruleCode: The rule code to check (e.g., "E009", "E010").
+
+Returns: `true` if the rule is currently bypassed.
+
+Example:
+  import { isRuleBypassed } from "@forge-ts/core";
+  if (isRuleBypassed("/path/to/project", "E009")) {
+    console.log("E009 is currently bypassed");
+  }
+
+### getRemainingBudget()
+
+(rootDir: string, config?: Partial<BypassConfig>) => number
+
+Returns the number of bypass budget slots remaining for today.
+
+Parameters:
+- rootDir: Absolute path to the project root directory.
+- config: Optional bypass budget configuration overrides.
+
+Returns: Number of remaining bypass slots for today.
+
+Example:
+  import { getRemainingBudget } from "@forge-ts/core";
+  const remaining = getRemainingBudget("/path/to/project", { dailyBudget: 5, durationHours: 24 });
+  console.log(`${remaining} bypass(es) remaining today`);
+
+### expireOldBypasses()
+
+(rootDir: string) => number
+
+Removes expired bypass records from `.forge-bypass.json`.
+
+Parameters:
+- rootDir: Absolute path to the project root directory.
+
+Returns: The number of expired records removed.
+
+Example:
+  import { expireOldBypasses } from "@forge-ts/core";
+  const removed = expireOldBypasses("/path/to/project");
+  console.log(`${removed} expired bypass(es) removed`);
+
+### defineConfig()
+
+(config: Partial<ForgeConfig>) => Partial<ForgeConfig>
+
+Type-safe helper for defining a partial forge-ts configuration.
+
+Parameters:
+- config: Partial configuration overrides.
+
+Returns: The same object (identity function for type checking).
+
+Example:
+  import { defineConfig } from "@forge-ts/core";
+  
+  const config = { outDir: "docs", enforce: { strict: true } };
+  export default defineConfig(config);
+
+### defaultConfig()
+
+(rootDir: string) => ForgeConfig
+
+Constructs a sensible default `ForgeConfig` rooted at `rootDir`.
+
+Parameters:
+- rootDir: Absolute path to the project root.
+
+Returns: A fully-populated default configuration.
+
+Example:
+  import { defaultConfig } from "@forge-ts/core";
+  const config = defaultConfig("/path/to/project");
+  console.log(config.enforce.enabled); // true
+
+### loadConfig()
+
+(rootDir?: string) => Promise<ForgeConfig>
+
+Loads the forge-ts configuration for a project.
+
+Parameters:
+- rootDir: The project root to search for config.  Defaults to `process.cwd()`.
+
+Returns: A fully-resolved `ForgeConfig`.
+
+Example:
+  import { loadConfig } from "@forge-ts/core";
+  const config = await loadConfig("/path/to/project");
+  // config is fully resolved with defaults
+
+### readLockFile()
+
+(rootDir: string) => ForgeLockManifest | null
+
+Reads the `.forge-lock.json` file from the given project root.
+
+Parameters:
+- rootDir: Absolute path to the project root.
+
+Returns: The parsed lock manifest, or `null` if no lock file exists or is invalid.
+
+Example:
+  import { readLockFile } from "@forge-ts/core";
+  const lock = readLockFile("/path/to/project");
+  if (lock) {
+    console.log(`Locked at ${lock.lockedAt} by ${lock.lockedBy}`);
+  }
+
+### writeLockFile()
+
+(rootDir: string, manifest: ForgeLockManifest) => void
+
+Writes a `ForgeLockManifest` to `.forge-lock.json` in the project root.
+
+Parameters:
+- rootDir: Absolute path to the project root.
+- manifest: The lock manifest to write.
+
+Example:
+  import { writeLockFile, createLockManifest, loadConfig } from "@forge-ts/core";
+  const config = await loadConfig("/path/to/project");
+  const manifest = createLockManifest(config, "alice");
+  writeLockFile("/path/to/project", manifest);
+
+### removeLockFile()
+
+(rootDir: string) => boolean
+
+Removes the `.forge-lock.json` file from the project root.
+
+Parameters:
+- rootDir: Absolute path to the project root.
+
+Returns: `true` if the file existed and was removed, `false` otherwise.
+
+Example:
+  import { removeLockFile } from "@forge-ts/core";
+  const removed = removeLockFile("/path/to/project");
+  console.log(removed ? "Lock removed" : "No lock file found");
+
+### createLockManifest()
+
+(config: ForgeConfig, lockedBy?: string) => ForgeLockManifest
+
+Creates a `ForgeLockManifest` from the current project config.
+
+Parameters:
+- config: The fully-resolved `ForgeConfig` to snapshot.
+- lockedBy: Identifier of the user or agent creating the lock. Defaults to `"forge-ts lock"`.
+
+Returns: A new lock manifest ready to be written with `writeLockFile`.
+
+Example:
+  import { createLockManifest, loadConfig } from "@forge-ts/core";
+  const config = await loadConfig();
+  const manifest = createLockManifest(config, "alice");
+  console.log(manifest.config.rules);
+
+### validateAgainstLock()
+
+(config: ForgeConfig, lock: ForgeLockManifest) => LockViolation[]
+
+Validates the current config against a locked manifest.
+
+Parameters:
+- config: The current fully-resolved `ForgeConfig`.
+- lock: The lock manifest to validate against.
+
+Returns: An array of `LockViolation` entries. Empty means no weakening detected.
+
+Example:
+  import { validateAgainstLock, readLockFile, loadConfig } from "@forge-ts/core";
+  const config = await loadConfig();
+  const lock = readLockFile(config.rootDir);
+  if (lock) {
+    const violations = validateAgainstLock(config, lock);
+    for (const v of violations) {
+      console.error(`LOCK VIOLATION: ${v.message}`);
+    }
+  }
+
+### resolveVisibility()
+
+(tags: Record<string, string[]> | undefined) => Visibility
+
+Determines the visibility level of a symbol from its TSDoc release tags.
+
+Parameters:
+- tags: The parsed `tags` map from `ForgeSymbol.documentation`.
+
+Returns: The resolved `Visibility` value.
+
+Example:
+  import { resolveVisibility } from "@forge-ts/core";
+  const vis = resolveVisibility({ internal: [] });
+  // vis === Visibility.Internal
+
+### meetsVisibility()
+
+(candidate: Visibility | "public" | "beta" | "internal" | "private", minVisibility: Visibility | "public" | "beta" | "internal" | "private") => boolean
+
+Returns whether `candidate` meets or exceeds the required minimum visibility.
+
+Parameters:
+- candidate: The visibility of the symbol being tested.
+- minVisibility: The minimum visibility threshold.
+
+Returns: `true` if `candidate` is at least as visible as `minVisibility`.
+
+Example:
+  import { meetsVisibility, Visibility } from "@forge-ts/core";
+  meetsVisibility(Visibility.Public, Visibility.Public); // true
+  meetsVisibility(Visibility.Internal, Visibility.Public); // false
+  meetsVisibility("public", "beta"); // true (string literals also accepted)
+
+### filterByVisibility()
+
+(symbols: ForgeSymbol[], minVisibility: Visibility | "public" | "beta" | "internal" | "private") => ForgeSymbol[]
+
+Filters an array of `ForgeSymbol` objects to only include symbols whose visibility meets or exceeds `minVisibility`.
+
+Parameters:
+- symbols: The full list of symbols to filter.
+- minVisibility: The minimum visibility threshold to keep.
+
+Returns: A new array containing only symbols that pass the visibility check.
+
+Example:
+  import { filterByVisibility, Visibility } from "@forge-ts/core";
+  const publicOnly = filterByVisibility(symbols, Visibility.Public);
+
+### clearTSDocConfigCache()
+
+() => void
+
+Clears the TSDoc configuration cache. Intended for use in tests only.
+
+### loadTSDocConfiguration()
+
+(folderPath: string) => TSDocConfiguration
+
+Resolve the TSDoc configuration to use when parsing comments in files under `folderPath`.  If a `tsdoc.json` file exists in or above the folder and can be loaded without errors, its settings are applied to a fresh `TSDocConfiguration` via `TSDocConfigFile.configureParser()`. Otherwise the default `TSDocConfiguration` is returned (backward-compatible behaviour).  Results are cached per folder path so the file system is only consulted once per unique directory.
+
+Parameters:
+- folderPath: Absolute directory path of the source file being parsed.
+
+Returns: A configured `TSDocConfiguration` instance.
+
+### createWalker()
+
+(config: ForgeConfig) => ASTWalker
+
+Creates an `ASTWalker` configured for the given forge config.
+
+Parameters:
+- config: The resolved `ForgeConfig` for the project.
+
+Returns: An `ASTWalker` instance whose `walk()` method performs the extraction.
+
+Example:
+  import { loadConfig, createWalker } from "@forge-ts/core";
+  const config = await loadConfig();
+  const walker = createWalker(config);
+  const symbols = walker.walk();
+  console.log(`Found ${symbols.length} symbols`);
+
+### signatureToSchema()
+
+(signature: string) => OpenAPISchemaObject
+
+Maps a TypeScript type signature string to an OpenAPI 3.2 schema object.  Handles common primitives, arrays, unions, `Record<K, V>`, and falls back to `{ type: "object" }` for anything it cannot parse.
+
+Parameters:
+- signature: A TypeScript type signature string, e.g. `"string"`, `"number[]"`,   `"string | number"`, `"Record<string, boolean>"`.
+
+Returns: An OpenAPI schema object.
+
+Example:
+  import { signatureToSchema } from "@forge-ts/api";
+  const schema = signatureToSchema("string[]");
+  // { type: "array", items: { type: "string" } }
+
+### extractSDKTypes()
+
+(symbols: ForgeSymbol[]) => SDKType[]
+
+Extracts SDK-relevant types (interfaces, type aliases, classes, enums) from a list of `ForgeSymbol` objects.  Only exported symbols whose visibility is not `Visibility.Internal` or `Visibility.Private` are included.
+
+Parameters:
+- symbols: The symbols produced by the core AST walker.
+
+Returns: An array of `SDKType` objects for public-facing type definitions.
+
+Example:
+  import { extractSDKTypes } from "@forge-ts/api";
+  const sdkTypes = extractSDKTypes(symbols);
+  console.log(sdkTypes.length); // number of public SDK types
+
+### generateOpenAPISpec()
+
+(config: ForgeConfig, sdkTypes: SDKType[], symbols?: ForgeSymbol[]) => OpenAPIDocument
+
+Generates a production-quality OpenAPI 3.2 document from the extracted SDK types.  The document is populated with: - An `info` block sourced from the config or reasonable defaults. - A `components.schemas` section with one schema per exported type. - `tags` derived from unique source file paths (grouping by file). - Visibility filtering: `@internal` symbols are never emitted. - HTTP paths are extracted from `@route` tags and appropriately mapped.
+
+Parameters:
+- config: The resolved `ForgeConfig`.
+- sdkTypes: SDK types to include as component schemas.
+- symbols: Raw symbols used to extract HTTP route paths from `@route` tags.
+
+Returns: An `OpenAPIDocument` object.
+
+Example:
+  import { generateOpenAPISpec } from "@forge-ts/api";
+  import { extractSDKTypes } from "@forge-ts/api";
+  const spec = generateOpenAPISpec(config, extractSDKTypes(symbols), symbols);
+  console.log(spec.openapi); // "3.2.0"
+
+### buildReference()
+
+(symbols: ForgeSymbol[]) => ReferenceEntry[]
+
+Builds a structured API reference from a list of exported symbols.  Unlike the minimal stub, this version includes nested children (class methods, interface properties) and all available TSDoc metadata.  Symbols with `Visibility.Internal` or `Visibility.Private` are excluded from the top-level results. Children with private/internal visibility are also filtered out.
+
+Parameters:
+- symbols: All symbols from the AST walker.
+
+Returns: An array of `ReferenceEntry` objects sorted by name.
+
+Example:
+  import { buildReference } from "@forge-ts/api";
+  const entries = buildReference(symbols);
+  console.log(entries[0].name); // first symbol name, alphabetically
+
+### generateApi()
+
+(config: ForgeConfig) => Promise<ForgeResult>
+
+Runs the API generation pipeline: walk → extract → generate → write.
+
+Parameters:
+- config: The resolved `ForgeConfig` for the project.
+
+Returns: A `ForgeResult` with success/failure and any diagnostics.
+
+Example:
+  import { generateApi } from "@forge-ts/api";
+  const result = await generateApi(config);
+  console.log(result.success); // true if spec was written successfully
+
+### configureLogger()
+
+(options: ForgeLoggerOptions) => void
+
+Configures the global `forgeLogger` based on CLI flags.  Call this once at the start of a command's `run()` handler to align consola's output level with the user's intent:  - `quiet` or `json` sets level to 0 (silent) so only LAFS output appears. - `verbose` sets level to 4 (debug) for maximum detail. - Default level is 3 (info) which covers info, warn, error, and success.
+
+Parameters:
+- options: Flag-driven configuration.
+
+Example:
+  import { configureLogger, forgeLogger } from "./forge-logger.js";
+  configureLogger({ quiet: args.quiet, json: args.json, verbose: args.verbose });
+  forgeLogger.info("This respects the configured level");
+
+### emitResult()
+
+<T>(output: CommandOutput<T>, flags: OutputFlags, humanFormatter: (data: T, output: CommandOutput<T>) => string) => void
+
+Wraps a command result in a LAFS envelope and emits it.  Output format is determined by LAFS flag resolution: - TTY terminals default to human-readable output. - Non-TTY (piped, CI, agents) defaults to JSON. - Explicit `--json` or `--human` flags always take precedence.  On failure, the full result is included alongside the error so agents get actionable data (e.g., suggestedFix) in a single response.
+
+Parameters:
+- output: Typed result from the command.
+- flags: Output format flags from citty args.
+- humanFormatter: Produces a human-readable string for TTY consumers.
+
+Example:
+  import { emitResult } from "@forge-ts/cli/output";
+  emitResult(output, { human: true }, (data) => `Done: ${data.summary.duration}ms`);
+
+### resolveExitCode()
+
+(output: CommandOutput<unknown>) => number
+
+Returns the LAFS-compliant exit code for a command output.
+
+Parameters:
+- output: Typed result from the command.
+
+Returns: `0` on success, `1` on validation/check failure.
+
+### runAudit()
+
+(args: AuditArgs) => CommandOutput<AuditResult>
+
+Reads the audit log and returns a typed command output.
+
+Parameters:
+- args: CLI arguments for the audit command.
+
+Returns: A typed `CommandOutput<AuditResult>`.
+
+Example:
+  import { runAudit } from "@forge-ts/cli/commands/audit";
+  const output = await runAudit({ cwd: process.cwd(), limit: 10 });
+  console.log(output.data.count); // number of events returned
+
+### discoverGuides()
+
+(symbolsByPackage: Map<string, ForgeSymbol[]>, config: ForgeConfig) => DiscoveredGuide[]
+
+Analyze the symbol graph and discover guides using multiple heuristics.  Each heuristic produces zero or more `DiscoveredGuide` entries. When multiple heuristics produce a guide with the same slug, the first one wins (priority order: guide-tag, config-interface, error-types, category, entry-point).
+
+Parameters:
+- symbolsByPackage: Symbols grouped by package name.
+- config: The resolved forge-ts configuration.
+
+Returns: An array of discovered guides, deduplicated by slug.
+
+### serializeMarkdown()
+
+(tree: MdRoot) => string
+
+Serialize an mdast tree to a well-formed markdown string.  Uses remark-stringify with GFM table support. The serializer handles all escaping (pipes in table cells, special characters in text, etc.) so callers never need manual escape functions.
+
+Parameters:
+- tree: The mdast root node to serialize.
+
+Returns: The serialized markdown string.
+
+### textP()
+
+(value: string) => MdParagraph
+
+Shorthand: paragraph containing a single text node.
+
+### boldIntroP()
+
+(bold: string, rest: string) => MdParagraph
+
+Shorthand: paragraph with bold intro text followed by regular text.
+
+### textListItem()
+
+(value: string) => MdListItem
+
+Shorthand: list item containing a single text paragraph.
+
+### rawBlock()
+
+(markdown: string) => MdHtml
+
+Wrap a raw markdown string as an HTML node. Use for TSDoc content that may contain markdown formatting (backticks, bold, links) which should pass through to the output verbatim rather than being escaped by the serializer.
+
+### truncate()
+
+(text: string, maxLen?: number) => string
+
+Truncate a string to at most maxLen chars. Avoids cutting inside backtick-delimited code spans to prevent broken inline code that would cause escaping issues.
+
+### toAnchor()
+
+(text: string) => string
+
+Convert a label to a GitHub-compatible anchor slug.
+
+### slugLink()
+
+(path: string) => string
+
+Strip extension from a link path and normalize to a slug. Produces bare slug links compatible with Mintlify and most SSGs.
+
+### parseFrontmatter()
+
+(content: string) => FrontmatterResult
+
+Parse frontmatter from markdown/MDX content.  Uses gray-matter for robust YAML parsing — handles multi-line values, quoted strings, and edge cases that regex-based stripping misses.
+
+Parameters:
+- content: The full file content including frontmatter.
+
+Returns: The body (without frontmatter) and the parsed data object.
+
+### stringifyWithFrontmatter()
+
+(body: string, data: Record<string, string | number | boolean>) => string
+
+Serialize content with frontmatter prepended.  Produces the standard format:
+
+Parameters:
+- body: The markdown body content (without frontmatter).
+- data: The frontmatter fields to serialize.
+
+Returns: The combined frontmatter + body string.
+
+### stripFrontmatter()
+
+(content: string) => string
+
+Strip frontmatter from content, returning only the body.
+
+Parameters:
+- content: The full file content including frontmatter.
+
+Returns: The body content without the frontmatter block.
+
+### parseInline()
+
+(markdown: string) => MdPhrasing[]
+
+Parse a markdown string and extract inline (phrasing) content.  Use for TSDoc text that may contain backtick code, bold, links, etc. The returned nodes can be spread into paragraphs, table cells, or any other context that accepts inline content.  This prevents double-escaping: backticks become proper `inlineCode` nodes instead of text that gets escaped by the serializer.
+
+Parameters:
+- markdown: The TSDoc content string (may contain markdown).
+
+Returns: Array of inline mdast nodes.
+
+### parseBlocks()
+
+(markdown: string) => MdBlock[]
+
+Parse a markdown string and extract block-level content.  Use for multi-line TSDoc content that may contain headings, lists, blockquotes, code blocks, etc.
+
+Parameters:
+- markdown: The markdown string to parse.
+
+Returns: Array of block-level mdast nodes.
+
+### sanitizeForMdx()
+
+(content: string) => string
+
+Sanitize markdown content for MDX compatibility using AST-aware processing.  Parses the document with remark to understand its structure, then applies targeted string replacements only to text and HTML comment nodes — code blocks, inline code, and frontmatter are automatically preserved.  Transformations applied outside code: - HTML comments to MDX comments - Curly braces in text escaped (prevents MDX expression parsing) - Angle brackets around word chars escaped (prevents JSX tag parsing)
+
+Parameters:
+- content: The markdown content to sanitize.
+
+Returns: The sanitized content safe for MDX consumption.
+
+### updateAutoSections()
+
+(existing: string, generated: string) => string | null
+
+Updates auto-enriched sections in an existing stub file.  Uses AST-aware parsing to find FORGE:AUTO markers, ensuring markers inside code blocks are never accidentally matched. Replaces content between `<!-- FORGE:AUTO-START id -->` and `<!-- FORGE:AUTO-END id -->` markers (or their MDX comment equivalents) with fresh content from the newly generated version.  Manual content outside markers is preserved exactly — no reformatting.
+
+Parameters:
+- existing: The current file content on disk.
+- generated: The freshly generated content with updated markers.
+
+Returns: The merged content, or null if no markers were found to update.
+
+### stubHash()
+
+(content: string) => string
+
+Compute a short fingerprint hash for content change detection.  Uses a simple DJB2-style hash converted to base-36 and truncated to 8 characters. This is NOT cryptographic — just a quick fingerprint to detect whether generated content has been manually edited.
+
+Parameters:
+- content: The content to hash.
+
+Returns: An 8-character alphanumeric hash string.
+
+### isStubModified()
+
+(existingContent: string, stubId: string, _generatedContent: string) => boolean
+
+Checks if a FORGE:STUB section has been modified by the user.  Compares the embedded hash (from the FORGE:STUB-HASH comment) against a freshly computed hash of the current inner content (with the hash comment itself stripped out). If the hashes diverge — meaning the user edited the content — or the hash comment was removed, the section is considered modified and should be preserved.
+
+Parameters:
+- existingContent: The full document content on disk.
+- stubId: The identifier of the FORGE:STUB section.
+- _generatedContent: Unused; kept for API symmetry. Detection is purely hash-based.
+
+Returns: `true` if the user has modified the stub (preserve it), `false` if unmodified (safe to regenerate).
+
+### updateStubSections()
+
+(existingContent: string, stubs: Array<{ id: string; content: string; }>) => string
+
+Updates FORGE:STUB sections in existing content.  Behavior for each stub: - If the stub doesn't exist yet, appends it at the end of the content. - If the stub exists but is unmodified (hash matches generated content), regenerates it. - If the stub exists and was modified by user (hash mismatch), PRESERVES user content.  Each generated stub includes a `FORGE:STUB-HASH` comment containing a fingerprint of the generated content. On subsequent builds, this hash is compared to determine whether the user has made edits.
+
+Parameters:
+- existingContent: The current file content on disk.
+- stubs: Array of stub definitions with their IDs and generated content.
+
+Returns: The updated content with stubs inserted or refreshed as needed.
+
+### escapeMdx()
+
+(text: string) => string
+
+Escape MDX-unsafe characters in text that appears outside code fences.  MDX parses `<Word>` as JSX tags and `{expr}` as JS expressions. In documentation content (summaries, descriptions, table cells), these come from TypeScript generics (`Array<string>`) and TSDoc inline tags (`{@link Foo}`). We escape them so MDX treats them as literal text.  This is exported so SSG adapters can apply it during page transformation.
+
+### groupSymbolsByPackage()
+
+(symbols: ForgeSymbol[], rootDir: string) => Map<string, ForgeSymbol[]>
+
+Groups symbols by their package based on file path.  For monorepos (symbols under `packages/<name>/`) the package name is derived from the directory segment immediately after `packages/`. For non-monorepo projects all symbols fall under the project name.
+
+Parameters:
+- symbols: All extracted symbols.
+- rootDir: Absolute path to the project root.
+
+Returns: A map from package name to symbol list.
+
+Example:
+  import { groupSymbolsByPackage } from "@forge-ts/gen";
+  const grouped = groupSymbolsByPackage(symbols, "/path/to/project");
+  console.log(grouped.has("core")); // true for monorepo
+
+### generateDocSite()
+
+(symbolsByPackage: Map<string, ForgeSymbol[]>, config: ForgeConfig, options: SiteGeneratorOptions) => DocPage[]
+
+Generates a full multi-page documentation site from symbols grouped by package.  Follows a 5-stage information architecture: 1. ORIENT — Landing page, Getting Started 2. LEARN — Concepts (stub) 3. BUILD — Guides (stub) 4. REFERENCE — API Reference, Types, Configuration, Changelog 5. COMMUNITY — FAQ, Contributing (stubs)
+
+Parameters:
+- symbolsByPackage: Symbols grouped by package name.
+- config: The resolved `ForgeConfig`.
+- options: Site generation options.
+
+Returns: An array of `DocPage` objects ready to be written to disk.
+
+Example:
+  import { generateDocSite, groupSymbolsByPackage } from "@forge-ts/gen";
+  const grouped = groupSymbolsByPackage(symbols, config.rootDir);
+  const pages = generateDocSite(grouped, config, { format: "markdown", projectName: "my-project" });
+  console.log(pages.length > 0); // true
+
+### registerAdapter()
+
+(adapter: SSGAdapter) => void
+
+Register an SSG adapter. Called once per provider at module load time.
+
+Parameters:
+- adapter: The adapter to register.
+
+Example:
+  import { registerAdapter } from "@forge-ts/gen";
+  registerAdapter(mintlifyAdapter);
+
+### getAdapter()
+
+(target: SSGTarget) => SSGAdapter
+
+Get a registered adapter by target name. Throws if the target is not registered.
+
+Parameters:
+- target: The SSG target identifier.
+
+Returns: The registered `SSGAdapter` for the given target.
+
+Example:
+  import { getAdapter } from "@forge-ts/gen";
+  const adapter = getAdapter("mintlify");
+
+### getAvailableTargets()
+
+() => SSGTarget[]
+
+Get all registered adapter targets.
+
+Returns: An array of all registered `SSGTarget` identifiers.
+
+Example:
+  import { getAvailableTargets } from "@forge-ts/gen";
+  const targets = getAvailableTargets(); // ["mintlify", "docusaurus", ...]
+
+### generateLlmsTxt()
+
+(symbols: ForgeSymbol[], config: ForgeConfig) => string
+
+Generates an `llms.txt` routing manifest from the extracted symbols.  The file follows the llms.txt specification: a compact, structured overview designed to help large language models navigate a project's documentation.
+
+Parameters:
+- symbols: The symbols to include.
+- config: The resolved `ForgeConfig`.
+
+Returns: The generated `llms.txt` content as a string.
+
+Example:
+  import { generateLlmsTxt } from "@forge-ts/gen";
+  const txt = generateLlmsTxt(symbols, config);
+  console.log(txt.startsWith("# ")); // true
+
+### generateLlmsFullTxt()
+
+(symbols: ForgeSymbol[], config: ForgeConfig) => string
+
+Generates an `llms-full.txt` dense context file from the extracted symbols.  Unlike `llms.txt`, this file contains complete documentation for every exported symbol, intended for LLM ingestion that requires full context.
+
+Parameters:
+- symbols: The symbols to include.
+- config: The resolved `ForgeConfig`.
+
+Returns: The generated `llms-full.txt` content as a string.
+
+Example:
+  import { generateLlmsFullTxt } from "@forge-ts/gen";
+  const fullTxt = generateLlmsFullTxt(symbols, config);
+  console.log(fullTxt.includes("Full Context")); // true
+
+### generateMarkdown()
+
+(symbols: ForgeSymbol[], config: ForgeConfig, options?: MarkdownOptions) => string
+
+Generates a Markdown (or MDX) string from a list of symbols.
+
+Parameters:
+- symbols: The symbols to document.
+- config: The resolved `ForgeConfig`.
+- options: Rendering options.
+
+Returns: The generated Markdown string.
+
+Example:
+  import { generateMarkdown } from "@forge-ts/gen";
+  const md = generateMarkdown(symbols, config, { mdx: false });
+  console.log(md.startsWith("# API Reference")); // true
+
+### syncReadme()
+
+(readmePath: string, symbols: ForgeSymbol[], options?: ReadmeSyncOptions) => Promise<boolean>
+
+Injects a summary of exported symbols into a `README.md` file.  The content is placed between `<!-- forge-ts:start -->` and `<!-- forge-ts:end -->` comment markers.  If neither marker exists, the summary is appended to the end of the file.
+
+Parameters:
+- readmePath: Absolute path to the `README.md` to update.
+- symbols: Symbols to summarise in the README.
+- options: Options controlling sync behaviour.
+
+Returns: `true` if the file was modified, `false` otherwise.
+
+Example:
+  import { syncReadme } from "@forge-ts/gen";
+  const modified = await syncReadme("/path/to/README.md", symbols);
+  console.log(modified); // true if README was updated
+
+### generateSkillPackage()
+
+(symbols: ForgeSymbol[], config: ForgeConfig) => SkillPackage
+
+Generates an agentskills.io-compliant skill package for ANY TypeScript project.  All content is derived from the project's exported symbols and metadata. No hardcoded project-specific content. Works for any project that forge-ts analyzes.
+
+Parameters:
+- symbols: All symbols from the project.
+- config: The resolved forge-ts config.
+
+Returns: A `SkillPackage` describing the directory and its files.
+
+Example:
+  import { generateSkillPackage } from "@forge-ts/gen";
+  const pkg = generateSkillPackage(symbols, config);
+  console.log(pkg.directoryName); // "my-lib"
+  console.log(pkg.files.map(f => f.path));
+  // ["SKILL.md", "references/API-REFERENCE.md", ...]
+
+### generateSkillMd()
+
+(symbols: ForgeSymbol[], config: ForgeConfig) => string
+
+Generates a SKILL.md string following the Agent Skills specification. Generic for any TypeScript project — content derived from symbols.
+
+Parameters:
+- symbols: All symbols from the project.
+- config: The resolved forge-ts config.
+
+Returns: The SKILL.md content as a string.
+
+Example:
+  import { generateSkillMd } from "@forge-ts/gen";
+  const skill = generateSkillMd(symbols, config);
+
+### generateSSGConfigs()
+
+(pages: DocPage[], target: "docusaurus" | "mintlify" | "nextra" | "vitepress", projectName: string) => SSGConfigFile[]
+
+Generate navigation configuration file(s) for the given SSG target.  Returns one file for most targets, but multiple files for Nextra (which uses per-directory `_meta.json` files).
+
+Parameters:
+- pages: The `DocPage` array produced by `generateDocSite`.
+- target: The SSG target.
+- projectName: The project name (used in config metadata).
+
+Returns: An array of `SSGConfigFile` objects ready to be written to disk.
+
+Example:
+  import { generateSSGConfigs } from "@forge-ts/gen";
+  const configs = generateSSGConfigs(pages, "vitepress", "my-project");
+  console.log(configs[0].path); // ".vitepress/sidebar.json"
+
+### generate()
+
+(config: ForgeConfig, options?: GenerateOptions) => Promise<ForgeResult>
+
+Runs the full generation pipeline: walk → render → write.  Auto-generated pages are always regenerated from source code. Stub pages (scaffolding for human/agent editing) are only created if they don't already exist, preserving manual edits across builds. Pass `{ forceStubs: true }` to overwrite stubs.
+
+Parameters:
+- config: The resolved `ForgeConfig` for the project.
+- options: Optional generation flags (e.g., forceStubs).
+
+Returns: A `ForgeResult` describing the outcome.
+
+Example:
+  import { generate } from "@forge-ts/gen";
+  const result = await generate(config);
+  console.log(result.success); // true if all files were written
+
+### runBuild()
+
+(args: BuildArgs) => Promise<CommandOutput<BuildResult>>
+
+Runs the full build pipeline and returns a typed command output.
+
+Parameters:
+- args: CLI arguments for the build command.
+
+Returns: A typed `CommandOutput<BuildResult>`.
+
+Example:
+  import { runBuild } from "@forge-ts/cli/commands/build";
+  const output = await runBuild({ cwd: process.cwd() });
+  console.log(output.success); // true if all steps succeeded
+
+### runBypassCreate()
+
+(args: { cwd?: string; reason: string; rule?: string; }) => Promise<CommandOutput<BypassCreateResult>>
+
+Runs the bypass creation: creates a new bypass record with budget enforcement.
+
+Parameters:
+- args: CLI arguments for the bypass command.
+
+Returns: A typed `CommandOutput<BypassCreateResult>`.
+
+Example:
+  import { runBypassCreate } from "@forge-ts/cli/commands/bypass";
+  const output = await runBypassCreate({
+    cwd: process.cwd(),
+    reason: "hotfix for release",
+    rule: "E009",
+  });
+  console.log(output.data.remainingBudget);
+
+### runBypassStatus()
+
+(args: { cwd?: string; }) => Promise<CommandOutput<BypassStatusResult>>
+
+Runs the bypass status query: shows active bypasses and remaining budget.
+
+Parameters:
+- args: CLI arguments for the bypass status command.
+
+Returns: A typed `CommandOutput<BypassStatusResult>`.
+
+Example:
+  import { runBypassStatus } from "@forge-ts/cli/commands/bypass";
+  const output = await runBypassStatus({ cwd: process.cwd() });
+  console.log(output.data.activeBypasses.length);
+
+### findDeprecatedUsages()
+
+(symbols: ForgeSymbol[]) => DeprecatedUsage[]
+
+Scans symbols for imports of deprecated exports from other packages.
+
+Parameters:
+- symbols: All symbols from the walker across the entire project.
+
+Returns: Array of deprecated usages found.
+
+### enforce()
+
+(config: ForgeConfig) => Promise<ForgeResult>
+
+Runs the TSDoc enforcement pass against a project.  The enforcer walks all exported symbols that meet the configured minimum visibility threshold and emits diagnostics for any documentation deficiencies it finds.  ### Error codes | Code | Severity | Condition | |------|----------|-----------| | E001 | error    | Exported symbol is missing a TSDoc summary. | | E002 | error    | Function/method parameter lacks a `@param` tag. | | E003 | error    | Non-void function/method lacks a `@returns` tag. | | E004 | error    | Exported function/method is missing an `@example` block. | | E005 | error    | Package entry point (index.ts) is missing `@packageDocumentation`. | | E006 | error    | Public/protected class member is missing a TSDoc comment. | | E007 | error    | Interface/type alias property is missing a TSDoc comment. | | W001 | warning  | TSDoc comment contains parse errors. | | W002 | warning  | Function body throws but has no `@throws` tag. | | W003 | warning  | `@deprecated` tag is present without explanation. | | W006 | warning  | TSDoc parser-level syntax error (invalid tag, malformed block, etc.). | | E009 | error    | tsconfig.json required strict-mode flag is missing or disabled (guard). | | E010 | error    | Config drift: a rule severity is weaker than the locked value. | | E013 | error    | Exported function/class is missing a `@remarks` block. | | E014 | warn     | Optional property of interface/type is missing `@defaultValue`. | | E015 | error    | Generic symbol is missing `@typeParam` for a type parameter. | | W005 | warn     | Symbol references other symbols via `{@link}` but has no `@see` tags. | | W007 | warn     | Guide FORGE:AUTO section references a symbol that no longer exists. | | W008 | warn     | Exported public symbol is not mentioned in any guide page. | | E017 | error    | `@internal` symbol re-exported through public barrel (index.ts). | | E018 | warn     | `@route`-tagged function missing `@response` tag. | | W009 | warn     | `{@inheritDoc}` references a symbol that does not exist. | | W010 | warn     | `@breaking` tag present without `@migration` path. | | W011 | warn     | New public export missing `@since` version tag. |  When `config.enforce.strict` is `true` all warnings are promoted to errors.
+
+Parameters:
+- config: The resolved `ForgeConfig` for the project.
+
+Returns: A `ForgeResult` describing which symbols passed or failed.
+
+Example:
+  import { loadConfig } from "@forge-ts/core";
+  import { enforce } from "@forge-ts/enforcer";
+  const config = await loadConfig();
+  const result = await enforce(config);
+  if (!result.success) {
+    console.error(`${result.errors.length} errors found`);
+  }
+
+### formatResults()
+
+(result: ForgeResult, options: FormatOptions) => string
+
+Formats a `ForgeResult` into a human-readable string suitable for printing to a terminal.  Diagnostics are grouped by source file.  Each file heading shows the relative-ish path, followed by indented error and warning lines.  A summary line is appended at the end.
+
+Parameters:
+- result: The result produced by `enforce`.
+- options: Rendering options (colours, verbosity).
+
+Returns: A formatted string ready to write to stdout or stderr.
+
+Example:
+  import { enforce } from "@forge-ts/enforcer";
+  import { formatResults } from "@forge-ts/enforcer";
+  import { loadConfig } from "@forge-ts/core";
+  const config = await loadConfig();
+  const result = await enforce(config);
+  console.log(formatResults(result, { colors: true, verbose: false }));
+
+### getStagedFiles()
+
+(cwd: string) => string[] | null
+
+Returns the list of staged .ts/.tsx files (relative paths) by querying git. Returns `null` when git is unavailable or the working directory is not a git repository. Deleted files are excluded.  The command is a fixed string with no interpolated user input, so shell injection is not a concern here.
+
+Parameters:
+- cwd: Working directory for the git command.
+
+Returns: Array of relative file paths, or `null` on failure.
+
+### runCheck()
+
+(args: CheckArgs) => Promise<CommandOutput<CheckResult>>
+
+Runs the TSDoc enforcement pass and returns a typed command output.
+
+Parameters:
+- args: CLI arguments for the check command.
+
+Returns: A typed `CommandOutput<CheckResult>`.
+
+Example:
+  import { runCheck } from "@forge-ts/cli/commands/check";
+  const output = await runCheck({ cwd: process.cwd() });
+  console.log(output.data.summary.errors); // number of TSDoc errors found
+
+### runDocsDev()
+
+(args: { cwd?: string; target?: string; port?: string; }) => Promise<void>
+
+Starts the local dev server for the configured SSG target.  Reads `gen.ssgTarget` from the forge-ts config, resolves the adapter, and spawns the platform's dev server in the output directory.
+
+Parameters:
+- args: Command arguments.
+
+Returns: A promise that resolves when the server exits.
+
+Example:
+  import { runDocsDev } from "@forge-ts/cli";
+  await runDocsDev({ cwd: "./my-project" });
+
+### readPkgJson()
+
+(rootDir: string) => PkgJson | null
+
+Read and parse package.json from a project root.  Detects indent style and trailing newline for lossless round-tripping. Returns `null` if the file doesn't exist or can't be parsed.
+
+Parameters:
+- rootDir: Absolute path to the project root.
+
+Returns: Parsed package.json with formatting metadata, or null.
+
+### serializePkgJson()
+
+(pkg: PkgJson) => string
+
+Serialize a package.json object preserving original formatting.
+
+Parameters:
+- pkg: The parsed package.json with formatting metadata.
+
+Returns: Formatted JSON string ready to write to disk.
+
+### writePkgJson()
+
+(pkg: PkgJson) => Promise<void>
+
+Write a modified package.json back to disk, preserving formatting.
+
+Parameters:
+- pkg: The parsed and modified package.json.
+
+### addScripts()
+
+(pkg: PkgJson, scripts: Record<string, string>) => string[]
+
+Add scripts to package.json idempotently.  Only adds scripts where the key doesn't already exist. Never overwrites existing script values. Returns the list of keys added.
+
+Parameters:
+- pkg: The parsed package.json to modify (mutated in place).
+- scripts: Map of script key to command value.
+
+Returns: Array of script keys that were added (empty if all already existed).
+
+### detectHookManager()
+
+(rootDir: string) => HookManager
+
+Detects which hook manager is present in the project.  Checks for: - husky: `.husky/` directory or `husky` in package.json devDependencies - lefthook: `lefthook.yml` or `lefthook` in package.json devDependencies
+
+Parameters:
+- rootDir: Absolute path to the project root.
+
+Returns: The detected hook manager, or "none" if neither is found.
+
+Example:
+  import { detectHookManager } from "@forge-ts/cli/commands/init-hooks";
+  const manager = detectHookManager("/path/to/project");
+  console.log(manager); // "husky" | "lefthook" | "none"
+
+### generateHuskyHook()
+
+() => string
+
+Generates the husky pre-commit hook file content (modern husky v9+).
+
+### generateHuskyPrePushHook()
+
+() => string
+
+Generates the husky pre-push hook file content (modern husky v9+).
+
+### generateLefthookBlock()
+
+() => string
+
+Generates the lefthook block with both pre-commit and pre-push sections.
+
+### detectVersionGuard()
+
+(rootDir: string) => boolean
+
+Checks whether a versionguard config file exists in the project root.  When detected, forge-ts appends versionguard's hook lines to the generated hook files so both tools run cooperatively.
+
+Parameters:
+- rootDir: Absolute path to the project root.
+
+Returns: True when a versionguard config file is found.
+
+Example:
+  import { detectVersionGuard } from "@forge-ts/cli/commands/init-hooks";
+  if (detectVersionGuard("/path/to/project")) {
+    console.log("VersionGuard detected — adding cooperative hooks");
+  }
+
+### runInitHooks()
+
+(args: InitHooksArgs) => Promise<CommandOutput<InitHooksResult>>
+
+Scaffolds git hook integration for the project.  Detects the hook manager (husky or lefthook), generates appropriate hook files, and reports what was written.
+
+Parameters:
+- args: CLI arguments for the init hooks command.
+
+Returns: A typed `CommandOutput<InitHooksResult>`.
+
+Example:
+  import { runInitHooks } from "@forge-ts/cli/commands/init-hooks";
+  const output = await runInitHooks({ cwd: "/my/project" });
+  console.log(output.data.files); // [".husky/pre-commit"]
+
+### detectEnvironment()
+
+(rootDir: string) => InitProjectEnvironment
+
+Detects the project environment by checking for files and dependencies.
+
+Parameters:
+- rootDir: Absolute path to the project root.
+
+Returns: The detected environment.
+
+### buildTsdocContent()
+
+(customTags?: Array<{ tagName: string; syntaxKind: "block" | "inline" | "modifier"; }>) => string
+
+Builds tsdoc.json content, merging in customTags from the forge config.  When `customTags` is non-empty, the written tsdoc.json includes both `tagDefinitions` and `supportForTags` entries so that the TSDoc parser (and any editor extensions) recognise the custom tags.
+
+Parameters:
+- customTags: Custom tag definitions from `ForgeConfig.tsdoc.customTags`.
+
+Returns: A JSON string for tsdoc.json.
+
+### runInitProject()
+
+(args: InitProjectArgs) => Promise<CommandOutput<InitProjectResult>>
+
+Runs the full project init flow.  Steps: 1. Detect project environment 2. Write forge-ts.config.ts (if not exists) 3. Write tsdoc.json (if not exists) 4. Wire package.json scripts (idempotent) 5. Validate tsconfig.json strictness 6. Validate package.json 7. Report summary
+
+Parameters:
+- args: CLI arguments for the init command.
+
+Returns: A typed `CommandOutput<InitProjectResult>`.
+
+Example:
+  import { runInitProject } from "@forge-ts/cli/commands/init-project";
+  const output = await runInitProject({ cwd: process.cwd() });
+  console.log(output.data.created); // ["forge-ts.config.ts", "tsdoc.json"]
+
+### runDoctor()
+
+(args: DoctorArgs) => Promise<CommandOutput<DoctorResult>>
+
+Runs the doctor integrity check flow.  Checks: 1. forge-ts.config.ts — exists and loadable 2. tsdoc.json — exists and extends forge-ts/core/tsdoc-preset 3. forge-ts/core — installed in node_modules 4. TypeScript — installed 5. tsconfig.json — exists and has strict mode 6. biome.json — exists (informational) 7. .forge-lock.json — exists, valid, matches config 8. .forge-audit.jsonl — exists and event count 9. .forge-bypass.json — exists and active bypasses 10. Git hooks — forge-ts check in pre-commit
+
+Parameters:
+- args: CLI arguments for the doctor command.
+
+Returns: A typed `CommandOutput<DoctorResult>`.
+
+Example:
+  import { runDoctor } from "@forge-ts/cli/commands/doctor";
+  const output = await runDoctor({ cwd: process.cwd(), fix: false });
+  console.log(output.data.summary); // { passed: 7, warnings: 2, errors: 1, info: 0 }
+
+### runInitDocs()
+
+(args: InitDocsArgs) => Promise<CommandOutput<InitDocsResult>>
+
+Scaffolds a documentation site for the target SSG platform.  Resolves the target from args, validates it, checks for an existing scaffold, calls the adapter's `scaffold()` method, and writes all files produced by the manifest to `outDir`.
+
+Parameters:
+- args: CLI arguments for the init docs command.
+
+Returns: A typed `CommandOutput<InitDocsResult>`.
+
+Example:
+  import { runInitDocs } from "@forge-ts/cli/commands/init-docs";
+  const output = await runInitDocs({ target: "mintlify", cwd: process.cwd() });
+  console.log(output.data.files); // list of created file paths
+
+### runLock()
+
+(args: { cwd?: string; }) => Promise<CommandOutput<LockResult>>
+
+Runs the lock command: reads current config and creates `.forge-lock.json`.
+
+Parameters:
+- args: CLI arguments for the lock command.
+
+Returns: A typed `CommandOutput<LockResult>`.
+
+Example:
+  import { runLock } from "@forge-ts/cli/commands/lock";
+  const output = await runLock({ cwd: process.cwd() });
+  console.log(output.data.locked.rules); // number of rules locked
+
+### runPrepublish()
+
+(args: PrepublishArgs) => Promise<CommandOutput<PrepublishResult>>
+
+Runs the prepublish safety gate: check then build.  If the check step fails, the build step is skipped entirely. Both steps use the same project root (cwd).
+
+Parameters:
+- args: CLI arguments for the prepublish command.
+
+Returns: A typed `CommandOutput<PrepublishResult>`.
+
+Example:
+  import { runPrepublish } from "@forge-ts/cli/commands/prepublish";
+  const output = await runPrepublish({ cwd: process.cwd() });
+  if (!output.success) process.exit(1);
+
+### extractExamples()
+
+(symbols: ForgeSymbol[]) => ExtractedExample[]
+
+Extracts all `@example` blocks from a list of `ForgeSymbol` objects.
+
+Parameters:
+- symbols: The symbols produced by the core AST walker.
+
+Returns: A flat array of `ExtractedExample` objects, one per code block.
+
+Example:
+  import { createWalker, loadConfig } from "@forge-ts/core";
+  import { extractExamples } from "@forge-ts/doctest";
+  const config = await loadConfig();
+  const symbols = createWalker(config).walk();
+  const examples = extractExamples(symbols);
+  console.log(`Found ${examples.length} examples`);
+
+### generateTestFiles()
+
+(examples: ExtractedExample[], options: GeneratorOptions) => VirtualTestFile[]
+
+Generates a virtual test file for a set of extracted examples.  Each example is wrapped in an `it()` block using the Node built-in `node:test` runner so that no additional test framework is required. Auto-imports the tested symbol from the source file, processes `// =>` assertion patterns, and appends an inline source map.
+
+Parameters:
+- examples: Examples to include in the generated file.
+- options: Output configuration.
+
+Returns: An array of `VirtualTestFile` objects (one per source file).
+
+Example:
+  import { generateTestFiles } from "@forge-ts/doctest";
+  const files = generateTestFiles(examples, { cacheDir: "/tmp/doctest-cache" });
+  console.log(`Generated ${files.length} test file(s)`);
+
+### runTests()
+
+(files: VirtualTestFile[]) => Promise<RunResult>
+
+Writes virtual test files to disk and executes them with Node 24 native TypeScript support (`--experimental-strip-types --test`).
+
+Parameters:
+- files: The virtual test files to write and run.
+
+Returns: A `RunResult` summarising the test outcome.
+
+Example:
+  import { runTests } from "@forge-ts/doctest";
+  const result = await runTests(virtualFiles);
+  if (!result.success) {
+    console.error(`${result.failed} doctest(s) failed`);
+  }
+
+### doctest()
+
+(config: ForgeConfig) => Promise<ForgeResult>
+
+Runs the full doctest pipeline: extract → generate → run.
+
+Parameters:
+- config: The resolved `ForgeConfig` for the project.
+
+Returns: A `ForgeResult` with success/failure and any diagnostics.
+
+Example:
+  import { loadConfig } from "@forge-ts/core";
+  import { doctest } from "@forge-ts/doctest";
+  const config = await loadConfig();
+  const result = await doctest(config);
+  if (!result.success) {
+    console.error(`${result.errors.length} doctest failure(s)`);
+  }
+
+### runTest()
+
+(args: TestArgs) => Promise<CommandOutput<TestResult>>
+
+Runs the doctest pipeline and returns a typed command output.
+
+Parameters:
+- args: CLI arguments for the test command.
+
+Returns: A typed `CommandOutput<TestResult>`.
+
+Example:
+  import { runTest } from "@forge-ts/cli/commands/test";
+  const output = await runTest({ cwd: process.cwd() });
+  console.log(output.data.summary.passed); // number of passing doctests
+
+### runUnlock()
+
+(args: { cwd?: string; reason: string; }) => Promise<CommandOutput<UnlockResult>>
+
+Runs the unlock command: removes `.forge-lock.json` with a mandatory reason.
+
+Parameters:
+- args: CLI arguments for the unlock command.
+
+Returns: A typed `CommandOutput<UnlockResult>`.
+
+Example:
+  import { runUnlock } from "@forge-ts/cli/commands/unlock";
+  const output = await runUnlock({ cwd: process.cwd(), reason: "Relaxing rules for migration" });
+  console.log(output.data.success); // true
+
+## Interfaces
+
+### AuditEvent
+
+AuditEvent
+
+A single audit event recorded in the forge-ts audit trail.
+
+Members:
+
+#### timestamp
+
+string
+
+ISO 8601 timestamp of when the event occurred.
+
+#### event
+
+AuditEventType
+
+Discriminated event type.
+
+#### user
+
+string
+
+OS username of the actor (falls back to "unknown").
+
+#### reason
+
+string | undefined
+
+Mandatory for lock/unlock/bypass events; optional otherwise.
+
+#### details
+
+Record<string, unknown>
+
+Event-specific payload.
+
+### ReadAuditOptions
+
+ReadAuditOptions
+
+Options for reading the audit log.
+
+Members:
+
+#### limit
+
+number | undefined
+
+Maximum number of events to return.
+
+#### eventType
+
+AuditEventType | undefined
+
+Filter to a single event type.
+
+### BypassConfig
+
+BypassConfig
+
+Configuration for the bypass budget system.
+
+Members:
+
+#### dailyBudget
+
+number
+
+Maximum number of bypasses allowed per calendar day. Default: 3
+
+#### durationHours
+
+number
+
+Duration in hours before a bypass automatically expires. Default: 24
+
+### BypassRecord
+
+BypassRecord
+
+A single bypass record stored in `.forge-bypass.json`.
+
+Members:
+
+#### id
+
+string
+
+Unique identifier for this bypass.
+
+#### createdAt
+
+string
+
+ISO 8601 timestamp when the bypass was created.
+
+#### expiresAt
+
+string
+
+ISO 8601 timestamp when the bypass expires.
+
+#### reason
+
+string
+
+Mandatory justification for why the bypass was created.
+
+#### rule
+
+string
+
+Specific rule code bypassed (e.g., "E009"), or "all" for a blanket bypass.
+
+#### user
+
+string
+
+OS username of the actor who created the bypass.
+
+### ForgeSymbol
+
+ForgeSymbol
+
+A single extracted and annotated symbol from the TypeScript AST.
+
+Members:
+
+#### name
+
+string
+
+The declared name of the symbol.
+
+#### kind
+
+"function" | "class" | "interface" | "type" | "enum" | "variable" | "method" | "property" | "file"
+
+The syntactic kind of the symbol.
+
+#### visibility
+
+Visibility
+
+Resolved visibility from TSDoc release tags.
+
+#### filePath
+
+string
+
+Absolute path to the source file.
+
+#### line
+
+number
+
+1-based line number of the declaration.
+
+#### column
+
+number
+
+0-based column of the declaration.
+
+#### documentation
+
+{ summary?: string; params?: Array<{ name: string; description: string; type?: string; }>; returns?: { description: string; type?: string; }; throws?: Array<{ type?: string; description: string; }>; examples?: Array<{ code: string; language: string; line: number; }>; tags?: Record<string, string[]>; deprecated?: string; links?: Array<{ target: string; line: number; text?: string; }>; parseMessages?: Array<{ messageId: string; text: string; line: number; }>; } | undefined
+
+Parsed TSDoc documentation, if present.
+
+#### signature
+
+string | undefined
+
+Human-readable type signature of the symbol.
+
+#### children
+
+ForgeSymbol[] | undefined
+
+Child symbols (e.g., class members, enum values).
+
+#### exported
+
+boolean
+
+Whether this symbol is part of the public module exports.
+
+### EnforceRules
+
+EnforceRules
+
+Per-rule severity configuration for the TSDoc enforcer. Each key corresponds to one of the E001–E007 rule codes.
+
+Members:
+
+#### "require-summary"
+
+RuleSeverity
+
+E001: Exported symbol missing TSDoc summary.
+
+#### "require-param"
+
+RuleSeverity
+
+E002: Function parameter missing `\@param` tag.
+
+#### "require-returns"
+
+RuleSeverity
+
+E003: Non-void function missing `\@returns` tag.
+
+#### "require-example"
+
+RuleSeverity
+
+E004: Exported function missing `\@example` block.
+
+#### "require-package-doc"
+
+RuleSeverity
+
+E005: Entry point missing `\@packageDocumentation`.
+
+#### "require-class-member-doc"
+
+RuleSeverity
+
+E006: Class member missing documentation.
+
+#### "require-interface-member-doc"
+
+RuleSeverity
+
+E007: Interface/type member missing documentation.
+
+#### "require-tsdoc-syntax"
+
+RuleSeverity
+
+W006: TSDoc syntax parse error (invalid tag, malformed block, etc.).
+
+#### "require-remarks"
+
+RuleSeverity
+
+E013: Exported function/class is missing a `\@remarks` block.
+
+#### "require-default-value"
+
+RuleSeverity
+
+E014: Optional property with default is missing `\@defaultValue`.
+
+#### "require-type-param"
+
+RuleSeverity
+
+E015: Generic symbol is missing `\@typeParam` for its type parameters.
+
+#### "require-see"
+
+RuleSeverity
+
+W005: Symbol references other symbols via `\@link` but has no `\@see` tags.
+
+#### "require-release-tag"
+
+RuleSeverity
+
+E016: Exported symbol is missing a release tag (`\@public`, `\@beta`, `\@internal`).
+
+#### "require-fresh-guides"
+
+RuleSeverity
+
+W007: Guide FORGE:AUTO section references a symbol that no longer exists or has changed.
+
+#### "require-guide-coverage"
+
+RuleSeverity
+
+W008: Exported public symbol is not mentioned in any guide page.
+
+#### "require-internal-boundary"
+
+RuleSeverity
+
+E017: `\@internal` symbol re-exported through public barrel (index.ts).
+
+#### "require-route-response"
+
+RuleSeverity
+
+E018: `\@route`-tagged function missing `\@response` tag.
+
+#### "require-inheritdoc-source"
+
+RuleSeverity
+
+W009: `\@inheritDoc` references a symbol that does not exist.
+
+#### "require-migration-path"
+
+RuleSeverity
+
+W010: `\@breaking` without `\@migration` path.
+
+#### "require-since"
+
+RuleSeverity
+
+W011: New public export missing `\@since` version tag.
+
+#### "require-fresh-examples"
+
+RuleSeverity
+
+W013: `\@example` block may be stale — function call arg count mismatches parameter count.
+
+#### "require-no-ts-ignore"
+
+RuleSeverity
+
+E019: Non-test file contains ts-ignore or ts-expect-error directive.
+
+#### "require-no-any-in-api"
+
+RuleSeverity
+
+E020: Exported symbol has `any` in its public API signature.
+
+#### "require-fresh-link-text"
+
+RuleSeverity
+
+W012: `\@link` display text appears stale relative to target summary.
+
+### ForgeConfig
+
+ForgeConfig
+
+Full configuration for a forge-ts run. Loaded from forge-ts.config.ts or the "forge-ts" key in package.json.
+
+Members:
+
+#### rootDir
+
+string
+
+Root directory of the project.
+
+#### tsconfig
+
+string
+
+Path to the tsconfig.json to compile against.
+
+#### outDir
+
+string
+
+Output directory for generated files.
+
+#### enforce
+
+{ enabled: boolean; minVisibility: Visibility | "public" | "beta" | "internal" | "private"; strict: boolean; rules: EnforceRules; ignoreFile?: string; }
+
+Enforce TSDoc on all public exports.
+
+#### doctest
+
+{ enabled: boolean; cacheDir: string; }
+
+DocTest configuration.
+
+#### api
+
+{ enabled: boolean; openapi: boolean; openapiPath: string; }
+
+API generation configuration.
+
+#### gen
+
+{ enabled: boolean; formats: Array<"markdown" | "mdx">; llmsTxt: boolean; readmeSync: boolean; ssgTarget?: "docusaurus" | "mintlify" | "nextra" | "vitepress"; }
+
+Output generation configuration.
+
+#### skill
+
+{ enabled?: boolean; customSections?: Array<{ heading: string; content: string; }>; extraGotchas?: string[]; }
+
+Skill package generation settings. Custom sections here are merged into the generated SKILL.md, allowing projects to inject workflow knowledge, domain gotchas, and other context that cannot be derived from symbols alone.
+
+#### tsdoc
+
+{ writeConfig: boolean; customTags: Array<{ tagName: string; syntaxKind: "block" | "inline" | "modifier"; }>; enforce: { core: "error" | "warn" | "off"; extended: "error" | "warn" | "off"; discretionary: "error" | "warn" | "off"; }; }
+
+TSDoc ecosystem configuration.
+
+#### bypass
+
+{ dailyBudget: number; durationHours: number; }
+
+Bypass budget configuration for temporary rule overrides.
+
+#### guides
+
+{ enabled: boolean; autoDiscover: boolean; custom: Array<{ slug: string; title: string; sources: string[]; }>; }
+
+Guide generation configuration.
+
+#### guards
+
+{ tsconfig: { enabled: boolean; requiredFlags: string[]; }; biome: { enabled: boolean; lockedRules: string[]; }; packageJson: { enabled: boolean; minNodeVersion: string; requiredFields: string[]; }; }
+
+Downstream config drift guards.
+
+#### _configWarnings
+
+string[] | undefined
+
+Warnings generated during config loading (e.g., unknown keys). Populated by loadConfig(). Agents should surface these in output.
+
+#### project
+
+{ repository?: string; homepage?: string; packageName?: string; description?: string; version?: string; bin?: Record<string, string>; scripts?: Record<string, string>; keywords?: string[]; }
+
+Project metadata — auto-detected from package.json if not provided.
+
+### ForgeResult
+
+ForgeResult
+
+The result of a forge-ts compilation pass.
+
+Members:
+
+#### success
+
+boolean
+
+Whether the run succeeded without errors.
+
+#### symbols
+
+ForgeSymbol[]
+
+All symbols extracted during this run.
+
+#### errors
+
+ForgeError[]
+
+Errors that caused or would cause failure.
+
+#### warnings
+
+ForgeWarning[]
+
+Non-fatal warnings.
+
+#### duration
+
+number
+
+Wall-clock duration of the run in milliseconds.
+
+#### writtenFiles
+
+string[] | undefined
+
+Absolute paths of files written during this run (populated by gen).
+
+### ForgeError
+
+ForgeError
+
+A diagnostic error produced during a forge-ts run.
+
+Members:
+
+#### code
+
+string
+
+Machine-readable error code (e.g. "E001").
+
+#### message
+
+string
+
+Human-readable description of the error.
+
+#### filePath
+
+string
+
+Absolute path of the file where the error occurred.
+
+#### line
+
+number
+
+1-based line number.
+
+#### column
+
+number
+
+0-based column.
+
+#### suggestedFix
+
+string | undefined
+
+Suggested fix for the agent — exact TSDoc block to add.
+
+#### symbolName
+
+string | undefined
+
+The symbol name that needs fixing.
+
+#### symbolKind
+
+string | undefined
+
+The symbol kind (function, class, interface, etc.).
+
+### ForgeWarning
+
+ForgeWarning
+
+A diagnostic warning produced during a forge-ts run.
+
+Members:
+
+#### code
+
+string
+
+Machine-readable warning code (e.g. "W001").
+
+#### message
+
+string
+
+Human-readable description of the warning.
+
+#### filePath
+
+string
+
+Absolute path of the file where the warning occurred.
+
+#### line
+
+number
+
+1-based line number.
+
+#### column
+
+number
+
+0-based column.
+
+### ForgeLockManifest
+
+ForgeLockManifest
+
+Manifest stored in `.forge-lock.json`. Captures a point-in-time snapshot of the project's forge-ts configuration so that future runs can detect when settings have been weakened.
+
+Members:
+
+#### version
+
+string
+
+Schema version of the lock manifest.
+
+#### lockedAt
+
+string
+
+ISO-8601 timestamp when the lock was created.
+
+#### lockedBy
+
+string
+
+Identifier of the user or agent that created the lock.
+
+#### config
+
+{ rules: Record<string, string>; tsconfig?: Record<string, unknown>; biome?: Record<string, unknown>; }
+
+Snapshot of locked configuration values.
+
+### LockViolation
+
+LockViolation
+
+A single violation found when comparing current config against the lock.
+
+Members:
+
+#### field
+
+string
+
+Dot-path of the config field that changed (e.g., "rules.require-summary").
+
+#### locked
+
+string
+
+The value stored in the lock file.
+
+#### current
+
+string
+
+The current value in the live config.
+
+#### message
+
+string
+
+Human-readable explanation of the violation.
+
+### OpenAPISchemaObject
+
+OpenAPISchemaObject
+
+OpenAPI 3.2 schema object.
+
+Members:
+
+#### type
+
+"string" | "number" | "boolean" | "object" | "integer" | "array" | "null" | undefined
+
+The data type of the schema (e.g., "string", "number", "object", "array").
+
+#### format
+
+string | undefined
+
+A format hint for the data type (e.g., "int32", "date-time", "email", "uuid").
+
+#### description
+
+string | undefined
+
+A human-readable description of the schema's purpose or constraints.
+
+#### properties
+
+Record<string, OpenAPISchemaObject> | undefined
+
+Property definitions for object-type schemas. Maps each property name to its schema.
+
+#### required
+
+string[] | undefined
+
+List of property names that must be present on the object.
+
+#### items
+
+OpenAPISchemaObject | undefined
+
+Schema definition for the elements of an array-type schema. Required when `type` is "array".
+
+#### additionalProperties
+
+boolean | OpenAPISchemaObject | undefined
+
+Controls whether additional properties are allowed (`true`/`false`) or defines their schema.
+
+#### enum
+
+(string | number | boolean)[] | undefined
+
+Restricts the value to one of the listed constants.
+
+#### oneOf
+
+OpenAPISchemaObject[] | undefined
+
+Validates the value against exactly one of the listed sub-schemas.
+
+#### allOf
+
+OpenAPISchemaObject[] | undefined
+
+Validates the value against all of the listed sub-schemas (intersection).
+
+#### anyOf
+
+OpenAPISchemaObject[] | undefined
+
+Validates the value against at least one of the listed sub-schemas.
+
+#### nullable
+
+boolean | undefined
+
+Indicates that the value may be `null` in addition to its declared type.
+
+#### deprecated
+
+boolean | undefined
+
+Marks the schema as deprecated, signalling that it may be removed in a future version.
+
+#### default
+
+string | number | boolean | null | undefined
+
+The default value to use when the property is absent.
+
+#### $ref
+
+string | undefined
+
+A JSON Reference (`$ref`) pointing to another schema definition in the document.
+
+### OpenAPIInfoObject
+
+OpenAPIInfoObject
+
+OpenAPI 3.2 info object.
+
+Members:
+
+#### title
+
+string
+
+The human-readable name of the API.
+
+#### version
+
+string
+
+The version string for the API (e.g., "1.0.0").
+
+#### description
+
+string | undefined
+
+A detailed description of the API, supporting CommonMark markdown.
+
+#### summary
+
+string | undefined
+
+A short summary of the API, intended for display in tooling.
+
+#### license
+
+{ name: string; url?: string; identifier?: string; } | undefined
+
+Licensing information for the exposed API, including name, URL, and SPDX identifier.
+
+### OpenAPITagObject
+
+OpenAPITagObject
+
+OpenAPI 3.2 tag object.
+
+Members:
+
+#### name
+
+string
+
+The name of the tag, used to group operations in the document.
+
+#### description
+
+string | undefined
+
+An optional description of the tag, supporting CommonMark markdown.
+
+### OpenAPIPathItemObject
+
+OpenAPIPathItemObject
+
+OpenAPI 3.2 path item object.
+
+Members:
+
+#### summary
+
+string | undefined
+
+A short summary of the path item, intended for tooling display.
+
+#### description
+
+string | undefined
+
+A detailed description of the path item, supporting CommonMark markdown.
+
+#### get
+
+OpenAPIOperationObject | undefined
+
+The operation definition for HTTP GET requests to this path.
+
+#### post
+
+OpenAPIOperationObject | undefined
+
+The operation definition for HTTP POST requests to this path.
+
+#### put
+
+OpenAPIOperationObject | undefined
+
+The operation definition for HTTP PUT requests to this path.
+
+#### delete
+
+OpenAPIOperationObject | undefined
+
+The operation definition for HTTP DELETE requests to this path.
+
+#### patch
+
+OpenAPIOperationObject | undefined
+
+The operation definition for HTTP PATCH requests to this path.
+
+#### options
+
+OpenAPIOperationObject | undefined
+
+The operation definition for HTTP OPTIONS requests to this path.
+
+#### head
+
+OpenAPIOperationObject | undefined
+
+The operation definition for HTTP HEAD requests to this path.
+
+#### trace
+
+OpenAPIOperationObject | undefined
+
+The operation definition for HTTP TRACE requests to this path.
+
+#### query
+
+OpenAPIOperationObject | undefined
+
+The operation definition for HTTP QUERY requests to this path (OpenAPI 3.2 extension).
+
+#### additionalOperations
+
+Record<string, OpenAPIOperationObject> | undefined
+
+Additional non-standard HTTP method operations keyed by method name.
+
+### OpenAPIOperationObject
+
+OpenAPIOperationObject
+
+OpenAPI 3.2 operation object.
+
+Members:
+
+#### operationId
+
+string | undefined
+
+A unique string identifier for the operation, used by tooling to reference it.
+
+#### summary
+
+string | undefined
+
+A short, human-readable summary of what the operation does.
+
+#### description
+
+string | undefined
+
+A detailed description of the operation's behaviour, supporting CommonMark markdown.
+
+#### tags
+
+string[] | undefined
+
+A list of tag names that logically group this operation in documentation and tooling.
+
+#### parameters
+
+OpenAPIParameterObject[] | undefined
+
+The list of parameters applicable to this operation.
+
+#### responses
+
+Record<string, OpenAPIResponseObject> | undefined
+
+The possible responses returned by this operation, keyed by HTTP status code or "default".
+
+### OpenAPIParameterObject
+
+OpenAPIParameterObject
+
+OpenAPI 3.2 parameter object.
+
+Members:
+
+#### name
+
+string
+
+The name of the parameter, case-sensitive.
+
+#### in
+
+"query" | "header" | "path" | "cookie" | "querystring"
+
+The location of the parameter: path, query, header, cookie, or querystring.
+
+#### description
+
+string | undefined
+
+A human-readable description of the parameter's purpose, supporting CommonMark markdown.
+
+#### required
+
+boolean | undefined
+
+Whether the parameter is mandatory. Required for `in: "path"` parameters.
+
+#### schema
+
+OpenAPISchemaObject | undefined
+
+The schema defining the type and constraints of the parameter value.
+
+#### deprecated
+
+boolean | undefined
+
+Marks the parameter as deprecated; clients should avoid using it.
+
+### OpenAPIEncodingObject
+
+OpenAPIEncodingObject
+
+OpenAPI 3.2 encoding object.
+
+Members:
+
+#### contentType
+
+string | undefined
+
+The MIME type to use for encoding a specific property (e.g., "application/json").
+
+#### headers
+
+Record<string, OpenAPIParameterObject> | undefined
+
+Additional headers to send alongside the encoded part, keyed by header name.
+
+#### style
+
+string | undefined
+
+The serialization style for the encoded value (e.g., "form", "spaceDelimited").
+
+#### explode
+
+boolean | undefined
+
+Whether arrays and objects should be exploded into separate query parameters.
+
+#### allowReserved
+
+boolean | undefined
+
+Whether reserved characters in the encoded value should be allowed without percent-encoding.
+
+### OpenAPIMediaTypeObject
+
+OpenAPIMediaTypeObject
+
+OpenAPI 3.2 media type object.
+
+Members:
+
+#### schema
+
+OpenAPISchemaObject | undefined
+
+The schema defining the structure and type of the media type's payload.
+
+#### encoding
+
+Record<string, OpenAPIEncodingObject> | undefined
+
+Encoding information for specific properties of a `multipart` or `application/x-www-form-urlencoded` request body.
+
+### OpenAPIResponseObject
+
+OpenAPIResponseObject
+
+OpenAPI 3.2 response object.
+
+Members:
+
+#### description
+
+string
+
+A required human-readable description of the response, supporting CommonMark markdown.
+
+#### headers
+
+Record<string, OpenAPIParameterObject> | undefined
+
+HTTP headers returned with this response, keyed by header name.
+
+#### content
+
+Record<string, OpenAPIMediaTypeObject> | undefined
+
+The response body content, keyed by media type (e.g., "application/json").
+
+### OpenAPIDocument
+
+OpenAPIDocument
+
+Complete OpenAPI 3.2 document.
+
+Members:
+
+#### openapi
+
+"3.2.0"
+
+The OpenAPI specification version this document conforms to. Must be "3.2.0".
+
+#### $self
+
+string | undefined
+
+An optional self-referencing URL for this document, used for tooling and resolution.
+
+#### info
+
+OpenAPIInfoObject
+
+Metadata about the API including title, version, and description.
+
+#### paths
+
+Record<string, OpenAPIPathItemObject>
+
+The available paths and their operations, keyed by path template (e.g., `/users/\{id\}`).
+
+#### components
+
+{ schemas: Record<string, OpenAPISchemaObject>; mediaTypes?: Record<string, OpenAPIMediaTypeObject>; }
+
+Reusable schema and media type definitions shared across the document.
+
+#### tags
+
+OpenAPITagObject[] | undefined
+
+A list of tags used to group operations, with optional descriptions.
+
+### ASTWalker
+
+ASTWalker
+
+The return type of `createWalker`.
+
+Members:
+
+#### walk()
+
+() => ForgeSymbol[]
+
+Walk all source files referenced by the configured tsconfig and return one `ForgeSymbol` per exported declaration.
+
+### SDKProperty
+
+SDKProperty
+
+A single property extracted from an interface or class symbol.
+
+Members:
+
+#### name
+
+string
+
+The property name.
+
+#### type
+
+string
+
+The TypeScript type string of the property.
+
+#### description
+
+string | undefined
+
+TSDoc summary for this property.
+
+#### required
+
+boolean
+
+Whether the property is required (not optional).
+
+#### deprecated
+
+string | undefined
+
+Deprecation notice, if present.
+
+### SDKType
+
+SDKType
+
+An SDK type descriptor extracted from the symbol graph.
+
+Members:
+
+#### name
+
+string
+
+The symbol name.
+
+#### kind
+
+"class" | "interface" | "type" | "enum"
+
+Syntactic kind of the type.
+
+#### signature
+
+string | undefined
+
+Human-readable type signature.
+
+#### description
+
+string | undefined
+
+TSDoc summary.
+
+#### deprecated
+
+string | undefined
+
+Deprecation notice, if present.
+
+#### visibility
+
+Visibility
+
+Resolved visibility level.
+
+#### properties
+
+SDKProperty[]
+
+Extracted properties (for interfaces, classes) or values (for enums).
+
+#### sourceFile
+
+string
+
+Absolute path to the source file.
+
+### ReferenceEntry
+
+ReferenceEntry
+
+A single entry in the generated API reference.
+
+Members:
+
+#### name
+
+string
+
+Symbol name.
+
+#### kind
+
+"function" | "class" | "interface" | "type" | "enum" | "variable" | "method" | "property" | "file"
+
+Symbol kind.
+
+#### summary
+
+string | undefined
+
+TSDoc summary.
+
+#### signature
+
+string | undefined
+
+Human-readable type signature.
+
+#### visibility
+
+Visibility
+
+Resolved visibility level.
+
+#### deprecated
+
+string | undefined
+
+Deprecation notice, if present.
+
+#### params
+
+{ name: string; description: string; type?: string; }[] | undefined
+
+Documented parameters.
+
+#### returns
+
+{ description: string; type?: string; } | undefined
+
+Documented return value.
+
+#### throws
+
+{ type?: string; description: string; }[] | undefined
+
+Documented thrown exceptions.
+
+#### examples
+
+{ code: string; language: string; }[] | undefined
+
+Code examples from TSDoc `@example` tags.
+
+#### children
+
+ReferenceEntry[] | undefined
+
+Nested child symbols (class methods, interface properties, enum members).
+
+#### location
+
+{ filePath: string; line: number; }
+
+Source file location.
+
+### ForgeLoggerOptions
+
+ForgeLoggerOptions
+
+Options for configuring the forge-ts logger at CLI startup.
+
+Members:
+
+#### quiet
+
+boolean | undefined
+
+Suppress all consola output (--quiet flag).
+
+#### json
+
+boolean | undefined
+
+JSON output mode (--json flag). LAFS handles JSON; suppress consola.
+
+#### verbose
+
+boolean | undefined
+
+Enable debug-level output (--verbose flag).
+
+### CommandOutput
+
+CommandOutput<T>
+
+Typed result from a forge-ts command.
+
+Members:
+
+#### operation
+
+string
+
+Name of the command that produced this output (e.g., "check", "build").
+
+#### success
+
+boolean
+
+Whether the command completed successfully.
+
+#### data
+
+T
+
+Strongly-typed command-specific result payload.
+
+#### errors
+
+ForgeCliError[] | undefined
+
+Structured errors produced by the command, if any.
+
+#### warnings
+
+ForgeCliWarning[] | undefined
+
+Structured warnings produced by the command, if any.
+
+#### duration
+
+number | undefined
+
+Wall-clock duration of the command in milliseconds.
+
+### ForgeCliError
+
+ForgeCliError
+
+Structured error for CLI commands.
+
+Members:
+
+#### code
+
+string
+
+Machine-readable error code (e.g., "E004").
+
+#### message
+
+string
+
+Human-readable error description.
+
+#### filePath
+
+string | undefined
+
+Absolute path to the source file containing the error, if applicable.
+
+#### line
+
+number | undefined
+
+1-based line number of the error, if applicable.
+
+#### column
+
+number | undefined
+
+0-based column number of the error, if applicable.
+
+### ForgeCliWarning
+
+ForgeCliWarning
+
+Structured warning for CLI commands.
+
+Members:
+
+#### code
+
+string
+
+Machine-readable warning code.
+
+#### message
+
+string
+
+Human-readable warning description.
+
+#### filePath
+
+string | undefined
+
+Absolute path to the source file containing the warning, if applicable.
+
+#### line
+
+number | undefined
+
+1-based line number of the warning, if applicable.
+
+#### column
+
+number | undefined
+
+0-based column number of the warning, if applicable.
+
+### OutputFlags
+
+OutputFlags
+
+Output format flags passed through from citty args.
+
+Members:
+
+#### json
+
+boolean | undefined
+
+Emit output as a LAFS JSON envelope instead of human-readable text.
+
+#### human
+
+boolean | undefined
+
+Emit output as formatted human-readable text.
+
+#### quiet
+
+boolean | undefined
+
+Suppress all output regardless of format.
+
+#### mvi
+
+string | undefined
+
+MVI verbosity level: "minimal", "standard", or "full".
+
+### AuditArgs
+
+AuditArgs
+
+Arguments for the `audit` command.
+
+Members:
+
+#### cwd
+
+string | undefined
+
+Project root directory (default: cwd).
+
+#### limit
+
+number | undefined
+
+Maximum number of events to display (default: 20).
+
+#### type
+
+AuditEventType | undefined
+
+Filter events by type.
+
+### AuditResult
+
+AuditResult
+
+Typed result for the `audit` command.
+
+Members:
+
+#### success
+
+boolean
+
+Whether the audit log was read successfully.
+
+#### count
+
+number
+
+Number of events returned.
+
+#### events
+
+AuditEvent[]
+
+The audit events, newest first.
+
+### DiscoveredGuide
+
+DiscoveredGuide
+
+A guide discovered from the symbol graph by code analysis heuristics.
+
+Members:
+
+#### slug
+
+string
+
+URL-safe slug (e.g. "configuration", "error-handling").
+
+#### title
+
+string
+
+Human-readable title (e.g. "Configuration Guide").
+
+#### description
+
+string
+
+Short description of the guide's content.
+
+#### source
+
+GuideSource
+
+Which heuristic discovered this guide.
+
+#### symbols
+
+ForgeSymbol[]
+
+The symbols that contribute content to this guide.
+
+### MdText
+
+MdText
+
+Inline leaf node: literal text.
+
+Members:
+
+#### type
+
+"text"
+
+#### value
+
+string
+
+### MdInlineCode
+
+MdInlineCode
+
+Inline leaf node: code span.
+
+Members:
+
+#### type
+
+"inlineCode"
+
+#### value
+
+string
+
+### MdStrong
+
+MdStrong
+
+Inline container: strong emphasis (bold).
+
+Members:
+
+#### type
+
+"strong"
+
+#### children
+
+MdPhrasing[]
+
+### MdEmphasis
+
+MdEmphasis
+
+Inline container: emphasis (italic).
+
+Members:
+
+#### type
+
+"emphasis"
+
+#### children
+
+MdPhrasing[]
+
+### MdLink
+
+MdLink
+
+Inline container: hyperlink.
+
+Members:
+
+#### type
+
+"link"
+
+#### url
+
+string
+
+#### children
+
+MdPhrasing[]
+
+### MdHeading
+
+MdHeading
+
+Block node: heading (depth 1-6).
+
+Members:
+
+#### type
+
+"heading"
+
+#### depth
+
+1 | 2 | 3 | 4 | 5 | 6
+
+#### children
+
+MdPhrasing[]
+
+### MdParagraph
+
+MdParagraph
+
+Block node: paragraph.
+
+Members:
+
+#### type
+
+"paragraph"
+
+#### children
+
+MdPhrasing[]
+
+### MdCode
+
+MdCode
+
+Block node: fenced code block.
+
+Members:
+
+#### type
+
+"code"
+
+#### lang
+
+string | null | undefined
+
+#### value
+
+string
+
+### MdBlockquote
+
+MdBlockquote
+
+Block node: blockquote.
+
+Members:
+
+#### type
+
+"blockquote"
+
+#### children
+
+MdBlock[]
+
+### MdHtml
+
+MdHtml
+
+Block node: raw HTML (including comments).
+
+Members:
+
+#### type
+
+"html"
+
+#### value
+
+string
+
+### MdThematicBreak
+
+MdThematicBreak
+
+Block node: horizontal rule.
+
+Members:
+
+#### type
+
+"thematicBreak"
+
+### MdListItem
+
+MdListItem
+
+List item container.
+
+Members:
+
+#### type
+
+"listItem"
+
+#### spread
+
+boolean | undefined
+
+#### children
+
+MdBlock[]
+
+### MdList
+
+MdList
+
+Block node: ordered or unordered list.
+
+Members:
+
+#### type
+
+"list"
+
+#### ordered
+
+boolean | undefined
+
+#### spread
+
+boolean | undefined
+
+#### children
+
+MdListItem[]
+
+### MdTableCell
+
+MdTableCell
+
+GFM table cell.
+
+Members:
+
+#### type
+
+"tableCell"
+
+#### children
+
+MdPhrasing[]
+
+### MdTableRow
+
+MdTableRow
+
+GFM table row.
+
+Members:
+
+#### type
+
+"tableRow"
+
+#### children
+
+MdTableCell[]
+
+### MdTable
+
+MdTable
+
+GFM table.
+
+Members:
+
+#### type
+
+"table"
+
+#### align
+
+("left" | "center" | "right" | null)[] | undefined
+
+#### children
+
+MdTableRow[]
+
+### MdRoot
+
+MdRoot
+
+Document root.
+
+Members:
+
+#### type
+
+"root"
+
+#### children
+
+MdBlock[]
+
+### FrontmatterResult
+
+FrontmatterResult
+
+Result of parsing frontmatter from markdown/MDX content.
+
+Members:
+
+#### body
+
+string
+
+The body content without the frontmatter block.
+
+#### data
+
+Record<string, unknown>
+
+The parsed frontmatter data as a key-value map.
+
+### DocPage
+
+DocPage
+
+A single generated documentation page.
+
+Members:
+
+#### path
+
+string
+
+Relative path from outDir (e.g., "packages/core/index.md")
+
+#### content
+
+string
+
+Page content (Markdown or MDX)
+
+#### frontmatter
+
+Record<string, string | number | boolean>
+
+Frontmatter fields
+
+#### stub
+
+boolean | undefined
+
+When true, this page is scaffolding intended for human/agent editing. Stub pages are created only on the first build and never overwritten, preserving manual edits across subsequent `forge-ts build` runs. Auto-generated pages (stub=false) are always regenerated from source.
+
+### SiteGeneratorOptions
+
+SiteGeneratorOptions
+
+Options controlling the doc site generator.
+
+Members:
+
+#### format
+
+"markdown" | "mdx"
+
+Output format
+
+#### ssgTarget
+
+"docusaurus" | "mintlify" | "nextra" | "vitepress" | undefined
+
+SSG target for frontmatter
+
+#### projectName
+
+string
+
+Project name
+
+#### projectDescription
+
+string | undefined
+
+Project description
+
+#### repositoryUrl
+
+string | undefined
+
+Repository URL (auto-detected from package.json).
+
+#### packageName
+
+string | undefined
+
+npm package name for install commands.
+
+### GeneratedFile
+
+GeneratedFile
+
+A file to write to disk during scaffolding or generation.
+
+Members:
+
+#### path
+
+string
+
+Relative path from the docs output directory.
+
+#### content
+
+string
+
+File content (string for text).
+
+#### stub
+
+boolean | undefined
+
+When true, this file is scaffolding intended for human/agent editing. Stub files are created only on the first build and never overwritten, preserving manual edits across subsequent `forge-ts build` runs. Callers should check this flag and skip writing if the file exists.
+
+### SSGStyleGuide
+
+SSGStyleGuide
+
+Style guide configuration for the SSG target.
+
+Members:
+
+#### pageExtension
+
+"mdx" | "md"
+
+File extension for doc pages.
+
+#### supportsMdx
+
+boolean
+
+Whether the target supports MDX components.
+
+#### requiresFrontmatter
+
+boolean
+
+Whether frontmatter is required on every page.
+
+#### maxHeadingDepth
+
+number
+
+Maximum recommended heading depth.
+
+#### defaultImports
+
+string[]
+
+Component imports to add at top of MDX files (if supportsMdx).
+
+#### codeBlockLanguage
+
+"typescript" | "ts" | "tsx"
+
+Code block language for TypeScript examples.
+
+### ScaffoldManifest
+
+ScaffoldManifest
+
+Scaffold manifest describing what `init docs` creates.
+
+Members:
+
+#### target
+
+SSGTarget
+
+The SSG target this manifest is for.
+
+#### files
+
+GeneratedFile[]
+
+Files that will be created.
+
+#### dependencies
+
+Record<string, string>
+
+npm dependencies to install.
+
+#### devDependencies
+
+Record<string, string>
+
+npm devDependencies to install.
+
+#### scripts
+
+Record<string, string>
+
+Scripts to add to package.json.
+
+#### instructions
+
+string[]
+
+Post-scaffold instructions for the user.
+
+### AdapterContext
+
+AdapterContext
+
+Context passed to adapter methods.
+
+Members:
+
+#### config
+
+ForgeConfig
+
+Resolved forge-ts configuration.
+
+#### projectName
+
+string
+
+Project name (from package.json or directory).
+
+#### projectDescription
+
+string | undefined
+
+Project description.
+
+#### pages
+
+DocPage[]
+
+The generated doc pages (from site-generator).
+
+#### symbols
+
+ForgeSymbol[]
+
+All symbols extracted from the project.
+
+#### outDir
+
+string
+
+Output directory for generated docs.
+
+### DevServerCommand
+
+DevServerCommand
+
+Command to start a local dev server for doc preview.
+
+Members:
+
+#### bin
+
+string
+
+The binary to execute (e.g., "npx", "node").
+
+#### args
+
+string[]
+
+Arguments to pass to the binary.
+
+#### cwd
+
+string
+
+Working directory to run from.
+
+#### label
+
+string
+
+Human-readable label for the command.
+
+#### url
+
+string
+
+The URL the dev server will be available at.
+
+### SSGAdapter
+
+SSGAdapter
+
+The central SSG adapter interface. Every doc platform provider implements this contract. One file per provider. No shared mutable state.
+
+Example:
+  import { getAdapter } from "@forge-ts/gen";
+  const adapter = getAdapter("mintlify");
+  const files = adapter.transformPages(pages, context);
+
+Members:
+
+#### target
+
+SSGTarget
+
+Unique target identifier.
+
+#### displayName
+
+string
+
+Human-readable display name.
+
+#### styleGuide
+
+SSGStyleGuide
+
+Style guide for this platform.
+
+#### scaffold()
+
+(context: AdapterContext) => ScaffoldManifest
+
+Generate the complete scaffold for a new doc site. Called by `forge-ts init docs --target <name>`. Returns all files, dependencies, and scripts needed.
+
+Parameters:
+- context: The adapter context for the current project.
+
+Returns: A `ScaffoldManifest` with files, deps, and instructions.
+
+Example:
+  import { getAdapter } from "@forge-ts/gen";
+  const adapter = getAdapter("mintlify");
+  const manifest = adapter.scaffold(context);
+  console.log(manifest.files.length);
+
+#### transformPages()
+
+(pages: DocPage[], context: AdapterContext) => GeneratedFile[]
+
+Transform generic DocPages into platform-specific pages. Adds correct frontmatter, component imports, file extensions. Called during `forge-ts build`.
+
+Parameters:
+- pages: The generic doc pages to transform.
+- context: The adapter context for the current project.
+
+Returns: An array of `GeneratedFile` objects ready to write.
+
+Example:
+  import { getAdapter } from "@forge-ts/gen";
+  const adapter = getAdapter("docusaurus");
+  const files = adapter.transformPages(pages, context);
+  console.log(files[0].path.endsWith(".mdx")); // true
+
+#### generateConfig()
+
+(context: AdapterContext) => GeneratedFile[]
+
+Generate platform-specific configuration files. e.g., mint.json, sidebars.js, _meta.json, .vitepress/config.ts Called during `forge-ts build`.
+
+Parameters:
+- context: The adapter context for the current project.
+
+Returns: An array of `GeneratedFile` objects ready to write.
+
+Example:
+  import { getAdapter } from "@forge-ts/gen";
+  const adapter = getAdapter("vitepress");
+  const configs = adapter.generateConfig(context);
+  console.log(configs[0].path); // ".vitepress/sidebar.json"
+
+#### getDevCommand()
+
+(outDir: string) => DevServerCommand
+
+Get the command to start the local dev server for this platform. Called by `forge-ts docs dev`.
+
+Parameters:
+- outDir: The docs output directory.
+
+Returns: The shell command and args to spawn, plus a display label.
+
+Example:
+  import { getAdapter } from "@forge-ts/gen";
+  const adapter = getAdapter("mintlify");
+  const cmd = adapter.getDevCommand("./docs");
+  // { bin: "npx", args: ["@mintlify/cli", "dev"], cwd: "./docs" }
+
+#### detectExisting()
+
+(outDir: string) => Promise<boolean>
+
+Check if a scaffold already exists in the output directory. Used for safety checks before init or target change.
+
+Parameters:
+- outDir: The output directory to inspect.
+
+Returns: `true` if a scaffold marker file already exists.
+
+Example:
+  import { getAdapter } from "@forge-ts/gen";
+  const adapter = getAdapter("mintlify");
+  const exists = await adapter.detectExisting("./docs");
+  if (exists) console.log("Scaffold already present");
+
+### MarkdownOptions
+
+MarkdownOptions
+
+Options controlling Markdown output.
+
+Members:
+
+#### mdx
+
+boolean | undefined
+
+Whether to use MDX syntax (default: Markdown).
+
+### ReadmeSyncOptions
+
+ReadmeSyncOptions
+
+Options controlling README sync behaviour.
+
+Members:
+
+#### badge
+
+boolean | undefined
+
+Include a "Documented with forge-ts" badge above the API table.
+
+#### includeExamples
+
+boolean | undefined
+
+Include first
+
+### SkillPackage
+
+SkillPackage
+
+A generated skill package following the agentskills.io directory structure. Contains SKILL.md plus optional references and scripts files.
+
+Members:
+
+#### directoryName
+
+string
+
+The skill directory name (lowercase, hyphens only, max 64 chars).
+
+#### files
+
+{ path: string; content: string; }[]
+
+Files to write inside the skill directory.
+
+### SSGConfigFile
+
+SSGConfigFile
+
+A single generated SSG configuration file.
+
+Members:
+
+#### path
+
+string
+
+Relative path from outDir (e.g., "mint.json", "_meta.json")
+
+#### content
+
+string
+
+File content
+
+### GenerateOptions
+
+GenerateOptions
+
+Options for the generation pipeline.
+
+Members:
+
+#### forceStubs
+
+boolean | undefined
+
+When true, overwrite stub pages even if they already exist on disk. Normally stub pages (concepts, guides, faq, contributing, changelog) are only created on the first build to preserve manual edits. Use this to reset stubs to their scaffolding state.
+
+Example:
+  await generate(config, { forceStubs: true });
+
+### BuildArgs
+
+BuildArgs
+
+Arguments for the `build` command.
+
+Members:
+
+#### cwd
+
+string | undefined
+
+Project root directory (default: cwd).
+
+#### skipApi
+
+boolean | undefined
+
+Skip API generation even if enabled in config.
+
+#### skipGen
+
+boolean | undefined
+
+Skip doc generation even if enabled in config.
+
+#### forceStubs
+
+boolean | undefined
+
+Overwrite stub pages even if they already exist on disk. Normally stub pages (concepts, guides, faq, contributing, changelog) are only created on the first build to preserve manual edits. Use this to reset stubs to their scaffolding state.
+
+#### mvi
+
+string | undefined
+
+MVI verbosity level for structured output.
+
+### BuildStep
+
+BuildStep
+
+A single step in the build pipeline.
+
+Members:
+
+#### name
+
+string
+
+Internal step name, e.g. "api" or "gen".
+
+#### status
+
+"success" | "skipped" | "failed"
+
+Outcome of this step.
+
+#### outputPath
+
+string | undefined
+
+Path to the primary output file produced by this step, if applicable.
+
+#### duration
+
+number | undefined
+
+Wall-clock duration of this step in milliseconds.
+
+#### errors
+
+ForgeCliError[] | undefined
+
+Errors produced by this step when status is "failed".
+
+### BuildResult
+
+BuildResult
+
+Typed result for the `build` command.
+
+Members:
+
+#### success
+
+boolean
+
+Whether the build succeeded.
+
+#### summary
+
+{ steps: number; succeeded: number; failed: number; duration: number; }
+
+Aggregate pipeline counts — always present.
+
+#### steps
+
+BuildStep[]
+
+Per-step details.
+
+#### generatedFiles
+
+string[] | undefined
+
+Files written during the build — present at standard and full MVI levels.
+
+### BypassCreateResult
+
+BypassCreateResult
+
+Typed result for the `bypass` command when creating a bypass.
+
+Members:
+
+#### success
+
+boolean
+
+Whether the bypass was successfully created.
+
+#### bypass
+
+BypassRecord
+
+The bypass record that was created.
+
+#### remainingBudget
+
+number
+
+Number of remaining bypass slots for today after creation.
+
+#### dailyBudget
+
+number
+
+The configured daily budget.
+
+### BypassStatusResult
+
+BypassStatusResult
+
+Typed result for the `bypass --status` command.
+
+Members:
+
+#### success
+
+boolean
+
+Always true for status queries.
+
+#### activeBypasses
+
+BypassRecord[]
+
+Active (non-expired) bypass records.
+
+#### remainingBudget
+
+number
+
+Number of remaining bypass slots for today.
+
+#### dailyBudget
+
+number
+
+The configured daily budget.
+
+#### expiredRemoved
+
+number
+
+Number of expired bypasses that were cleaned up.
+
+### DeprecatedUsage
+
+DeprecatedUsage
+
+A detected usage of a deprecated symbol.
+
+Members:
+
+#### deprecatedSymbol
+
+string
+
+The deprecated symbol being consumed.
+
+#### sourcePackage
+
+string
+
+The package that exports the deprecated symbol.
+
+#### consumingFile
+
+string
+
+The file importing the deprecated symbol.
+
+#### line
+
+number
+
+Line number of the import.
+
+#### deprecationMessage
+
+string
+
+The deprecation message.
+
+### FormatOptions
+
+FormatOptions
+
+Options that control how `formatResults` renders its output.
+
+Members:
+
+#### colors
+
+boolean
+
+Emit ANSI colour escape sequences when `true`.
+
+#### verbose
+
+boolean
+
+When `true`, include the symbol's type signature alongside each diagnostic so the reader has immediate context.
+
+### CheckArgs
+
+CheckArgs
+
+Arguments for the `check` command.
+
+Members:
+
+#### cwd
+
+string | undefined
+
+Project root directory (default: cwd).
+
+#### strict
+
+boolean | undefined
+
+Exit with non-zero code on warnings as well as errors.
+
+#### verbose
+
+boolean | undefined
+
+Include symbol signatures alongside diagnostics.
+
+#### mvi
+
+string | undefined
+
+MVI verbosity level for structured output.
+
+#### rule
+
+string | undefined
+
+Filter errors to a specific rule code (e.g., "E001").
+
+#### file
+
+string | undefined
+
+Filter errors to a specific file path (substring match).
+
+#### staged
+
+boolean | undefined
+
+Only check symbols from git-staged .ts/.tsx files.
+
+#### limit
+
+number | undefined
+
+Maximum number of file groups to return in byFile (default: 20).
+
+#### offset
+
+number | undefined
+
+Offset into the byFile list for pagination (default: 0).
+
+### CheckFileError
+
+CheckFileError
+
+A single error entry within a file group.
+
+Members:
+
+#### code
+
+string
+
+Machine-readable error code.
+
+#### symbol
+
+string
+
+Symbol name that needs fixing.
+
+#### kind
+
+string
+
+Symbol kind (function, class, interface, etc.).
+
+#### line
+
+number
+
+1-based line number of the error.
+
+#### message
+
+string
+
+Human-readable description.
+
+#### suggestedFix
+
+string | undefined
+
+Exact TSDoc block to add (present at full MVI or with --rule/--file filters).
+
+#### agentAction
+
+string | undefined
+
+Recommended agent action.
+
+### CheckFileWarning
+
+CheckFileWarning
+
+A single warning entry within a file group.
+
+Members:
+
+#### code
+
+string
+
+Machine-readable warning code.
+
+#### symbol
+
+string
+
+Symbol name that generated the warning.
+
+#### kind
+
+string
+
+Symbol kind (function, class, interface, etc.).
+
+#### line
+
+number
+
+1-based line number of the warning.
+
+#### message
+
+string
+
+Human-readable description.
+
+### CheckFileGroup
+
+CheckFileGroup
+
+Errors and warnings grouped by file.
+
+Members:
+
+#### file
+
+string
+
+Absolute path to the source file.
+
+#### errors
+
+CheckFileError[]
+
+Errors in this file.
+
+#### warnings
+
+CheckFileWarning[]
+
+Warnings in this file.
+
+### CheckRuleCount
+
+CheckRuleCount
+
+Error breakdown by rule code, sorted by count descending.
+
+Members:
+
+#### code
+
+string
+
+Machine-readable rule code (e.g., "E001").
+
+#### rule
+
+string
+
+Human-readable rule name (e.g., "require-summary").
+
+#### count
+
+number
+
+Number of violations.
+
+#### files
+
+number
+
+Number of unique files affected by this rule.
+
+### CheckTriage
+
+CheckTriage
+
+Triage data for prioritizing fixes. Always present when the check has errors, bounded in size (~9 rules + top 20 files).
+
+Members:
+
+#### byRule
+
+CheckRuleCount[]
+
+Error counts by rule, sorted descending.
+
+#### topFiles
+
+{ file: string; errors: number; warnings: number; }[]
+
+Top files by error count (max 20).
+
+#### fixOrder
+
+{ code: string; rule: string; count: number; files: number; }[]
+
+Suggested fix order: rules sorted by fewest files affected first (quick wins).
+
+### CheckPage
+
+CheckPage
+
+Pagination metadata for byFile results.
+
+Members:
+
+#### offset
+
+number
+
+Current offset.
+
+#### limit
+
+number
+
+Page size.
+
+#### hasMore
+
+boolean
+
+Whether more results exist beyond this page.
+
+#### total
+
+number
+
+Total number of file groups (after filters).
+
+### CheckResult
+
+CheckResult
+
+Typed result for the `check` command.
+
+Members:
+
+#### success
+
+boolean
+
+Whether the check passed without errors.
+
+#### summary
+
+{ errors: number; warnings: number; files: number; symbols: number; duration: number; }
+
+Aggregate counts — always present regardless of MVI level.
+
+#### triage
+
+CheckTriage | undefined
+
+Triage data for prioritizing fixes — present when errors  0 (except minimal).
+
+#### byFile
+
+CheckFileGroup[] | undefined
+
+Per-file breakdown — present at standard and full MVI levels, paginated.
+
+#### page
+
+CheckPage | undefined
+
+Pagination metadata when byFile is paginated.
+
+#### filters
+
+{ rule?: string; file?: string; } | undefined
+
+Active filters applied to this result.
+
+#### nextCommand
+
+string | undefined
+
+CLI command hint for the agent to run next.
+
+### PkgJson
+
+PkgJson
+
+Parsed package.json with formatting metadata for lossless round-tripping.
+
+Members:
+
+#### path
+
+string
+
+Absolute path to the file.
+
+#### raw
+
+string
+
+Raw file content as read from disk.
+
+#### obj
+
+Record<string, unknown>
+
+Parsed JSON object.
+
+#### indent
+
+string
+
+Detected indent string (tabs or spaces).
+
+#### trailingNewline
+
+boolean
+
+Whether the original file ended with a newline.
+
+### InitHooksResult
+
+InitHooksResult
+
+Result of the `init hooks` command.
+
+Example:
+  import { runInitHooks } from "@forge-ts/cli/commands/init-hooks";
+  const output = await runInitHooks({ cwd: process.cwd() });
+  console.log(output.data.hookManager); // "husky" | "lefthook" | "none"
+
+Members:
+
+#### success
+
+boolean
+
+Whether the hook scaffolding succeeded.
+
+#### hookManager
+
+HookManager
+
+The detected or chosen hook manager.
+
+#### summary
+
+{ filesWritten: number; filesSkipped: number; }
+
+Summary of what was created.
+
+#### files
+
+string[]
+
+Relative paths of all files written.
+
+#### instructions
+
+string[]
+
+Post-scaffold instructions for the user.
+
+### InitHooksArgs
+
+InitHooksArgs
+
+Arguments for the `init hooks` command.
+
+Members:
+
+#### cwd
+
+string | undefined
+
+Project root directory (default: cwd).
+
+#### force
+
+boolean | undefined
+
+Force overwrite existing hook files.
+
+#### mvi
+
+string | undefined
+
+MVI verbosity level for structured output.
+
+### InitProjectEnvironment
+
+InitProjectEnvironment
+
+Detected project environment from Step 1 of the init flow.
+
+Members:
+
+#### packageJsonExists
+
+boolean
+
+Whether package.json exists.
+
+#### tsconfigExists
+
+boolean
+
+Whether tsconfig.json exists.
+
+#### biomeDetected
+
+boolean
+
+Whether biome.json or biome.jsonc exists.
+
+#### typescriptVersion
+
+string | null
+
+TypeScript version from dependencies, or null if not found.
+
+#### hookManager
+
+"husky" | "lefthook" | "none"
+
+Detected hook manager.
+
+#### monorepo
+
+boolean
+
+Whether the project is a monorepo.
+
+#### monorepoType
+
+"pnpm" | "npm/yarn" | null
+
+Monorepo type if detected.
+
+### InitProjectResult
+
+InitProjectResult
+
+Result of the `init` (project setup) command.
+
+Example:
+  import { runInitProject } from "@forge-ts/cli/commands/init-project";
+  const output = await runInitProject({ cwd: process.cwd() });
+  console.log(output.data.created); // list of created files
+
+Members:
+
+#### success
+
+boolean
+
+Whether the init succeeded.
+
+#### created
+
+string[]
+
+Files that were created.
+
+#### skipped
+
+string[]
+
+Files that already existed and were skipped.
+
+#### warnings
+
+string[]
+
+Warning messages collected during init.
+
+#### environment
+
+InitProjectEnvironment
+
+Detected project environment.
+
+#### nextSteps
+
+string[]
+
+Next steps for the user.
+
+#### scriptsAdded
+
+string[]
+
+Scripts that were added to package.json (empty if none were added).
+
+### InitProjectArgs
+
+InitProjectArgs
+
+Arguments for the `init` (project setup) command.
+
+Members:
+
+#### cwd
+
+string | undefined
+
+Project root directory (default: cwd).
+
+#### mvi
+
+string | undefined
+
+MVI verbosity level for structured output.
+
+### DoctorCheckResult
+
+DoctorCheckResult
+
+Result of a single doctor check.
+
+Members:
+
+#### name
+
+string
+
+Name of the check.
+
+#### status
+
+DoctorCheckStatus
+
+Status of the check.
+
+#### message
+
+string
+
+Human-readable message.
+
+#### fixable
+
+boolean
+
+Whether this issue can be auto-fixed with --fix.
+
+### DoctorResult
+
+DoctorResult
+
+Result of the `doctor` command.
+
+Example:
+  import { runDoctor } from "@forge-ts/cli/commands/doctor";
+  const output = await runDoctor({ cwd: process.cwd() });
+  console.log(output.data.summary.passed); // number of passed checks
+
+Members:
+
+#### success
+
+boolean
+
+Whether all checks passed without errors.
+
+#### checks
+
+DoctorCheckResult[]
+
+Individual check results.
+
+#### summary
+
+{ passed: number; warnings: number; errors: number; info: number; }
+
+Summary counts.
+
+#### fixed
+
+string[]
+
+Files that were fixed (only populated when --fix is used).
+
+### DoctorArgs
+
+DoctorArgs
+
+Arguments for the `doctor` command.
+
+Members:
+
+#### cwd
+
+string | undefined
+
+Project root directory (default: cwd).
+
+#### fix
+
+boolean | undefined
+
+Auto-fix resolvable issues.
+
+#### mvi
+
+string | undefined
+
+MVI verbosity level for structured output.
+
+### InitDocsResult
+
+InitDocsResult
+
+Result of the `init docs` command.
+
+Example:
+  import { runInitDocs } from "@forge-ts/cli/commands/init-docs";
+  const output = await runInitDocs({ target: "mintlify" });
+  console.log(output.data.summary.filesCreated); // number of files written
+
+Members:
+
+#### success
+
+boolean
+
+Whether the scaffold succeeded.
+
+#### target
+
+SSGTarget
+
+The SSG target that was scaffolded.
+
+#### summary
+
+{ filesCreated: number; dependencies: number; scripts: number; }
+
+Summary of what was created.
+
+#### files
+
+string[]
+
+Relative paths of all files created.
+
+#### instructions
+
+string[]
+
+Post-scaffold instructions for the user.
+
+### InitDocsArgs
+
+InitDocsArgs
+
+Arguments for the `init docs` command.
+
+Members:
+
+#### target
+
+string | undefined
+
+SSG target to scaffold. Defaults to `DEFAULT_TARGET`.
+
+#### cwd
+
+string | undefined
+
+Project root directory (default: cwd).
+
+#### outDir
+
+string | undefined
+
+Output directory for the doc site (default: outDir from config or ./docs).
+
+#### force
+
+boolean | undefined
+
+Overwrite an existing scaffold without prompting.
+
+#### mvi
+
+string | undefined
+
+MVI verbosity level for structured output.
+
+### LockResult
+
+LockResult
+
+Typed result for the `lock` command.
+
+Members:
+
+#### success
+
+boolean
+
+Whether the lock was successfully created.
+
+#### lockFile
+
+string
+
+Path to the lock file that was written.
+
+#### lockedAt
+
+string
+
+ISO-8601 timestamp when the lock was created.
+
+#### lockedBy
+
+string
+
+Identifier of who created the lock.
+
+#### locked
+
+{ rules: number; tsconfig: boolean; biome: boolean; }
+
+Summary of what was locked.
+
+#### overwrote
+
+boolean
+
+Whether a previous lock file was overwritten.
+
+### PrepublishResult
+
+PrepublishResult
+
+Typed result for the `prepublish` command.
+
+Example:
+  import { runPrepublish } from "@forge-ts/cli/commands/prepublish";
+  const output = await runPrepublish({ cwd: process.cwd() });
+  console.log(output.data.check.success); // true if check passed
+  console.log(output.data.build?.success); // true if build passed
+
+Members:
+
+#### success
+
+boolean
+
+Whether both check and build passed.
+
+#### summary
+
+{ steps: number; passed: number; failed: number; duration: number; }
+
+Summary of the prepublish pipeline.
+
+#### check
+
+{ success: boolean; errors: number; warnings: number; duration: number; }
+
+Result of the check step.
+
+#### build
+
+{ success: boolean; steps: number; succeeded: number; failed: number; duration: number; } | undefined
+
+Result of the build step (absent if check failed and build was skipped).
+
+#### skippedReason
+
+string | undefined
+
+If check failed, the reason build was skipped.
+
+### PrepublishArgs
+
+PrepublishArgs
+
+Arguments for the `prepublish` command.
+
+Members:
+
+#### cwd
+
+string | undefined
+
+Project root directory (default: cwd).
+
+#### strict
+
+boolean | undefined
+
+Treat warnings as errors during the check step.
+
+#### mvi
+
+string | undefined
+
+MVI verbosity level for structured output.
+
+### ExtractedExample
+
+ExtractedExample
+
+A single extracted `@example` block ready for test generation.
+
+Members:
+
+#### symbolName
+
+string
+
+The symbol this example belongs to.
+
+#### filePath
+
+string
+
+Absolute path to the source file.
+
+#### line
+
+number
+
+1-based line number of the `@example` tag.
+
+#### code
+
+string
+
+The raw code inside the fenced block.
+
+#### language
+
+string
+
+The language identifier (e.g. `"typescript"`).
+
+#### index
+
+number
+
+Sequential index among examples for this symbol.
+
+### GeneratorOptions
+
+GeneratorOptions
+
+Options for virtual test file generation.
+
+Members:
+
+#### cacheDir
+
+string
+
+Directory where virtual test files will be written.
+
+### VirtualTestFile
+
+VirtualTestFile
+
+A generated virtual test file.
+
+Members:
+
+#### path
+
+string
+
+Absolute path where the file will be written.
+
+#### content
+
+string
+
+File contents (valid TypeScript).
+
+### RunResult
+
+RunResult
+
+Result of running the generated test files.
+
+Members:
+
+#### success
+
+boolean
+
+Whether all tests passed.
+
+#### passed
+
+number
+
+Number of tests that passed.
+
+#### failed
+
+number
+
+Number of tests that failed.
+
+#### output
+
+string
+
+Combined stdout + stderr output from the test runner.
+
+#### tests
+
+TestCaseResult[]
+
+Individual test results with name and status.
+
+### TestCaseResult
+
+TestCaseResult
+
+The result of a single test case.
+
+Members:
+
+#### name
+
+string
+
+The full test name as reported by the runner.
+
+#### passed
+
+boolean
+
+Whether this test passed.
+
+#### sourceFile
+
+string | undefined
+
+The source file this test was generated from, if determinable.
+
+### TestArgs
+
+TestArgs
+
+Arguments for the `test` command.
+
+Members:
+
+#### cwd
+
+string | undefined
+
+Project root directory (default: cwd).
+
+#### mvi
+
+string | undefined
+
+MVI verbosity level for structured output.
+
+### TestFailure
+
+TestFailure
+
+A single test failure entry, included at standard and full MVI levels.
+
+Members:
+
+#### symbol
+
+string
+
+Symbol name where the doctest failed.
+
+#### file
+
+string
+
+Absolute path to the source file.
+
+#### line
+
+number
+
+1-based line number of the failing example.
+
+#### message
+
+string
+
+Human-readable failure message.
+
+### TestResult
+
+TestResult
+
+Typed result for the `test` command.
+
+Members:
+
+#### success
+
+boolean
+
+Whether all doctests passed.
+
+#### summary
+
+{ passed: number; failed: number; total: number; duration: number; }
+
+Aggregate counts — always present regardless of MVI level.
+
+#### failures
+
+TestFailure[] | undefined
+
+Per-failure details — present at standard and full MVI levels.
+
+### UnlockResult
+
+UnlockResult
+
+Typed result for the `unlock` command.
+
+Members:
+
+#### success
+
+boolean
+
+Whether the unlock was successful.
+
+#### reason
+
+string
+
+The reason provided for unlocking.
+
+#### previousLockedBy
+
+string | null
+
+Who originally locked the config, if known.
+
+#### previousLockedAt
+
+string | null
+
+When the config was originally locked, if known.
+
+## Types
+
+### AuditEventType
+
+AuditEventType
+
+Discriminated event types recorded in the audit trail.
+
+### RuleSeverity
+
+RuleSeverity
+
+Severity level for an individual enforcement rule. - `"error"` — violation fails the build. - `"warn"`  — violation is reported but does not fail the build. - `"off"`   — rule is disabled entirely.
+
+### GuideSource
+
+GuideSource
+
+The source heuristic that discovered a guide.
+
+### MdPhrasing
+
+MdPhrasing
+
+Union of all inline (phrasing) content types.
+
+### MdBlock
+
+MdBlock
+
+Union of all block content types.
+
+### SSGTarget
+
+SSGTarget
+
+Supported SSG target identifiers.
+
+### HookManager
+
+HookManager
+
+Detected hook manager in the project.
+
+### DoctorCheckStatus
+
+DoctorCheckStatus
+
+Status of a single doctor check.
+
+## Enums
+
+### Visibility
+
+Visibility
+
+Visibility levels for exported symbols. Derived from TSDoc release tags (`@public`, `@beta`, `@internal`).
+
+Members:
+
+#### Public
+
+Visibility.Public
+
+#### Beta
+
+Visibility.Beta
+
+#### Internal
+
+Visibility.Internal
+
+#### Private
+
+Visibility.Private
+
+## Variables
+
+### RULE_GROUP_MAP
+
+Partial<Record<keyof EnforceRules, "core" | "extended" | "discretionary">>
+
+Maps each rule key in `EnforceRules` to its TSDoc standardisation group.  - **core**: Tags defined in the TSDoc core standard (`@param`, `@returns`, etc.). - **extended**: Tags from the extended standard (`@example`, `@defaultValue`, etc.). - **discretionary**: Release-tag family (`@public`, `@beta`, `@internal`). - Rules not listed here are **guard rules** and are not affected by group settings.
+
+### forgeLogger
+
+import("/mnt/projects/forge-ts/node_modules/.pnpm/consola@3.4.2/node_modules/consola/dist/core").ConsolaInstance
+
+Pre-configured consola instance branded for forge-ts.
+
+Example:
+  import { forgeLogger } from "./forge-logger.js";
+  forgeLogger.info("Checking 42 files...");
+  forgeLogger.success("All checks passed");
+  forgeLogger.warn("Deprecated import detected");
+  forgeLogger.error("Build failed");
+  forgeLogger.debug("Resolved config from forge-ts.config.ts");
+
+### auditCommand
+
+import("/mnt/projects/forge-ts/node_modules/.pnpm/citty@0.2.1/node_modules/citty/dist/index").CommandDef<{ readonly cwd: { readonly type: "string"; readonly description: "Project root directory"; }; readonly limit: { readonly type: "string"; readonly description: "Maximum events to display (default: 20)"; }; readonly type: { readonly type: "string"; readonly description: "Filter by event type (config.lock, config.unlock, config.drift, bypass.create, bypass.expire, rule.change)"; }; readonly json: { readonly type: "boolean"; readonly description: "Output as LAFS JSON envelope (agent-friendly)"; readonly default: false; }; readonly human: { readonly type: "boolean"; readonly description: "Output as formatted text (default for TTY)"; readonly default: false; }; readonly quiet: { readonly type: "boolean"; readonly description: "Suppress non-essential output"; readonly default: false; }; }>
+
+Citty command definition for `forge-ts audit`.
+
+### md
+
+{ text: (value: string) => MdText; inlineCode: (value: string) => MdInlineCode; strong: (...children: MdPhrasing[]) => MdStrong; emphasis: (...children: MdPhrasing[]) => MdEmphasis; link: (url: string, ...children: MdPhrasing[]) => MdLink; heading: (depth: 1 | 2 | 3 | 4 | 5 | 6, ...children: MdPhrasing[]) => MdHeading; paragraph: (...children: MdPhrasing[]) => MdParagraph; code: (lang: string, value: string) => MdCode; blockquote: (...children: MdBlock[]) => MdBlockquote; html: (value: string) => MdHtml; thematicBreak: () => MdThematicBreak; listItem: (...children: MdBlock[]) => MdListItem; list: (items: MdListItem[], ordered?: boolean) => MdList; tableCell: (...children: MdPhrasing[]) => MdTableCell; tableRow: (...cells: MdTableCell[]) => MdTableRow; table: (align: ("left" | "center" | "right" | null)[] | null, ...rows: MdTableRow[]) => MdTable; root: (...children: MdBlock[]) => MdRoot; }
+
+Concise factory functions for building mdast nodes.  Usage:
+
+### DEFAULT_TARGET
+
+SSGTarget
+
+The default SSG target when none is specified.
+
+### mintlifyAdapter
+
+SSGAdapter
+
+Mintlify SSG adapter. Implements the `SSGAdapter` contract for the Mintlify platform.
+
+Example:
+  import { getAdapter } from "@forge-ts/gen";
+  const adapter = getAdapter("mintlify");
+  const configs = adapter.generateConfig(context);
+  console.log(configs[0].path); // "docs.json"
+
+### docusaurusAdapter
+
+SSGAdapter
+
+Docusaurus SSG adapter. Implements the `SSGAdapter` contract for the Docusaurus platform.
+
+Example:
+  import { getAdapter } from "@forge-ts/gen";
+  const adapter = getAdapter("docusaurus");
+  const configs = adapter.generateConfig(context);
+  console.log(configs[0].path); // "sidebars.ts"
+
+### nextraAdapter
+
+SSGAdapter
+
+Nextra SSG adapter (v4, App Router). Implements the `SSGAdapter` contract for the Nextra platform.
+
+Example:
+  import { getAdapter } from "@forge-ts/gen";
+  const adapter = getAdapter("nextra");
+  const configs = adapter.generateConfig(context);
+  console.log(configs[0].path); // "content/_meta.js"
+
+### vitepressAdapter
+
+SSGAdapter
+
+VitePress SSG adapter. Implements the `SSGAdapter` contract for the VitePress platform.
+
+Example:
+  import { getAdapter } from "@forge-ts/gen";
+  const adapter = getAdapter("vitepress");
+  const configs = adapter.generateConfig(context);
+  console.log(configs[0].path); // ".vitepress/config.mts"
+
+### buildCommand
+
+import("/mnt/projects/forge-ts/node_modules/.pnpm/citty@0.2.1/node_modules/citty/dist/index").CommandDef<{ readonly cwd: { readonly type: "string"; readonly description: "Project root directory"; }; readonly "skip-api": { readonly type: "boolean"; readonly description: "Skip OpenAPI generation"; readonly default: false; }; readonly "skip-gen": { readonly type: "boolean"; readonly description: "Skip doc generation"; readonly default: false; }; readonly "force-stubs": { readonly type: "boolean"; readonly description: "Overwrite stub pages even if they exist (reset to scaffolding)"; readonly default: false; }; readonly json: { readonly type: "boolean"; readonly description: "Output as LAFS JSON envelope (agent-friendly)"; readonly default: false; }; readonly human: { readonly type: "boolean"; readonly description: "Output as formatted text (default for TTY)"; readonly default: false; }; readonly quiet: { readonly type: "boolean"; readonly description: "Suppress non-essential output"; readonly default: false; }; readonly mvi: { readonly type: "string"; readonly description: "MVI verbosity level: minimal, standard, full"; }; }>
+
+Citty command definition for `forge-ts build`.
+
+### bypassCommand
+
+import("/mnt/projects/forge-ts/node_modules/.pnpm/citty@0.2.1/node_modules/citty/dist/index").CommandDef<{ readonly cwd: { readonly type: "string"; readonly description: "Project root directory"; }; readonly reason: { readonly type: "string"; readonly description: "Mandatory justification for bypassing rules"; }; readonly rule: { readonly type: "string"; readonly description: "Specific rule code to bypass (e.g., \"E009\"). Defaults to \"all\""; }; readonly status: { readonly type: "boolean"; readonly description: "Show active bypasses and remaining budget"; readonly default: false; }; readonly json: { readonly type: "boolean"; readonly description: "Output as LAFS JSON envelope (agent-friendly)"; readonly default: false; }; readonly human: { readonly type: "boolean"; readonly description: "Output as formatted text (default for TTY)"; readonly default: false; }; readonly quiet: { readonly type: "boolean"; readonly description: "Suppress non-essential output"; readonly default: false; }; }>
+
+Citty command definition for `forge-ts bypass`.
+
+### checkCommand
+
+import("/mnt/projects/forge-ts/node_modules/.pnpm/citty@0.2.1/node_modules/citty/dist/index").CommandDef<{ readonly cwd: { readonly type: "string"; readonly description: "Project root directory"; }; readonly strict: { readonly type: "boolean"; readonly description: "Treat warnings as errors"; readonly default: false; }; readonly verbose: { readonly type: "boolean"; readonly description: "Show detailed output"; readonly default: false; }; readonly rule: { readonly type: "string"; readonly description: "Filter by rule code (e.g., E001, W004)"; }; readonly file: { readonly type: "string"; readonly description: "Filter by file path (substring match)"; }; readonly staged: { readonly type: "boolean"; readonly description: "Only check symbols from git-staged .ts/.tsx files"; readonly default: false; }; readonly limit: { readonly type: "string"; readonly description: "Max file groups in output (default: 20)"; }; readonly offset: { readonly type: "string"; readonly description: "Skip N file groups for pagination (default: 0)"; }; readonly json: { readonly type: "boolean"; readonly description: "Output as LAFS JSON envelope (agent-friendly)"; readonly default: false; }; readonly human: { readonly type: "boolean"; readonly description: "Output as formatted text (default for TTY)"; readonly default: false; }; readonly quiet: { readonly type: "boolean"; readonly description: "Suppress non-essential output"; readonly default: false; }; readonly mvi: { readonly type: "string"; readonly description: "MVI verbosity level: minimal, standard, full"; }; }>
+
+Citty command definition for `forge-ts check`.
+
+### docsDevCommand
+
+import("/mnt/projects/forge-ts/node_modules/.pnpm/citty@0.2.1/node_modules/citty/dist/index").CommandDef<{ readonly cwd: { readonly type: "string"; readonly description: "Project root directory"; }; readonly target: { readonly type: "string"; readonly description: "SSG target override (reads from config by default)"; }; readonly port: { readonly type: "string"; readonly description: "Port for the dev server"; }; }>
+
+Citty command definition for `forge-ts docs dev`.
+
+Example:
+  import { docsDevCommand } from "@forge-ts/cli";
+
+### initHooksCommand
+
+import("/mnt/projects/forge-ts/node_modules/.pnpm/citty@0.2.1/node_modules/citty/dist/index").CommandDef<{ readonly cwd: { readonly type: "string"; readonly description: "Project root directory"; }; readonly force: { readonly type: "boolean"; readonly description: "Overwrite existing hook files"; readonly default: false; }; readonly json: { readonly type: "boolean"; readonly description: "Output as LAFS JSON envelope"; readonly default: false; }; readonly human: { readonly type: "boolean"; readonly description: "Output as formatted text"; readonly default: false; }; readonly quiet: { readonly type: "boolean"; readonly description: "Suppress non-essential output"; readonly default: false; }; readonly mvi: { readonly type: "string"; readonly description: "MVI verbosity level: minimal, standard, full"; }; }>
+
+Citty command definition for `forge-ts init hooks`.  Scaffolds git hook integration for the project by detecting the hook manager (husky or lefthook) and generating pre-commit hooks.
+
+Example:
+  import { initHooksCommand } from "@forge-ts/cli/commands/init-hooks";
+  // Registered as a subcommand of `forge-ts init`
+
+### initProjectCommand
+
+import("/mnt/projects/forge-ts/node_modules/.pnpm/citty@0.2.1/node_modules/citty/dist/index").CommandDef<{ readonly cwd: { readonly type: "string"; readonly description: "Project root directory"; }; readonly json: { readonly type: "boolean"; readonly description: "Output as LAFS JSON envelope"; readonly default: false; }; readonly human: { readonly type: "boolean"; readonly description: "Output as formatted text"; readonly default: false; }; readonly quiet: { readonly type: "boolean"; readonly description: "Suppress non-essential output"; readonly default: false; }; readonly mvi: { readonly type: "string"; readonly description: "MVI verbosity level: minimal, standard, full"; }; }>
+
+Citty command definition for `forge-ts init` (bare — full project setup).  Detects the project environment, writes default configuration files, validates tsconfig/package.json, and reports a summary.
+
+Example:
+  import { initProjectCommand } from "@forge-ts/cli/commands/init-project";
+  // Registered as the default handler for `forge-ts init`
+
+### doctorCommand
+
+import("/mnt/projects/forge-ts/node_modules/.pnpm/citty@0.2.1/node_modules/citty/dist/index").CommandDef<{ readonly cwd: { readonly type: "string"; readonly description: "Project root directory"; }; readonly fix: { readonly type: "boolean"; readonly description: "Auto-fix resolvable issues"; readonly default: false; }; readonly json: { readonly type: "boolean"; readonly description: "Output as LAFS JSON envelope"; readonly default: false; }; readonly human: { readonly type: "boolean"; readonly description: "Output as formatted text"; readonly default: false; }; readonly quiet: { readonly type: "boolean"; readonly description: "Suppress non-essential output"; readonly default: false; }; readonly mvi: { readonly type: "string"; readonly description: "MVI verbosity level: minimal, standard, full"; }; }>
+
+Citty command definition for `forge-ts doctor`.  Performs project integrity checks and optionally auto-fixes resolvable issues with `--fix`.
+
+Example:
+  import { doctorCommand } from "@forge-ts/cli/commands/doctor";
+  // Registered as a top-level subcommand of `forge-ts`
+
+### initDocsCommand
+
+import("/mnt/projects/forge-ts/node_modules/.pnpm/citty@0.2.1/node_modules/citty/dist/index").CommandDef<{ readonly target: { readonly type: "string"; readonly description: `SSG target: ${string} (default: docusaurus)` | `SSG target: ${string} (default: mintlify)` | `SSG target: ${string} (default: nextra)` | `SSG target: ${string} (default: vitepress)`; }; readonly cwd: { readonly type: "string"; readonly description: "Project root directory"; }; readonly "out-dir": { readonly type: "string"; readonly description: "Output directory for doc site (default: ./docs)"; }; readonly force: { readonly type: "boolean"; readonly description: "Overwrite existing scaffold"; readonly default: false; }; readonly json: { readonly type: "boolean"; readonly description: "Output as LAFS JSON envelope"; readonly default: false; }; readonly human: { readonly type: "boolean"; readonly description: "Output as formatted text"; readonly default: false; }; readonly quiet: { readonly type: "boolean"; readonly description: "Suppress non-essential output"; readonly default: false; }; readonly mvi: { readonly type: "string"; readonly description: "MVI verbosity level: minimal, standard, full"; }; }>
+
+Citty command definition for `forge-ts init docs`.  Scaffolds a complete documentation site for the target SSG platform. Use `--json` for LAFS JSON envelope output (agent/CI-friendly).
+
+Example:
+  import { initDocsCommand } from "@forge-ts/cli/commands/init-docs";
+  // Registered automatically as a subcommand of `forge-ts init`
+
+### initCommand
+
+import("/mnt/projects/forge-ts/node_modules/.pnpm/citty@0.2.1/node_modules/citty/dist/index").CommandDef<import("/mnt/projects/forge-ts/node_modules/.pnpm/citty@0.2.1/node_modules/citty/dist/index").ArgsDef>
+
+Citty command definition for `forge-ts init`.  Exposes subcommands for scaffolding project artefacts.
+
+Example:
+  import { initCommand } from "@forge-ts/cli/commands/init-docs";
+  // Registered automatically as a subcommand of `forge-ts`
+
+### lockCommand
+
+import("/mnt/projects/forge-ts/node_modules/.pnpm/citty@0.2.1/node_modules/citty/dist/index").CommandDef<{ readonly cwd: { readonly type: "string"; readonly description: "Project root directory"; }; readonly json: { readonly type: "boolean"; readonly description: "Output as LAFS JSON envelope (agent-friendly)"; readonly default: false; }; readonly human: { readonly type: "boolean"; readonly description: "Output as formatted text (default for TTY)"; readonly default: false; }; readonly quiet: { readonly type: "boolean"; readonly description: "Suppress non-essential output"; readonly default: false; }; }>
+
+Citty command definition for `forge-ts lock`.
+
+### prepublishCommand
+
+import("/mnt/projects/forge-ts/node_modules/.pnpm/citty@0.2.1/node_modules/citty/dist/index").CommandDef<{ readonly cwd: { readonly type: "string"; readonly description: "Project root directory"; }; readonly strict: { readonly type: "boolean"; readonly description: "Treat warnings as errors during check"; readonly default: false; }; readonly json: { readonly type: "boolean"; readonly description: "Output as LAFS JSON envelope (agent-friendly)"; readonly default: false; }; readonly human: { readonly type: "boolean"; readonly description: "Output as formatted text (default for TTY)"; readonly default: false; }; readonly quiet: { readonly type: "boolean"; readonly description: "Suppress non-essential output"; readonly default: false; }; readonly mvi: { readonly type: "string"; readonly description: "MVI verbosity level: minimal, standard, full"; }; }>
+
+Citty command definition for `forge-ts prepublish`.  Runs check then build as a publish safety gate. Add to package.json as: `"prepublishOnly": "forge-ts prepublish"`
+
+Example:
+  import { prepublishCommand } from "@forge-ts/cli/commands/prepublish";
+  // Registered as `forge-ts prepublish`
+
+### testCommand
+
+import("/mnt/projects/forge-ts/node_modules/.pnpm/citty@0.2.1/node_modules/citty/dist/index").CommandDef<{ readonly cwd: { readonly type: "string"; readonly description: "Project root directory"; }; readonly json: { readonly type: "boolean"; readonly description: "Output as LAFS JSON envelope (agent-friendly)"; readonly default: false; }; readonly human: { readonly type: "boolean"; readonly description: "Output as formatted text (default for TTY)"; readonly default: false; }; readonly quiet: { readonly type: "boolean"; readonly description: "Suppress non-essential output"; readonly default: false; }; readonly mvi: { readonly type: "string"; readonly description: "MVI verbosity level: minimal, standard, full"; }; }>
+
+Citty command definition for `forge-ts test`.
+
+### unlockCommand
+
+import("/mnt/projects/forge-ts/node_modules/.pnpm/citty@0.2.1/node_modules/citty/dist/index").CommandDef<{ readonly cwd: { readonly type: "string"; readonly description: "Project root directory"; }; readonly reason: { readonly type: "string"; readonly description: "Mandatory reason for unlocking (audit trail)"; readonly required: true; }; readonly json: { readonly type: "boolean"; readonly description: "Output as LAFS JSON envelope (agent-friendly)"; readonly default: false; }; readonly human: { readonly type: "boolean"; readonly description: "Output as formatted text (default for TTY)"; readonly default: false; }; readonly quiet: { readonly type: "boolean"; readonly description: "Suppress non-essential output"; readonly default: false; }; }>
+
+Citty command definition for `forge-ts unlock`.

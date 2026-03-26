@@ -1,0 +1,66 @@
+---
+title: Getting Started
+description: Key entry-point functions to get started with the library.
+---
+
+Key entry-point functions to get started with the library.
+
+> TODO: Add your own content to this guide. The sections below are auto-generated from code.
+
+{/* FORGE:AUTO-START guide-getting-started */}
+
+## Key Functions
+
+### generateApi(config)
+
+Runs the API generation pipeline: walk → extract → generate → write.
+
+```typescript
+(config: ForgeConfig) => Promise<ForgeResult>
+```
+
+**Example**
+
+```typescript
+import { generateApi } from "@forge-ts/api";
+const result = await generateApi(config);
+console.log(result.success); // true if spec was written successfully
+```
+
+### generate(config, options)
+
+Runs the full generation pipeline: walk → render → write.  Auto-generated pages are always regenerated from source code. Stub pages (scaffolding for human/agent editing) are only created if they don't already exist, preserving manual edits across builds. Pass `{ forceStubs: true }` to overwrite stubs.
+
+```typescript
+(config: ForgeConfig, options?: GenerateOptions) => Promise<ForgeResult>
+```
+
+**Example**
+
+```typescript
+import { generate } from "@forge-ts/gen";
+const result = await generate(config);
+console.log(result.success); // true if all files were written
+```
+
+### doctest(config)
+
+Runs the full doctest pipeline: extract → generate → run.
+
+```typescript
+(config: ForgeConfig) => Promise<ForgeResult>
+```
+
+**Example**
+
+```typescript
+import { loadConfig } from "@forge-ts/core";
+import { doctest } from "@forge-ts/doctest";
+const config = await loadConfig();
+const result = await doctest(config);
+if (!result.success) {
+  console.error(`${result.errors.length} doctest failure(s)`);
+}
+```
+
+{/* FORGE:AUTO-END guide-getting-started */}

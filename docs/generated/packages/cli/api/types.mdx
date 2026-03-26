@@ -1,0 +1,459 @@
+---
+title: cli — Types
+description: Type contracts for the cli package
+---
+
+Type contracts exported by this package: interfaces, type aliases, and enums.
+
+## ForgeLoggerOptions
+
+Options for configuring the forge-ts logger at CLI startup.
+
+| Property  | Type                   | Required | Description                                                          |
+| --------- | ---------------------- | -------- | -------------------------------------------------------------------- |
+| `quiet`   | `boolean \| undefined` | No       | Suppress all consola output (--quiet flag).                          |
+| `json`    | `boolean \| undefined` | No       | JSON output mode (--json flag). LAFS handles JSON; suppress consola. |
+| `verbose` | `boolean \| undefined` | No       | Enable debug-level output (--verbose flag).                          |
+
+## CommandOutput
+
+Typed result from a forge-ts command.
+
+| Property    | Type                             | Required | Description                                                             |
+| ----------- | -------------------------------- | -------- | ----------------------------------------------------------------------- |
+| `operation` | `string`                         | Yes      | Name of the command that produced this output (e.g., "check", "build"). |
+| `success`   | `boolean`                        | Yes      | Whether the command completed successfully.                             |
+| `data`      | `T`                              | Yes      | Strongly-typed command-specific result payload.                         |
+| `errors`    | `ForgeCliError[] \| undefined`   | No       | Structured errors produced by the command, if any.                      |
+| `warnings`  | `ForgeCliWarning[] \| undefined` | No       | Structured warnings produced by the command, if any.                    |
+| `duration`  | `number \| undefined`            | No       | Wall-clock duration of the command in milliseconds.                     |
+
+## ForgeCliError
+
+Structured error for CLI commands.
+
+| Property   | Type                  | Required | Description                                                           |
+| ---------- | --------------------- | -------- | --------------------------------------------------------------------- |
+| `code`     | `string`              | Yes      | Machine-readable error code (e.g., "E004").                           |
+| `message`  | `string`              | Yes      | Human-readable error description.                                     |
+| `filePath` | `string \| undefined` | No       | Absolute path to the source file containing the error, if applicable. |
+| `line`     | `number \| undefined` | No       | 1-based line number of the error, if applicable.                      |
+| `column`   | `number \| undefined` | No       | 0-based column number of the error, if applicable.                    |
+
+## ForgeCliWarning
+
+Structured warning for CLI commands.
+
+| Property   | Type                  | Required | Description                                                             |
+| ---------- | --------------------- | -------- | ----------------------------------------------------------------------- |
+| `code`     | `string`              | Yes      | Machine-readable warning code.                                          |
+| `message`  | `string`              | Yes      | Human-readable warning description.                                     |
+| `filePath` | `string \| undefined` | No       | Absolute path to the source file containing the warning, if applicable. |
+| `line`     | `number \| undefined` | No       | 1-based line number of the warning, if applicable.                      |
+| `column`   | `number \| undefined` | No       | 0-based column number of the warning, if applicable.                    |
+
+## OutputFlags
+
+Output format flags passed through from citty args.
+
+| Property | Type                   | Required | Description                                                         |
+| -------- | ---------------------- | -------- | ------------------------------------------------------------------- |
+| `json`   | `boolean \| undefined` | No       | Emit output as a LAFS JSON envelope instead of human-readable text. |
+| `human`  | `boolean \| undefined` | No       | Emit output as formatted human-readable text.                       |
+| `quiet`  | `boolean \| undefined` | No       | Suppress all output regardless of format.                           |
+| `mvi`    | `string \| undefined`  | No       | MVI verbosity level: "minimal", "standard", or "full".              |
+
+## AuditArgs
+
+Arguments for the `audit` command.
+
+| Property | Type                          | Required | Description                                        |
+| -------- | ----------------------------- | -------- | -------------------------------------------------- |
+| `cwd`    | `string \| undefined`         | No       | Project root directory (default: cwd).             |
+| `limit`  | `number \| undefined`         | No       | Maximum number of events to display (default: 20). |
+| `type`   | `AuditEventType \| undefined` | No       | Filter events by type.                             |
+
+## AuditResult
+
+Typed result for the `audit` command.
+
+| Property  | Type           | Required | Description                                  |
+| --------- | -------------- | -------- | -------------------------------------------- |
+| `success` | `boolean`      | Yes      | Whether the audit log was read successfully. |
+| `count`   | `number`       | Yes      | Number of events returned.                   |
+| `events`  | `AuditEvent[]` | Yes      | The audit events, newest first.              |
+
+## BuildArgs
+
+Arguments for the `build` command.
+
+| Property     | Type                   | Required | Description                                                                                                                                                                                                                                     |
+| ------------ | ---------------------- | -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `cwd`        | `string \| undefined`  | No       | Project root directory (default: cwd).                                                                                                                                                                                                          |
+| `skipApi`    | `boolean \| undefined` | No       | Skip API generation even if enabled in config.                                                                                                                                                                                                  |
+| `skipGen`    | `boolean \| undefined` | No       | Skip doc generation even if enabled in config.                                                                                                                                                                                                  |
+| `forceStubs` | `boolean \| undefined` | No       | Overwrite stub pages even if they already exist on disk. Normally stub pages (concepts, guides, faq, contributing, changelog) are only created on the first build to preserve manual edits. Use this to reset stubs to their scaffolding state. |
+| `mvi`        | `string \| undefined`  | No       | MVI verbosity level for structured output.                                                                                                                                                                                                      |
+
+## BuildStep
+
+A single step in the build pipeline.
+
+| Property     | Type                                 | Required | Description                                                           |
+| ------------ | ------------------------------------ | -------- | --------------------------------------------------------------------- |
+| `name`       | `string`                             | Yes      | Internal step name, e.g. "api" or "gen".                              |
+| `status`     | `"success" \| "skipped" \| "failed"` | Yes      | Outcome of this step.                                                 |
+| `outputPath` | `string \| undefined`                | No       | Path to the primary output file produced by this step, if applicable. |
+| `duration`   | `number \| undefined`                | No       | Wall-clock duration of this step in milliseconds.                     |
+| `errors`     | `ForgeCliError[] \| undefined`       | No       | Errors produced by this step when status is "failed".                 |
+
+## BuildResult
+
+Typed result for the `build` command.
+
+| Property         | Type                                                                      | Required | Description                                                               |
+| ---------------- | ------------------------------------------------------------------------- | -------- | ------------------------------------------------------------------------- |
+| `success`        | `boolean`                                                                 | Yes      | Whether the build succeeded.                                              |
+| `summary`        | `{ steps: number; succeeded: number; failed: number; duration: number; }` | Yes      | Aggregate pipeline counts — always present.                               |
+| `steps`          | `BuildStep[]`                                                             | Yes      | Per-step details.                                                         |
+| `generatedFiles` | `string[] \| undefined`                                                   | No       | Files written during the build — present at standard and full MVI levels. |
+
+## BypassCreateResult
+
+Typed result for the `bypass` command when creating a bypass.
+
+| Property          | Type           | Required | Description                                                |
+| ----------------- | -------------- | -------- | ---------------------------------------------------------- |
+| `success`         | `boolean`      | Yes      | Whether the bypass was successfully created.               |
+| `bypass`          | `BypassRecord` | Yes      | The bypass record that was created.                        |
+| `remainingBudget` | `number`       | Yes      | Number of remaining bypass slots for today after creation. |
+| `dailyBudget`     | `number`       | Yes      | The configured daily budget.                               |
+
+## BypassStatusResult
+
+Typed result for the `bypass --status` command.
+
+| Property          | Type             | Required | Description                                      |
+| ----------------- | ---------------- | -------- | ------------------------------------------------ |
+| `success`         | `boolean`        | Yes      | Always true for status queries.                  |
+| `activeBypasses`  | `BypassRecord[]` | Yes      | Active (non-expired) bypass records.             |
+| `remainingBudget` | `number`         | Yes      | Number of remaining bypass slots for today.      |
+| `dailyBudget`     | `number`         | Yes      | The configured daily budget.                     |
+| `expiredRemoved`  | `number`         | Yes      | Number of expired bypasses that were cleaned up. |
+
+## CheckArgs
+
+Arguments for the `check` command.
+
+| Property  | Type                   | Required | Description                                                      |
+| --------- | ---------------------- | -------- | ---------------------------------------------------------------- |
+| `cwd`     | `string \| undefined`  | No       | Project root directory (default: cwd).                           |
+| `strict`  | `boolean \| undefined` | No       | Exit with non-zero code on warnings as well as errors.           |
+| `verbose` | `boolean \| undefined` | No       | Include symbol signatures alongside diagnostics.                 |
+| `mvi`     | `string \| undefined`  | No       | MVI verbosity level for structured output.                       |
+| `rule`    | `string \| undefined`  | No       | Filter errors to a specific rule code (e.g., "E001").            |
+| `file`    | `string \| undefined`  | No       | Filter errors to a specific file path (substring match).         |
+| `staged`  | `boolean \| undefined` | No       | Only check symbols from git-staged .ts/.tsx files.               |
+| `limit`   | `number \| undefined`  | No       | Maximum number of file groups to return in byFile (default: 20). |
+| `offset`  | `number \| undefined`  | No       | Offset into the byFile list for pagination (default: 0).         |
+
+## CheckFileError
+
+A single error entry within a file group.
+
+| Property       | Type                  | Required | Description                                                                   |
+| -------------- | --------------------- | -------- | ----------------------------------------------------------------------------- |
+| `code`         | `string`              | Yes      | Machine-readable error code.                                                  |
+| `symbol`       | `string`              | Yes      | Symbol name that needs fixing.                                                |
+| `kind`         | `string`              | Yes      | Symbol kind (function, class, interface, etc.).                               |
+| `line`         | `number`              | Yes      | 1-based line number of the error.                                             |
+| `message`      | `string`              | Yes      | Human-readable description.                                                   |
+| `suggestedFix` | `string \| undefined` | No       | Exact TSDoc block to add (present at full MVI or with --rule/--file filters). |
+| `agentAction`  | `string \| undefined` | No       | Recommended agent action.                                                     |
+
+## CheckFileWarning
+
+A single warning entry within a file group.
+
+| Property  | Type     | Required | Description                                     |
+| --------- | -------- | -------- | ----------------------------------------------- |
+| `code`    | `string` | Yes      | Machine-readable warning code.                  |
+| `symbol`  | `string` | Yes      | Symbol name that generated the warning.         |
+| `kind`    | `string` | Yes      | Symbol kind (function, class, interface, etc.). |
+| `line`    | `number` | Yes      | 1-based line number of the warning.             |
+| `message` | `string` | Yes      | Human-readable description.                     |
+
+## CheckFileGroup
+
+Errors and warnings grouped by file.
+
+| Property   | Type                 | Required | Description                       |
+| ---------- | -------------------- | -------- | --------------------------------- |
+| `file`     | `string`             | Yes      | Absolute path to the source file. |
+| `errors`   | `CheckFileError[]`   | Yes      | Errors in this file.              |
+| `warnings` | `CheckFileWarning[]` | Yes      | Warnings in this file.            |
+
+## CheckRuleCount
+
+Error breakdown by rule code, sorted by count descending.
+
+| Property | Type     | Required | Description                                         |
+| -------- | -------- | -------- | --------------------------------------------------- |
+| `code`   | `string` | Yes      | Machine-readable rule code (e.g., "E001").          |
+| `rule`   | `string` | Yes      | Human-readable rule name (e.g., "require-summary"). |
+| `count`  | `number` | Yes      | Number of violations.                               |
+| `files`  | `number` | Yes      | Number of unique files affected by this rule.       |
+
+## CheckTriage
+
+Triage data for prioritizing fixes. Always present when the check has errors, bounded in size (\~9 rules + top 20 files).
+
+| Property   | Type                                                              | Required | Description                                                                    |
+| ---------- | ----------------------------------------------------------------- | -------- | ------------------------------------------------------------------------------ |
+| `byRule`   | `CheckRuleCount[]`                                                | Yes      | Error counts by rule, sorted descending.                                       |
+| `topFiles` | `{ file: string; errors: number; warnings: number; }[]`           | Yes      | Top files by error count (max 20).                                             |
+| `fixOrder` | `{ code: string; rule: string; count: number; files: number; }[]` | Yes      | Suggested fix order: rules sorted by fewest files affected first (quick wins). |
+
+## CheckPage
+
+Pagination metadata for byFile results.
+
+| Property  | Type      | Required | Description                                  |
+| --------- | --------- | -------- | -------------------------------------------- |
+| `offset`  | `number`  | Yes      | Current offset.                              |
+| `limit`   | `number`  | Yes      | Page size.                                   |
+| `hasMore` | `boolean` | Yes      | Whether more results exist beyond this page. |
+| `total`   | `number`  | Yes      | Total number of file groups (after filters). |
+
+## CheckResult
+
+Typed result for the `check` command.
+
+| Property      | Type                                                                                      | Required | Description                                                                   |
+| ------------- | ----------------------------------------------------------------------------------------- | -------- | ----------------------------------------------------------------------------- |
+| `success`     | `boolean`                                                                                 | Yes      | Whether the check passed without errors.                                      |
+| `summary`     | `{ errors: number; warnings: number; files: number; symbols: number; duration: number; }` | Yes      | Aggregate counts — always present regardless of MVI level.                    |
+| `triage`      | `CheckTriage \| undefined`                                                                | No       | Triage data for prioritizing fixes — present when errors  0 (except minimal). |
+| `byFile`      | `CheckFileGroup[] \| undefined`                                                           | No       | Per-file breakdown — present at standard and full MVI levels, paginated.      |
+| `page`        | `CheckPage \| undefined`                                                                  | No       | Pagination metadata when byFile is paginated.                                 |
+| `filters`     | `{ rule?: string; file?: string; } \| undefined`                                          | No       | Active filters applied to this result.                                        |
+| `nextCommand` | `string \| undefined`                                                                     | No       | CLI command hint for the agent to run next.                                   |
+
+## PkgJson
+
+Parsed package.json with formatting metadata for lossless round-tripping.
+
+| Property          | Type                      | Required | Description                                     |
+| ----------------- | ------------------------- | -------- | ----------------------------------------------- |
+| `path`            | `string`                  | Yes      | Absolute path to the file.                      |
+| `raw`             | `string`                  | Yes      | Raw file content as read from disk.             |
+| `obj`             | `Record<string, unknown>` | Yes      | Parsed JSON object.                             |
+| `indent`          | `string`                  | Yes      | Detected indent string (tabs or spaces).        |
+| `trailingNewline` | `boolean`                 | Yes      | Whether the original file ended with a newline. |
+
+## HookManager
+
+Detected hook manager in the project.
+
+```typescript
+HookManager
+```
+
+## InitHooksResult
+
+Result of the `init hooks` command.
+
+| Property       | Type                                              | Required | Description                              |
+| -------------- | ------------------------------------------------- | -------- | ---------------------------------------- |
+| `success`      | `boolean`                                         | Yes      | Whether the hook scaffolding succeeded.  |
+| `hookManager`  | `HookManager`                                     | Yes      | The detected or chosen hook manager.     |
+| `summary`      | `{ filesWritten: number; filesSkipped: number; }` | Yes      | Summary of what was created.             |
+| `files`        | `string[]`                                        | Yes      | Relative paths of all files written.     |
+| `instructions` | `string[]`                                        | Yes      | Post-scaffold instructions for the user. |
+
+## InitHooksArgs
+
+Arguments for the `init hooks` command.
+
+| Property | Type                   | Required | Description                                |
+| -------- | ---------------------- | -------- | ------------------------------------------ |
+| `cwd`    | `string \| undefined`  | No       | Project root directory (default: cwd).     |
+| `force`  | `boolean \| undefined` | No       | Force overwrite existing hook files.       |
+| `mvi`    | `string \| undefined`  | No       | MVI verbosity level for structured output. |
+
+## InitProjectEnvironment
+
+Detected project environment from Step 1 of the init flow.
+
+| Property            | Type                              | Required | Description                                                 |
+| ------------------- | --------------------------------- | -------- | ----------------------------------------------------------- |
+| `packageJsonExists` | `boolean`                         | Yes      | Whether package.json exists.                                |
+| `tsconfigExists`    | `boolean`                         | Yes      | Whether tsconfig.json exists.                               |
+| `biomeDetected`     | `boolean`                         | Yes      | Whether biome.json or biome.jsonc exists.                   |
+| `typescriptVersion` | `string \| null`                  | Yes      | TypeScript version from dependencies, or null if not found. |
+| `hookManager`       | `"husky" \| "lefthook" \| "none"` | Yes      | Detected hook manager.                                      |
+| `monorepo`          | `boolean`                         | Yes      | Whether the project is a monorepo.                          |
+| `monorepoType`      | `"pnpm" \| "npm/yarn" \| null`    | Yes      | Monorepo type if detected.                                  |
+
+## InitProjectResult
+
+Result of the `init` (project setup) command.
+
+| Property       | Type                     | Required | Description                                                         |
+| -------------- | ------------------------ | -------- | ------------------------------------------------------------------- |
+| `success`      | `boolean`                | Yes      | Whether the init succeeded.                                         |
+| `created`      | `string[]`               | Yes      | Files that were created.                                            |
+| `skipped`      | `string[]`               | Yes      | Files that already existed and were skipped.                        |
+| `warnings`     | `string[]`               | Yes      | Warning messages collected during init.                             |
+| `environment`  | `InitProjectEnvironment` | Yes      | Detected project environment.                                       |
+| `nextSteps`    | `string[]`               | Yes      | Next steps for the user.                                            |
+| `scriptsAdded` | `string[]`               | Yes      | Scripts that were added to package.json (empty if none were added). |
+
+## InitProjectArgs
+
+Arguments for the `init` (project setup) command.
+
+| Property | Type                  | Required | Description                                |
+| -------- | --------------------- | -------- | ------------------------------------------ |
+| `cwd`    | `string \| undefined` | No       | Project root directory (default: cwd).     |
+| `mvi`    | `string \| undefined` | No       | MVI verbosity level for structured output. |
+
+## DoctorCheckStatus
+
+Status of a single doctor check.
+
+```typescript
+DoctorCheckStatus
+```
+
+## DoctorCheckResult
+
+Result of a single doctor check.
+
+| Property  | Type                | Required | Description                                      |
+| --------- | ------------------- | -------- | ------------------------------------------------ |
+| `name`    | `string`            | Yes      | Name of the check.                               |
+| `status`  | `DoctorCheckStatus` | Yes      | Status of the check.                             |
+| `message` | `string`            | Yes      | Human-readable message.                          |
+| `fixable` | `boolean`           | Yes      | Whether this issue can be auto-fixed with --fix. |
+
+## DoctorResult
+
+Result of the `doctor` command.
+
+| Property  | Type                                                                  | Required | Description                                                |
+| --------- | --------------------------------------------------------------------- | -------- | ---------------------------------------------------------- |
+| `success` | `boolean`                                                             | Yes      | Whether all checks passed without errors.                  |
+| `checks`  | `DoctorCheckResult[]`                                                 | Yes      | Individual check results.                                  |
+| `summary` | `{ passed: number; warnings: number; errors: number; info: number; }` | Yes      | Summary counts.                                            |
+| `fixed`   | `string[]`                                                            | Yes      | Files that were fixed (only populated when --fix is used). |
+
+## DoctorArgs
+
+Arguments for the `doctor` command.
+
+| Property | Type                   | Required | Description                                |
+| -------- | ---------------------- | -------- | ------------------------------------------ |
+| `cwd`    | `string \| undefined`  | No       | Project root directory (default: cwd).     |
+| `fix`    | `boolean \| undefined` | No       | Auto-fix resolvable issues.                |
+| `mvi`    | `string \| undefined`  | No       | MVI verbosity level for structured output. |
+
+## InitDocsResult
+
+Result of the `init docs` command.
+
+| Property       | Type                                                               | Required | Description                              |
+| -------------- | ------------------------------------------------------------------ | -------- | ---------------------------------------- |
+| `success`      | `boolean`                                                          | Yes      | Whether the scaffold succeeded.          |
+| `target`       | `SSGTarget`                                                        | Yes      | The SSG target that was scaffolded.      |
+| `summary`      | `{ filesCreated: number; dependencies: number; scripts: number; }` | Yes      | Summary of what was created.             |
+| `files`        | `string[]`                                                         | Yes      | Relative paths of all files created.     |
+| `instructions` | `string[]`                                                         | Yes      | Post-scaffold instructions for the user. |
+
+## InitDocsArgs
+
+Arguments for the `init docs` command.
+
+| Property | Type                   | Required | Description                                                                |
+| -------- | ---------------------- | -------- | -------------------------------------------------------------------------- |
+| `target` | `string \| undefined`  | No       | SSG target to scaffold. Defaults to `DEFAULT_TARGET`.                      |
+| `cwd`    | `string \| undefined`  | No       | Project root directory (default: cwd).                                     |
+| `outDir` | `string \| undefined`  | No       | Output directory for the doc site (default: outDir from config or ./docs). |
+| `force`  | `boolean \| undefined` | No       | Overwrite an existing scaffold without prompting.                          |
+| `mvi`    | `string \| undefined`  | No       | MVI verbosity level for structured output.                                 |
+
+## LockResult
+
+Typed result for the `lock` command.
+
+| Property    | Type                                                    | Required | Description                                   |
+| ----------- | ------------------------------------------------------- | -------- | --------------------------------------------- |
+| `success`   | `boolean`                                               | Yes      | Whether the lock was successfully created.    |
+| `lockFile`  | `string`                                                | Yes      | Path to the lock file that was written.       |
+| `lockedAt`  | `string`                                                | Yes      | ISO-8601 timestamp when the lock was created. |
+| `lockedBy`  | `string`                                                | Yes      | Identifier of who created the lock.           |
+| `locked`    | `{ rules: number; tsconfig: boolean; biome: boolean; }` | Yes      | Summary of what was locked.                   |
+| `overwrote` | `boolean`                                               | Yes      | Whether a previous lock file was overwritten. |
+
+## PrepublishResult
+
+Typed result for the `prepublish` command.
+
+| Property        | Type                                                                                                     | Required | Description                                                              |
+| --------------- | -------------------------------------------------------------------------------------------------------- | -------- | ------------------------------------------------------------------------ |
+| `success`       | `boolean`                                                                                                | Yes      | Whether both check and build passed.                                     |
+| `summary`       | `{ steps: number; passed: number; failed: number; duration: number; }`                                   | Yes      | Summary of the prepublish pipeline.                                      |
+| `check`         | `{ success: boolean; errors: number; warnings: number; duration: number; }`                              | Yes      | Result of the check step.                                                |
+| `build`         | `{ success: boolean; steps: number; succeeded: number; failed: number; duration: number; } \| undefined` | No       | Result of the build step (absent if check failed and build was skipped). |
+| `skippedReason` | `string \| undefined`                                                                                    | No       | If check failed, the reason build was skipped.                           |
+
+## PrepublishArgs
+
+Arguments for the `prepublish` command.
+
+| Property | Type                   | Required | Description                                     |
+| -------- | ---------------------- | -------- | ----------------------------------------------- |
+| `cwd`    | `string \| undefined`  | No       | Project root directory (default: cwd).          |
+| `strict` | `boolean \| undefined` | No       | Treat warnings as errors during the check step. |
+| `mvi`    | `string \| undefined`  | No       | MVI verbosity level for structured output.      |
+
+## TestArgs
+
+Arguments for the `test` command.
+
+| Property | Type                  | Required | Description                                |
+| -------- | --------------------- | -------- | ------------------------------------------ |
+| `cwd`    | `string \| undefined` | No       | Project root directory (default: cwd).     |
+| `mvi`    | `string \| undefined` | No       | MVI verbosity level for structured output. |
+
+## TestFailure
+
+A single test failure entry, included at standard and full MVI levels.
+
+| Property  | Type     | Required | Description                                 |
+| --------- | -------- | -------- | ------------------------------------------- |
+| `symbol`  | `string` | Yes      | Symbol name where the doctest failed.       |
+| `file`    | `string` | Yes      | Absolute path to the source file.           |
+| `line`    | `number` | Yes      | 1-based line number of the failing example. |
+| `message` | `string` | Yes      | Human-readable failure message.             |
+
+## TestResult
+
+Typed result for the `test` command.
+
+| Property   | Type                                                                   | Required | Description                                                    |
+| ---------- | ---------------------------------------------------------------------- | -------- | -------------------------------------------------------------- |
+| `success`  | `boolean`                                                              | Yes      | Whether all doctests passed.                                   |
+| `summary`  | `{ passed: number; failed: number; total: number; duration: number; }` | Yes      | Aggregate counts — always present regardless of MVI level.     |
+| `failures` | `TestFailure[] \| undefined`                                           | No       | Per-failure details — present at standard and full MVI levels. |
+
+## UnlockResult
+
+Typed result for the `unlock` command.
+
+| Property           | Type             | Required | Description                                      |
+| ------------------ | ---------------- | -------- | ------------------------------------------------ |
+| `success`          | `boolean`        | Yes      | Whether the unlock was successful.               |
+| `reason`           | `string`         | Yes      | The reason provided for unlocking.               |
+| `previousLockedBy` | `string \| null` | Yes      | Who originally locked the config, if known.      |
+| `previousLockedAt` | `string \| null` | Yes      | When the config was originally locked, if known. |

@@ -1,0 +1,137 @@
+---
+title: Concepts
+description: Core concepts behind forge-ts
+---
+
+This page explains the core concepts behind **forge-ts**.
+
+> This is a stub page. Edit this file to add your project's conceptual documentation.
+>
+> Auto-generated sections below (inside FORGE:AUTO markers) update on every build.
+
+{/* FORGE:AUTO-START how-it-works */}
+
+## How It Works
+
+forge-ts processes your TypeScript source with a single AST traversal, extracting TSDoc comments and type information to generate documentation.
+
+{/* FORGE:AUTO-END how-it-works */}
+
+{/* FORGE:AUTO-START key-abstractions */}
+
+## Key Abstractions
+
+- **`AuditEventType`** — Discriminated event types recorded in the audit trail.
+- **`AuditEvent`** — A single audit event recorded in the forge-ts audit trail.
+- **`ReadAuditOptions`** — Options for reading the audit log.
+- **`BypassConfig`** — Configuration for the bypass budget system.
+- **`BypassRecord`** — A single bypass record stored in `.forge-bypass.json`.
+- **`Visibility`** — Visibility levels for exported symbols. Derived from TSDoc release tags (`@public`, `@beta`, `@internal`).
+- **`ForgeSymbol`** — A single extracted and annotated symbol from the TypeScript AST.
+- **`RuleSeverity`** — Severity level for an individual enforcement rule. - `"error"` — violation fails the build. - `"warn"`  — violation is reported but does not fail the build. - `"off"`   — rule is disabled entirely.
+- **`EnforceRules`** — Per-rule severity configuration for the TSDoc enforcer. Each key corresponds to one of the E001–E007 rule codes.
+- **`ForgeConfig`** — Full configuration for a forge-ts run. Loaded from forge-ts.config.ts or the "forge-ts" key in package.json.
+- **`ForgeResult`** — The result of a forge-ts compilation pass.
+- **`ForgeError`** — A diagnostic error produced during a forge-ts run.
+- **`ForgeWarning`** — A diagnostic warning produced during a forge-ts run.
+- **`ForgeLockManifest`** — Manifest stored in `.forge-lock.json`. Captures a point-in-time snapshot of the project's forge-ts configuration so that future runs can detect when settings have been weakened.
+- **`LockViolation`** — A single violation found when comparing current config against the lock.
+- **`OpenAPISchemaObject`** — OpenAPI 3.2 schema object.
+- **`OpenAPIInfoObject`** — OpenAPI 3.2 info object.
+- **`OpenAPITagObject`** — OpenAPI 3.2 tag object.
+- **`OpenAPIPathItemObject`** — OpenAPI 3.2 path item object.
+- **`OpenAPIOperationObject`** — OpenAPI 3.2 operation object.
+- **`OpenAPIParameterObject`** — OpenAPI 3.2 parameter object.
+- **`OpenAPIEncodingObject`** — OpenAPI 3.2 encoding object.
+- **`OpenAPIMediaTypeObject`** — OpenAPI 3.2 media type object.
+- **`OpenAPIResponseObject`** — OpenAPI 3.2 response object.
+- **`OpenAPIDocument`** — Complete OpenAPI 3.2 document.
+- **`ASTWalker`** — The return type of `createWalker`.
+- **`SDKProperty`** — A single property extracted from an interface or class symbol.
+- **`SDKType`** — An SDK type descriptor extracted from the symbol graph.
+- **`ReferenceEntry`** — A single entry in the generated API reference.
+- **`ForgeLoggerOptions`** — Options for configuring the forge-ts logger at CLI startup.
+- **`CommandOutput`** — Typed result from a forge-ts command.
+- **`ForgeCliError`** — Structured error for CLI commands.
+- **`ForgeCliWarning`** — Structured warning for CLI commands.
+- **`OutputFlags`** — Output format flags passed through from citty args.
+- **`AuditArgs`** — Arguments for the `audit` command.
+- **`AuditResult`** — Typed result for the `audit` command.
+- **`BuildArgs`** — Arguments for the `build` command.
+- **`BuildStep`** — A single step in the build pipeline.
+- **`BuildResult`** — Typed result for the `build` command.
+- **`BypassCreateResult`** — Typed result for the `bypass` command when creating a bypass.
+- **`BypassStatusResult`** — Typed result for the `bypass --status` command.
+- **`CheckArgs`** — Arguments for the `check` command.
+- **`CheckFileError`** — A single error entry within a file group.
+- **`CheckFileWarning`** — A single warning entry within a file group.
+- **`CheckFileGroup`** — Errors and warnings grouped by file.
+- **`CheckRuleCount`** — Error breakdown by rule code, sorted by count descending.
+- **`CheckTriage`** — Triage data for prioritizing fixes. Always present when the check has errors, bounded in size (\~9 rules + top 20 files).
+- **`CheckPage`** — Pagination metadata for byFile results.
+- **`CheckResult`** — Typed result for the `check` command.
+- **`PkgJson`** — Parsed package.json with formatting metadata for lossless round-tripping.
+- **`HookManager`** — Detected hook manager in the project.
+- **`InitHooksResult`** — Result of the `init hooks` command.
+- **`InitHooksArgs`** — Arguments for the `init hooks` command.
+- **`InitProjectEnvironment`** — Detected project environment from Step 1 of the init flow.
+- **`InitProjectResult`** — Result of the `init` (project setup) command.
+- **`InitProjectArgs`** — Arguments for the `init` (project setup) command.
+- **`DoctorCheckStatus`** — Status of a single doctor check.
+- **`DoctorCheckResult`** — Result of a single doctor check.
+- **`DoctorResult`** — Result of the `doctor` command.
+- **`DoctorArgs`** — Arguments for the `doctor` command.
+- **`InitDocsResult`** — Result of the `init docs` command.
+- **`InitDocsArgs`** — Arguments for the `init docs` command.
+- **`LockResult`** — Typed result for the `lock` command.
+- **`PrepublishResult`** — Typed result for the `prepublish` command.
+- **`PrepublishArgs`** — Arguments for the `prepublish` command.
+- **`TestArgs`** — Arguments for the `test` command.
+- **`TestFailure`** — A single test failure entry, included at standard and full MVI levels.
+- **`TestResult`** — Typed result for the `test` command.
+- **`UnlockResult`** — Typed result for the `unlock` command.
+- **`GuideSource`** — The source heuristic that discovered a guide.
+- **`DiscoveredGuide`** — A guide discovered from the symbol graph by code analysis heuristics.
+- **`MdText`** — Inline leaf node: literal text.
+- **`MdInlineCode`** — Inline leaf node: code span.
+- **`MdStrong`** — Inline container: strong emphasis (bold).
+- **`MdEmphasis`** — Inline container: emphasis (italic).
+- **`MdLink`** — Inline container: hyperlink.
+- **`MdPhrasing`** — Union of all inline (phrasing) content types.
+- **`MdHeading`** — Block node: heading (depth 1-6).
+- **`MdParagraph`** — Block node: paragraph.
+- **`MdCode`** — Block node: fenced code block.
+- **`MdBlockquote`** — Block node: blockquote.
+- **`MdHtml`** — Block node: raw HTML (including comments).
+- **`MdThematicBreak`** — Block node: horizontal rule.
+- **`MdListItem`** — List item container.
+- **`MdList`** — Block node: ordered or unordered list.
+- **`MdTableCell`** — GFM table cell.
+- **`MdTableRow`** — GFM table row.
+- **`MdTable`** — GFM table.
+- **`MdBlock`** — Union of all block content types.
+- **`MdRoot`** — Document root.
+- **`FrontmatterResult`** — Result of parsing frontmatter from markdown/MDX content.
+- **`DocPage`** — A single generated documentation page.
+- **`SiteGeneratorOptions`** — Options controlling the doc site generator.
+- **`SSGTarget`** — Supported SSG target identifiers.
+- **`GeneratedFile`** — A file to write to disk during scaffolding or generation.
+- **`SSGStyleGuide`** — Style guide configuration for the SSG target.
+- **`ScaffoldManifest`** — Scaffold manifest describing what `init docs` creates.
+- **`AdapterContext`** — Context passed to adapter methods.
+- **`DevServerCommand`** — Command to start a local dev server for doc preview.
+- **`SSGAdapter`** — The central SSG adapter interface. Every doc platform provider implements this contract. One file per provider. No shared mutable state.
+- **`MarkdownOptions`** — Options controlling Markdown output.
+- **`ReadmeSyncOptions`** — Options controlling README sync behaviour.
+- **`SkillPackage`** — A generated skill package following the agentskills.io directory structure. Contains SKILL.md plus optional references and scripts files.
+- **`SSGConfigFile`** — A single generated SSG configuration file.
+- **`GenerateOptions`** — Options for the generation pipeline.
+- **`DeprecatedUsage`** — A detected usage of a deprecated symbol.
+- **`FormatOptions`** — Options that control how `formatResults` renders its output.
+- **`ExtractedExample`** — A single extracted `@example` block ready for test generation.
+- **`GeneratorOptions`** — Options for virtual test file generation.
+- **`VirtualTestFile`** — A generated virtual test file.
+- **`RunResult`** — Result of running the generated test files.
+- **`TestCaseResult`** — The result of a single test case.
+
+{/* FORGE:AUTO-END key-abstractions */}

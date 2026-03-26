@@ -1,0 +1,655 @@
+---
+title: gen — Functions
+description: Functions and classes for the gen package
+---
+
+Functions and classes exported by this package.
+
+## discoverGuides(symbolsByPackage, config)
+
+Analyze the symbol graph and discover guides using multiple heuristics.  Each heuristic produces zero or more `DiscoveredGuide` entries. When multiple heuristics produce a guide with the same slug, the first one wins (priority order: guide-tag, config-interface, error-types, category, entry-point).
+
+**Signature**
+
+```typescript
+(symbolsByPackage: Map<string, ForgeSymbol[]>, config: ForgeConfig) => DiscoveredGuide[]
+```
+
+**Parameters**
+
+| Name               | Type          | Description                          |
+| ------------------ | ------------- | ------------------------------------ |
+| `symbolsByPackage` | `Map<string`  | Symbols grouped by package name.     |
+| `config`           | `ForgeConfig` | The resolved forge-ts configuration. |
+
+**Returns** — An array of discovered guides, deduplicated by slug.
+
+## serializeMarkdown(tree)
+
+Serialize an mdast tree to a well-formed markdown string.  Uses remark-stringify with GFM table support. The serializer handles all escaping (pipes in table cells, special characters in text, etc.) so callers never need manual escape functions.
+
+**Signature**
+
+```typescript
+(tree: MdRoot) => string
+```
+
+**Parameters**
+
+| Name   | Type     | Description                       |
+| ------ | -------- | --------------------------------- |
+| `tree` | `MdRoot` | The mdast root node to serialize. |
+
+**Returns** — The serialized markdown string.
+
+## textP()
+
+Shorthand: paragraph containing a single text node.
+
+**Signature**
+
+```typescript
+(value: string) => MdParagraph
+```
+
+## boldIntroP()
+
+Shorthand: paragraph with bold intro text followed by regular text.
+
+**Signature**
+
+```typescript
+(bold: string, rest: string) => MdParagraph
+```
+
+## textListItem()
+
+Shorthand: list item containing a single text paragraph.
+
+**Signature**
+
+```typescript
+(value: string) => MdListItem
+```
+
+## rawBlock()
+
+Wrap a raw markdown string as an HTML node. Use for TSDoc content that may contain markdown formatting (backticks, bold, links) which should pass through to the output verbatim rather than being escaped by the serializer.
+
+**Signature**
+
+```typescript
+(markdown: string) => MdHtml
+```
+
+## truncate()
+
+Truncate a string to at most maxLen chars. Avoids cutting inside backtick-delimited code spans to prevent broken inline code that would cause escaping issues.
+
+**Signature**
+
+```typescript
+(text: string, maxLen?: number) => string
+```
+
+## toAnchor()
+
+Convert a label to a GitHub-compatible anchor slug.
+
+**Signature**
+
+```typescript
+(text: string) => string
+```
+
+## slugLink()
+
+Strip extension from a link path and normalize to a slug. Produces bare slug links compatible with Mintlify and most SSGs.
+
+**Signature**
+
+```typescript
+(path: string) => string
+```
+
+## parseFrontmatter(content)
+
+Parse frontmatter from markdown/MDX content.  Uses gray-matter for robust YAML parsing — handles multi-line values, quoted strings, and edge cases that regex-based stripping misses.
+
+**Signature**
+
+```typescript
+(content: string) => FrontmatterResult
+```
+
+**Parameters**
+
+| Name      | Type     | Description                                  |
+| --------- | -------- | -------------------------------------------- |
+| `content` | `string` | The full file content including frontmatter. |
+
+**Returns** — The body (without frontmatter) and the parsed data object.
+
+## stringifyWithFrontmatter(body, data)
+
+Serialize content with frontmatter prepended.  Produces the standard format:
+
+**Signature**
+
+```typescript
+(body: string, data: Record<string, string | number | boolean>) => string
+```
+
+**Parameters**
+
+| Name   | Type            | Description                                      |
+| ------ | --------------- | ------------------------------------------------ |
+| `body` | `string`        | The markdown body content (without frontmatter). |
+| `data` | `Record<string` | The frontmatter fields to serialize.             |
+
+**Returns** — The combined frontmatter + body string.
+
+## stripFrontmatter(content)
+
+Strip frontmatter from content, returning only the body.
+
+**Signature**
+
+```typescript
+(content: string) => string
+```
+
+**Parameters**
+
+| Name      | Type     | Description                                  |
+| --------- | -------- | -------------------------------------------- |
+| `content` | `string` | The full file content including frontmatter. |
+
+**Returns** — The body content without the frontmatter block.
+
+## parseInline(markdown)
+
+Parse a markdown string and extract inline (phrasing) content.  Use for TSDoc text that may contain backtick code, bold, links, etc. The returned nodes can be spread into paragraphs, table cells, or any other context that accepts inline content.  This prevents double-escaping: backticks become proper `inlineCode` nodes instead of text that gets escaped by the serializer.
+
+**Signature**
+
+```typescript
+(markdown: string) => MdPhrasing[]
+```
+
+**Parameters**
+
+| Name       | Type     | Description                                      |
+| ---------- | -------- | ------------------------------------------------ |
+| `markdown` | `string` | The TSDoc content string (may contain markdown). |
+
+**Returns** — Array of inline mdast nodes.
+
+## parseBlocks(markdown)
+
+Parse a markdown string and extract block-level content.  Use for multi-line TSDoc content that may contain headings, lists, blockquotes, code blocks, etc.
+
+**Signature**
+
+```typescript
+(markdown: string) => MdBlock[]
+```
+
+**Parameters**
+
+| Name       | Type     | Description                   |
+| ---------- | -------- | ----------------------------- |
+| `markdown` | `string` | The markdown string to parse. |
+
+**Returns** — Array of block-level mdast nodes.
+
+## sanitizeForMdx(content)
+
+Sanitize markdown content for MDX compatibility using AST-aware processing.  Parses the document with remark to understand its structure, then applies targeted string replacements only to text and HTML comment nodes — code blocks, inline code, and frontmatter are automatically preserved.  Transformations applied outside code: - HTML comments to MDX comments - Curly braces in text escaped (prevents MDX expression parsing) - Angle brackets around word chars escaped (prevents JSX tag parsing)
+
+**Signature**
+
+```typescript
+(content: string) => string
+```
+
+**Parameters**
+
+| Name      | Type     | Description                       |
+| --------- | -------- | --------------------------------- |
+| `content` | `string` | The markdown content to sanitize. |
+
+**Returns** — The sanitized content safe for MDX consumption.
+
+## updateAutoSections(existing, generated)
+
+Updates auto-enriched sections in an existing stub file.  Uses AST-aware parsing to find FORGE:AUTO markers, ensuring markers inside code blocks are never accidentally matched. Replaces content between `<!-- FORGE:AUTO-START id -->` and `<!-- FORGE:AUTO-END id -->` markers (or their MDX comment equivalents) with fresh content from the newly generated version.  Manual content outside markers is preserved exactly — no reformatting.
+
+**Signature**
+
+```typescript
+(existing: string, generated: string) => string | null
+```
+
+**Parameters**
+
+| Name        | Type     | Description                                         |
+| ----------- | -------- | --------------------------------------------------- |
+| `existing`  | `string` | The current file content on disk.                   |
+| `generated` | `string` | The freshly generated content with updated markers. |
+
+**Returns** — The merged content, or null if no markers were found to update.
+
+## stubHash(content)
+
+Compute a short fingerprint hash for content change detection.  Uses a simple DJB2-style hash converted to base-36 and truncated to 8 characters. This is NOT cryptographic — just a quick fingerprint to detect whether generated content has been manually edited.
+
+**Signature**
+
+```typescript
+(content: string) => string
+```
+
+**Parameters**
+
+| Name      | Type     | Description          |
+| --------- | -------- | -------------------- |
+| `content` | `string` | The content to hash. |
+
+**Returns** — An 8-character alphanumeric hash string.
+
+## isStubModified(existingContent, stubId, \_generatedContent)
+
+Checks if a FORGE:STUB section has been modified by the user.  Compares the embedded hash (from the FORGE:STUB-HASH comment) against a freshly computed hash of the current inner content (with the hash comment itself stripped out). If the hashes diverge — meaning the user edited the content — or the hash comment was removed, the section is considered modified and should be preserved.
+
+**Signature**
+
+```typescript
+(existingContent: string, stubId: string, _generatedContent: string) => boolean
+```
+
+**Parameters**
+
+| Name                | Type     | Description                                                    |
+| ------------------- | -------- | -------------------------------------------------------------- |
+| `existingContent`   | `string` | The full document content on disk.                             |
+| `stubId`            | `string` | The identifier of the FORGE:STUB section.                      |
+| `_generatedContent` | `string` | Unused; kept for API symmetry. Detection is purely hash-based. |
+
+**Returns** — `true` if the user has modified the stub (preserve it), `false` if unmodified (safe to regenerate).
+
+## updateStubSections(existingContent, stubs)
+
+Updates FORGE:STUB sections in existing content.  Behavior for each stub: - If the stub doesn't exist yet, appends it at the end of the content. - If the stub exists but is unmodified (hash matches generated content), regenerates it. - If the stub exists and was modified by user (hash mismatch), PRESERVES user content.  Each generated stub includes a `FORGE:STUB-HASH` comment containing a fingerprint of the generated content. On subsequent builds, this hash is compared to determine whether the user has made edits.
+
+**Signature**
+
+```typescript
+(existingContent: string, stubs: Array<{ id: string; content: string; }>) => string
+```
+
+**Parameters**
+
+| Name              | Type                                      | Description                                                     |
+| ----------------- | ----------------------------------------- | --------------------------------------------------------------- |
+| `existingContent` | `string`                                  | The current file content on disk.                               |
+| `stubs`           | `Array<{ id: string; content: string; }>` | Array of stub definitions with their IDs and generated content. |
+
+**Returns** — The updated content with stubs inserted or refreshed as needed.
+
+## escapeMdx()
+
+Escape MDX-unsafe characters in text that appears outside code fences.  MDX parses `<Word>` as JSX tags and `{expr}` as JS expressions. In documentation content (summaries, descriptions, table cells), these come from TypeScript generics (`Array<string>`) and TSDoc inline tags (`{@link Foo}`). We escape them so MDX treats them as literal text.  This is exported so SSG adapters can apply it during page transformation.
+
+**Signature**
+
+```typescript
+(text: string) => string
+```
+
+## groupSymbolsByPackage(symbols, rootDir)
+
+Groups symbols by their package based on file path.  For monorepos (symbols under `packages/<name>/`) the package name is derived from the directory segment immediately after `packages/`. For non-monorepo projects all symbols fall under the project name.
+
+**Signature**
+
+```typescript
+(symbols: ForgeSymbol[], rootDir: string) => Map<string, ForgeSymbol[]>
+```
+
+**Parameters**
+
+| Name      | Type            | Description                        |
+| --------- | --------------- | ---------------------------------- |
+| `symbols` | `ForgeSymbol[]` | All extracted symbols.             |
+| `rootDir` | `string`        | Absolute path to the project root. |
+
+**Returns** — A map from package name to symbol list.
+
+**Example**
+
+```typescript
+import { groupSymbolsByPackage } from "@forge-ts/gen";
+const grouped = groupSymbolsByPackage(symbols, "/path/to/project");
+console.log(grouped.has("core")); // true for monorepo
+```
+
+## generateDocSite(symbolsByPackage, config, options)
+
+Generates a full multi-page documentation site from symbols grouped by package.  Follows a 5-stage information architecture: 1. ORIENT — Landing page, Getting Started 2. LEARN — Concepts (stub) 3. BUILD — Guides (stub) 4. REFERENCE — API Reference, Types, Configuration, Changelog 5. COMMUNITY — FAQ, Contributing (stubs)
+
+**Signature**
+
+```typescript
+(symbolsByPackage: Map<string, ForgeSymbol[]>, config: ForgeConfig, options: SiteGeneratorOptions) => DocPage[]
+```
+
+**Parameters**
+
+| Name               | Type                   | Description                      |
+| ------------------ | ---------------------- | -------------------------------- |
+| `symbolsByPackage` | `Map<string`           | Symbols grouped by package name. |
+| `config`           | `ForgeConfig`          | The resolved `ForgeConfig`.      |
+| `options`          | `SiteGeneratorOptions` | Site generation options.         |
+
+**Returns** — An array of `DocPage` objects ready to be written to disk.
+
+**Example**
+
+```typescript
+import { generateDocSite, groupSymbolsByPackage } from "@forge-ts/gen";
+const grouped = groupSymbolsByPackage(symbols, config.rootDir);
+const pages = generateDocSite(grouped, config, { format: "markdown", projectName: "my-project" });
+console.log(pages.length > 0); // true
+```
+
+## registerAdapter(adapter)
+
+Register an SSG adapter. Called once per provider at module load time.
+
+**Signature**
+
+```typescript
+(adapter: SSGAdapter) => void
+```
+
+**Parameters**
+
+| Name      | Type         | Description              |
+| --------- | ------------ | ------------------------ |
+| `adapter` | `SSGAdapter` | The adapter to register. |
+
+**Example**
+
+```typescript
+import { registerAdapter } from "@forge-ts/gen";
+registerAdapter(mintlifyAdapter);
+```
+
+## getAdapter(target)
+
+Get a registered adapter by target name. Throws if the target is not registered.
+
+**Signature**
+
+```typescript
+(target: SSGTarget) => SSGAdapter
+```
+
+**Parameters**
+
+| Name     | Type        | Description                |
+| -------- | ----------- | -------------------------- |
+| `target` | `SSGTarget` | The SSG target identifier. |
+
+**Returns** — The registered `SSGAdapter` for the given target.
+
+**Throws**
+
+- `Error` if the target is not registered.
+
+**Example**
+
+```typescript
+import { getAdapter } from "@forge-ts/gen";
+const adapter = getAdapter("mintlify");
+```
+
+## getAvailableTargets()
+
+Get all registered adapter targets.
+
+**Signature**
+
+```typescript
+() => SSGTarget[]
+```
+
+**Returns** — An array of all registered `SSGTarget` identifiers.
+
+**Example**
+
+```typescript
+import { getAvailableTargets } from "@forge-ts/gen";
+const targets = getAvailableTargets(); // ["mintlify", "docusaurus", ...]
+```
+
+## generateLlmsTxt(symbols, config)
+
+Generates an `llms.txt` routing manifest from the extracted symbols.  The file follows the llms.txt specification: a compact, structured overview designed to help large language models navigate a project's documentation.
+
+**Signature**
+
+```typescript
+(symbols: ForgeSymbol[], config: ForgeConfig) => string
+```
+
+**Parameters**
+
+| Name      | Type            | Description                 |
+| --------- | --------------- | --------------------------- |
+| `symbols` | `ForgeSymbol[]` | The symbols to include.     |
+| `config`  | `ForgeConfig`   | The resolved `ForgeConfig`. |
+
+**Returns** — The generated `llms.txt` content as a string.
+
+**Example**
+
+```typescript
+import { generateLlmsTxt } from "@forge-ts/gen";
+const txt = generateLlmsTxt(symbols, config);
+console.log(txt.startsWith("# ")); // true
+```
+
+## generateLlmsFullTxt(symbols, config)
+
+Generates an `llms-full.txt` dense context file from the extracted symbols.  Unlike `llms.txt`, this file contains complete documentation for every exported symbol, intended for LLM ingestion that requires full context.
+
+**Signature**
+
+```typescript
+(symbols: ForgeSymbol[], config: ForgeConfig) => string
+```
+
+**Parameters**
+
+| Name      | Type            | Description                 |
+| --------- | --------------- | --------------------------- |
+| `symbols` | `ForgeSymbol[]` | The symbols to include.     |
+| `config`  | `ForgeConfig`   | The resolved `ForgeConfig`. |
+
+**Returns** — The generated `llms-full.txt` content as a string.
+
+**Example**
+
+```typescript
+import { generateLlmsFullTxt } from "@forge-ts/gen";
+const fullTxt = generateLlmsFullTxt(symbols, config);
+console.log(fullTxt.includes("Full Context")); // true
+```
+
+## generateMarkdown(symbols, config, options)
+
+Generates a Markdown (or MDX) string from a list of symbols.
+
+**Signature**
+
+```typescript
+(symbols: ForgeSymbol[], config: ForgeConfig, options?: MarkdownOptions) => string
+```
+
+**Parameters**
+
+| Name      | Type                | Description                 |
+| --------- | ------------------- | --------------------------- |
+| `symbols` | `ForgeSymbol[]`     | The symbols to document.    |
+| `config`  | `ForgeConfig`       | The resolved `ForgeConfig`. |
+| `options` | `: MarkdownOptions` | Rendering options.          |
+
+**Returns** — The generated Markdown string.
+
+**Example**
+
+```typescript
+import { generateMarkdown } from "@forge-ts/gen";
+const md = generateMarkdown(symbols, config, { mdx: false });
+console.log(md.startsWith("# API Reference")); // true
+```
+
+## syncReadme(readmePath, symbols, options)
+
+Injects a summary of exported symbols into a `README.md` file.  The content is placed between `<!-- forge-ts:start -->` and `<!-- forge-ts:end -->` comment markers.  If neither marker exists, the summary is appended to the end of the file.
+
+**Signature**
+
+```typescript
+(readmePath: string, symbols: ForgeSymbol[], options?: ReadmeSyncOptions) => Promise<boolean>
+```
+
+**Parameters**
+
+| Name         | Type                  | Description                                 |
+| ------------ | --------------------- | ------------------------------------------- |
+| `readmePath` | `string`              | Absolute path to the `README.md` to update. |
+| `symbols`    | `ForgeSymbol[]`       | Symbols to summarise in the README.         |
+| `options`    | `: ReadmeSyncOptions` | Options controlling sync behaviour.         |
+
+**Returns** — `true` if the file was modified, `false` otherwise.
+
+**Example**
+
+```typescript
+import { syncReadme } from "@forge-ts/gen";
+const modified = await syncReadme("/path/to/README.md", symbols);
+console.log(modified); // true if README was updated
+```
+
+## generateSkillPackage(symbols, config)
+
+Generates an agentskills.io-compliant skill package for ANY TypeScript project.  All content is derived from the project's exported symbols and metadata. No hardcoded project-specific content. Works for any project that forge-ts analyzes.
+
+**Signature**
+
+```typescript
+(symbols: ForgeSymbol[], config: ForgeConfig) => SkillPackage
+```
+
+**Parameters**
+
+| Name      | Type            | Description                   |
+| --------- | --------------- | ----------------------------- |
+| `symbols` | `ForgeSymbol[]` | All symbols from the project. |
+| `config`  | `ForgeConfig`   | The resolved forge-ts config. |
+
+**Returns** — A `SkillPackage` describing the directory and its files.
+
+**Example**
+
+```typescript
+import { generateSkillPackage } from "@forge-ts/gen";
+const pkg = generateSkillPackage(symbols, config);
+console.log(pkg.directoryName); // "my-lib"
+console.log(pkg.files.map(f => f.path));
+// ["SKILL.md", "references/API-REFERENCE.md", ...]
+```
+
+## generateSkillMd(symbols, config)
+
+Generates a SKILL.md string following the Agent Skills specification. Generic for any TypeScript project — content derived from symbols.
+
+**Signature**
+
+```typescript
+(symbols: ForgeSymbol[], config: ForgeConfig) => string
+```
+
+**Parameters**
+
+| Name      | Type            | Description                   |
+| --------- | --------------- | ----------------------------- |
+| `symbols` | `ForgeSymbol[]` | All symbols from the project. |
+| `config`  | `ForgeConfig`   | The resolved forge-ts config. |
+
+**Returns** — The SKILL.md content as a string.
+
+**Example**
+
+```typescript
+import { generateSkillMd } from "@forge-ts/gen";
+const skill = generateSkillMd(symbols, config);
+```
+
+## generateSSGConfigs(pages, target, projectName)
+
+Generate navigation configuration file(s) for the given SSG target.  Returns one file for most targets, but multiple files for Nextra (which uses per-directory `_meta.json` files).
+
+**Signature**
+
+```typescript
+(pages: DocPage[], target: "docusaurus" | "mintlify" | "nextra" | "vitepress", projectName: string) => SSGConfigFile[]
+```
+
+**Parameters**
+
+| Name          | Type                                                    | Description                                        |
+| ------------- | ------------------------------------------------------- | -------------------------------------------------- |
+| `pages`       | `DocPage[]`                                             | The `DocPage` array produced by `generateDocSite`. |
+| `target`      | `"docusaurus" \| "mintlify" \| "nextra" \| "vitepress"` | The SSG target.                                    |
+| `projectName` | `string`                                                | The project name (used in config metadata).        |
+
+**Returns** — An array of `SSGConfigFile` objects ready to be written to disk.
+
+**Example**
+
+```typescript
+import { generateSSGConfigs } from "@forge-ts/gen";
+const configs = generateSSGConfigs(pages, "vitepress", "my-project");
+console.log(configs[0].path); // ".vitepress/sidebar.json"
+```
+
+## generate(config, options)
+
+Runs the full generation pipeline: walk → render → write.  Auto-generated pages are always regenerated from source code. Stub pages (scaffolding for human/agent editing) are only created if they don't already exist, preserving manual edits across builds. Pass `{ forceStubs: true }` to overwrite stubs.
+
+**Signature**
+
+```typescript
+(config: ForgeConfig, options?: GenerateOptions) => Promise<ForgeResult>
+```
+
+**Parameters**
+
+| Name      | Type                | Description                                   |
+| --------- | ------------------- | --------------------------------------------- |
+| `config`  | `ForgeConfig`       | The resolved `ForgeConfig` for the project.   |
+| `options` | `: GenerateOptions` | Optional generation flags (e.g., forceStubs). |
+
+**Returns** — A `ForgeResult` describing the outcome.
+
+**Example**
+
+```typescript
+import { generate } from "@forge-ts/gen";
+const result = await generate(config);
+console.log(result.success); // true if all files were written
+```

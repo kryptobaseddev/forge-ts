@@ -13,6 +13,3 @@ dist
 .cleo/logs/
 clawmsgr-agent.json
 clawmsgr-*.json
-
-# Generated docs (regenerate with: pnpm build && npx forge-ts build)
-docs/generated/

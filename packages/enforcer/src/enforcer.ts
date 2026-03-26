@@ -163,7 +163,14 @@ function parseParamNames(signature: string | undefined): string[] {
 	}
 	if (current.trim()) params.push(current.trim());
 	// Extract just the name (before : or ?)
-	return params.map((p) => p.replace(/^\.{3}/, "").split(/[?:]/)[0].trim()).filter((p) => p.length > 0 && p !== "this");
+	return params
+		.map((p) =>
+			p
+				.replace(/^\.{3}/, "")
+				.split(/[?:]/)[0]
+				.trim(),
+		)
+		.filter((p) => p.length > 0 && p !== "this");
 }
 
 /**
@@ -326,6 +333,9 @@ const RULE_MAP: Record<string, keyof EnforceRules> = {
 	W015: "require-param-count",
 	W016: "require-fresh-returns",
 	W017: "require-meaningful-remarks",
+	W018: "require-operation-completeness",
+	W019: "require-ckm-tag-content",
+	W020: "require-constraint-throws",
 };
 
 // ---------------------------------------------------------------------------
@@ -374,6 +384,9 @@ const RULE_MAP: Record<string, keyof EnforceRules> = {
  * | W015 | warn     | `@param` count in TSDoc doesn't match actual parameter count. |
  * | W016 | warn     | `@returns` tag on a void/Promise<void> function. |
  * | W017 | warn     | `@remarks` block is empty or contains only placeholder text. |
+ * | W018 | warn     | `@operation`-tagged function missing required CKM docs (`@param`, `@returns`, `@remarks`, `@example`). |
+ * | W019 | warn     | CKM tag (`@operation`, `@constraint`, `@workflow`, `@concept`) has insufficient content. |
+ * | W020 | warn     | `@constraint`-tagged symbol missing `@throws` to document constraint violation. |
  *
  * When `config.enforce.strict` is `true` all warnings are promoted to errors.
  *
@@ -853,9 +866,7 @@ export async function enforce(config: ForgeConfig): Promise<ForgeResult> {
 			const arrowIdx = symbol.signature.lastIndexOf("=>");
 			if (arrowIdx !== -1) {
 				const returnType = symbol.signature.slice(arrowIdx + 2).trim();
-				const isVoidReturn =
-					returnType === "void" ||
-					returnType.startsWith("Promise<void>");
+				const isVoidReturn = returnType === "void" || returnType.startsWith("Promise<void>");
 				if (isVoidReturn) {
 					if (!isRuleBypassed(config.rootDir, "W016")) {
 						emit(
@@ -899,6 +910,74 @@ export async function enforce(config: ForgeConfig): Promise<ForgeResult> {
 					);
 				}
 			}
+		}
+
+		// W018 — @operation-tagged function missing required CKM documentation
+		if (isFunctionLike && symbol.documentation?.tags?.operation !== undefined) {
+			const missing: string[] = [];
+			if (!symbol.documentation?.params?.length) missing.push("@param");
+			if (!symbol.documentation?.returns && missingReturns(symbol)) missing.push("@returns");
+			if (!symbol.documentation?.remarks && symbol.documentation?.tags?.remarks === undefined)
+				missing.push("@remarks");
+			if (!(symbol.documentation?.examples ?? []).length) missing.push("@example");
+			if (missing.length > 0) {
+				emit(
+					"W018",
+					`@operation-tagged function "${symbol.name}" is missing: ${missing.join(", ")}`,
+					symbol.filePath,
+					symbol.line,
+					symbol.column,
+					{
+						suggestedFix: `Add the following to "${symbol.name}": ${missing.join(", ")}`,
+						symbolName: symbol.name,
+						symbolKind: symbol.kind,
+					},
+				);
+			}
+		}
+
+		// W019 — CKM tags with empty or insufficient content
+		{
+			const ckmTags = ["operation", "constraint", "workflow", "concept"] as const;
+			for (const tag of ckmTags) {
+				const values = symbol.documentation?.tags?.[tag];
+				if (values && values.length > 0) {
+					const content = values[0]?.trim() ?? "";
+					if (content.length < 10) {
+						emit(
+							"W019",
+							`@${tag} tag on "${symbol.name}" has insufficient content (${content.length} chars, minimum 10)`,
+							symbol.filePath,
+							symbol.line,
+							symbol.column,
+							{
+								suggestedFix: `@${tag} [Provide at least 10 characters of meaningful content]`,
+								symbolName: symbol.name,
+								symbolKind: symbol.kind,
+							},
+						);
+					}
+				}
+			}
+		}
+
+		// W020 — @constraint-tagged symbol missing @throws
+		if (
+			symbol.documentation?.tags?.constraint !== undefined &&
+			!(symbol.documentation?.throws && symbol.documentation.throws.length > 0)
+		) {
+			emit(
+				"W020",
+				`@constraint-tagged symbol "${symbol.name}" is missing a @throws tag. Document what error occurs when the constraint is violated.`,
+				symbol.filePath,
+				symbol.line,
+				symbol.column,
+				{
+					suggestedFix: "@throws {Error} [Describe the error when the constraint is violated]",
+					symbolName: symbol.name,
+					symbolKind: symbol.kind,
+				},
+			);
 		}
 
 		// W006 — TSDoc parser syntax messages

@@ -557,7 +557,7 @@ console.log(config.enforce.enabled); // true
 
 ### `loadConfig()`
 
-*Defined in `packages/core/src/config.ts:567`*
+*Defined in `packages/core/src/config.ts:573`*
 
 ```typescript
 (rootDir?: string) => Promise<ForgeConfig>
@@ -1169,7 +1169,7 @@ console.log(output.data.count); // number of events returned
 
 ### `runBarometer()`
 
-*Defined in `packages/cli/src/commands/barometer.ts:606`*
+*Defined in `packages/cli/src/commands/barometer.ts:717`*
 
 ```typescript
 (args: BarometerArgs) => Promise<CommandOutput<BarometerResult>>
@@ -2095,13 +2095,13 @@ console.log(usages.length); // number of deprecated cross-package imports
 
 ### `enforce()`
 
-*Defined in `packages/enforcer/src/enforcer.ts:403`*
+*Defined in `packages/enforcer/src/enforcer.ts:416`*
 
 ```typescript
 (config: ForgeConfig) => Promise<ForgeResult>
 ```
 
-Runs the TSDoc enforcement pass against a project.  The enforcer walks all exported symbols that meet the configured minimum visibility threshold and emits diagnostics for any documentation deficiencies it finds.  ### Error codes | Code | Severity | Condition | |------|----------|-----------| | E001 | error    | Exported symbol is missing a TSDoc summary. | | E002 | error    | Function/method parameter lacks a `@param` tag. | | E003 | error    | Non-void function/method lacks a `@returns` tag. | | E004 | error    | Exported function/method is missing an `@example` block. | | E005 | error    | Package entry point (index.ts) is missing `@packageDocumentation`. | | E006 | error    | Public/protected class member is missing a TSDoc comment. | | E007 | error    | Interface/type alias property is missing a TSDoc comment. | | W001 | warning  | TSDoc comment contains parse errors. | | W002 | warning  | Function body throws but has no `@throws` tag. | | W003 | warning  | `@deprecated` tag is present without explanation. | | W006 | warning  | TSDoc parser-level syntax error (invalid tag, malformed block, etc.). | | E009 | error    | tsconfig.json required strict-mode flag is missing or disabled (guard). | | E010 | error    | Config drift: a rule severity is weaker than the locked value. | | E013 | error    | Exported function/class is missing a `@remarks` block. | | E014 | warn     | Optional property of interface/type is missing `@defaultValue`. | | E015 | error    | Generic symbol is missing `@typeParam` for a type parameter. | | W005 | warn     | Symbol references other symbols via `{@link}` but has no `@see` tags. | | W007 | warn     | Guide FORGE:AUTO section references a symbol that no longer exists. | | W008 | warn     | Exported public symbol is not mentioned in any guide page. | | E017 | error    | `@internal` symbol re-exported through public barrel (index.ts). | | E018 | warn     | `@route`-tagged function missing `@response` tag. | | W009 | warn     | `{@inheritDoc}` references a symbol that does not exist. | | W010 | warn     | `@breaking` tag present without `@migration` path. | | W011 | warn     | New public export missing `@since` version tag. | | E019 | error    | Non-test file contains `@ts-expect-error` / `@ts-expect-error`. | | E020 | error    | Exported symbol has `any` in its public API signature. | | W012 | warn     | `{@link}` display text appears stale relative to target summary. | | W013 | warn     | `@example` block may be stale (arg count mismatch). | | W014 | warn     | `@param` name in TSDoc doesn't match actual parameter name. | | W015 | warn     | `@param` count in TSDoc doesn't match actual parameter count. | | W016 | warn     | `@returns` tag on a void/Promise function. | | W017 | warn     | `@remarks` block is empty or contains only placeholder text. |  When `config.enforce.strict` is `true` all warnings are promoted to errors.
+Runs the TSDoc enforcement pass against a project.  The enforcer walks all exported symbols that meet the configured minimum visibility threshold and emits diagnostics for any documentation deficiencies it finds.  ### Error codes | Code | Severity | Condition | |------|----------|-----------| | E001 | error    | Exported symbol is missing a TSDoc summary. | | E002 | error    | Function/method parameter lacks a `@param` tag. | | E003 | error    | Non-void function/method lacks a `@returns` tag. | | E004 | error    | Exported function/method is missing an `@example` block. | | E005 | error    | Package entry point (index.ts) is missing `@packageDocumentation`. | | E006 | error    | Public/protected class member is missing a TSDoc comment. | | E007 | error    | Interface/type alias property is missing a TSDoc comment. | | W001 | warning  | TSDoc comment contains parse errors. | | W002 | warning  | Function body throws but has no `@throws` tag. | | W003 | warning  | `@deprecated` tag is present without explanation. | | W006 | warning  | TSDoc parser-level syntax error (invalid tag, malformed block, etc.). | | E009 | error    | tsconfig.json required strict-mode flag is missing or disabled (guard). | | E010 | error    | Config drift: a rule severity is weaker than the locked value. | | E013 | error    | Exported function/class is missing a `@remarks` block. | | E014 | warn     | Optional property of interface/type is missing `@defaultValue`. | | E015 | error    | Generic symbol is missing `@typeParam` for a type parameter. | | W005 | warn     | Symbol references other symbols via `{@link}` but has no `@see` tags. | | W007 | warn     | Guide FORGE:AUTO section references a symbol that no longer exists. | | W008 | warn     | Exported public symbol is not mentioned in any guide page. | | E017 | error    | `@internal` symbol re-exported through public barrel (index.ts). | | E018 | warn     | `@route`-tagged function missing `@response` tag. | | W009 | warn     | `{@inheritDoc}` references a symbol that does not exist. | | W010 | warn     | `@breaking` tag present without `@migration` path. | | W011 | warn     | New public export missing `@since` version tag. | | E019 | error    | Non-test file contains `@ts-expect-error` / `@ts-expect-error`. | | E020 | error    | Exported symbol has `any` in its public API signature. | | W012 | warn     | `{@link}` display text appears stale relative to target summary. | | W013 | warn     | `@example` block may be stale (arg count mismatch). | | W014 | warn     | `@param` name in TSDoc doesn't match actual parameter name. | | W015 | warn     | `@param` count in TSDoc doesn't match actual parameter count. | | W016 | warn     | `@returns` tag on a void/Promise function. | | W017 | warn     | `@remarks` block is empty or contains only placeholder text. | | W018 | warn     | `@operation`-tagged function missing required CKM docs (`@param`, `@returns`, `@remarks`, `@example`). | | W019 | warn     | CKM tag (`@operation`, `@constraint`, `@workflow`, `@concept`) has insufficient content. | | W020 | warn     | `@constraint`-tagged symbol missing `@throws` to document constraint violation. |  When `config.enforce.strict` is `true` all warnings are promoted to errors.
 
 **Parameters**
 
@@ -3180,7 +3180,7 @@ Whether this symbol is part of the public module exports.
 EnforceRules
 ```
 
-Per-rule severity configuration for the TSDoc enforcer. 37 rules across 4 layers: API (E001-E008, W003-W004), Dev (E013-E015, E017-E018, W005-W006, W009), Consumer (E016, W007-W008, W010-W011), LLM Anti-Pattern (E019-E020, W012-W013), Staleness (W014-W017).
+Per-rule severity configuration for the TSDoc enforcer. 40 rules across 5 layers: API (E001-E008, W003-W004), Dev (E013-E015, E017-E018, W005-W006, W009), Consumer (E016, W007-W008, W010-W011), LLM Anti-Pattern (E019-E020, W012-W013), Staleness (W014-W017), CKM Truthfulness (W018-W020).
 
 #### `"require-summary"`
 
@@ -3462,9 +3462,39 @@ RuleSeverity
 
 W017: `\@remarks` block is empty or contains only placeholder text.
 
+#### `"require-operation-completeness"`
+
+*Defined in `packages/core/src/types.ts:150`*
+
+```typescript
+RuleSeverity
+```
+
+W018: `\@operation`-tagged function missing required CKM documentation (`\@param`, `\@returns`, `\@remarks`, `\@example`).
+
+#### `"require-ckm-tag-content"`
+
+*Defined in `packages/core/src/types.ts:152`*
+
+```typescript
+RuleSeverity
+```
+
+W019: CKM tag (`\@operation`, `\@constraint`, `\@workflow`, `\@concept`) has empty or insufficient content.
+
+#### `"require-constraint-throws"`
+
+*Defined in `packages/core/src/types.ts:154`*
+
+```typescript
+RuleSeverity
+```
+
+W020: `\@constraint`-tagged symbol missing `\@throws` to document constraint violation error.
+
 ### `ForgeConfig`
 
-*Defined in `packages/core/src/types.ts:157`*
+*Defined in `packages/core/src/types.ts:163`*
 
 ```typescript
 ForgeConfig
@@ -3474,7 +3504,7 @@ Full configuration for a forge-ts run. Loaded from forge-ts.config.ts or the "fo
 
 #### `rootDir`
 
-*Defined in `packages/core/src/types.ts:159`*
+*Defined in `packages/core/src/types.ts:165`*
 
 ```typescript
 string
@@ -3484,7 +3514,7 @@ Root directory of the project.
 
 #### `tsconfig`
 
-*Defined in `packages/core/src/types.ts:161`*
+*Defined in `packages/core/src/types.ts:167`*
 
 ```typescript
 string
@@ -3494,7 +3524,7 @@ Path to the tsconfig.json to compile against.
 
 #### `outDir`
 
-*Defined in `packages/core/src/types.ts:163`*
+*Defined in `packages/core/src/types.ts:169`*
 
 ```typescript
 string
@@ -3504,7 +3534,7 @@ Output directory for generated files.
 
 #### `enforce`
 
-*Defined in `packages/core/src/types.ts:165`*
+*Defined in `packages/core/src/types.ts:171`*
 
 ```typescript
 { enabled: boolean; minVisibility: Visibility | "public" | "beta" | "internal" | "private"; strict: boolean; rules: EnforceRules; ignoreFile?: string; }
@@ -3514,7 +3544,7 @@ Enforce TSDoc on all public exports.
 
 #### `doctest`
 
-*Defined in `packages/core/src/types.ts:187`*
+*Defined in `packages/core/src/types.ts:193`*
 
 ```typescript
 { enabled: boolean; cacheDir: string; }
@@ -3524,7 +3554,7 @@ DocTest configuration.
 
 #### `api`
 
-*Defined in `packages/core/src/types.ts:193`*
+*Defined in `packages/core/src/types.ts:199`*
 
 ```typescript
 { enabled: boolean; openapi: boolean; openapiPath: string; }
@@ -3534,7 +3564,7 @@ API generation configuration.
 
 #### `gen`
 
-*Defined in `packages/core/src/types.ts:201`*
+*Defined in `packages/core/src/types.ts:207`*
 
 ```typescript
 { enabled: boolean; formats: Array<"markdown" | "mdx">; llmsTxt: boolean; readmeSync: boolean; ssgTarget?: "docusaurus" | "mintlify" | "nextra" | "vitepress"; ckm?: boolean; }
@@ -3544,7 +3574,7 @@ Output generation configuration.
 
 #### `skill`
 
-*Defined in `packages/core/src/types.ts:220`*
+*Defined in `packages/core/src/types.ts:226`*
 
 ```typescript
 { enabled?: boolean; customSections?: Array<{ heading: string; content: string; }>; extraGotchas?: string[]; }
@@ -3554,7 +3584,7 @@ Skill package generation settings. Custom sections here are merged into the gene
 
 #### `tsdoc`
 
-*Defined in `packages/core/src/types.ts:244`*
+*Defined in `packages/core/src/types.ts:250`*
 
 ```typescript
 { writeConfig: boolean; customTags: Array<{ tagName: string; syntaxKind: "block" | "inline" | "modifier"; }>; enforce: { core: "error" | "warn" | "off"; extended: "error" | "warn" | "off"; discretionary: "error" | "warn" | "off"; }; }
@@ -3564,7 +3594,7 @@ TSDoc ecosystem configuration.
 
 #### `bypass`
 
-*Defined in `packages/core/src/types.ts:263`*
+*Defined in `packages/core/src/types.ts:269`*
 
 ```typescript
 { dailyBudget: number; durationHours: number; }
@@ -3574,7 +3604,7 @@ Bypass budget configuration for temporary rule overrides.
 
 #### `guides`
 
-*Defined in `packages/core/src/types.ts:270`*
+*Defined in `packages/core/src/types.ts:276`*
 
 ```typescript
 { enabled: boolean; autoDiscover: boolean; custom: Array<{ slug: string; title: string; sources: string[]; }>; }
@@ -3584,7 +3614,7 @@ Guide generation configuration.
 
 #### `guards`
 
-*Defined in `packages/core/src/types.ts:286`*
+*Defined in `packages/core/src/types.ts:292`*
 
 ```typescript
 { tsconfig: { enabled: boolean; requiredFlags: string[]; }; biome: { enabled: boolean; lockedRules: string[]; }; packageJson: { enabled: boolean; minNodeVersion: string; requiredFields: string[]; }; }
@@ -3594,7 +3624,7 @@ Downstream config drift guards.
 
 #### `_configWarnings`
 
-*Defined in `packages/core/src/types.ts:314`*
+*Defined in `packages/core/src/types.ts:320`*
 
 ```typescript
 string[] | undefined
@@ -3604,7 +3634,7 @@ Warnings generated during config loading (e.g., unknown keys). Populated by load
 
 #### `project`
 
-*Defined in `packages/core/src/types.ts:316`*
+*Defined in `packages/core/src/types.ts:322`*
 
 ```typescript
 { repository?: string; homepage?: string; packageName?: string; description?: string; version?: string; bin?: Record<string, string>; scripts?: Record<string, string>; keywords?: string[]; }
@@ -3614,7 +3644,7 @@ Project metadata — auto-detected from package.json if not provided.
 
 ### `ForgeResult`
 
-*Defined in `packages/core/src/types.ts:341`*
+*Defined in `packages/core/src/types.ts:347`*
 
 ```typescript
 ForgeResult
@@ -3624,7 +3654,7 @@ The result of a forge-ts compilation pass.
 
 #### `success`
 
-*Defined in `packages/core/src/types.ts:343`*
+*Defined in `packages/core/src/types.ts:349`*
 
 ```typescript
 boolean
@@ -3634,7 +3664,7 @@ Whether the run succeeded without errors.
 
 #### `symbols`
 
-*Defined in `packages/core/src/types.ts:345`*
+*Defined in `packages/core/src/types.ts:351`*
 
 ```typescript
 ForgeSymbol[]
@@ -3644,7 +3674,7 @@ All symbols extracted during this run.
 
 #### `errors`
 
-*Defined in `packages/core/src/types.ts:347`*
+*Defined in `packages/core/src/types.ts:353`*
 
 ```typescript
 ForgeError[]
@@ -3654,7 +3684,7 @@ Errors that caused or would cause failure.
 
 #### `warnings`
 
-*Defined in `packages/core/src/types.ts:349`*
+*Defined in `packages/core/src/types.ts:355`*
 
 ```typescript
 ForgeWarning[]
@@ -3664,7 +3694,7 @@ Non-fatal warnings.
 
 #### `duration`
 
-*Defined in `packages/core/src/types.ts:351`*
+*Defined in `packages/core/src/types.ts:357`*
 
 ```typescript
 number
@@ -3674,7 +3704,7 @@ Wall-clock duration of the run in milliseconds.
 
 #### `writtenFiles`
 
-*Defined in `packages/core/src/types.ts:356`*
+*Defined in `packages/core/src/types.ts:362`*
 
 ```typescript
 string[] | undefined
@@ -3684,7 +3714,7 @@ Absolute paths of files written during this run (populated by gen).
 
 ### `ForgeError`
 
-*Defined in `packages/core/src/types.ts:364`*
+*Defined in `packages/core/src/types.ts:370`*
 
 ```typescript
 ForgeError
@@ -3694,7 +3724,7 @@ A diagnostic error produced during a forge-ts run.
 
 #### `code`
 
-*Defined in `packages/core/src/types.ts:366`*
+*Defined in `packages/core/src/types.ts:372`*
 
 ```typescript
 string
@@ -3704,7 +3734,7 @@ Machine-readable error code (e.g. "E001").
 
 #### `message`
 
-*Defined in `packages/core/src/types.ts:368`*
+*Defined in `packages/core/src/types.ts:374`*
 
 ```typescript
 string
@@ -3714,7 +3744,7 @@ Human-readable description of the error.
 
 #### `filePath`
 
-*Defined in `packages/core/src/types.ts:370`*
+*Defined in `packages/core/src/types.ts:376`*
 
 ```typescript
 string
@@ -3724,7 +3754,7 @@ Absolute path of the file where the error occurred.
 
 #### `line`
 
-*Defined in `packages/core/src/types.ts:372`*
+*Defined in `packages/core/src/types.ts:378`*
 
 ```typescript
 number
@@ -3734,7 +3764,7 @@ number
 
 #### `column`
 
-*Defined in `packages/core/src/types.ts:374`*
+*Defined in `packages/core/src/types.ts:380`*
 
 ```typescript
 number
@@ -3744,7 +3774,7 @@ number
 
 #### `suggestedFix`
 
-*Defined in `packages/core/src/types.ts:379`*
+*Defined in `packages/core/src/types.ts:385`*
 
 ```typescript
 string | undefined
@@ -3754,7 +3784,7 @@ Suggested fix for the agent — exact TSDoc block to add.
 
 #### `symbolName`
 
-*Defined in `packages/core/src/types.ts:384`*
+*Defined in `packages/core/src/types.ts:390`*
 
 ```typescript
 string | undefined
@@ -3764,7 +3794,7 @@ The symbol name that needs fixing.
 
 #### `symbolKind`
 
-*Defined in `packages/core/src/types.ts:389`*
+*Defined in `packages/core/src/types.ts:395`*
 
 ```typescript
 string | undefined
@@ -3774,7 +3804,7 @@ The symbol kind (function, class, interface, etc.).
 
 ### `ForgeWarning`
 
-*Defined in `packages/core/src/types.ts:397`*
+*Defined in `packages/core/src/types.ts:403`*
 
 ```typescript
 ForgeWarning
@@ -3784,7 +3814,7 @@ A diagnostic warning produced during a forge-ts run.
 
 #### `code`
 
-*Defined in `packages/core/src/types.ts:399`*
+*Defined in `packages/core/src/types.ts:405`*
 
 ```typescript
 string
@@ -3794,7 +3824,7 @@ Machine-readable warning code (e.g. "W001").
 
 #### `message`
 
-*Defined in `packages/core/src/types.ts:401`*
+*Defined in `packages/core/src/types.ts:407`*
 
 ```typescript
 string
@@ -3804,7 +3834,7 @@ Human-readable description of the warning.
 
 #### `filePath`
 
-*Defined in `packages/core/src/types.ts:403`*
+*Defined in `packages/core/src/types.ts:409`*
 
 ```typescript
 string
@@ -3814,7 +3844,7 @@ Absolute path of the file where the warning occurred.
 
 #### `line`
 
-*Defined in `packages/core/src/types.ts:405`*
+*Defined in `packages/core/src/types.ts:411`*
 
 ```typescript
 number
@@ -3824,7 +3854,7 @@ number
 
 #### `column`
 
-*Defined in `packages/core/src/types.ts:407`*
+*Defined in `packages/core/src/types.ts:413`*
 
 ```typescript
 number
@@ -5594,7 +5624,7 @@ The audit events, newest first.
 
 ### `BarometerSource`
 
-*Defined in `packages/cli/src/commands/barometer.ts:56`*
+*Defined in `packages/cli/src/commands/barometer.ts:51`*
 
 ```typescript
 BarometerSource
@@ -5604,7 +5634,7 @@ Source provenance for a barometer question.
 
 #### `symbol`
 
-*Defined in `packages/cli/src/commands/barometer.ts:58`*
+*Defined in `packages/cli/src/commands/barometer.ts:53`*
 
 ```typescript
 string
@@ -5614,7 +5644,7 @@ Symbol name the fact was extracted from.
 
 #### `file`
 
-*Defined in `packages/cli/src/commands/barometer.ts:60`*
+*Defined in `packages/cli/src/commands/barometer.ts:55`*
 
 ```typescript
 string
@@ -5624,7 +5654,7 @@ Relative file path where the symbol is declared.
 
 #### `field`
 
-*Defined in `packages/cli/src/commands/barometer.ts:62`*
+*Defined in `packages/cli/src/commands/barometer.ts:57`*
 
 ```typescript
 string
@@ -5634,7 +5664,7 @@ Which field on the symbol yielded the fact (e.g. "signature", "remarks").
 
 ### `BarometerQuestion`
 
-*Defined in `packages/cli/src/commands/barometer.ts:70`*
+*Defined in `packages/cli/src/commands/barometer.ts:65`*
 
 ```typescript
 BarometerQuestion
@@ -5644,7 +5674,7 @@ A single barometer question with its ground-truth answer.
 
 #### `id`
 
-*Defined in `packages/cli/src/commands/barometer.ts:72`*
+*Defined in `packages/cli/src/commands/barometer.ts:67`*
 
 ```typescript
 string
@@ -5654,7 +5684,7 @@ Unique question identifier (e.g. "Q001").
 
 #### `category`
 
-*Defined in `packages/cli/src/commands/barometer.ts:74`*
+*Defined in `packages/cli/src/commands/barometer.ts:69`*
 
 ```typescript
 "signature" | "remarks" | "config" | "architecture" | "rules"
@@ -5664,7 +5694,7 @@ Fact extraction category.
 
 #### `difficulty`
 
-*Defined in `packages/cli/src/commands/barometer.ts:76`*
+*Defined in `packages/cli/src/commands/barometer.ts:71`*
 
 ```typescript
 "easy" | "medium" | "hard"
@@ -5674,7 +5704,7 @@ Difficulty rating.
 
 #### `question`
 
-*Defined in `packages/cli/src/commands/barometer.ts:78`*
+*Defined in `packages/cli/src/commands/barometer.ts:73`*
 
 ```typescript
 string
@@ -5684,7 +5714,7 @@ The question text.
 
 #### `answer`
 
-*Defined in `packages/cli/src/commands/barometer.ts:80`*
+*Defined in `packages/cli/src/commands/barometer.ts:75`*
 
 ```typescript
 string
@@ -5694,7 +5724,7 @@ Ground-truth answer derived from source code.
 
 #### `source`
 
-*Defined in `packages/cli/src/commands/barometer.ts:82`*
+*Defined in `packages/cli/src/commands/barometer.ts:77`*
 
 ```typescript
 BarometerSource
@@ -5704,7 +5734,7 @@ Provenance information linking back to the source.
 
 ### `BarometerRatingBand`
 
-*Defined in `packages/cli/src/commands/barometer.ts:90`*
+*Defined in `packages/cli/src/commands/barometer.ts:85`*
 
 ```typescript
 BarometerRatingBand
@@ -5714,7 +5744,7 @@ A single rating band in the barometer scoring rubric.
 
 #### `min`
 
-*Defined in `packages/cli/src/commands/barometer.ts:92`*
+*Defined in `packages/cli/src/commands/barometer.ts:87`*
 
 ```typescript
 number
@@ -5724,7 +5754,7 @@ Minimum score (inclusive) for this band.
 
 #### `max`
 
-*Defined in `packages/cli/src/commands/barometer.ts:94`*
+*Defined in `packages/cli/src/commands/barometer.ts:89`*
 
 ```typescript
 number
@@ -5734,7 +5764,7 @@ Maximum score (inclusive) for this band.
 
 #### `rating`
 
-*Defined in `packages/cli/src/commands/barometer.ts:96`*
+*Defined in `packages/cli/src/commands/barometer.ts:91`*
 
 ```typescript
 string
@@ -5744,7 +5774,7 @@ Short label for this band.
 
 #### `description`
 
-*Defined in `packages/cli/src/commands/barometer.ts:98`*
+*Defined in `packages/cli/src/commands/barometer.ts:93`*
 
 ```typescript
 string
@@ -5754,7 +5784,7 @@ Description of what this band means.
 
 ### `BarometerResult`
 
-*Defined in `packages/cli/src/commands/barometer.ts:106`*
+*Defined in `packages/cli/src/commands/barometer.ts:101`*
 
 ```typescript
 BarometerResult
@@ -5764,7 +5794,7 @@ Full barometer output written to `.forge/barometer.json`.
 
 #### `$schema`
 
-*Defined in `packages/cli/src/commands/barometer.ts:108`*
+*Defined in `packages/cli/src/commands/barometer.ts:103`*
 
 ```typescript
 string
@@ -5774,7 +5804,7 @@ JSON schema URL.
 
 #### `version`
 
-*Defined in `packages/cli/src/commands/barometer.ts:110`*
+*Defined in `packages/cli/src/commands/barometer.ts:105`*
 
 ```typescript
 string
@@ -5784,7 +5814,7 @@ Barometer format version.
 
 #### `project`
 
-*Defined in `packages/cli/src/commands/barometer.ts:112`*
+*Defined in `packages/cli/src/commands/barometer.ts:107`*
 
 ```typescript
 string
@@ -5794,7 +5824,7 @@ Project name from package.json or config.
 
 #### `generated`
 
-*Defined in `packages/cli/src/commands/barometer.ts:114`*
+*Defined in `packages/cli/src/commands/barometer.ts:109`*
 
 ```typescript
 string
@@ -5804,7 +5834,7 @@ ISO 8601 timestamp of when the barometer was generated.
 
 #### `symbolCount`
 
-*Defined in `packages/cli/src/commands/barometer.ts:116`*
+*Defined in `packages/cli/src/commands/barometer.ts:111`*
 
 ```typescript
 number
@@ -5814,7 +5844,7 @@ Total number of exported symbols analyzed.
 
 #### `questions`
 
-*Defined in `packages/cli/src/commands/barometer.ts:118`*
+*Defined in `packages/cli/src/commands/barometer.ts:113`*
 
 ```typescript
 BarometerQuestion[]
@@ -5824,7 +5854,7 @@ Generated questions with ground-truth answers.
 
 #### `rubric`
 
-*Defined in `packages/cli/src/commands/barometer.ts:120`*
+*Defined in `packages/cli/src/commands/barometer.ts:115`*
 
 ```typescript
 { scale: BarometerRatingBand[]; scoring: string; }
@@ -5834,7 +5864,7 @@ Scoring rubric for evaluating documentation effectiveness.
 
 ### `BarometerArgs`
 
-*Defined in `packages/cli/src/commands/barometer.ts:133`*
+*Defined in `packages/cli/src/commands/barometer.ts:128`*
 
 ```typescript
 BarometerArgs
@@ -5844,7 +5874,7 @@ Arguments for the `barometer` command.
 
 #### `cwd`
 
-*Defined in `packages/cli/src/commands/barometer.ts:135`*
+*Defined in `packages/cli/src/commands/barometer.ts:130`*
 
 ```typescript
 string | undefined
@@ -5854,7 +5884,7 @@ Project root directory (default: cwd).
 
 #### `questionsOnly`
 
-*Defined in `packages/cli/src/commands/barometer.ts:137`*
+*Defined in `packages/cli/src/commands/barometer.ts:132`*
 
 ```typescript
 boolean | undefined
@@ -5864,7 +5894,7 @@ Output only questions (no answers) for test agents.
 
 #### `mvi`
 
-*Defined in `packages/cli/src/commands/barometer.ts:139`*
+*Defined in `packages/cli/src/commands/barometer.ts:134`*
 
 ```typescript
 string | undefined
@@ -10383,7 +10413,7 @@ Citty command definition for `forge-ts audit`.
 
 ### `barometerCommand`
 
-*Defined in `packages/cli/src/commands/barometer.ts:751`*
+*Defined in `packages/cli/src/commands/barometer.ts:862`*
 
 ```typescript
 import("citty").CommandDef<{ readonly cwd: { readonly type: "string"; readonly description: "Project root directory"; }; readonly "questions-only": { readonly type: "boolean"; readonly description: "Output only questions (no answers) — for test agents"; readonly default: false; }; readonly json: { readonly type: "boolean"; readonly description: "Output as LAFS JSON envelope"; readonly default: false; }; readonly human: { readonly type: "boolean"; readonly description: "Output as formatted text"; readonly default: false; }; readonly quiet: { readonly type: "boolean"; readonly description: "Suppress non-essential output"; readonly default: false; }; readonly mvi: { readonly type: "string"; readonly description: "MVI verbosity level: minimal, standard, full"; }; }>

@@ -98,38 +98,41 @@ RuleSeverity
 
 ## EnforceRules
 
-Per-rule severity configuration for the TSDoc enforcer. 37 rules across 4 layers: API (E001-E008, W003-W004), Dev (E013-E015, E017-E018, W005-W006, W009), Consumer (E016, W007-W008, W010-W011), LLM Anti-Pattern (E019-E020, W012-W013), Staleness (W014-W017).
+Per-rule severity configuration for the TSDoc enforcer. 40 rules across 5 layers: API (E001-E008, W003-W004), Dev (E013-E015, E017-E018, W005-W006, W009), Consumer (E016, W007-W008, W010-W011), LLM Anti-Pattern (E019-E020, W012-W013), Staleness (W014-W017), CKM Truthfulness (W018-W020).
 
-| Property                         | Type           | Required | Description                                                                                |
-| -------------------------------- | -------------- | -------- | ------------------------------------------------------------------------------------------ |
-| `"require-summary"`              | `RuleSeverity` | Yes      | E001: Exported symbol missing TSDoc summary.                                               |
-| `"require-param"`                | `RuleSeverity` | Yes      | E002: Function parameter missing `\@param` tag.                                            |
-| `"require-returns"`              | `RuleSeverity` | Yes      | E003: Non-void function missing `\@returns` tag.                                           |
-| `"require-example"`              | `RuleSeverity` | Yes      | E004: Exported function missing `\@example` block.                                         |
-| `"require-package-doc"`          | `RuleSeverity` | Yes      | E005: Entry point missing `\@packageDocumentation`.                                        |
-| `"require-class-member-doc"`     | `RuleSeverity` | Yes      | E006: Class member missing documentation.                                                  |
-| `"require-interface-member-doc"` | `RuleSeverity` | Yes      | E007: Interface/type member missing documentation.                                         |
-| `"require-tsdoc-syntax"`         | `RuleSeverity` | Yes      | W006: TSDoc syntax parse error (invalid tag, malformed block, etc.).                       |
-| `"require-remarks"`              | `RuleSeverity` | Yes      | E013: Exported function/class is missing a `\@remarks` block.                              |
-| `"require-default-value"`        | `RuleSeverity` | Yes      | E014: Optional property with default is missing `\@defaultValue`.                          |
-| `"require-type-param"`           | `RuleSeverity` | Yes      | E015: Generic symbol is missing `\@typeParam` for its type parameters.                     |
-| `"require-see"`                  | `RuleSeverity` | Yes      | W005: Symbol references other symbols via `\@link` but has no `\@see` tags.                |
-| `"require-release-tag"`          | `RuleSeverity` | Yes      | E016: Exported symbol is missing a release tag (`\@public`, `\@beta`, `\@internal`).       |
-| `"require-fresh-guides"`         | `RuleSeverity` | Yes      | W007: Guide FORGE:AUTO section references a symbol that no longer exists or has changed.   |
-| `"require-guide-coverage"`       | `RuleSeverity` | Yes      | W008: Exported public symbol is not mentioned in any guide page.                           |
-| `"require-internal-boundary"`    | `RuleSeverity` | Yes      | E017: `\@internal` symbol re-exported through public barrel (index.ts).                    |
-| `"require-route-response"`       | `RuleSeverity` | Yes      | E018: `\@route`-tagged function missing `\@response` tag.                                  |
-| `"require-inheritdoc-source"`    | `RuleSeverity` | Yes      | W009: `\@inheritDoc` references a symbol that does not exist.                              |
-| `"require-migration-path"`       | `RuleSeverity` | Yes      | W010: `\@breaking` without `\@migration` path.                                             |
-| `"require-since"`                | `RuleSeverity` | Yes      | W011: New public export missing `\@since` version tag.                                     |
-| `"require-fresh-examples"`       | `RuleSeverity` | Yes      | W013: `\@example` block may be stale — function call arg count mismatches parameter count. |
-| `"require-no-ts-ignore"`         | `RuleSeverity` | Yes      | E019: Non-test file contains ts-ignore or ts-expect-error directive.                       |
-| `"require-no-any-in-api"`        | `RuleSeverity` | Yes      | E020: Exported symbol has `any` in its public API signature.                               |
-| `"require-fresh-link-text"`      | `RuleSeverity` | Yes      | W012: `\@link` display text appears stale relative to target summary.                      |
-| `"require-fresh-params"`         | `RuleSeverity` | Yes      | W014: `\@param` name in TSDoc does not match actual parameter name in signature.           |
-| `"require-param-count"`          | `RuleSeverity` | Yes      | W015: `\@param` count in TSDoc does not match actual parameter count in signature.         |
-| `"require-fresh-returns"`        | `RuleSeverity` | Yes      | W016: `\@returns` tag present on a void/Promisevoid function.                              |
-| `"require-meaningful-remarks"`   | `RuleSeverity` | Yes      | W017: `\@remarks` block is empty or contains only placeholder text.                        |
+| Property                           | Type           | Required | Description                                                                                                                |
+| ---------------------------------- | -------------- | -------- | -------------------------------------------------------------------------------------------------------------------------- |
+| `"require-summary"`                | `RuleSeverity` | Yes      | E001: Exported symbol missing TSDoc summary.                                                                               |
+| `"require-param"`                  | `RuleSeverity` | Yes      | E002: Function parameter missing `\@param` tag.                                                                            |
+| `"require-returns"`                | `RuleSeverity` | Yes      | E003: Non-void function missing `\@returns` tag.                                                                           |
+| `"require-example"`                | `RuleSeverity` | Yes      | E004: Exported function missing `\@example` block.                                                                         |
+| `"require-package-doc"`            | `RuleSeverity` | Yes      | E005: Entry point missing `\@packageDocumentation`.                                                                        |
+| `"require-class-member-doc"`       | `RuleSeverity` | Yes      | E006: Class member missing documentation.                                                                                  |
+| `"require-interface-member-doc"`   | `RuleSeverity` | Yes      | E007: Interface/type member missing documentation.                                                                         |
+| `"require-tsdoc-syntax"`           | `RuleSeverity` | Yes      | W006: TSDoc syntax parse error (invalid tag, malformed block, etc.).                                                       |
+| `"require-remarks"`                | `RuleSeverity` | Yes      | E013: Exported function/class is missing a `\@remarks` block.                                                              |
+| `"require-default-value"`          | `RuleSeverity` | Yes      | E014: Optional property with default is missing `\@defaultValue`.                                                          |
+| `"require-type-param"`             | `RuleSeverity` | Yes      | E015: Generic symbol is missing `\@typeParam` for its type parameters.                                                     |
+| `"require-see"`                    | `RuleSeverity` | Yes      | W005: Symbol references other symbols via `\@link` but has no `\@see` tags.                                                |
+| `"require-release-tag"`            | `RuleSeverity` | Yes      | E016: Exported symbol is missing a release tag (`\@public`, `\@beta`, `\@internal`).                                       |
+| `"require-fresh-guides"`           | `RuleSeverity` | Yes      | W007: Guide FORGE:AUTO section references a symbol that no longer exists or has changed.                                   |
+| `"require-guide-coverage"`         | `RuleSeverity` | Yes      | W008: Exported public symbol is not mentioned in any guide page.                                                           |
+| `"require-internal-boundary"`      | `RuleSeverity` | Yes      | E017: `\@internal` symbol re-exported through public barrel (index.ts).                                                    |
+| `"require-route-response"`         | `RuleSeverity` | Yes      | E018: `\@route`-tagged function missing `\@response` tag.                                                                  |
+| `"require-inheritdoc-source"`      | `RuleSeverity` | Yes      | W009: `\@inheritDoc` references a symbol that does not exist.                                                              |
+| `"require-migration-path"`         | `RuleSeverity` | Yes      | W010: `\@breaking` without `\@migration` path.                                                                             |
+| `"require-since"`                  | `RuleSeverity` | Yes      | W011: New public export missing `\@since` version tag.                                                                     |
+| `"require-fresh-examples"`         | `RuleSeverity` | Yes      | W013: `\@example` block may be stale — function call arg count mismatches parameter count.                                 |
+| `"require-no-ts-ignore"`           | `RuleSeverity` | Yes      | E019: Non-test file contains ts-ignore or ts-expect-error directive.                                                       |
+| `"require-no-any-in-api"`          | `RuleSeverity` | Yes      | E020: Exported symbol has `any` in its public API signature.                                                               |
+| `"require-fresh-link-text"`        | `RuleSeverity` | Yes      | W012: `\@link` display text appears stale relative to target summary.                                                      |
+| `"require-fresh-params"`           | `RuleSeverity` | Yes      | W014: `\@param` name in TSDoc does not match actual parameter name in signature.                                           |
+| `"require-param-count"`            | `RuleSeverity` | Yes      | W015: `\@param` count in TSDoc does not match actual parameter count in signature.                                         |
+| `"require-fresh-returns"`          | `RuleSeverity` | Yes      | W016: `\@returns` tag present on a void/Promisevoid function.                                                              |
+| `"require-meaningful-remarks"`     | `RuleSeverity` | Yes      | W017: `\@remarks` block is empty or contains only placeholder text.                                                        |
+| `"require-operation-completeness"` | `RuleSeverity` | Yes      | W018: `\@operation`-tagged function missing required CKM documentation (`\@param`, `\@returns`, `\@remarks`, `\@example`). |
+| `"require-ckm-tag-content"`        | `RuleSeverity` | Yes      | W019: CKM tag (`\@operation`, `\@constraint`, `\@workflow`, `\@concept`) has empty or insufficient content.                |
+| `"require-constraint-throws"`      | `RuleSeverity` | Yes      | W020: `\@constraint`-tagged symbol missing `\@throws` to document constraint violation error.                              |
 
 ## ForgeConfig
 

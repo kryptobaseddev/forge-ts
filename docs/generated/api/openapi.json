@@ -2,7 +2,7 @@
   "openapi": "3.2.0",
   "info": {
     "title": "forge-ts",
-    "version": "0.21.0",
+    "version": "0.21.1",
     "description": "Universal TypeScript documentation compiler — enforces TSDoc as a build gate, then generates all artifacts from source in one pass"
   },
   "tags": [
@@ -327,7 +327,7 @@
         "type": "object"
       },
       "EnforceRules": {
-        "description": "Per-rule severity configuration for the TSDoc enforcer. 37 rules across 4 layers: API (E001-E008, W003-W004), Dev (E013-E015, E017-E018, W005-W006, W009), Consumer (E016, W007-W008, W010-W011), LLM Anti-Pattern (E019-E020, W012-W013), Staleness (W014-W017).",
+        "description": "Per-rule severity configuration for the TSDoc enforcer. 40 rules across 5 layers: API (E001-E008, W003-W004), Dev (E013-E015, E017-E018, W005-W006, W009), Consumer (E016, W007-W008, W010-W011), LLM Anti-Pattern (E019-E020, W012-W013), Staleness (W014-W017), CKM Truthfulness (W018-W020).",
         "type": "object",
         "properties": {
           "\"require-summary\"": {
@@ -441,6 +441,18 @@
           "\"require-meaningful-remarks\"": {
             "type": "object",
             "description": "W017: `\\@remarks` block is empty or contains only placeholder text."
+          },
+          "\"require-operation-completeness\"": {
+            "type": "object",
+            "description": "W018: `\\@operation`-tagged function missing required CKM documentation (`\\@param`, `\\@returns`, `\\@remarks`, `\\@example`)."
+          },
+          "\"require-ckm-tag-content\"": {
+            "type": "object",
+            "description": "W019: CKM tag (`\\@operation`, `\\@constraint`, `\\@workflow`, `\\@concept`) has empty or insufficient content."
+          },
+          "\"require-constraint-throws\"": {
+            "type": "object",
+            "description": "W020: `\\@constraint`-tagged symbol missing `\\@throws` to document constraint violation error."
           }
         },
         "required": [
@@ -471,7 +483,10 @@
           "\"require-fresh-params\"",
           "\"require-param-count\"",
           "\"require-fresh-returns\"",
-          "\"require-meaningful-remarks\""
+          "\"require-meaningful-remarks\"",
+          "\"require-operation-completeness\"",
+          "\"require-ckm-tag-content\"",
+          "\"require-constraint-throws\""
         ]
       },
       "ForgeConfig": {

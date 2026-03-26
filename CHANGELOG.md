@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.21.1] - 2026-03-26
+
+### Added
+- CKM enforcement rules: W018 (operation completeness), W019 (CKM tag content), W020 (constraint @throws)
+- 40 enforcement rules total (was 37)
+
+### Fixed
+- Biome schema migration 2.4.8 to 2.4.9 (CI lint failure)
+
 ## [0.21.0] - 2026-03-26
 
 ### Added

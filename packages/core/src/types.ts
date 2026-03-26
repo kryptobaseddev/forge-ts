@@ -83,9 +83,9 @@ export type RuleSeverity = "error" | "warn" | "off";
 
 /**
  * Per-rule severity configuration for the TSDoc enforcer.
- * 37 rules across 4 layers: API (E001-E008, W003-W004), Dev (E013-E015, E017-E018, W005-W006, W009),
+ * 40 rules across 5 layers: API (E001-E008, W003-W004), Dev (E013-E015, E017-E018, W005-W006, W009),
  * Consumer (E016, W007-W008, W010-W011), LLM Anti-Pattern (E019-E020, W012-W013),
- * Staleness (W014-W017).
+ * Staleness (W014-W017), CKM Truthfulness (W018-W020).
  * @since 0.1.0
  * @public
  */
@@ -146,6 +146,12 @@ export interface EnforceRules {
 	"require-fresh-returns": RuleSeverity;
 	/** W017: `\@remarks` block is empty or contains only placeholder text. */
 	"require-meaningful-remarks": RuleSeverity;
+	/** W018: `\@operation`-tagged function missing required CKM documentation (`\@param`, `\@returns`, `\@remarks`, `\@example`). */
+	"require-operation-completeness": RuleSeverity;
+	/** W019: CKM tag (`\@operation`, `\@constraint`, `\@workflow`, `\@concept`) has empty or insufficient content. */
+	"require-ckm-tag-content": RuleSeverity;
+	/** W020: `\@constraint`-tagged symbol missing `\@throws` to document constraint violation error. */
+	"require-constraint-throws": RuleSeverity;
 }
 
 /**

@@ -1,5 +1,18 @@
 # @forge-ts/enforcer
 
+## 0.21.1
+
+### Patch Changes
+
+- Add CKM enforcement rules W018-W020 to prevent hallucination in generated knowledge manifests
+
+  - W018: @operation-tagged functions must have complete docs (params, returns, remarks, example)
+  - W019: CKM tags (@operation, @constraint, @workflow, @concept) must have meaningful content (min 10 chars)
+  - W020: @constraint-tagged functions should have @throws documenting violation errors
+
+- Updated dependencies []:
+  - @forge-ts/core@0.21.1
+
 ## 0.21.0
 
 ### Minor Changes

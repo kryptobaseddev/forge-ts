@@ -33,8 +33,10 @@ npx forge-ts build             # Generate all artifacts
 npx forge-ts init docs         # Scaffold SSG site
 npx forge-ts init hooks        # Scaffold pre-commit hooks (husky/lefthook)
 npx forge-ts docs dev          # Launch dev server
+npx forge-ts doctor            # Validate project setup
 npx forge-ts lock              # Snapshot config to prevent drift
 npx forge-ts prepublish        # Safety gate: check + build
+npx forge-ts version           # Print version
 ```
 
 ## Fixing TSDoc Errors (Agent Workflow)
@@ -95,6 +97,9 @@ Returns only counts (~50 tokens). Repeat from step 1 when ready.
 | `--mvi standard` | Triage + byFile without suggestedFix (default) |
 | `--mvi full` | Triage + byFile with suggestedFix |
 | `--strict` | Treat warnings as errors |
+| `--staged` | Only check files in the git staging area |
+| `--cwd <dir>` | Set the project root directory |
+| `--verbose` | Show verbose output |
 
 ## CLI Commands
 
@@ -112,7 +117,8 @@ Returns only counts (~50 tokens). Repeat from step 1 when ready.
 | `forge-ts bypass --reason` | Create temporary rule bypass. Subject to daily budget. |
 | `forge-ts audit` | Display append-only audit trail from `.forge-audit.jsonl`. |
 | `forge-ts prepublish` | Safety gate: runs `check` + `build`. Non-zero exit on failure. |
-| `forge-ts doctor` | Validate project setup: checks Husky hooks, prepare script, tsdoc.json, config. |
+| `forge-ts doctor` | Validate project setup: checks Husky hooks, prepare script, tsdoc.json, config. Supports `--fix`. |
+| `forge-ts version` | Print the forge-ts version. Also: `--version`, `-V`, `-v`. |
 
 All commands support `--json` (LAFS envelope), `--human`, `--quiet`, `--mvi`.
 

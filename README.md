@@ -136,6 +136,25 @@ The barometer generates questions from your code, produces an answer key, and sc
 
 ---
 
+## Agent-First Design
+
+forge-ts is built for LLM agent pipelines. Every command supports `--json` output with LAFS envelopes and machine-readable exit codes.
+
+```bash
+# Structured JSON output for agents and CI
+forge-ts check --json
+
+# Token-efficient minimal output for agentic loops
+forge-ts check --mvi minimal
+
+# Feed generated context directly to your agent
+cat docs/generated/llms-full.txt | your-agent-cli
+```
+
+The `llms.txt` and `llms-full.txt` outputs follow the [llms.txt standard](https://llmstxt.org), giving any AI assistant accurate, up-to-date context about your project's API surface — including `@remarks` implementation details — without hallucination.
+
+---
+
 ## Configuration
 
 Zero-config by default. Optionally create `forge-ts.config.ts`:
@@ -144,15 +163,31 @@ Zero-config by default. Optionally create `forge-ts.config.ts`:
 import { defineConfig } from "@forge-ts/core";
 
 export default defineConfig({
+  rootDir: ".",
+  outDir: "./docs/generated",
   enforce: {
+    enabled: true,
+    minVisibility: "public",
+    strict: false,
     rules: {
       "require-example": "warn",
       "require-remarks": "error",
     },
   },
+  doctest: {
+    enabled: true,
+    cacheDir: ".cache/doctest",
+  },
+  api: {
+    enabled: true,
+    openapi: true,
+    openapiPath: "./docs/generated/openapi.json",
+  },
   gen: {
+    enabled: true,
     formats: ["markdown"],
     llmsTxt: true,
+    readmeSync: false,
     ssgTarget: "mintlify",
   },
 });
@@ -181,6 +216,100 @@ export default defineConfig({
 | `forge-ts version` | Print version. Also `-V`, `-v`. |
 
 All commands support `--json` (LAFS envelope), `--human`, `--quiet`, `--mvi`.
+
+### `forge-ts check`
+
+Validates TSDoc coverage across all public exports. Use as a CI build gate.
+
+```bash
+forge-ts check [--strict] [--staged] [--verbose] [--rule E001] [--file src/] [--cwd <dir>]
+```
+
+| Flag | Description |
+|------|-------------|
+| `--strict` | Treat warnings as errors |
+| `--staged` | Only check git-staged `.ts`/`.tsx` files (fast pre-commit) |
+| `--rule E001` | Filter to a specific rule code |
+| `--file src/types.ts` | Filter to files matching substring |
+| `--limit 20` | Max file groups per page (pagination) |
+| `--mvi minimal` | Counts only (~50 tokens) |
+| `--mvi full` | Full details with `suggestedFix` |
+
+### `forge-ts test`
+
+Extracts `@example` blocks and runs them as tests via Node 24's built-in `node:test` runner.
+
+```bash
+forge-ts test [--cwd <dir>]
+```
+
+### `forge-ts build`
+
+Generates all outputs in a single AST traversal.
+
+```bash
+forge-ts build [--skip-api] [--skip-gen] [--force-stubs] [--cwd <dir>]
+```
+
+| Flag | Description |
+|------|-------------|
+| `--skip-api` | Skip OpenAPI spec generation |
+| `--skip-gen` | Skip Markdown/MDX and llms.txt generation |
+| `--force-stubs` | Overwrite stub pages (reset to scaffolding) |
+
+---
+
+## SSG Targets
+
+Set `gen.ssgTarget` in your config to target your documentation platform:
+
+| Target | Output Format | Description |
+|--------|--------------|-------------|
+| `"mintlify"` | MDX | Mintlify docs.json navigation (default) |
+| `"docusaurus"` | MDX | Docusaurus sidebar config |
+| `"nextra"` | MDX | Nextra v4 App Router with `_meta.json` |
+| `"vitepress"` | Markdown | VitePress `.vitepress/config.mts` |
+
+---
+
+## Supported TSDoc Tags
+
+### Standard Tags (enforced)
+
+| Tag | Description |
+|-----|-------------|
+| `@param` | Parameter documentation (E002) |
+| `@returns` | Return value documentation (E003) |
+| `@throws` | Exception documentation |
+| `@example` | Executable code example — becomes a doctest (E004) |
+| `@remarks` | Implementation details for agents (E013) |
+| `@defaultValue` | Default value for optional properties (E014) |
+| `@typeParam` | Generic type parameter documentation (E015) |
+| `@public` | Mark as public API (E016 requires one of public/beta/internal) |
+| `@beta` | Mark as beta / unstable |
+| `@internal` | Exclude from generated docs |
+| `@deprecated` | Mark as deprecated with explanation (W003) |
+| `@see` | Cross-reference to related symbols (W005) |
+| `@since` | Version when symbol was introduced (W011) |
+
+### Custom Tags (15 tags via `@forge-ts/core/tsdoc-preset`)
+
+| Tag | Kind | Description |
+|-----|------|-------------|
+| `@route` | block | HTTP route path for OpenAPI (e.g., `@route GET /api/users`) |
+| `@category` | block | Symbol grouping for guide discovery |
+| `@guide` | block | Associates symbol with a named guide page |
+| `@concept` | block | Links symbol to a concepts page section |
+| `@response` | block | HTTP response type/status for OpenAPI |
+| `@query` | block | Query parameter documentation |
+| `@header` | block | HTTP header documentation |
+| `@body` | block | Request body schema |
+| `@quickstart` | modifier | "Start here" marker |
+| `@faq` | block | FAQ entry association |
+| `@breaking` | block | Breaking change documentation (W010 requires `@migration`) |
+| `@migration` | block | Migration path from old API |
+| `@complexity` | block | Algorithmic complexity |
+| `@forgeIgnore` | modifier | Skip all enforcement on this symbol |
 
 ---
 

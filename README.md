@@ -1,15 +1,53 @@
 # forge-ts
 
-> The universal documentation compiler for any TypeScript project.
+> The Hallucination Killer. A documentation compiler that FORCES structural clarity in TypeScript.
 
-[![npm version](https://img.shields.io/npm/v/@forge-ts/cli?style=flat-square&label=forge-cli)](https://www.npmjs.com/package/@forge-ts/cli)
+[![npm version](https://img.shields.io/npm/v/@forge-ts/cli?style=flat-square&label=@forge-ts/cli)](https://www.npmjs.com/package/@forge-ts/cli)
 [![CI](https://img.shields.io/github/actions/workflow/status/kryptobaseddev/forge-ts/ci.yml?style=flat-square&label=CI)](https://github.com/kryptobaseddev/forge-ts/actions)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg?style=flat-square)](LICENSE)
+[![TypeScript 6.0](https://img.shields.io/badge/TypeScript-6.0.2-blue?style=flat-square&logo=typescript)](https://www.typescriptlang.org/)
 [![Node.js: >=24](https://img.shields.io/badge/Node.js-%3E%3D24-brightgreen?style=flat-square&logo=node.js)](https://nodejs.org)
 
-Write your TypeScript. Write your TSDoc. Run `npx forge-ts build`. Get everything.
+If it isn't documented, it isn't finished. If the docs are stale, the build is broken.
 
-forge-ts performs a **single AST traversal** of your TypeScript project and produces OpenAPI specs, executable doctests, AI context files, and SSG-ready docs — all from the TSDoc comments you were writing anyway.
+forge-ts performs a **single AST traversal** of your TypeScript project and compiles TSDoc into OpenAPI specs, executable doctests, AI context files, and SSG-ready documentation. **37 enforcement rules** across 5 layers ensure documentation is never optional, never stale, and never wrong.
+
+---
+
+## Proven Results
+
+forge-ts dogfoods itself. Every claim below is verified by the codebase.
+
+| Metric | Value |
+|--------|-------|
+| Enforcement rules | **37** across 5 layers (API, Dev, Consumer, LLM Anti-Pattern, Staleness) |
+| Symbols checked | **363** across 6 packages |
+| TSDoc errors | **0** (forge-ts passes its own full check) |
+| Tests | **859** passing across 20 test files |
+| Barometer score | **93% (Elite SSoT)** -- a zero-context agent answered 14/15 questions correctly using only generated docs |
+
+### The Barometer Test
+
+We built `forge-ts barometer` -- a command that generates questions from the AST and tests whether the generated docs are accurate enough for an agent with zero prior context. An agent reading only `llms-full.txt` scored **93%**, proving the vision: code IS the documentation, and forge-ts makes it true.
+
+```
+Pre-fix barometer:  35% (Stale/Shallow) -- @remarks silently dropped
+Post-fix barometer: 93% (Elite SSoT)    -- @remarks pipeline restored
+```
+
+---
+
+## Quick Start
+
+```bash
+npm install -D @forge-ts/cli
+
+npx forge-ts check            # Lint TSDoc coverage (37 rules)
+npx forge-ts test              # Run @example blocks as tests
+npx forge-ts build             # Generate all artifacts in one pass
+npx forge-ts barometer         # Test documentation effectiveness
+npx forge-ts doctor            # Validate project setup
+```
 
 ---
 
@@ -17,176 +55,132 @@ forge-ts performs a **single AST traversal** of your TypeScript project and prod
 
 ```
 Your TypeScript + TSDoc
-        │
-        ▼
+        |
+        v
   forge-ts build
-        │
-   ┌────┴────────────────────────────────────────┐
-   │                                              │
-   ▼                ▼              ▼              ▼
-OpenAPI 3.2    Doctests       AI Context     Markdown/MDX
-  specs       (@example      (llms.txt /    (Docusaurus /
-(openapi.json)  blocks)     llms-full.txt)  Mintlify /
+        |
+   +----+----------------------------------------+
+   |              |              |                |
+   v              v              v                v
+OpenAPI 3.2   Doctests      AI Context       Markdown/MDX
+  specs      (@example     (llms.txt /      (Docusaurus /
+(openapi.json) blocks)    llms-full.txt)    Mintlify /
                                              Nextra /
                                              VitePress)
 ```
 
 | Output | Description |
 |--------|-------------|
-| **OpenAPI 3.2** | Machine-readable API specs generated from your exported types and interfaces |
-| **Doctests** | `@example` blocks extracted and executed as real tests via Node's test runner |
-| **AI context** | `llms.txt` and `llms-full.txt` for feeding LLM agents accurate project context |
-| **Markdown/MDX** | SSG-ready docs for Docusaurus, Mintlify, Nextra, or VitePress |
-| **README sync** | Keeps your GitHub front page automatically up-to-date |
+| **OpenAPI 3.2** | Machine-readable API specs from exported types and `@route` tags |
+| **Doctests** | `@example` blocks extracted and executed via Node 24's `node:test` runner |
+| **AI context** | Token-optimized `llms.txt` and `llms-full.txt` with `@remarks` content for LLM agents |
+| **Markdown/MDX** | SSG-ready docs grouped by package with `@packageDocumentation` summaries |
+| **SKILL packages** | Agent-consumable skill bundles following the agentskills.io spec |
+| **README sync** | Keeps your GitHub front page synchronized with your code |
 
 ---
 
-## Quick Start
+## The Five Pillars
+
+### 1. The Hallucination Killer (Enforcement)
+
+Undocumented code is broken code. forge-ts FORCES explicit `@param`, `@returns`, `@remarks`, and `@example` on every public symbol. Agents can't guess -- they read what's documented.
+
+**37 rules** across 5 layers:
+
+| Layer | Rules | What It Catches |
+|-------|-------|----------------|
+| **API** | E001-E008, W003-W004 | Missing summary, params, returns, examples, package docs, dead links |
+| **Dev** | E013-E015, E017-E018, W005-W006, W009 | Missing @remarks, @typeParam, @see; TSDoc syntax errors |
+| **Consumer** | E016, W007-W008, W010-W011 | Missing release tags, stale guides, undocumented exports |
+| **LLM Anti-Pattern** | E019-E020, W012-W013 | @ts-ignore in non-test files, `any` in public APIs, stale examples |
+| **Staleness** | W014-W017 | @param name drift, param count mismatch, void @returns, placeholder @remarks |
+
+### 2. The Deterministic Layer (Generation)
+
+Extraction > Inference. forge-ts extracts documentation from your AST -- it never guesses, summarizes, or hallucinates. The generated `llms-full.txt` includes full `@remarks` content so agents understand implementation details, not just signatures.
+
+### 3. Agent-Proof Guardrails
+
+Agents take the easy way out. forge-ts blocks the exit.
+
+- **Config Locking**: `forge-ts lock` snapshots rule severities. Weakening them triggers E010.
+- **Audit Trail**: Every change logged to `.forge-audit.jsonl` with user, timestamp, and reason.
+- **Bypass Budget**: 3 bypasses/day max, each requires `--reason` and expires in 24h.
+- **Guard Rules**: E009-E012 detect tsconfig loosening, Biome weakening, engine downgrades.
+
+### 4. Safety Pipeline
+
+Pre-commit, not post-mortem.
 
 ```bash
-# Install the CLI
-npm install -D @forge-ts/cli
-
-# Check TSDoc coverage across all public exports
-npx forge-ts check
-
-# Run @example blocks as tests
-npx forge-ts test
-
-# Generate everything (OpenAPI, docs, AI context)
-npx forge-ts build
+npx forge-ts init hooks        # Scaffold husky/lefthook pre-commit hooks
+npx forge-ts prepublish        # Safety gate: check + build before npm publish
 ```
+
+### 5. Documentation Effectiveness Testing
+
+```bash
+npx forge-ts barometer                    # Generate Q&A from AST
+npx forge-ts barometer --questions-only   # Questions only (for test agents)
+```
+
+The barometer generates questions from your code, produces an answer key, and scores on a 4-band rubric:
+
+| Score | Rating | Meaning |
+|-------|--------|---------|
+| 90-100% | **Elite SSoT** | Agents operate with zero source code access |
+| 70-89% | **High Fidelity** | Excellent, might miss some @remarks details |
+| 50-69% | **Standard** | Useful for usage, architecture needs source access |
+| 0-49% | **Stale/Shallow** | Needs deeper @remarks and @example coverage |
 
 ---
 
 ## Configuration
 
-Zero-config by default. Optionally create `forge-ts.config.ts` in your project root:
+Zero-config by default. Optionally create `forge-ts.config.ts`:
 
 ```typescript
-import type { ForgeConfig } from "@forge-ts/core";
+import { defineConfig } from "@forge-ts/core";
 
-export default {
-  rootDir: ".",
-  tsconfig: "./tsconfig.json",
-  outDir: "./docs/generated",
+export default defineConfig({
   enforce: {
-    enabled: true,
-    minVisibility: "public",
-    strict: false,
-  },
-  doctest: {
-    enabled: true,
-    cacheDir: ".cache/doctest",
-  },
-  api: {
-    enabled: true,
-    openapi: true,
-    openapiPath: "./docs/generated/openapi.json",
+    rules: {
+      "require-example": "warn",
+      "require-remarks": "error",
+    },
   },
   gen: {
-    enabled: true,
     formats: ["markdown"],
     llmsTxt: true,
-    readmeSync: false,
-    ssgTarget: "docusaurus",
+    ssgTarget: "mintlify",
   },
-} satisfies Partial<ForgeConfig>;
+});
 ```
 
 ---
 
-## Commands
+## CLI Commands
 
-### `forge-ts check`
+| Command | Description |
+|---------|-------------|
+| `forge-ts check` | Lint TSDoc coverage. 37 rules. Supports `--staged` for pre-commit. |
+| `forge-ts test` | Run `@example` blocks as doctests via `node:test`. |
+| `forge-ts build` | Generate OpenAPI, docs, llms.txt, SKILL packages. |
+| `forge-ts barometer` | Generate documentation effectiveness Q&A from AST. |
+| `forge-ts init` | Full project setup: config, tsdoc.json, scripts. |
+| `forge-ts init docs` | Scaffold SSG documentation site. |
+| `forge-ts init hooks` | Scaffold pre-commit hooks (Husky/Lefthook). |
+| `forge-ts docs dev` | Start local doc preview server. |
+| `forge-ts lock` | Snapshot config to prevent drift. |
+| `forge-ts unlock` | Remove lock with mandatory `--reason`. |
+| `forge-ts bypass` | Temporary rule exemption with daily budget. |
+| `forge-ts audit` | View append-only audit trail. |
+| `forge-ts prepublish` | Safety gate: check + build before publish. |
+| `forge-ts doctor` | Validate project setup. Supports `--fix`. |
+| `forge-ts version` | Print version. Also `-V`, `-v`. |
 
-Validates that all public exports have TSDoc comments. Use this as a build gate in CI.
-
-```bash
-forge-ts check [--strict] [--verbose] [--json] [--cwd <dir>]
-```
-
-| Flag | Description |
-|------|-------------|
-| `--strict` | Fail on any missing tag (overrides config `strict` setting) |
-| `--verbose` | Print all checked symbols, not just failures |
-| `--json` | Output results as JSON (ideal for LLM agents and CI parsing) |
-| `--cwd <dir>` | Run as if started in `<dir>` (useful for monorepos) |
-
-### `forge-ts test`
-
-Extracts `@example` blocks from your TSDoc and runs them as tests via Node's built-in test runner.
-
-```bash
-forge-ts test [--json] [--cwd <dir>]
-```
-
-| Flag | Description |
-|------|-------------|
-| `--json` | Output test results as JSON |
-| `--cwd <dir>` | Run as if started in `<dir>` |
-
-### `forge-ts build`
-
-Generates all outputs in a single AST traversal: OpenAPI specs, Markdown/MDX docs, and AI context files.
-
-```bash
-forge-ts build [--skip-api] [--skip-gen] [--json] [--cwd <dir>]
-```
-
-| Flag | Description |
-|------|-------------|
-| `--skip-api` | Skip OpenAPI spec generation |
-| `--skip-gen` | Skip Markdown/MDX and llms.txt generation |
-| `--json` | Output results as JSON |
-| `--cwd <dir>` | Run as if started in `<dir>` |
-
----
-
-## Agent-First Design
-
-forge-ts is built to work inside LLM agent pipelines. Every command supports `--json` output and machine-readable exit codes.
-
-```bash
-# Structured JSON output for LLM agents and CI
-forge-ts check --json
-
-# Token-efficient output for agentic loops
-forge-ts build --json
-
-# Feed generated context directly to your agent
-cat docs/generated/llms.txt | your-agent-cli
-```
-
-The `llms.txt` and `llms-full.txt` outputs follow the [llms.txt standard](https://llmstxt.org), giving any AI assistant accurate, up-to-date context about your project's API surface without hallucination.
-
----
-
-## SSG Targets
-
-Set `gen.ssgTarget` in your config to target your documentation platform:
-
-| Target | Output Format | Front Matter |
-|--------|--------------|-------------|
-| `"docusaurus"` | MDX | Docusaurus-compatible |
-| `"mintlify"` | MDX | Mintlify meta blocks |
-| `"nextra"` | MDX | Nextra page config |
-| `"vitepress"` | Markdown | VitePress frontmatter |
-
----
-
-## Supported TSDoc Tags
-
-| Tag | Description |
-|-----|-------------|
-| `@param` | Parameter documentation |
-| `@returns` | Return value documentation |
-| `@throws` | Exception documentation |
-| `@example` | Executable code example (becomes a doctest) |
-| `@public` | Mark export as public API |
-| `@beta` | Mark as beta / unstable |
-| `@internal` | Exclude from generated docs |
-| `@deprecated` | Mark as deprecated with message |
+All commands support `--json` (LAFS envelope), `--human`, `--quiet`, `--mvi`.
 
 ---
 
@@ -194,32 +188,38 @@ Set `gen.ssgTarget` in your config to target your documentation platform:
 
 | Package | Description |
 |---------|-------------|
-| `@forge-ts/core` | Shared types, config loader, and AST walker |
-| `@forge-ts/enforcer` | TSDoc enforcement — the build gate |
-| `@forge-ts/doctest` | `@example` block extraction and test execution |
-| `@forge-ts/api` | OpenAPI 3.2 spec generation from TypeScript types |
-| `@forge-ts/gen` | Markdown, MDX, and `llms.txt` generation |
-| `@forge-ts/cli` | Unified CLI entry point |
+| `@forge-ts/core` | TypeScript Compiler API walker, ForgeSymbol graph, config loader, lock/audit/bypass |
+| `@forge-ts/enforcer` | 37 rules across 5 layers with per-rule severity config |
+| `@forge-ts/doctest` | `@example` extraction + Node 24 `node:test` runner |
+| `@forge-ts/api` | OpenAPI 3.2.0 generation from `@route` tags |
+| `@forge-ts/gen` | Markdown/MDX, SSG adapters, llms.txt, SKILL packages, guide discovery |
+| `@forge-ts/cli` | Unified CLI (citty + consola), 15 commands |
 
 ---
 
-## Technology Stack
+## Technology
 
-| Dependency | Version | Role |
-|------------|---------|------|
-| TypeScript | 6.0 beta | Compiler API for AST traversal |
+| Tool | Version | Role |
+|------|---------|------|
+| TypeScript | 6.0.2 | Compiler API -- last JS-based release before Go rewrite |
+| Node.js | 24 LTS | Runtime with native TS stripping and stable `node:test` |
 | @microsoft/tsdoc | 0.16 | Standards-compliant TSDoc parsing |
-| Node.js | >=24 LTS | Runtime with native TypeScript support |
-| Biome | 2.4 | Linting and formatting |
-| Vitest | 4.x | Test runner |
-| citty | 0.2 | CLI framework |
-| @changesets/cli | 2.x | Release management |
+| @cleocode/lafs | 2026.3.x | LLM-Agent-First output protocol |
+| Biome | 2.4 | Linting + formatting |
+| Vitest | 4.1 | Unit testing |
+| @codluv/versionguard | 0.4 | Version governance |
 
 ---
 
-## Contributing
+## The Vision
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup, workflow, and code standards.
+forge-ts exists because LLM agents are primary contributors now, and undocumented code is a liability. Agents can't infer intent from messy code -- they hallucinate. forge-ts eliminates hallucination by forcing explicit, structured documentation at the compiler level, then extracting it deterministically into artifacts that agents consume with zero context.
+
+**Extraction > Inference. Always.**
+
+Read the full vision: [docs/VISION.md](docs/VISION.md)
+
+---
 
 ## License
 

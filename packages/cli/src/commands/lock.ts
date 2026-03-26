@@ -57,6 +57,9 @@ export interface LockResult {
 /**
  * Runs the lock command: reads current config and creates `.forge-lock.json`.
  *
+ * @remarks
+ * Loads the project config, snapshots enforce rules and guard settings into a lock manifest, writes `.forge-lock.json`, and appends an audit event.
+ *
  * @param args - CLI arguments for the lock command.
  * @returns A typed `CommandOutput<LockResult>`.
  * @example

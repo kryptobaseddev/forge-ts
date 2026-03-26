@@ -5,6 +5,104 @@ description: Usage examples for the gen package
 
 All usage examples from the package, aggregated for quick reference.
 
+## `discoverGuides()`
+
+*Analyze the symbol graph and discover guides using multiple heuristics.  Each heuristic produces zero or more `DiscoveredGuide` entries. When multiple heuristics produce a guide with the same slug, the first one wins (priority order: guide-tag, config-interface, error-types, category, entry-point).*
+
+[View in API reference](/packages/gen/api/functions#discoverguides)
+
+```typescript
+import { discoverGuides } from "@forge-ts/gen";
+const guides = discoverGuides(symbolsByPackage, config);
+console.log(guides.map(g => g.slug));
+```
+
+## `serializeMarkdown()`
+
+*Serialize an mdast tree to a well-formed markdown string.  Uses remark-stringify with GFM table support. The serializer handles all escaping (pipes in table cells, special characters in text, etc.) so callers never need manual escape functions.*
+
+[View in API reference](/packages/gen/api/functions#serializemarkdown)
+
+```typescript
+const output = serializeMarkdown(md.root(md.heading(1, md.text("Hello"))));
+console.log(output); // "# Hello\n"
+```
+
+## `textP()`
+
+*Shorthand: paragraph containing a single text node.*
+
+[View in API reference](/packages/gen/api/functions#textp)
+
+```typescript
+const node = textP("Hello world");
+// { type: "paragraph", children: [{ type: "text", value: "Hello world" }] }
+```
+
+## `boldIntroP()`
+
+*Shorthand: paragraph with bold intro text followed by regular text.*
+
+[View in API reference](/packages/gen/api/functions#boldintrop)
+
+```typescript
+const node = boldIntroP("Note: ", "this is important.");
+// renders as **Note: **this is important.
+```
+
+## `textListItem()`
+
+*Shorthand: list item containing a single text paragraph.*
+
+[View in API reference](/packages/gen/api/functions#textlistitem)
+
+```typescript
+const item = textListItem("First item");
+const list = md.list([item, textListItem("Second item")]);
+```
+
+## `rawBlock()`
+
+*Wrap a raw markdown string as an HTML node. Use for TSDoc content that may contain markdown formatting (backticks, bold, links) which should pass through to the output verbatim rather than being escaped by the serializer.*
+
+[View in API reference](/packages/gen/api/functions#rawblock)
+
+```typescript
+const badge = rawBlock("![badge](https://img.shields.io/badge/ok-green)");
+const tree = md.root(badge);
+```
+
+## `truncate()`
+
+*Truncate a string to at most maxLen chars. Avoids cutting inside backtick-delimited code spans to prevent broken inline code that would cause escaping issues.*
+
+[View in API reference](/packages/gen/api/functions#truncate)
+
+```typescript
+truncate("A very long description of the API", 20);
+// "A very long descr..."
+```
+
+## `toAnchor()`
+
+*Convert a label to a GitHub-compatible anchor slug.*
+
+[View in API reference](/packages/gen/api/functions#toanchor)
+
+```typescript
+toAnchor("My Function()"); // "my-function"
+```
+
+## `slugLink()`
+
+*Strip extension from a link path and normalize to a slug. Produces bare slug links compatible with Mintlify and most SSGs.*
+
+[View in API reference](/packages/gen/api/functions#sluglink)
+
+```typescript
+slugLink("./packages/core/index.md"); // "/packages/core/index"
+```
+
 ## `parseFrontmatter()`
 
 *Parse frontmatter from markdown/MDX content.  Uses gray-matter for robust YAML parsing — handles multi-line values, quoted strings, and edge cases that regex-based stripping misses.*

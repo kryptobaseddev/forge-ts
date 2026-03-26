@@ -58,6 +58,9 @@ export interface TestResult {
 /**
  * Runs the doctest pipeline and returns a typed command output.
  *
+ * @remarks
+ * Loads config, delegates to the `@forge-ts/doctest` pipeline, and wraps pass/fail counts into a LAFS-compatible command output.
+ *
  * @param args - CLI arguments for the test command.
  * @returns A typed `CommandOutput<TestResult>`.
  * @example

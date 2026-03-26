@@ -70,14 +70,22 @@ npm install -D forge-ts
 - ASTWalker — The return type of `createWalker`.
 
 ### api
-5 functions, 3 types
+10 functions, 6 types
 
 - signatureToSchema() — Maps a TypeScript type signature string to an OpenAPI 3.2 schema object.  Handles common primitives, arrays, unions, `Record<K, V>`, and falls back to `{ type: "object" }` for anything it cannot parse.
 - extractSDKTypes() — Extracts SDK-relevant types (interfaces, type aliases, classes, enums) from a list of `ForgeSymbol` objects.  Only exported symbols whose visibility is not `Visibility.Internal` or `Visibility.Private` are included.
 - generateOpenAPISpec() — Generates a production-quality OpenAPI 3.2 document from the extracted SDK types.  The document is populated with: - An `info` block sourced from the config or reasonable defaults. - A `components.schemas` section with one schema per exported type. - `tags` derived from unique source file paths (grouping by file). - Visibility filtering: `@internal` symbols are never emitted. - HTTP paths are extracted from `@route` tags and appropriately mapped.
 - buildReference() — Builds a structured API reference from a list of exported symbols.  Unlike the minimal stub, this version includes nested children (class methods, interface properties) and all available TSDoc metadata.  Symbols with `Visibility.Internal` or `Visibility.Private` are excluded from the top-level results. Children with private/internal visibility are also filtered out.
 - generateApi() — Runs the API generation pipeline: walk → extract → generate → write.
+- signatureToSchema() — Maps a TypeScript type signature string to an OpenAPI 3.2 schema object.  Handles common primitives, arrays, unions, `Record<K, V>`, and falls back to `{ type: "object" }` for anything it cannot parse.
+- extractSDKTypes() — Extracts SDK-relevant types (interfaces, type aliases, classes, enums) from a list of `ForgeSymbol` objects.  Only exported symbols whose visibility is not `Visibility.Internal` or `Visibility.Private` are included.
+- generateOpenAPISpec() — Generates a production-quality OpenAPI 3.2 document from the extracted SDK types.  The document is populated with: - An `info` block sourced from the config or reasonable defaults. - A `components.schemas` section with one schema per exported type. - `tags` derived from unique source file paths (grouping by file). - Visibility filtering: `@internal` symbols are never emitted. - HTTP paths are extracted from `@route` tags and appropriately mapped.
+- buildReference() — Builds a structured API reference from a list of exported symbols.  Unlike the minimal stub, this version includes nested children (class methods, interface properties) and all available TSDoc metadata.  Symbols with `Visibility.Internal` or `Visibility.Private` are excluded from the top-level results. Children with private/internal visibility are also filtered out.
+- generateApi() — Runs the API generation pipeline: walk → extract → generate → write.
 
+- SDKProperty — A single property extracted from an interface or class symbol.
+- SDKType — An SDK type descriptor extracted from the symbol graph.
+- ReferenceEntry — A single entry in the generated API reference.
 - SDKProperty — A single property extracted from an interface or class symbol.
 - SDKType — An SDK type descriptor extracted from the symbol graph.
 - ReferenceEntry — A single entry in the generated API reference.
@@ -107,8 +115,8 @@ npm install -D forge-ts
 - runInitHooks() — Scaffolds git hook integration for the project.  Detects the hook manager (husky or lefthook), generates appropriate hook files, and reports what was written.
 - detectEnvironment() — Detects the project environment by checking for files and dependencies.
 - buildTsdocContent() — Builds tsdoc.json content, merging in customTags from the forge config.  When `customTags` is non-empty, the written tsdoc.json includes both `tagDefinitions` and `supportForTags` entries so that the TSDoc parser (and any editor extensions) recognise the custom tags.
-- runInitProject() — Runs the full project init flow.  Steps: 1. Detect project environment 2. Write forge-ts.config.ts (if not exists) 3. Write tsdoc.json (if not exists) 4. Wire package.json scripts (idempotent) 5. Validate tsconfig.json strictness 6. Validate package.json 7. Report summary
-- runDoctor() — Runs the doctor integrity check flow.  Checks: 1. forge-ts.config.ts — exists and loadable 2. tsdoc.json — exists and extends forge-ts/core/tsdoc-preset 3. forge-ts/core — installed in node_modules 4. TypeScript — installed 5. tsconfig.json — exists and has strict mode 6. biome.json — exists (informational) 7. .forge-lock.json — exists, valid, matches config 8. .forge-audit.jsonl — exists and event count 9. .forge-bypass.json — exists and active bypasses 10. Git hooks — forge-ts check in pre-commit
+- runInitProject() — Runs the full project init flow.
+- runDoctor() — Runs the doctor integrity check flow.
 - runInitDocs() — Scaffolds a documentation site for the target SSG platform.  Resolves the target from args, validates it, checks for an existing scaffold, calls the adapter's `scaffold()` method, and writes all files produced by the manifest to `outDir`.
 - runLock() — Runs the lock command: reads current config and creates `.forge-lock.json`.
 - runPrepublish() — Runs the prepublish safety gate: check then build.  If the check step fails, the build step is skipped entirely. Both steps use the same project root (cwd).
@@ -231,23 +239,37 @@ npm install -D forge-ts
 - GenerateOptions — Options for the generation pipeline.
 
 ### enforcer
-3 functions, 2 types
+6 functions, 4 types
 
+- findDeprecatedUsages() — Scans symbols for imports of deprecated exports from other packages.
+- enforce() — Runs the TSDoc enforcement pass against a project.  The enforcer walks all exported symbols that meet the configured minimum visibility threshold and emits diagnostics for any documentation deficiencies it finds.  ### Error codes | Code | Severity | Condition | |------|----------|-----------| | E001 | error    | Exported symbol is missing a TSDoc summary. | | E002 | error    | Function/method parameter lacks a `@param` tag. | | E003 | error    | Non-void function/method lacks a `@returns` tag. | | E004 | error    | Exported function/method is missing an `@example` block. | | E005 | error    | Package entry point (index.ts) is missing `@packageDocumentation`. | | E006 | error    | Public/protected class member is missing a TSDoc comment. | | E007 | error    | Interface/type alias property is missing a TSDoc comment. | | W001 | warning  | TSDoc comment contains parse errors. | | W002 | warning  | Function body throws but has no `@throws` tag. | | W003 | warning  | `@deprecated` tag is present without explanation. | | W006 | warning  | TSDoc parser-level syntax error (invalid tag, malformed block, etc.). | | E009 | error    | tsconfig.json required strict-mode flag is missing or disabled (guard). | | E010 | error    | Config drift: a rule severity is weaker than the locked value. | | E013 | error    | Exported function/class is missing a `@remarks` block. | | E014 | warn     | Optional property of interface/type is missing `@defaultValue`. | | E015 | error    | Generic symbol is missing `@typeParam` for a type parameter. | | W005 | warn     | Symbol references other symbols via `{@link}` but has no `@see` tags. | | W007 | warn     | Guide FORGE:AUTO section references a symbol that no longer exists. | | W008 | warn     | Exported public symbol is not mentioned in any guide page. | | E017 | error    | `@internal` symbol re-exported through public barrel (index.ts). | | E018 | warn     | `@route`-tagged function missing `@response` tag. | | W009 | warn     | `{@inheritDoc}` references a symbol that does not exist. | | W010 | warn     | `@breaking` tag present without `@migration` path. | | W011 | warn     | New public export missing `@since` version tag. | | E019 | error    | Non-test file contains `@ts-expect-error` / `@ts-expect-error`. | | E020 | error    | Exported symbol has `any` in its public API signature. | | W012 | warn     | `{@link}` display text appears stale relative to target summary. | | W013 | warn     | `@example` block may be stale (arg count mismatch). |  When `config.enforce.strict` is `true` all warnings are promoted to errors.
+- formatResults() — Formats a `ForgeResult` into a human-readable string suitable for printing to a terminal.  Diagnostics are grouped by source file.  Each file heading shows the relative-ish path, followed by indented error and warning lines.  A summary line is appended at the end.
 - findDeprecatedUsages() — Scans symbols for imports of deprecated exports from other packages.
 - enforce() — Runs the TSDoc enforcement pass against a project.  The enforcer walks all exported symbols that meet the configured minimum visibility threshold and emits diagnostics for any documentation deficiencies it finds.  ### Error codes | Code | Severity | Condition | |------|----------|-----------| | E001 | error    | Exported symbol is missing a TSDoc summary. | | E002 | error    | Function/method parameter lacks a `@param` tag. | | E003 | error    | Non-void function/method lacks a `@returns` tag. | | E004 | error    | Exported function/method is missing an `@example` block. | | E005 | error    | Package entry point (index.ts) is missing `@packageDocumentation`. | | E006 | error    | Public/protected class member is missing a TSDoc comment. | | E007 | error    | Interface/type alias property is missing a TSDoc comment. | | W001 | warning  | TSDoc comment contains parse errors. | | W002 | warning  | Function body throws but has no `@throws` tag. | | W003 | warning  | `@deprecated` tag is present without explanation. | | W006 | warning  | TSDoc parser-level syntax error (invalid tag, malformed block, etc.). | | E009 | error    | tsconfig.json required strict-mode flag is missing or disabled (guard). | | E010 | error    | Config drift: a rule severity is weaker than the locked value. | | E013 | error    | Exported function/class is missing a `@remarks` block. | | E014 | warn     | Optional property of interface/type is missing `@defaultValue`. | | E015 | error    | Generic symbol is missing `@typeParam` for a type parameter. | | W005 | warn     | Symbol references other symbols via `{@link}` but has no `@see` tags. | | W007 | warn     | Guide FORGE:AUTO section references a symbol that no longer exists. | | W008 | warn     | Exported public symbol is not mentioned in any guide page. | | E017 | error    | `@internal` symbol re-exported through public barrel (index.ts). | | E018 | warn     | `@route`-tagged function missing `@response` tag. | | W009 | warn     | `{@inheritDoc}` references a symbol that does not exist. | | W010 | warn     | `@breaking` tag present without `@migration` path. | | W011 | warn     | New public export missing `@since` version tag. | | E019 | error    | Non-test file contains `@ts-expect-error` / `@ts-expect-error`. | | E020 | error    | Exported symbol has `any` in its public API signature. | | W012 | warn     | `{@link}` display text appears stale relative to target summary. | | W013 | warn     | `@example` block may be stale (arg count mismatch). |  When `config.enforce.strict` is `true` all warnings are promoted to errors.
 - formatResults() — Formats a `ForgeResult` into a human-readable string suitable for printing to a terminal.  Diagnostics are grouped by source file.  Each file heading shows the relative-ish path, followed by indented error and warning lines.  A summary line is appended at the end.
 
 - DeprecatedUsage — A detected usage of a deprecated symbol.
 - FormatOptions — Options that control how `formatResults` renders its output.
+- DeprecatedUsage — A detected usage of a deprecated symbol.
+- FormatOptions — Options that control how `formatResults` renders its output.
 
 ### doctest
-4 functions, 5 types
+8 functions, 10 types
 
 - extractExamples() — Extracts all `@example` blocks from a list of `ForgeSymbol` objects.
 - generateTestFiles() — Generates a virtual test file for a set of extracted examples.  Each example is wrapped in an `it()` block using the Node built-in `node:test` runner so that no additional test framework is required. Auto-imports the tested symbol from the source file, processes `// =>` assertion patterns, and appends an inline source map.
 - runTests() — Writes virtual test files to disk and executes them with Node 24 native TypeScript support (`--experimental-strip-types --test`).
 - doctest() — Runs the full doctest pipeline: extract → generate → run.
+- extractExamples() — Extracts all `@example` blocks from a list of `ForgeSymbol` objects.
+- generateTestFiles() — Generates a virtual test file for a set of extracted examples.  Each example is wrapped in an `it()` block using the Node built-in `node:test` runner so that no additional test framework is required. Auto-imports the tested symbol from the source file, processes `// =>` assertion patterns, and appends an inline source map.
+- runTests() — Writes virtual test files to disk and executes them with Node 24 native TypeScript support (`--experimental-strip-types --test`).
+- doctest() — Runs the full doctest pipeline: extract → generate → run.
 
+- ExtractedExample — A single extracted `@example` block ready for test generation.
+- GeneratorOptions — Options for virtual test file generation.
+- VirtualTestFile — A generated virtual test file.
+- RunResult — Result of running the generated test files.
+- TestCaseResult — The result of a single test case.
 - ExtractedExample — A single extracted `@example` block ready for test generation.
 - GeneratorOptions — Options for virtual test file generation.
 - VirtualTestFile — A generated virtual test file.

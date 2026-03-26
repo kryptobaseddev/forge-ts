@@ -15,7 +15,10 @@ import {
  * @public
  */
 export interface MarkdownOptions {
-	/** Whether to use MDX syntax (default: Markdown). */
+	/**
+	 * Whether to use MDX syntax (default: Markdown).
+	 * @defaultValue false
+	 */
 	mdx?: boolean;
 }
 
@@ -214,6 +217,10 @@ function buildTocBlocks(groups: Map<ForgeSymbol["kind"], ForgeSymbol[]>): MdBloc
 
 /**
  * Generates a Markdown (or MDX) string from a list of symbols.
+ *
+ * @remarks
+ * Produces a flat single-file API reference with a Table of Contents,
+ * symbol groups ordered by kind, and optional SSG frontmatter.
  *
  * @param symbols - The symbols to document.
  * @param config - The resolved {@link ForgeConfig}.

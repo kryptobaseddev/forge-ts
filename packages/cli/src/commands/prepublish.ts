@@ -102,6 +102,9 @@ export interface PrepublishArgs {
  * If the check step fails, the build step is skipped entirely.
  * Both steps use the same project root (cwd).
  *
+ * @remarks
+ * Runs `runCheck` first; if it passes, runs `runBuild`. Aggregates both step results into a single pipeline summary suitable for `prepublishOnly`.
+ *
  * @param args - CLI arguments for the prepublish command.
  * @returns A typed `CommandOutput<PrepublishResult>`.
  * @example

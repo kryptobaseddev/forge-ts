@@ -81,6 +81,9 @@ export interface BuildResult {
 /**
  * Runs the full build pipeline and returns a typed command output.
  *
+ * @remarks
+ * Loads config from the project root, runs API generation and doc generation steps in sequence, and aggregates per-step results into a pipeline summary.
+ *
  * @param args - CLI arguments for the build command.
  * @returns A typed `CommandOutput<BuildResult>`.
  * @example

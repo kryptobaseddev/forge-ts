@@ -15,9 +15,15 @@ const SECTION_END = "<!-- forge-ts:end -->";
 
 /** Options controlling README sync behaviour. */
 export interface ReadmeSyncOptions {
-	/** Include a "Documented with forge-ts" badge above the API table. */
+	/**
+	 * Include a "Documented with forge-ts" badge above the API table.
+	 * @defaultValue false
+	 */
 	badge?: boolean;
-	/** Include first @example from each top-level symbol. */
+	/**
+	 * Include first @example from each top-level symbol.
+	 * @defaultValue false
+	 */
 	includeExamples?: boolean;
 }
 
@@ -83,6 +89,10 @@ function buildApiBlocks(symbols: ForgeSymbol[], includeExamples: boolean): MdBlo
  * The content is placed between `<!-- forge-ts:start -->` and
  * `<!-- forge-ts:end -->` comment markers.  If neither marker exists, the
  * summary is appended to the end of the file.
+ *
+ * @remarks
+ * Uses mdast-based rendering for the API table so pipe characters and
+ * special markdown syntax inside summaries are escaped correctly.
  *
  * @param readmePath - Absolute path to the `README.md` to update.
  * @param symbols - Symbols to summarise in the README.

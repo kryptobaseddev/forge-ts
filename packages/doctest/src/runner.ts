@@ -85,6 +85,9 @@ function parseTapOutput(output: string): {
  * Writes virtual test files to disk and executes them with Node 24 native
  * TypeScript support (`--experimental-strip-types --test`).
  *
+ * @remarks
+ * Writes each virtual file to disk, spawns `node --experimental-strip-types --test`, parses the TAP output into structured pass/fail results, and reconciles exit codes with parsed failures.
+ *
  * @param files - The virtual test files to write and run.
  * @returns A {@link RunResult} summarising the test outcome.
  * @example

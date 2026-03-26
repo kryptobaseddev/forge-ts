@@ -22,6 +22,9 @@ export interface ExtractedExample {
 /**
  * Extracts all `@example` blocks from a list of {@link ForgeSymbol} objects.
  *
+ * @remarks
+ * Iterates each symbol's documentation examples, flattening them into a single array with source metadata (file path, line number, sequential index) for downstream test generation.
+ *
  * @param symbols - The symbols produced by the core AST walker.
  * @returns A flat array of {@link ExtractedExample} objects, one per code block.
  * @example

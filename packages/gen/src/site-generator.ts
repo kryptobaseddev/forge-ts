@@ -32,6 +32,7 @@ export interface DocPage {
 	 * Stub pages are created only on the first build and never overwritten,
 	 * preserving manual edits across subsequent `forge-ts build` runs.
 	 * Auto-generated pages (stub=false) are always regenerated from source.
+	 * @defaultValue false
 	 */
 	stub?: boolean;
 }
@@ -43,15 +44,27 @@ export interface DocPage {
 export interface SiteGeneratorOptions {
 	/** Output format */
 	format: "markdown" | "mdx";
-	/** SSG target for frontmatter */
+	/**
+	 * SSG target for frontmatter.
+	 * @defaultValue undefined
+	 */
 	ssgTarget?: "docusaurus" | "mintlify" | "nextra" | "vitepress";
 	/** Project name */
 	projectName: string;
-	/** Project description */
+	/**
+	 * Project description.
+	 * @defaultValue undefined
+	 */
 	projectDescription?: string;
-	/** Repository URL (auto-detected from package.json). */
+	/**
+	 * Repository URL (auto-detected from package.json).
+	 * @defaultValue undefined
+	 */
 	repositoryUrl?: string;
-	/** npm package name for install commands. */
+	/**
+	 * npm package name for install commands.
+	 * @defaultValue undefined
+	 */
 	packageName?: string;
 }
 

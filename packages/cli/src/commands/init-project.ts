@@ -276,6 +276,9 @@ const FORGE_SCRIPTS: Record<string, string> = {
 /**
  * Runs the full project init flow.
  *
+ * @remarks
+ * Detects the project environment, writes forge-ts.config.ts and tsdoc.json if missing, wires package.json scripts, validates tsconfig strictness, scaffolds git hooks, and reports a summary with next steps.
+ *
  * Steps:
  * 1. Detect project environment
  * 2. Write forge-ts.config.ts (if not exists)

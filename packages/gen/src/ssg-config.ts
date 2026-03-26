@@ -255,6 +255,10 @@ function generateVitePressConfig(pages: DocPage[], _projectName: string): SSGCon
  * Returns one file for most targets, but multiple files for Nextra (which
  * uses per-directory `_meta.json` files).
  *
+ * @remarks
+ * Dispatches to a target-specific generator that understands each SSG's
+ * sidebar/navigation format. The result is JSON or JS ready to write to disk.
+ *
  * @param pages - The {@link DocPage} array produced by `generateDocSite`.
  * @param target - The SSG target.
  * @param projectName - The project name (used in config metadata).

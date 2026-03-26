@@ -83,6 +83,9 @@ export interface InitDocsArgs {
  * scaffold, calls the adapter's `scaffold()` method, and writes all files
  * produced by the manifest to `outDir`.
  *
+ * @remarks
+ * Validates the SSG target, detects cross-target collisions, invokes the adapter scaffold, writes manifest files to disk, and optionally generates tsdoc.json.
+ *
  * @param args - CLI arguments for the init docs command.
  * @returns A typed `CommandOutput<InitDocsResult>`.
  * @example

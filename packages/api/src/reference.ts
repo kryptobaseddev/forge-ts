@@ -42,6 +42,9 @@ export interface ReferenceEntry {
  * excluded from the top-level results. Children with private/internal
  * visibility are also filtered out.
  *
+ * @remarks
+ * Filters to public/beta symbols, recursively converts children (methods, properties) to nested entries, and sorts the result alphabetically by name.
+ *
  * @param symbols - All symbols from the AST walker.
  * @returns An array of {@link ReferenceEntry} objects sorted by name.
  * @example

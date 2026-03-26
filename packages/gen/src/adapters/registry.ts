@@ -7,6 +7,10 @@ const adapters = new Map<SSGTarget, SSGAdapter>();
  * Register an SSG adapter.
  * Called once per provider at module load time.
  *
+ * @remarks
+ * Each adapter self-registers at import time via this function.
+ * Duplicate registrations for the same target silently overwrite.
+ *
  * @param adapter - The adapter to register.
  * @example
  * ```typescript
@@ -22,6 +26,10 @@ export function registerAdapter(adapter: SSGAdapter): void {
 /**
  * Get a registered adapter by target name.
  * Throws if the target is not registered.
+ *
+ * @remarks
+ * Looks up the adapter in the in-memory registry populated by self-registering
+ * adapter modules. All built-in adapters are registered when `@forge-ts/gen` is imported.
  *
  * @param target - The SSG target identifier.
  * @returns The registered {@link SSGAdapter} for the given target.
@@ -44,6 +52,10 @@ export function getAdapter(target: SSGTarget): SSGAdapter {
 
 /**
  * Get all registered adapter targets.
+ *
+ * @remarks
+ * Returns targets in the order they were registered — typically
+ * mintlify, docusaurus, nextra, vitepress (the built-in import order).
  *
  * @returns An array of all registered {@link SSGTarget} identifiers.
  * @example

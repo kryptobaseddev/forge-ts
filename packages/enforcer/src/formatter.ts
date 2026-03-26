@@ -88,6 +88,9 @@ function renderDiagnostic(diag: Diagnostic, opts: FormatOptions): string {
  * relative-ish path, followed by indented error and warning lines.  A summary
  * line is appended at the end.
  *
+ * @remarks
+ * Groups errors and warnings by file path, renders each with ANSI colours when enabled, and appends a summary line with total counts.
+ *
  * @param result  - The result produced by {@link enforce}.
  * @param options - Rendering options (colours, verbosity).
  * @returns A formatted string ready to write to stdout or stderr.

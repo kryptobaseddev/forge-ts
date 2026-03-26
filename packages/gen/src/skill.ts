@@ -801,6 +801,10 @@ export interface SkillPackage {
  * All content is derived from the project's exported symbols and metadata.
  * No hardcoded project-specific content. Works for any project that forge-ts analyzes.
  *
+ * @remarks
+ * Produces SKILL.md, API-REFERENCE.md, CONFIGURATION.md, and contextual shell
+ * scripts. The directory name follows the `SKILL-{project}` convention.
+ *
  * @param symbols - All symbols from the project.
  * @param config - The resolved forge-ts config.
  * @returns A {@link SkillPackage} describing the directory and its files.
@@ -837,6 +841,10 @@ export function generateSkillPackage(symbols: ForgeSymbol[], config: ForgeConfig
 /**
  * Generates a SKILL.md string following the Agent Skills specification.
  * Generic for any TypeScript project — content derived from symbols.
+ *
+ * @remarks
+ * Delegates to the internal `buildSkillMd` function with an auto-generated
+ * directory name derived from the project's package name.
  *
  * @param symbols - All symbols from the project.
  * @param config - The resolved forge-ts config.

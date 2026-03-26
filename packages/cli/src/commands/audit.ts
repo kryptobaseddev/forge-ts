@@ -57,6 +57,9 @@ export interface AuditResult {
 /**
  * Reads the audit log and returns a typed command output.
  *
+ * @remarks
+ * Reads `.forge-audit.jsonl` from the project root, applies optional limit and event-type filters, and returns events newest-first.
+ *
  * @param args - CLI arguments for the audit command.
  * @returns A typed `CommandOutput<AuditResult>`.
  * @example

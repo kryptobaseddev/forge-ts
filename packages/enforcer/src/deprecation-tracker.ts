@@ -17,8 +17,17 @@ export interface DeprecatedUsage {
 /**
  * Scans symbols for imports of deprecated exports from other packages.
  *
+ * @remarks
+ * Builds a map of deprecated exported symbols, then checks `{@link}` references across package boundaries to detect cross-package consumption of deprecated APIs.
+ *
  * @param symbols - All symbols from the walker across the entire project.
  * @returns Array of deprecated usages found.
+ * @example
+ * ```typescript
+ * import { findDeprecatedUsages } from "@forge-ts/enforcer";
+ * const usages = findDeprecatedUsages(symbols);
+ * console.log(usages.length); // number of deprecated cross-package imports
+ * ```
  */
 export function findDeprecatedUsages(symbols: ForgeSymbol[]): DeprecatedUsage[] {
 	// Build a set of deprecated symbol names with their source info

@@ -21,6 +21,9 @@ import { extractSDKTypes } from "./sdk-extractor.js";
 /**
  * Runs the API generation pipeline: walk → extract → generate → write.
  *
+ * @remarks
+ * Creates an AST walker from config, extracts SDK types from the symbol graph, generates an OpenAPI 3.2 spec, and writes it to the configured output path.
+ *
  * @param config - The resolved {@link ForgeConfig} for the project.
  * @returns A {@link ForgeResult} with success/failure and any diagnostics.
  * @example

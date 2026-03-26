@@ -1638,10 +1638,12 @@
         "type": "object",
         "properties": {
           "type": {
-            "type": "object"
+            "type": "object",
+            "description": "Node discriminant — always `\"text\"`."
           },
           "value": {
-            "type": "string"
+            "type": "string",
+            "description": "The raw text content."
           }
         },
         "required": [
@@ -1654,10 +1656,12 @@
         "type": "object",
         "properties": {
           "type": {
-            "type": "object"
+            "type": "object",
+            "description": "Node discriminant — always `\"inlineCode\"`."
           },
           "value": {
-            "type": "string"
+            "type": "string",
+            "description": "The code span content (without surrounding backticks)."
           }
         },
         "required": [
@@ -1670,13 +1674,15 @@
         "type": "object",
         "properties": {
           "type": {
-            "type": "object"
+            "type": "object",
+            "description": "Node discriminant — always `\"strong\"`."
           },
           "children": {
             "type": "array",
             "items": {
               "type": "object"
-            }
+            },
+            "description": "Inline content rendered in bold."
           }
         },
         "required": [
@@ -1689,13 +1695,15 @@
         "type": "object",
         "properties": {
           "type": {
-            "type": "object"
+            "type": "object",
+            "description": "Node discriminant — always `\"emphasis\"`."
           },
           "children": {
             "type": "array",
             "items": {
               "type": "object"
-            }
+            },
+            "description": "Inline content rendered in italic."
           }
         },
         "required": [
@@ -1708,16 +1716,19 @@
         "type": "object",
         "properties": {
           "type": {
-            "type": "object"
+            "type": "object",
+            "description": "Node discriminant — always `\"link\"`."
           },
           "url": {
-            "type": "string"
+            "type": "string",
+            "description": "The link destination URL."
           },
           "children": {
             "type": "array",
             "items": {
               "type": "object"
-            }
+            },
+            "description": "Inline content rendered as the link text."
           }
         },
         "required": [
@@ -1735,7 +1746,8 @@
         "type": "object",
         "properties": {
           "type": {
-            "type": "object"
+            "type": "object",
+            "description": "Node discriminant — always `\"heading\"`."
           },
           "depth": {
             "oneOf": [
@@ -1757,13 +1769,15 @@
               {
                 "type": "object"
               }
-            ]
+            ],
+            "description": "Heading level: 1 for `#`, 2 for `##`, up to 6 for `######`."
           },
           "children": {
             "type": "array",
             "items": {
               "type": "object"
-            }
+            },
+            "description": "Inline content of the heading."
           }
         },
         "required": [
@@ -1777,13 +1791,15 @@
         "type": "object",
         "properties": {
           "type": {
-            "type": "object"
+            "type": "object",
+            "description": "Node discriminant — always `\"paragraph\"`."
           },
           "children": {
             "type": "array",
             "items": {
               "type": "object"
-            }
+            },
+            "description": "Inline content of the paragraph."
           }
         },
         "required": [
@@ -1796,13 +1812,16 @@
         "type": "object",
         "properties": {
           "type": {
-            "type": "object"
+            "type": "object",
+            "description": "Node discriminant — always `\"code\"`."
           },
           "lang": {
-            "type": "string"
+            "type": "string",
+            "description": "Language tag for syntax highlighting."
           },
           "value": {
-            "type": "string"
+            "type": "string",
+            "description": "The code content (without the fence delimiters)."
           }
         },
         "required": [
@@ -1816,13 +1835,15 @@
         "type": "object",
         "properties": {
           "type": {
-            "type": "object"
+            "type": "object",
+            "description": "Node discriminant — always `\"blockquote\"`."
           },
           "children": {
             "type": "array",
             "items": {
               "type": "object"
-            }
+            },
+            "description": "Block-level content inside the quote."
           }
         },
         "required": [
@@ -1835,10 +1856,12 @@
         "type": "object",
         "properties": {
           "type": {
-            "type": "object"
+            "type": "object",
+            "description": "Node discriminant — always `\"html\"`."
           },
           "value": {
-            "type": "string"
+            "type": "string",
+            "description": "The raw HTML string."
           }
         },
         "required": [
@@ -1851,7 +1874,8 @@
         "type": "object",
         "properties": {
           "type": {
-            "type": "object"
+            "type": "object",
+            "description": "Node discriminant — always `\"thematicBreak\"`."
           }
         },
         "required": [
@@ -1863,16 +1887,19 @@
         "type": "object",
         "properties": {
           "type": {
-            "type": "object"
+            "type": "object",
+            "description": "Node discriminant — always `\"listItem\"`."
           },
           "spread": {
-            "type": "boolean"
+            "type": "boolean",
+            "description": "Whether blank lines separate this item's children."
           },
           "children": {
             "type": "array",
             "items": {
               "type": "object"
-            }
+            },
+            "description": "Block-level content of the list item."
           }
         },
         "required": [
@@ -1886,19 +1913,23 @@
         "type": "object",
         "properties": {
           "type": {
-            "type": "object"
+            "type": "object",
+            "description": "Node discriminant — always `\"list\"`."
           },
           "ordered": {
-            "type": "boolean"
+            "type": "boolean",
+            "description": "`true` for numbered lists, `false` for bullet lists."
           },
           "spread": {
-            "type": "boolean"
+            "type": "boolean",
+            "description": "Whether blank lines separate list items."
           },
           "children": {
             "type": "array",
             "items": {
               "type": "object"
-            }
+            },
+            "description": "The list items."
           }
         },
         "required": [
@@ -1913,13 +1944,15 @@
         "type": "object",
         "properties": {
           "type": {
-            "type": "object"
+            "type": "object",
+            "description": "Node discriminant — always `\"tableCell\"`."
           },
           "children": {
             "type": "array",
             "items": {
               "type": "object"
-            }
+            },
+            "description": "Inline content of the cell."
           }
         },
         "required": [
@@ -1932,13 +1965,15 @@
         "type": "object",
         "properties": {
           "type": {
-            "type": "object"
+            "type": "object",
+            "description": "Node discriminant — always `\"tableRow\"`."
           },
           "children": {
             "type": "array",
             "items": {
               "type": "object"
-            }
+            },
+            "description": "Cells in this row."
           }
         },
         "required": [
@@ -1951,19 +1986,22 @@
         "type": "object",
         "properties": {
           "type": {
-            "type": "object"
+            "type": "object",
+            "description": "Node discriminant — always `\"table\"`."
           },
           "align": {
             "type": "array",
             "items": {
               "type": "object"
-            }
+            },
+            "description": "Column alignment directives for each column."
           },
           "children": {
             "type": "array",
             "items": {
               "type": "object"
-            }
+            },
+            "description": "Rows of the table (first row is the header)."
           }
         },
         "required": [
@@ -1981,13 +2019,15 @@
         "type": "object",
         "properties": {
           "type": {
-            "type": "object"
+            "type": "object",
+            "description": "Node discriminant — always `\"root\"`."
           },
           "children": {
             "type": "array",
             "items": {
               "type": "object"
-            }
+            },
+            "description": "Top-level block content of the document."
           }
         },
         "required": [
@@ -2085,7 +2125,7 @@
                 "type": "object"
               }
             ],
-            "description": "SSG target for frontmatter"
+            "description": "SSG target for frontmatter."
           },
           "projectName": {
             "type": "string",
@@ -2093,7 +2133,7 @@
           },
           "projectDescription": {
             "type": "string",
-            "description": "Project description"
+            "description": "Project description."
           },
           "repositoryUrl": {
             "type": "string",

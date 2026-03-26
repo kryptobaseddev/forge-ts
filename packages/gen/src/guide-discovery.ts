@@ -237,9 +237,19 @@ function toTitle(text: string): string {
  * one wins (priority order: guide-tag, config-interface, error-types,
  * category, entry-point).
  *
+ * @remarks
+ * Runs five discovery heuristics in priority order and deduplicates the
+ * results by slug. The `config` parameter is reserved for future filtering.
+ *
  * @param symbolsByPackage - Symbols grouped by package name.
  * @param config - The resolved forge-ts configuration.
  * @returns An array of discovered guides, deduplicated by slug.
+ * @example
+ * ```typescript
+ * import { discoverGuides } from "@forge-ts/gen";
+ * const guides = discoverGuides(symbolsByPackage, config);
+ * console.log(guides.map(g => g.slug));
+ * ```
  * @public
  */
 export function discoverGuides(

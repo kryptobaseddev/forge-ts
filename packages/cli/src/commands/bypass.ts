@@ -68,6 +68,9 @@ export interface BypassStatusResult {
 /**
  * Runs the bypass creation: creates a new bypass record with budget enforcement.
  *
+ * @remarks
+ * Loads the project config, expires stale bypasses, then creates a new record with daily budget enforcement.
+ *
  * @param args - CLI arguments for the bypass command.
  * @returns A typed `CommandOutput<BypassCreateResult>`.
  * @example
@@ -132,6 +135,9 @@ export async function runBypassCreate(args: {
 
 /**
  * Runs the bypass status query: shows active bypasses and remaining budget.
+ *
+ * @remarks
+ * Loads config, cleans up expired bypasses, and returns active records with the remaining daily budget.
  *
  * @param args - CLI arguments for the bypass status command.
  * @returns A typed `CommandOutput<BypassStatusResult>`.

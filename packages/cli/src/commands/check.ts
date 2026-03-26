@@ -449,6 +449,9 @@ function buildCheckResult(
 /**
  * Runs the TSDoc enforcement pass and returns a typed command output.
  *
+ * @remarks
+ * Loads config, runs the enforcer pass, computes triage data with rule/file breakdowns, and paginates the per-file diagnostics based on MVI level.
+ *
  * @param args - CLI arguments for the check command.
  * @returns A typed `CommandOutput<CheckResult>`.
  * @example

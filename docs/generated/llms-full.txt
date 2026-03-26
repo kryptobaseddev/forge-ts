@@ -3,7 +3,7 @@
 > Universal TypeScript documentation compiler — enforces TSDoc as a build gate, then generates all artifacts from source in one pass
 
 Version: 0.19.5
-Generated: 2026-03-26T06:15:42.237Z
+Generated: 2026-03-26T06:42:43.082Z
 
 ## Package: core
 
@@ -1583,6 +1583,8 @@ Maps each rule key in `EnforceRules` to its TSDoc standardisation group.  - **co
 
 Maps a TypeScript type signature string to an OpenAPI 3.2 schema object.  Handles common primitives, arrays, unions, `Record<K, V>`, and falls back to `{ type: "object" }` for anything it cannot parse.
 
+Strips trailing `| undefined` and `| null`, then pattern-matches union, array shorthand, generic Array, and Record types recursively before falling back to primitive or object schemas.
+
 Parameters:
 - signature: A TypeScript type signature string, e.g. `"string"`, `"number[]"`,   `"string | number"`, `"Record<string, boolean>"`.
 
@@ -1598,6 +1600,8 @@ Example:
 (symbols: ForgeSymbol[]) => SDKType[]
 
 Extracts SDK-relevant types (interfaces, type aliases, classes, enums) from a list of `ForgeSymbol` objects.  Only exported symbols whose visibility is not `Visibility.Internal` or `Visibility.Private` are included.
+
+Filters symbols to exported interfaces, type aliases, classes, and enums with public/beta visibility, then maps each to an `SDKType` with extracted child properties.
 
 Parameters:
 - symbols: The symbols produced by the core AST walker.
@@ -1636,6 +1640,8 @@ Example:
 
 Builds a structured API reference from a list of exported symbols.  Unlike the minimal stub, this version includes nested children (class methods, interface properties) and all available TSDoc metadata.  Symbols with `Visibility.Internal` or `Visibility.Private` are excluded from the top-level results. Children with private/internal visibility are also filtered out.
 
+Filters to public/beta symbols, recursively converts children (methods, properties) to nested entries, and sorts the result alphabetically by name.
+
 Parameters:
 - symbols: All symbols from the AST walker.
 
@@ -1652,6 +1658,101 @@ Example:
 
 Runs the API generation pipeline: walk → extract → generate → write.
 
+Creates an AST walker from config, extracts SDK types from the symbol graph, generates an OpenAPI 3.2 spec, and writes it to the configured output path.
+
+Parameters:
+- config: The resolved `ForgeConfig` for the project.
+
+Returns: A `ForgeResult` with success/failure and any diagnostics.
+
+Example:
+  import { generateApi } from "@forge-ts/api";
+  const result = await generateApi(config);
+  console.log(result.success); // true if spec was written successfully
+
+#### signatureToSchema()
+
+(signature: string) => OpenAPISchemaObject
+
+Maps a TypeScript type signature string to an OpenAPI 3.2 schema object.  Handles common primitives, arrays, unions, `Record<K, V>`, and falls back to `{ type: "object" }` for anything it cannot parse.
+
+Strips trailing `| undefined` and `| null` before parsing so callers can handle optionality separately via the `required` array.
+
+Parameters:
+- signature: A TypeScript type signature string, e.g. `"string"`, `"number[]"`,   `"string | number"`, `"Record<string, boolean>"`.
+
+Returns: An OpenAPI schema object.
+
+Example:
+  import { signatureToSchema } from "@forge-ts/api";
+  const schema = signatureToSchema("string[]");
+  // { type: "array", items: { type: "string" } }
+
+#### extractSDKTypes()
+
+(symbols: ForgeSymbol[]) => SDKType[]
+
+Extracts SDK-relevant types (interfaces, type aliases, classes, enums) from a list of `ForgeSymbol` objects.  Only exported symbols whose visibility is not `Visibility.Internal` or `Visibility.Private` are included.
+
+Filters the symbol list to exported interfaces, type aliases, classes, and enums, then maps each to an `SDKType` with extracted properties from child symbols.
+
+Parameters:
+- symbols: The symbols produced by the core AST walker.
+
+Returns: An array of `SDKType` objects for public-facing type definitions.
+
+Example:
+  import { extractSDKTypes } from "@forge-ts/api";
+  const sdkTypes = extractSDKTypes(symbols);
+  console.log(sdkTypes.length); // number of public SDK types
+
+#### generateOpenAPISpec()
+
+(config: ForgeConfig, sdkTypes: SDKType[], symbols?: ForgeSymbol[]) => OpenAPIDocument
+
+Generates a production-quality OpenAPI 3.2 document from the extracted SDK types.  The document is populated with: - An `info` block sourced from the config or reasonable defaults. - A `components.schemas` section with one schema per exported type. - `tags` derived from unique source file paths (grouping by file). - Visibility filtering: `@internal` symbols are never emitted. - HTTP paths are extracted from `@route` tags and appropriately mapped.
+
+Produces an OpenAPI 3.2.0 document. Symbols marked `@internal` or `@private` are filtered out before schema generation.  HTTP paths are extracted from `@route` tags in the format `METHOD /path`. Path template variables like `{id}` become required path parameters (`in: "path"`). Any `@param` entries whose names are NOT found in the route path template are classified as query parameters (`in: "query"`).
+
+Parameters:
+- config: The resolved `ForgeConfig`.
+- sdkTypes: SDK types to include as component schemas.
+- symbols: Raw symbols used to extract HTTP route paths from `@route` tags.
+
+Returns: An `OpenAPIDocument` object.
+
+Example:
+  import { generateOpenAPISpec } from "@forge-ts/api";
+  import { extractSDKTypes } from "@forge-ts/api";
+  const spec = generateOpenAPISpec(config, extractSDKTypes(symbols), symbols);
+  console.log(spec.openapi); // "3.2.0"
+
+#### buildReference()
+
+(symbols: ForgeSymbol[]) => ReferenceEntry[]
+
+Builds a structured API reference from a list of exported symbols.  Unlike the minimal stub, this version includes nested children (class methods, interface properties) and all available TSDoc metadata.  Symbols with `Visibility.Internal` or `Visibility.Private` are excluded from the top-level results. Children with private/internal visibility are also filtered out.
+
+Filters to exported, non-internal symbols and recursively maps children through `symbolToEntry`, producing a tree of `ReferenceEntry` nodes.
+
+Parameters:
+- symbols: All symbols from the AST walker.
+
+Returns: An array of `ReferenceEntry` objects sorted by name.
+
+Example:
+  import { buildReference } from "@forge-ts/api";
+  const entries = buildReference(symbols);
+  console.log(entries[0].name); // first symbol name, alphabetically
+
+#### generateApi()
+
+(config: ForgeConfig) => Promise<ForgeResult>
+
+Runs the API generation pipeline: walk → extract → generate → write.
+
+Walks the symbol graph, extracts SDK types, generates an OpenAPI 3.2 spec, and writes it to the configured output path.
+
 Parameters:
 - config: The resolved `ForgeConfig` for the project.
 
@@ -1663,6 +1764,180 @@ Example:
   console.log(result.success); // true if spec was written successfully
 
 ### Interfaces
+
+#### SDKProperty
+
+SDKProperty
+
+A single property extracted from an interface or class symbol.
+
+Members:
+
+##### name
+
+string
+
+The property name.
+
+##### type
+
+string
+
+The TypeScript type string of the property.
+
+##### description
+
+string | undefined
+
+TSDoc summary for this property.
+
+##### required
+
+boolean
+
+Whether the property is required (not optional).
+
+##### deprecated
+
+string | undefined
+
+Deprecation notice, if present.
+
+#### SDKType
+
+SDKType
+
+An SDK type descriptor extracted from the symbol graph.
+
+Members:
+
+##### name
+
+string
+
+The symbol name.
+
+##### kind
+
+"class" | "interface" | "type" | "enum"
+
+Syntactic kind of the type.
+
+##### signature
+
+string | undefined
+
+Human-readable type signature.
+
+##### description
+
+string | undefined
+
+TSDoc summary.
+
+##### deprecated
+
+string | undefined
+
+Deprecation notice, if present.
+
+##### visibility
+
+Visibility
+
+Resolved visibility level.
+
+##### properties
+
+SDKProperty[]
+
+Extracted properties (for interfaces, classes) or values (for enums).
+
+##### sourceFile
+
+string
+
+Absolute path to the source file.
+
+#### ReferenceEntry
+
+ReferenceEntry
+
+A single entry in the generated API reference.
+
+Members:
+
+##### name
+
+string
+
+Symbol name.
+
+##### kind
+
+"function" | "class" | "interface" | "type" | "enum" | "variable" | "method" | "property" | "file"
+
+Symbol kind.
+
+##### summary
+
+string | undefined
+
+TSDoc summary.
+
+##### signature
+
+string | undefined
+
+Human-readable type signature.
+
+##### visibility
+
+Visibility
+
+Resolved visibility level.
+
+##### deprecated
+
+string | undefined
+
+Deprecation notice, if present.
+
+##### params
+
+{ name: string; description: string; type?: string; }[] | undefined
+
+Documented parameters.
+
+##### returns
+
+{ description: string; type?: string; } | undefined
+
+Documented return value.
+
+##### throws
+
+{ type?: string; description: string; }[] | undefined
+
+Documented thrown exceptions.
+
+##### examples
+
+{ code: string; language: string; }[] | undefined
+
+Code examples from TSDoc `@example` tags.
+
+##### children
+
+ReferenceEntry[] | undefined
+
+Nested child symbols (class methods, interface properties, enum members).
+
+##### location
+
+{ filePath: string; line: number; }
+
+Source file location.
 
 #### SDKProperty
 
@@ -1888,6 +2163,8 @@ Returns: `0` on success, `1` on validation/check failure.
 
 Reads the audit log and returns a typed command output.
 
+Reads `.forge-audit.jsonl` from the project root, applies optional limit and event-type filters, and returns events newest-first.
+
 Parameters:
 - args: CLI arguments for the audit command.
 
@@ -1904,6 +2181,8 @@ Example:
 
 Runs the full build pipeline and returns a typed command output.
 
+Loads config from the project root, runs API generation and doc generation steps in sequence, and aggregates per-step results into a pipeline summary.
+
 Parameters:
 - args: CLI arguments for the build command.
 
@@ -1919,6 +2198,8 @@ Example:
 (args: { cwd?: string; reason: string; rule?: string; }) => Promise<CommandOutput<BypassCreateResult>>
 
 Runs the bypass creation: creates a new bypass record with budget enforcement.
+
+Loads the project config, expires stale bypasses, then creates a new record with daily budget enforcement.
 
 Parameters:
 - args: CLI arguments for the bypass command.
@@ -1939,6 +2220,8 @@ Example:
 (args: { cwd?: string; }) => Promise<CommandOutput<BypassStatusResult>>
 
 Runs the bypass status query: shows active bypasses and remaining budget.
+
+Loads config, cleans up expired bypasses, and returns active records with the remaining daily budget.
 
 Parameters:
 - args: CLI arguments for the bypass status command.
@@ -1967,6 +2250,8 @@ Returns: Array of relative file paths, or `null` on failure.
 
 Runs the TSDoc enforcement pass and returns a typed command output.
 
+Loads config, runs the enforcer pass, computes triage data with rule/file breakdowns, and paginates the per-file diagnostics based on MVI level.
+
 Parameters:
 - args: CLI arguments for the check command.
 
@@ -1982,6 +2267,8 @@ Example:
 (args: { cwd?: string; target?: string; port?: string; }) => Promise<void>
 
 Starts the local dev server for the configured SSG target.  Reads `gen.ssgTarget` from the forge-ts config, resolves the adapter, and spawns the platform's dev server in the output directory.
+
+Resolves the SSG adapter from config, constructs the dev command, and spawns the child process with inherited stdio.
 
 Parameters:
 - args: Command arguments.
@@ -2134,7 +2421,9 @@ Returns: A JSON string for tsdoc.json.
 
 (args: InitProjectArgs) => Promise<CommandOutput<InitProjectResult>>
 
-Runs the full project init flow.  Steps: 1. Detect project environment 2. Write forge-ts.config.ts (if not exists) 3. Write tsdoc.json (if not exists) 4. Wire package.json scripts (idempotent) 5. Validate tsconfig.json strictness 6. Validate package.json 7. Report summary
+Runs the full project init flow.
+
+Detects the project environment, writes forge-ts.config.ts and tsdoc.json if missing, wires package.json scripts, validates tsconfig strictness, scaffolds git hooks, and reports a summary with next steps.  Steps: 1. Detect project environment 2. Write forge-ts.config.ts (if not exists) 3. Write tsdoc.json (if not exists) 4. Wire package.json scripts (idempotent) 5. Validate tsconfig.json strictness 6. Validate package.json 7. Report summary
 
 Parameters:
 - args: CLI arguments for the init command.
@@ -2150,7 +2439,9 @@ Example:
 
 (args: DoctorArgs) => Promise<CommandOutput<DoctorResult>>
 
-Runs the doctor integrity check flow.  Checks: 1. forge-ts.config.ts — exists and loadable 2. tsdoc.json — exists and extends forge-ts/core/tsdoc-preset 3. forge-ts/core — installed in node_modules 4. TypeScript — installed 5. tsconfig.json — exists and has strict mode 6. biome.json — exists (informational) 7. .forge-lock.json — exists, valid, matches config 8. .forge-audit.jsonl — exists and event count 9. .forge-bypass.json — exists and active bypasses 10. Git hooks — forge-ts check in pre-commit
+Runs the doctor integrity check flow.
+
+Validates 10 project health checks (config, tsdoc.json, dependencies, tsconfig, biome, lock, audit trail, bypasses, git hooks) and optionally auto-fixes resolvable issues.  Checks: 1. forge-ts.config.ts — exists and loadable 2. tsdoc.json — exists and extends forge-ts/core/tsdoc-preset 3. forge-ts/core — installed in node_modules 4. TypeScript — installed 5. tsconfig.json — exists and has strict mode 6. biome.json — exists (informational) 7. .forge-lock.json — exists, valid, matches config 8. .forge-audit.jsonl — exists and event count 9. .forge-bypass.json — exists and active bypasses 10. Git hooks — forge-ts check in pre-commit
 
 Parameters:
 - args: CLI arguments for the doctor command.
@@ -2168,6 +2459,8 @@ Example:
 
 Scaffolds a documentation site for the target SSG platform.  Resolves the target from args, validates it, checks for an existing scaffold, calls the adapter's `scaffold()` method, and writes all files produced by the manifest to `outDir`.
 
+Validates the SSG target, detects cross-target collisions, invokes the adapter scaffold, writes manifest files to disk, and optionally generates tsdoc.json.
+
 Parameters:
 - args: CLI arguments for the init docs command.
 
@@ -2183,6 +2476,8 @@ Example:
 (args: { cwd?: string; }) => Promise<CommandOutput<LockResult>>
 
 Runs the lock command: reads current config and creates `.forge-lock.json`.
+
+Loads the project config, snapshots enforce rules and guard settings into a lock manifest, writes `.forge-lock.json`, and appends an audit event.
 
 Parameters:
 - args: CLI arguments for the lock command.
@@ -2200,6 +2495,8 @@ Example:
 
 Runs the prepublish safety gate: check then build.  If the check step fails, the build step is skipped entirely. Both steps use the same project root (cwd).
 
+Runs `runCheck` first; if it passes, runs `runBuild`. Aggregates both step results into a single pipeline summary suitable for `prepublishOnly`.
+
 Parameters:
 - args: CLI arguments for the prepublish command.
 
@@ -2216,6 +2513,8 @@ Example:
 
 Runs the doctest pipeline and returns a typed command output.
 
+Loads config, delegates to the `@forge-ts/doctest` pipeline, and wraps pass/fail counts into a LAFS-compatible command output.
+
 Parameters:
 - args: CLI arguments for the test command.
 
@@ -2231,6 +2530,8 @@ Example:
 (args: { cwd?: string; reason: string; }) => Promise<CommandOutput<UnlockResult>>
 
 Runs the unlock command: removes `.forge-lock.json` with a mandatory reason.
+
+Loads config, verifies a lock file exists, deletes `.forge-lock.json`, and appends an audit event recording who unlocked and why.
 
 Parameters:
 - args: CLI arguments for the unlock command.
@@ -3751,11 +4052,18 @@ Citty command definition for `forge-ts unlock`.
 
 Analyze the symbol graph and discover guides using multiple heuristics.  Each heuristic produces zero or more `DiscoveredGuide` entries. When multiple heuristics produce a guide with the same slug, the first one wins (priority order: guide-tag, config-interface, error-types, category, entry-point).
 
+Runs five discovery heuristics in priority order and deduplicates the results by slug. The `config` parameter is reserved for future filtering.
+
 Parameters:
 - symbolsByPackage: Symbols grouped by package name.
 - config: The resolved forge-ts configuration.
 
 Returns: An array of discovered guides, deduplicated by slug.
+
+Example:
+  import { discoverGuides } from "@forge-ts/gen";
+  const guides = discoverGuides(symbolsByPackage, config);
+  console.log(guides.map(g => g.slug));
 
 #### serializeMarkdown()
 
@@ -3763,10 +4071,16 @@ Returns: An array of discovered guides, deduplicated by slug.
 
 Serialize an mdast tree to a well-formed markdown string.  Uses remark-stringify with GFM table support. The serializer handles all escaping (pipes in table cells, special characters in text, etc.) so callers never need manual escape functions.
 
+A single cached unified processor is reused across calls for performance. The processor is configured with remark-gfm and remark-frontmatter plugins.
+
 Parameters:
 - tree: The mdast root node to serialize.
 
 Returns: The serialized markdown string.
+
+Example:
+  const output = serializeMarkdown(md.root(md.heading(1, md.text("Hello"))));
+  console.log(output); // "# Hello\n"
 
 #### textP()
 
@@ -3774,11 +4088,34 @@ Returns: The serialized markdown string.
 
 Shorthand: paragraph containing a single text node.
 
+Equivalent to `md.paragraph(md.text(value))` but saves nesting verbosity.
+
+Parameters:
+- value: The plain text content.
+
+Returns: An MdParagraph wrapping a single MdText child.
+
+Example:
+  const node = textP("Hello world");
+  // { type: "paragraph", children: [{ type: "text", value: "Hello world" }] }
+
 #### boldIntroP()
 
 (bold: string, rest: string) => MdParagraph
 
 Shorthand: paragraph with bold intro text followed by regular text.
+
+Produces `**bold**rest` in one paragraph node, useful for definition-style lines.
+
+Parameters:
+- bold: Text to render in bold at the start.
+- rest: Plain text appended after the bold segment.
+
+Returns: An MdParagraph with a strong child followed by a text child.
+
+Example:
+  const node = boldIntroP("Note: ", "this is important.");
+  // renders as **Note: **this is important.
 
 #### textListItem()
 
@@ -3786,11 +4123,33 @@ Shorthand: paragraph with bold intro text followed by regular text.
 
 Shorthand: list item containing a single text paragraph.
 
+Equivalent to `md.listItem(md.paragraph(md.text(value)))` but reduces nesting.
+
+Parameters:
+- value: The plain text content of the list item.
+
+Returns: An MdListItem wrapping a single text paragraph.
+
+Example:
+  const item = textListItem("First item");
+  const list = md.list([item, textListItem("Second item")]);
+
 #### rawBlock()
 
 (markdown: string) => MdHtml
 
 Wrap a raw markdown string as an HTML node. Use for TSDoc content that may contain markdown formatting (backticks, bold, links) which should pass through to the output verbatim rather than being escaped by the serializer.
+
+Bypasses remark-stringify escaping by storing content as an `html` node, which the serializer emits verbatim. Use sparingly — prefer typed nodes.
+
+Parameters:
+- markdown: The raw markdown/HTML string to pass through unescaped.
+
+Returns: An MdHtml node wrapping the raw content.
+
+Example:
+  const badge = rawBlock("![badge](https://img.shields.io/badge/ok-green)");
+  const tree = md.root(badge);
 
 #### truncate()
 
@@ -3798,17 +4157,49 @@ Wrap a raw markdown string as an HTML node. Use for TSDoc content that may conta
 
 Truncate a string to at most maxLen chars. Avoids cutting inside backtick-delimited code spans to prevent broken inline code that would cause escaping issues.
 
+Counts backticks before the cut point to detect open code spans. If the cut falls inside a span, it backs up to before the opening backtick.
+
+Parameters:
+- text: The string to truncate.
+- maxLen: Maximum allowed length (including the trailing `...`).
+
+Returns: The original string if within maxLen, or a truncated version with `...`.
+
+Example:
+  truncate("A very long description of the API", 20);
+  // "A very long descr..."
+
 #### toAnchor()
 
 (text: string) => string
 
 Convert a label to a GitHub-compatible anchor slug.
 
+Lowercases the input, strips non-alphanumeric characters (except spaces and hyphens), and replaces whitespace runs with single hyphens.
+
+Parameters:
+- text: The heading or label text to slugify.
+
+Returns: A lowercase, hyphen-separated anchor string.
+
+Example:
+  toAnchor("My Function()"); // "my-function"
+
 #### slugLink()
 
 (path: string) => string
 
 Strip extension from a link path and normalize to a slug. Produces bare slug links compatible with Mintlify and most SSGs.
+
+Removes a leading `./` prefix and strips `.md` or `.mdx` extensions, then prepends `/` for absolute-path links expected by most SSGs.
+
+Parameters:
+- path: The relative file path (e.g., `"./packages/core/index.md"`).
+
+Returns: An absolute slug path (e.g., `"/packages/core/index"`).
+
+Example:
+  slugLink("./packages/core/index.md"); // "/packages/core/index"
 
 #### parseFrontmatter()
 
@@ -4037,6 +4428,8 @@ Example:
 
 Register an SSG adapter. Called once per provider at module load time.
 
+Each adapter self-registers at import time via this function. Duplicate registrations for the same target silently overwrite.
+
 Parameters:
 - adapter: The adapter to register.
 
@@ -4049,6 +4442,8 @@ Example:
 (target: SSGTarget) => SSGAdapter
 
 Get a registered adapter by target name. Throws if the target is not registered.
+
+Looks up the adapter in the in-memory registry populated by self-registering adapter modules. All built-in adapters are registered when `@forge-ts/gen` is imported.
 
 Parameters:
 - target: The SSG target identifier.
@@ -4064,6 +4459,8 @@ Example:
 () => SSGTarget[]
 
 Get all registered adapter targets.
+
+Returns targets in the order they were registered — typically mintlify, docusaurus, nextra, vitepress (the built-in import order).
 
 Returns: An array of all registered `SSGTarget` identifiers.
 
@@ -4115,6 +4512,8 @@ Example:
 
 Generates a Markdown (or MDX) string from a list of symbols.
 
+Produces a flat single-file API reference with a Table of Contents, symbol groups ordered by kind, and optional SSG frontmatter.
+
 Parameters:
 - symbols: The symbols to document.
 - config: The resolved `ForgeConfig`.
@@ -4133,6 +4532,8 @@ Example:
 
 Injects a summary of exported symbols into a `README.md` file.  The content is placed between `<!-- forge-ts:start -->` and `<!-- forge-ts:end -->` comment markers.  If neither marker exists, the summary is appended to the end of the file.
 
+Uses mdast-based rendering for the API table so pipe characters and special markdown syntax inside summaries are escaped correctly.
+
 Parameters:
 - readmePath: Absolute path to the `README.md` to update.
 - symbols: Symbols to summarise in the README.
@@ -4150,6 +4551,8 @@ Example:
 (symbols: ForgeSymbol[], config: ForgeConfig) => SkillPackage
 
 Generates an agentskills.io-compliant skill package for ANY TypeScript project.  All content is derived from the project's exported symbols and metadata. No hardcoded project-specific content. Works for any project that forge-ts analyzes.
+
+Produces SKILL.md, API-REFERENCE.md, CONFIGURATION.md, and contextual shell scripts. The directory name follows the `SKILL-{project}` convention.
 
 Parameters:
 - symbols: All symbols from the project.
@@ -4170,6 +4573,8 @@ Example:
 
 Generates a SKILL.md string following the Agent Skills specification. Generic for any TypeScript project — content derived from symbols.
 
+Delegates to the internal `buildSkillMd` function with an auto-generated directory name derived from the project's package name.
+
 Parameters:
 - symbols: All symbols from the project.
 - config: The resolved forge-ts config.
@@ -4185,6 +4590,8 @@ Example:
 (pages: DocPage[], target: "docusaurus" | "mintlify" | "nextra" | "vitepress", projectName: string) => SSGConfigFile[]
 
 Generate navigation configuration file(s) for the given SSG target.  Returns one file for most targets, but multiple files for Nextra (which uses per-directory `_meta.json` files).
+
+Dispatches to a target-specific generator that understands each SSG's sidebar/navigation format. The result is JSON or JS ready to write to disk.
 
 Parameters:
 - pages: The `DocPage` array produced by `generateDocSite`.
@@ -4269,9 +4676,13 @@ Members:
 
 "text"
 
+Node discriminant — always `"text"`.
+
 ##### value
 
 string
+
+The raw text content.
 
 #### MdInlineCode
 
@@ -4285,9 +4696,13 @@ Members:
 
 "inlineCode"
 
+Node discriminant — always `"inlineCode"`.
+
 ##### value
 
 string
+
+The code span content (without surrounding backticks).
 
 #### MdStrong
 
@@ -4301,9 +4716,13 @@ Members:
 
 "strong"
 
+Node discriminant — always `"strong"`.
+
 ##### children
 
 MdPhrasing[]
+
+Inline content rendered in bold.
 
 #### MdEmphasis
 
@@ -4317,9 +4736,13 @@ Members:
 
 "emphasis"
 
+Node discriminant — always `"emphasis"`.
+
 ##### children
 
 MdPhrasing[]
+
+Inline content rendered in italic.
 
 #### MdLink
 
@@ -4333,13 +4756,19 @@ Members:
 
 "link"
 
+Node discriminant — always `"link"`.
+
 ##### url
 
 string
 
+The link destination URL.
+
 ##### children
 
 MdPhrasing[]
+
+Inline content rendered as the link text.
 
 #### MdHeading
 
@@ -4353,13 +4782,19 @@ Members:
 
 "heading"
 
+Node discriminant — always `"heading"`.
+
 ##### depth
 
 1 | 2 | 3 | 4 | 5 | 6
 
+Heading level: 1 for `#`, 2 for `##`, up to 6 for `######`.
+
 ##### children
 
 MdPhrasing[]
+
+Inline content of the heading.
 
 #### MdParagraph
 
@@ -4373,9 +4808,13 @@ Members:
 
 "paragraph"
 
+Node discriminant — always `"paragraph"`.
+
 ##### children
 
 MdPhrasing[]
+
+Inline content of the paragraph.
 
 #### MdCode
 
@@ -4389,13 +4828,19 @@ Members:
 
 "code"
 
+Node discriminant — always `"code"`.
+
 ##### lang
 
 string | null | undefined
 
+Language tag for syntax highlighting.
+
 ##### value
 
 string
+
+The code content (without the fence delimiters).
 
 #### MdBlockquote
 
@@ -4409,9 +4854,13 @@ Members:
 
 "blockquote"
 
+Node discriminant — always `"blockquote"`.
+
 ##### children
 
 MdBlock[]
+
+Block-level content inside the quote.
 
 #### MdHtml
 
@@ -4425,9 +4874,13 @@ Members:
 
 "html"
 
+Node discriminant — always `"html"`.
+
 ##### value
 
 string
+
+The raw HTML string.
 
 #### MdThematicBreak
 
@@ -4441,6 +4894,8 @@ Members:
 
 "thematicBreak"
 
+Node discriminant — always `"thematicBreak"`.
+
 #### MdListItem
 
 MdListItem
@@ -4453,13 +4908,19 @@ Members:
 
 "listItem"
 
+Node discriminant — always `"listItem"`.
+
 ##### spread
 
 boolean | undefined
 
+Whether blank lines separate this item's children.
+
 ##### children
 
 MdBlock[]
+
+Block-level content of the list item.
 
 #### MdList
 
@@ -4473,17 +4934,25 @@ Members:
 
 "list"
 
+Node discriminant — always `"list"`.
+
 ##### ordered
 
 boolean | undefined
+
+`true` for numbered lists, `false` for bullet lists.
 
 ##### spread
 
 boolean | undefined
 
+Whether blank lines separate list items.
+
 ##### children
 
 MdListItem[]
+
+The list items.
 
 #### MdTableCell
 
@@ -4497,9 +4966,13 @@ Members:
 
 "tableCell"
 
+Node discriminant — always `"tableCell"`.
+
 ##### children
 
 MdPhrasing[]
+
+Inline content of the cell.
 
 #### MdTableRow
 
@@ -4513,9 +4986,13 @@ Members:
 
 "tableRow"
 
+Node discriminant — always `"tableRow"`.
+
 ##### children
 
 MdTableCell[]
+
+Cells in this row.
 
 #### MdTable
 
@@ -4529,13 +5006,19 @@ Members:
 
 "table"
 
+Node discriminant — always `"table"`.
+
 ##### align
 
 ("left" | "center" | "right" | null)[] | undefined
 
+Column alignment directives for each column.
+
 ##### children
 
 MdTableRow[]
+
+Rows of the table (first row is the header).
 
 #### MdRoot
 
@@ -4549,9 +5032,13 @@ Members:
 
 "root"
 
+Node discriminant — always `"root"`.
+
 ##### children
 
 MdBlock[]
+
+Top-level block content of the document.
 
 #### FrontmatterResult
 
@@ -4623,7 +5110,7 @@ Output format
 
 "docusaurus" | "mintlify" | "nextra" | "vitepress" | undefined
 
-SSG target for frontmatter
+SSG target for frontmatter.
 
 ##### projectName
 
@@ -4635,7 +5122,7 @@ Project name
 
 string | undefined
 
-Project description
+Project description.
 
 ##### repositoryUrl
 
@@ -5151,10 +5638,17 @@ Example:
 
 Scans symbols for imports of deprecated exports from other packages.
 
+Builds a map of deprecated exported symbols, then checks `{@link}` references across package boundaries to detect cross-package consumption of deprecated APIs.
+
 Parameters:
 - symbols: All symbols from the walker across the entire project.
 
 Returns: Array of deprecated usages found.
+
+Example:
+  import { findDeprecatedUsages } from "@forge-ts/enforcer";
+  const usages = findDeprecatedUsages(symbols);
+  console.log(usages.length); // number of deprecated cross-package imports
 
 #### enforce()
 
@@ -5184,6 +5678,8 @@ Example:
 
 Formats a `ForgeResult` into a human-readable string suitable for printing to a terminal.  Diagnostics are grouped by source file.  Each file heading shows the relative-ish path, followed by indented error and warning lines.  A summary line is appended at the end.
 
+Groups errors and warnings by file path, renders each with ANSI colours when enabled, and appends a summary line with total counts.
+
 Parameters:
 - result: The result produced by `enforce`.
 - options: Rendering options (colours, verbosity).
@@ -5198,7 +5694,127 @@ Example:
   const result = await enforce(config);
   console.log(formatResults(result, { colors: true, verbose: false }));
 
+#### findDeprecatedUsages()
+
+(symbols: ForgeSymbol[]) => DeprecatedUsage[]
+
+Scans symbols for imports of deprecated exports from other packages.
+
+Uses the walker's `links` metadata to detect cross-package references to symbols that carry a `@deprecated` tag, comparing file paths to determine package boundaries.
+
+Parameters:
+- symbols: All symbols from the walker across the entire project.
+
+Returns: Array of deprecated usages found.
+
+Example:
+  import { findDeprecatedUsages } from "@forge-ts/enforcer";
+  const usages = findDeprecatedUsages(symbols);
+  console.log(`${usages.length} deprecated import(s)`);
+
+#### enforce()
+
+(config: ForgeConfig) => Promise<ForgeResult>
+
+Runs the TSDoc enforcement pass against a project.  The enforcer walks all exported symbols that meet the configured minimum visibility threshold and emits diagnostics for any documentation deficiencies it finds.  ### Error codes | Code | Severity | Condition | |------|----------|-----------| | E001 | error    | Exported symbol is missing a TSDoc summary. | | E002 | error    | Function/method parameter lacks a `@param` tag. | | E003 | error    | Non-void function/method lacks a `@returns` tag. | | E004 | error    | Exported function/method is missing an `@example` block. | | E005 | error    | Package entry point (index.ts) is missing `@packageDocumentation`. | | E006 | error    | Public/protected class member is missing a TSDoc comment. | | E007 | error    | Interface/type alias property is missing a TSDoc comment. | | W001 | warning  | TSDoc comment contains parse errors. | | W002 | warning  | Function body throws but has no `@throws` tag. | | W003 | warning  | `@deprecated` tag is present without explanation. | | W006 | warning  | TSDoc parser-level syntax error (invalid tag, malformed block, etc.). | | E009 | error    | tsconfig.json required strict-mode flag is missing or disabled (guard). | | E010 | error    | Config drift: a rule severity is weaker than the locked value. | | E013 | error    | Exported function/class is missing a `@remarks` block. | | E014 | warn     | Optional property of interface/type is missing `@defaultValue`. | | E015 | error    | Generic symbol is missing `@typeParam` for a type parameter. | | W005 | warn     | Symbol references other symbols via `{@link}` but has no `@see` tags. | | W007 | warn     | Guide FORGE:AUTO section references a symbol that no longer exists. | | W008 | warn     | Exported public symbol is not mentioned in any guide page. | | E017 | error    | `@internal` symbol re-exported through public barrel (index.ts). | | E018 | warn     | `@route`-tagged function missing `@response` tag. | | W009 | warn     | `{@inheritDoc}` references a symbol that does not exist. | | W010 | warn     | `@breaking` tag present without `@migration` path. | | W011 | warn     | New public export missing `@since` version tag. | | E019 | error    | Non-test file contains `@ts-expect-error` / `@ts-expect-error`. | | E020 | error    | Exported symbol has `any` in its public API signature. | | W012 | warn     | `{@link}` display text appears stale relative to target summary. | | W013 | warn     | `@example` block may be stale (arg count mismatch). |  When `config.enforce.strict` is `true` all warnings are promoted to errors.
+
+E020 (`require-no-any-in-api`) uses the symbol's `signature` string — which the walker populates via `getDeclaredTypeOfSymbol` for interfaces, types, and enums — to inspect the declared API surface rather than runtime types. Only the signature type string is tested for the word `any` (via `\bany\b`); function bodies are never inspected. This avoids false positives from internal `any` usage inside implementation code that does not surface in the public API.
+
+Parameters:
+- config: The resolved `ForgeConfig` for the project.
+
+Returns: A `ForgeResult` describing which symbols passed or failed.
+
+Example:
+  import { loadConfig } from "@forge-ts/core";
+  import { enforce } from "@forge-ts/enforcer";
+  const config = await loadConfig();
+  const result = await enforce(config);
+  if (!result.success) {
+    console.error(`${result.errors.length} errors found`);
+  }
+
+#### formatResults()
+
+(result: ForgeResult, options: FormatOptions) => string
+
+Formats a `ForgeResult` into a human-readable string suitable for printing to a terminal.  Diagnostics are grouped by source file.  Each file heading shows the relative-ish path, followed by indented error and warning lines.  A summary line is appended at the end.
+
+Groups diagnostics by file path and sorts errors before warnings within each group. When `verbose` is enabled, type signatures are appended to each diagnostic.
+
+Parameters:
+- result: The result produced by `enforce`.
+- options: Rendering options (colours, verbosity).
+
+Returns: A formatted string ready to write to stdout or stderr.
+
+Example:
+  import { enforce } from "@forge-ts/enforcer";
+  import { formatResults } from "@forge-ts/enforcer";
+  import { loadConfig } from "@forge-ts/core";
+  const config = await loadConfig();
+  const result = await enforce(config);
+  console.log(formatResults(result, opts));
+
 ### Interfaces
+
+#### DeprecatedUsage
+
+DeprecatedUsage
+
+A detected usage of a deprecated symbol.
+
+Members:
+
+##### deprecatedSymbol
+
+string
+
+The deprecated symbol being consumed.
+
+##### sourcePackage
+
+string
+
+The package that exports the deprecated symbol.
+
+##### consumingFile
+
+string
+
+The file importing the deprecated symbol.
+
+##### line
+
+number
+
+Line number of the import.
+
+##### deprecationMessage
+
+string
+
+The deprecation message.
+
+#### FormatOptions
+
+FormatOptions
+
+Options that control how `formatResults` renders its output.
+
+Members:
+
+##### colors
+
+boolean
+
+Emit ANSI colour escape sequences when `true`.
+
+##### verbose
+
+boolean
+
+When `true`, include the symbol's type signature alongside each diagnostic so the reader has immediate context.
 
 #### DeprecatedUsage
 
@@ -5268,6 +5884,8 @@ When `true`, include the symbol's type signature alongside each diagnostic so th
 
 Extracts all `@example` blocks from a list of `ForgeSymbol` objects.
 
+Iterates each symbol's documentation examples, flattening them into a single array with source metadata (file path, line number, sequential index) for downstream test generation.
+
 Parameters:
 - symbols: The symbols produced by the core AST walker.
 
@@ -5306,6 +5924,8 @@ Example:
 
 Writes virtual test files to disk and executes them with Node 24 native TypeScript support (`--experimental-strip-types --test`).
 
+Writes each virtual file to disk, spawns `node --experimental-strip-types --test`, parses the TAP output into structured pass/fail results, and reconciles exit codes with parsed failures.
+
 Parameters:
 - files: The virtual test files to write and run.
 
@@ -5324,6 +5944,90 @@ Example:
 
 Runs the full doctest pipeline: extract → generate → run.
 
+Creates an AST walker, extracts `@example` blocks, generates virtual `node:test` files, and executes them via the native Node test runner.
+
+Parameters:
+- config: The resolved `ForgeConfig` for the project.
+
+Returns: A `ForgeResult` with success/failure and any diagnostics.
+
+Example:
+  import { loadConfig } from "@forge-ts/core";
+  import { doctest } from "@forge-ts/doctest";
+  const config = await loadConfig();
+  const result = await doctest(config);
+  if (!result.success) {
+    console.error(`${result.errors.length} doctest failure(s)`);
+  }
+
+#### extractExamples()
+
+(symbols: ForgeSymbol[]) => ExtractedExample[]
+
+Extracts all `@example` blocks from a list of `ForgeSymbol` objects.
+
+Iterates every symbol's `documentation.examples` array and flattens them into a single list with source location metadata for downstream test generation.
+
+Parameters:
+- symbols: The symbols produced by the core AST walker.
+
+Returns: A flat array of `ExtractedExample` objects, one per code block.
+
+Example:
+  import { createWalker, loadConfig } from "@forge-ts/core";
+  import { extractExamples } from "@forge-ts/doctest";
+  const config = await loadConfig();
+  const symbols = createWalker(config).walk();
+  const examples = extractExamples(symbols);
+  console.log(`Found ${examples.length} examples`);
+
+#### generateTestFiles()
+
+(examples: ExtractedExample[], options: GeneratorOptions) => VirtualTestFile[]
+
+Generates a virtual test file for a set of extracted examples.  Each example is wrapped in an `it()` block using the Node built-in `node:test` runner so that no additional test framework is required. Auto-imports the tested symbol from the source file, processes `// =>` assertion patterns, and appends an inline source map.
+
+Source file imports are rewritten from `.ts`/`.tsx` to `.js` for ESM compatibility using `relative(...).replace(/\.tsx?$/, ".js")`. This ensures the generated test files use valid ESM import specifiers at runtime.
+
+Parameters:
+- examples: Examples to include in the generated file.
+- options: Output configuration.
+
+Returns: An array of `VirtualTestFile` objects (one per source file).
+
+Example:
+  import { generateTestFiles } from "@forge-ts/doctest";
+  const files = generateTestFiles(examples, opts);
+  console.log(`Generated ${files.length} test file(s)`);
+
+#### runTests()
+
+(files: VirtualTestFile[]) => Promise<RunResult>
+
+Writes virtual test files to disk and executes them with Node 24 native TypeScript support (`--experimental-strip-types --test`).
+
+Spawns `node --experimental-strip-types --test` as a child process and parses the TAP output to extract per-test pass/fail results.
+
+Parameters:
+- files: The virtual test files to write and run.
+
+Returns: A `RunResult` summarising the test outcome.
+
+Example:
+  import { runTests } from "@forge-ts/doctest";
+  const result = await runTests(virtualFiles);
+  if (!result.success) {
+    console.error(`${result.failed} doctest(s) failed`);
+  }
+
+#### doctest()
+
+(config: ForgeConfig) => Promise<ForgeResult>
+
+Runs the full doctest pipeline: extract → generate → run.
+
+Orchestrates the three-phase pipeline: extracts `@example` blocks via the walker, generates virtual `node:test` files, then executes them with native TS support.
+
 Parameters:
 - config: The resolved `ForgeConfig` for the project.
 
@@ -5339,6 +6043,148 @@ Example:
   }
 
 ### Interfaces
+
+#### ExtractedExample
+
+ExtractedExample
+
+A single extracted `@example` block ready for test generation.
+
+Members:
+
+##### symbolName
+
+string
+
+The symbol this example belongs to.
+
+##### filePath
+
+string
+
+Absolute path to the source file.
+
+##### line
+
+number
+
+1-based line number of the `@example` tag.
+
+##### code
+
+string
+
+The raw code inside the fenced block.
+
+##### language
+
+string
+
+The language identifier (e.g. `"typescript"`).
+
+##### index
+
+number
+
+Sequential index among examples for this symbol.
+
+#### GeneratorOptions
+
+GeneratorOptions
+
+Options for virtual test file generation.
+
+Members:
+
+##### cacheDir
+
+string
+
+Directory where virtual test files will be written.
+
+#### VirtualTestFile
+
+VirtualTestFile
+
+A generated virtual test file.
+
+Members:
+
+##### path
+
+string
+
+Absolute path where the file will be written.
+
+##### content
+
+string
+
+File contents (valid TypeScript).
+
+#### RunResult
+
+RunResult
+
+Result of running the generated test files.
+
+Members:
+
+##### success
+
+boolean
+
+Whether all tests passed.
+
+##### passed
+
+number
+
+Number of tests that passed.
+
+##### failed
+
+number
+
+Number of tests that failed.
+
+##### output
+
+string
+
+Combined stdout + stderr output from the test runner.
+
+##### tests
+
+TestCaseResult[]
+
+Individual test results with name and status.
+
+#### TestCaseResult
+
+TestCaseResult
+
+The result of a single test case.
+
+Members:
+
+##### name
+
+string
+
+The full test name as reported by the runner.
+
+##### passed
+
+boolean
+
+Whether this test passed.
+
+##### sourceFile
+
+string | undefined
+
+The source file this test was generated from, if determinable.
 
 #### ExtractedExample
 

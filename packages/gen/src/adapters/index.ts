@@ -1,3 +1,13 @@
+/**
+ * SSG adapter registry for documentation generation.
+ *
+ * Provides pluggable adapters for Mintlify, Docusaurus, Nextra, and VitePress
+ * that transform forge-ts output into framework-specific documentation files.
+ *
+ * @packageDocumentation
+ * @public
+ */
+
 export {
 	DEFAULT_TARGET,
 	getAdapter,

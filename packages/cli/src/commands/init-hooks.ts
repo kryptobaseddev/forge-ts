@@ -85,8 +85,20 @@ export interface InitHooksArgs {
  * - husky: `.husky/` directory or `husky` in package.json devDependencies
  * - lefthook: `lefthook.yml` or `lefthook` in package.json devDependencies
  *
+ * @remarks
+ * Detection order: filesystem check first (`.husky/`, `lefthook.yml`),
+ * then falls back to checking `package.json` devDependencies/dependencies.
+ *
  * @param rootDir - Absolute path to the project root.
  * @returns The detected hook manager, or "none" if neither is found.
+ *
+ * @example
+ * ```typescript
+ * import { detectHookManager } from "@forge-ts/cli/commands/init-hooks";
+ * const manager = detectHookManager("/path/to/project");
+ * console.log(manager); // "husky" | "lefthook" | "none"
+ * ```
+ *
  * @public
  */
 export function detectHookManager(rootDir: string): HookManager {
@@ -217,8 +229,21 @@ const VG_CONFIG_FILES = [
  * When detected, forge-ts appends versionguard's hook lines to the
  * generated hook files so both tools run cooperatively.
  *
+ * @remarks
+ * Scans for `.versionguard.yml`, `.versionguard.yaml`, `versionguard.yml`,
+ * and `versionguard.yaml` in the project root directory.
+ *
  * @param rootDir - Absolute path to the project root.
  * @returns True when a versionguard config file is found.
+ *
+ * @example
+ * ```typescript
+ * import { detectVersionGuard } from "@forge-ts/cli/commands/init-hooks";
+ * if (detectVersionGuard("/path/to/project")) {
+ *   console.log("VersionGuard detected — adding cooperative hooks");
+ * }
+ * ```
+ *
  * @public
  */
 export function detectVersionGuard(rootDir: string): boolean {
@@ -234,6 +259,11 @@ export function detectVersionGuard(rootDir: string): boolean {
  *
  * Detects the hook manager (husky or lefthook), generates appropriate
  * hook files, and reports what was written.
+ *
+ * @remarks
+ * Supports both husky v9+ and lefthook. When versionguard is detected in the
+ * project, its hook lines are appended cooperatively. Existing hook files are
+ * preserved unless `--force` is passed.
  *
  * @param args - CLI arguments for the init hooks command.
  * @returns A typed `CommandOutput<InitHooksResult>`.
@@ -280,9 +310,7 @@ export async function runInitHooks(args: InitHooksArgs): Promise<CommandOutput<I
 		const preCommitContent = hasVersionGuard
 			? `${HUSKY_PRE_COMMIT}${VG_PRE_COMMIT}`
 			: HUSKY_PRE_COMMIT;
-		const prePushContent = hasVersionGuard
-			? `${HUSKY_PRE_PUSH}${VG_PRE_PUSH}`
-			: HUSKY_PRE_PUSH;
+		const prePushContent = hasVersionGuard ? `${HUSKY_PRE_PUSH}${VG_PRE_PUSH}` : HUSKY_PRE_PUSH;
 
 		// -----------------------------------------------------------------
 		// Write pre-commit hook (.husky/pre-commit)
@@ -428,7 +456,9 @@ export async function runInitHooks(args: InitHooksArgs): Promise<CommandOutput<I
 		instructions.push("Lefthook pre-push hook configured to run forge-ts prepublish.");
 
 		if (hasVersionGuard) {
-			instructions.push("Detected .versionguard.yml — add versionguard validate commands to lefthook.yml manually.");
+			instructions.push(
+				"Detected .versionguard.yml — add versionguard validate commands to lefthook.yml manually.",
+			);
 		}
 	}
 

@@ -1,11 +1,14 @@
 {
 	"compilerOptions": {
+		"ignoreDeprecations": "6.0",
 		"target": "ESNext",
 		"module": "NodeNext",
 		"moduleResolution": "NodeNext",
 		"lib": ["ESNext"],
 		"types": ["node"],
 		"strict": true,
+		"strictNullChecks": true,
+		"noImplicitAny": true,
 		"verbatimModuleSyntax": true,
 		"declaration": true,
 		"declarationMap": true,

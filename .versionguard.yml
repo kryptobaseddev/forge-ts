@@ -1,0 +1,25 @@
+versioning:
+  type: semver
+sync:
+  files:
+    - README.md
+  patterns:
+    - regex: (version\s*[=:]\s*["'])(.+?)(["'])
+      template: $1{{version}}$3
+changelog:
+  enabled: true
+  file: CHANGELOG.md
+  strict: true
+  requireEntry: true
+git:
+  hooks:
+    pre-commit: true
+    pre-push: true
+    post-tag: false
+  enforceHooks: true
+ignore:
+  - node_modules/**
+  - dist/**
+  - .git/**
+  - "*.lock"
+  - .changeset/**

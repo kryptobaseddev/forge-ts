@@ -1,5 +1,6 @@
 {
 	"name": "forge-ts",
+	"version": "0.19.5",
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/kryptobaseddev/forge-ts"
@@ -26,19 +27,24 @@
 		"forge:build": "forge-ts build",
 		"forge:test": "forge-ts test --cwd packages/core",
 		"docs:generate": "pnpm build && node packages/cli/dist/index.js build",
-		"sync:tsdoc-spec": "tsx scripts/sync-tsdoc-spec.ts"
+		"sync:tsdoc-spec": "tsx scripts/sync-tsdoc-spec.ts",
+		"prepare": "husky",
+		"vg:check": "versionguard check",
+		"vg:validate": "versionguard validate"
 	},
 	"devDependencies": {
-		"@biomejs/biome": "^2.4.0",
+		"@biomejs/biome": "^2.4.9",
 		"@changesets/changelog-github": "^0.6.0",
 		"@changesets/cli": "^2.30.0",
-		"@cleocode/lafs-protocol": "^1.8.0",
+		"@cleocode/lafs": "^2026.3.74",
+		"@codluv/versionguard": "^0.4.0",
 		"@forge-ts/cli": "^0.19.4",
 		"@microsoft/tsdoc": "^0.16.0",
 		"@types/node": "^25.5.0",
+		"husky": "^9.1.7",
 		"tsup": "^8.5.0",
-		"typescript": "6.0.1-rc",
-		"vite": "^8.0.0",
-		"vitest": "^4.1.0"
+		"typescript": "6.0.2",
+		"vite": "^8.0.2",
+		"vitest": "^4.1.1"
 	}
 }

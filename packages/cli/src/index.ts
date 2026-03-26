@@ -274,6 +274,24 @@ const initCommand = defineCommand({
 	},
 });
 
+/**
+ * The `version` subcommand — prints the CLI version and exits.
+ *
+ * Supplements citty's built-in `--version` flag so that `forge-ts version`,
+ * `forge-ts -V`, and `forge-ts -v` all work as users expect.
+ *
+ * @public
+ */
+const versionCommand = defineCommand({
+	meta: {
+		name: "version",
+		description: "Print the forge-ts version",
+	},
+	run() {
+		console.log(pkg.version);
+	},
+});
+
 const main = defineCommand({
 	meta: {
 		name: "forge-ts",
@@ -292,7 +310,15 @@ const main = defineCommand({
 		audit: auditCommand,
 		prepublish: prepublishCommand,
 		doctor: doctorCommand,
+		version: versionCommand,
 	},
 });
+
+// Handle -V and -v as version flags (citty only supports --version natively)
+const versionFlags = new Set(["-V", "-v"]);
+if (process.argv.length === 3 && versionFlags.has(process.argv[2])) {
+	console.log(pkg.version);
+	process.exit(0);
+}
 
 runMain(main);

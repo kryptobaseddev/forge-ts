@@ -9,12 +9,7 @@
  */
 
 import { randomUUID } from "node:crypto";
-import {
-	createEnvelope,
-	type MVILevel,
-	resolveFlags,
-	type UnifiedFlagInput,
-} from "@cleocode/lafs-protocol";
+import { createEnvelope, type MVILevel, resolveFlags, type UnifiedFlagInput } from "@cleocode/lafs";
 
 // ---------------------------------------------------------------------------
 // Public types

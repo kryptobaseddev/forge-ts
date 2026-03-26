@@ -1,0 +1,4 @@
+# forge-ts
+npx --no-install forge-ts check --staged
+# versionguard
+npx --no-install versionguard validate --hook=pre-commit

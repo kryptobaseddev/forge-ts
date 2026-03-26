@@ -11,3 +11,5 @@ dist
 .cleo/backups/
 .cleo/.context-state.json
 .cleo/logs/
+clawmsgr-agent.json
+clawmsgr-*.json

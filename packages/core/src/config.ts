@@ -125,6 +125,9 @@ export function defaultConfig(rootDir: string): ForgeConfig {
 				"require-param-count": "warn",
 				"require-fresh-returns": "warn",
 				"require-meaningful-remarks": "warn",
+				"require-operation-completeness": "warn",
+				"require-ckm-tag-content": "warn",
+				"require-constraint-throws": "warn",
 			},
 		},
 		doctest: {
@@ -261,6 +264,9 @@ const KNOWN_RULE_KEYS = new Set([
 	"require-param-count",
 	"require-fresh-returns",
 	"require-meaningful-remarks",
+	"require-operation-completeness",
+	"require-ckm-tag-content",
+	"require-constraint-throws",
 ]);
 
 /**

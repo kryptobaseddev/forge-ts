@@ -34,12 +34,7 @@
 import { existsSync } from "node:fs";
 import { mkdir, writeFile } from "node:fs/promises";
 import { join, relative } from "node:path";
-import {
-	createWalker,
-	type ForgeConfig,
-	type ForgeSymbol,
-	loadConfig,
-} from "@forge-ts/core";
+import { createWalker, type ForgeConfig, type ForgeSymbol, loadConfig } from "@forge-ts/core";
 import { defineCommand } from "citty";
 import { forgeLogger } from "../forge-logger.js";
 import { type CommandOutput, emitResult, type OutputFlags, resolveExitCode } from "../output.js";
@@ -170,31 +165,130 @@ interface BarometerFact {
  *
  * @internal
  */
-const RULE_DEFINITIONS: Record<string, { name: string; description: string; defaultSeverity: string }> = {
-	E001: { name: "require-summary", description: "Exported symbol missing TSDoc summary", defaultSeverity: "error" },
-	E002: { name: "require-param", description: "Function parameter missing @param tag", defaultSeverity: "error" },
-	E003: { name: "require-returns", description: "Non-void function missing @returns tag", defaultSeverity: "error" },
-	E004: { name: "require-example", description: "Exported function missing @example block", defaultSeverity: "error" },
-	E005: { name: "require-package-doc", description: "Entry point missing @packageDocumentation", defaultSeverity: "warn" },
-	E006: { name: "require-class-member-doc", description: "Class member missing documentation", defaultSeverity: "error" },
-	E007: { name: "require-interface-member-doc", description: "Interface/type member missing documentation", defaultSeverity: "error" },
-	E013: { name: "require-remarks", description: "Exported function/class missing @remarks block", defaultSeverity: "error" },
-	E014: { name: "require-default-value", description: "Optional property missing @defaultValue", defaultSeverity: "warn" },
-	E015: { name: "require-type-param", description: "Generic symbol missing @typeParam", defaultSeverity: "error" },
-	E016: { name: "require-release-tag", description: "Exported symbol missing release tag (@public, @beta, @internal)", defaultSeverity: "error" },
-	E017: { name: "require-internal-boundary", description: "@internal symbol re-exported through public barrel", defaultSeverity: "error" },
-	E018: { name: "require-route-response", description: "@route-tagged function missing @response tag", defaultSeverity: "warn" },
-	E019: { name: "require-no-ts-ignore", description: "Non-test file contains ts-ignore or ts-expect-error", defaultSeverity: "error" },
-	E020: { name: "require-no-any-in-api", description: "Exported symbol has any in public API signature", defaultSeverity: "warn" },
-	W005: { name: "require-see", description: "Symbol uses @link but has no @see tags", defaultSeverity: "warn" },
-	W006: { name: "require-tsdoc-syntax", description: "TSDoc syntax parse error", defaultSeverity: "warn" },
-	W007: { name: "require-fresh-guides", description: "Guide FORGE:AUTO section references stale symbol", defaultSeverity: "warn" },
-	W008: { name: "require-guide-coverage", description: "Public symbol not mentioned in any guide", defaultSeverity: "warn" },
-	W009: { name: "require-inheritdoc-source", description: "@inheritDoc references non-existent symbol", defaultSeverity: "warn" },
-	W010: { name: "require-migration-path", description: "@breaking without @migration path", defaultSeverity: "warn" },
-	W011: { name: "require-since", description: "New public export missing @since version tag", defaultSeverity: "warn" },
-	W012: { name: "require-fresh-link-text", description: "@link display text appears stale", defaultSeverity: "warn" },
-	W013: { name: "require-fresh-examples", description: "@example block may be stale (arg count mismatch)", defaultSeverity: "warn" },
+const RULE_DEFINITIONS: Record<
+	string,
+	{ name: string; description: string; defaultSeverity: string }
+> = {
+	E001: {
+		name: "require-summary",
+		description: "Exported symbol missing TSDoc summary",
+		defaultSeverity: "error",
+	},
+	E002: {
+		name: "require-param",
+		description: "Function parameter missing @param tag",
+		defaultSeverity: "error",
+	},
+	E003: {
+		name: "require-returns",
+		description: "Non-void function missing @returns tag",
+		defaultSeverity: "error",
+	},
+	E004: {
+		name: "require-example",
+		description: "Exported function missing @example block",
+		defaultSeverity: "error",
+	},
+	E005: {
+		name: "require-package-doc",
+		description: "Entry point missing @packageDocumentation",
+		defaultSeverity: "warn",
+	},
+	E006: {
+		name: "require-class-member-doc",
+		description: "Class member missing documentation",
+		defaultSeverity: "error",
+	},
+	E007: {
+		name: "require-interface-member-doc",
+		description: "Interface/type member missing documentation",
+		defaultSeverity: "error",
+	},
+	E013: {
+		name: "require-remarks",
+		description: "Exported function/class missing @remarks block",
+		defaultSeverity: "error",
+	},
+	E014: {
+		name: "require-default-value",
+		description: "Optional property missing @defaultValue",
+		defaultSeverity: "warn",
+	},
+	E015: {
+		name: "require-type-param",
+		description: "Generic symbol missing @typeParam",
+		defaultSeverity: "error",
+	},
+	E016: {
+		name: "require-release-tag",
+		description: "Exported symbol missing release tag (@public, @beta, @internal)",
+		defaultSeverity: "error",
+	},
+	E017: {
+		name: "require-internal-boundary",
+		description: "@internal symbol re-exported through public barrel",
+		defaultSeverity: "error",
+	},
+	E018: {
+		name: "require-route-response",
+		description: "@route-tagged function missing @response tag",
+		defaultSeverity: "warn",
+	},
+	E019: {
+		name: "require-no-ts-ignore",
+		description: "Non-test file contains ts-ignore or ts-expect-error",
+		defaultSeverity: "error",
+	},
+	E020: {
+		name: "require-no-any-in-api",
+		description: "Exported symbol has any in public API signature",
+		defaultSeverity: "warn",
+	},
+	W005: {
+		name: "require-see",
+		description: "Symbol uses @link but has no @see tags",
+		defaultSeverity: "warn",
+	},
+	W006: {
+		name: "require-tsdoc-syntax",
+		description: "TSDoc syntax parse error",
+		defaultSeverity: "warn",
+	},
+	W007: {
+		name: "require-fresh-guides",
+		description: "Guide FORGE:AUTO section references stale symbol",
+		defaultSeverity: "warn",
+	},
+	W008: {
+		name: "require-guide-coverage",
+		description: "Public symbol not mentioned in any guide",
+		defaultSeverity: "warn",
+	},
+	W009: {
+		name: "require-inheritdoc-source",
+		description: "@inheritDoc references non-existent symbol",
+		defaultSeverity: "warn",
+	},
+	W010: {
+		name: "require-migration-path",
+		description: "@breaking without @migration path",
+		defaultSeverity: "warn",
+	},
+	W011: {
+		name: "require-since",
+		description: "New public export missing @since version tag",
+		defaultSeverity: "warn",
+	},
+	W012: {
+		name: "require-fresh-link-text",
+		description: "@link display text appears stale",
+		defaultSeverity: "warn",
+	},
+	W013: {
+		name: "require-fresh-examples",
+		description: "@example block may be stale (arg count mismatch)",
+		defaultSeverity: "warn",
+	},
 };
 
 // ---------------------------------------------------------------------------
@@ -263,7 +357,11 @@ function parseParamNames(signature: string): string[] {
  * @returns Array of extracted facts ready for question generation.
  * @internal
  */
-function extractFacts(symbols: ForgeSymbol[], config: ForgeConfig, rootDir: string): BarometerFact[] {
+function extractFacts(
+	symbols: ForgeSymbol[],
+	config: ForgeConfig,
+	rootDir: string,
+): BarometerFact[] {
 	const facts: BarometerFact[] = [];
 
 	// Helper to make file paths relative
@@ -388,7 +486,11 @@ function extractFacts(symbols: ForgeSymbol[], config: ForgeConfig, rootDir: stri
 		difficulty: "medium",
 		question: "What is the default value of the bypass dailyBudget config option?",
 		answer: String(config.bypass.dailyBudget),
-		source: { symbol: "ForgeConfig", file: "packages/core/src/types.ts", field: "bypass.dailyBudget" },
+		source: {
+			symbol: "ForgeConfig",
+			file: "packages/core/src/types.ts",
+			field: "bypass.dailyBudget",
+		},
 	});
 
 	facts.push({
@@ -396,7 +498,11 @@ function extractFacts(symbols: ForgeSymbol[], config: ForgeConfig, rootDir: stri
 		difficulty: "medium",
 		question: "What is the default bypass duration in hours before automatic expiry?",
 		answer: String(config.bypass.durationHours),
-		source: { symbol: "ForgeConfig", file: "packages/core/src/types.ts", field: "bypass.durationHours" },
+		source: {
+			symbol: "ForgeConfig",
+			file: "packages/core/src/types.ts",
+			field: "bypass.durationHours",
+		},
 	});
 
 	facts.push({
@@ -404,7 +510,11 @@ function extractFacts(symbols: ForgeSymbol[], config: ForgeConfig, rootDir: stri
 		difficulty: "easy",
 		question: "What is the default minimum Node.js version required by the packageJson guard?",
 		answer: config.guards.packageJson.minNodeVersion,
-		source: { symbol: "ForgeConfig", file: "packages/core/src/types.ts", field: "guards.packageJson.minNodeVersion" },
+		source: {
+			symbol: "ForgeConfig",
+			file: "packages/core/src/types.ts",
+			field: "guards.packageJson.minNodeVersion",
+		},
 	});
 
 	// -----------------------------------------------------------------------
@@ -450,9 +560,7 @@ function extractFacts(symbols: ForgeSymbol[], config: ForgeConfig, rootDir: stri
 	});
 
 	// @packageDocumentation facts
-	const packageDocSymbols = symbols.filter(
-		(s) => s.kind === "file" && s.documentation?.summary,
-	);
+	const packageDocSymbols = symbols.filter((s) => s.kind === "file" && s.documentation?.summary);
 	for (const sym of packageDocSymbols) {
 		const pkgMatch = /packages\/([^/]+)\//.exec(sym.filePath);
 		if (pkgMatch) {
@@ -481,7 +589,11 @@ function extractFacts(symbols: ForgeSymbol[], config: ForgeConfig, rootDir: stri
 			difficulty: "medium",
 			question: `What does rule ${code} (${rule.name}) check for?`,
 			answer: rule.description,
-			source: { symbol: code, file: "packages/enforcer/src/enforcer.ts", field: "rule-description" },
+			source: {
+				symbol: code,
+				file: "packages/enforcer/src/enforcer.ts",
+				field: "rule-description",
+			},
 		});
 
 		facts.push({
@@ -560,8 +672,7 @@ function buildRubric(): BarometerResult["rubric"] {
 				min: 50,
 				max: 69,
 				rating: "Standard",
-				description:
-					"Useful for API usage, but internal architecture requires source code access.",
+				description: "Useful for API usage, but internal architecture requires source code access.",
 			},
 			{
 				min: 0,
@@ -798,9 +909,7 @@ export const barometerCommand = defineCommand({
 			mvi: args.mvi,
 		};
 
-		emitResult(output, flags, (data) =>
-			formatBarometerHuman(data, questionsOnly),
-		);
+		emitResult(output, flags, (data) => formatBarometerHuman(data, questionsOnly));
 
 		const exitCode = resolveExitCode(output);
 		forgeLogger.success(

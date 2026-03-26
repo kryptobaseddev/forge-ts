@@ -7,6 +7,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.20.0] - 2026-03-26
+
+### Added
+- TypeScript 6.0.2 upgrade across all 6 packages
+- `@remarks` pipeline: walker promotes @remarks to ForgeSymbol.documentation.remarks, rendered in llms-full.txt
+- Staleness detection rules: W014 (param name drift), W015 (param count mismatch), W016 (void @returns), W017 (placeholder @remarks)
+- `forge-ts barometer` command: generates documentation effectiveness Q&A from the AST
+- `forge-ts version` subcommand with `-V` and `-v` flag support
+- Versionguard integration with strict config and husky pre-commit/pre-push hooks
+- Package-grouped llms.txt with @packageDocumentation summaries
+- Documentation effectiveness barometer at `.forge/barometer.md`
+
+### Changed
+- Renamed `@cleocode/lafs-protocol` to `@cleocode/lafs`
+- Generator uses `config.project.packageName` for project identity (was rootDir path)
+- OpenAPI spec reads title/version/description from config.project
+- llms.txt shows named functions instead of anonymous signatures
+- Site generator excludes root config files from package grouping
+- Hero example selection prefers index.ts entry-point functions
+- Updated deps: biome 2.4.9, vite 8.0.3, vitest 4.1.1
+
+### Fixed
+- Full TSDoc coverage: 0 errors across 355 symbols (was 95 errors)
+- EnforceRules TSDoc updated to document all 33+ rules
+- Docs cleanup: removed stale files, updated VISION.md references
+
 ## [0.19.5] - 2026-03-22
 
 ### Added
@@ -49,7 +75,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Vitest 4.1 for testing
 - pnpm workspaces with fixed versioning via changesets
 
-[Unreleased]: https://github.com/kryptobaseddev/forge-ts/compare/v0.19.5...HEAD
+[Unreleased]: https://github.com/kryptobaseddev/forge-ts/compare/v0.20.0...HEAD
+[0.20.0]: https://github.com/kryptobaseddev/forge-ts/compare/v0.19.5...v0.20.0
 [0.19.5]: https://github.com/kryptobaseddev/forge-ts/compare/v0.19.0...v0.19.5
 [0.19.0]: https://github.com/kryptobaseddev/forge-ts/compare/v0.1.0...v0.19.0
 [0.1.0]: https://github.com/kryptobaseddev/forge-ts/releases/tag/v0.1.0

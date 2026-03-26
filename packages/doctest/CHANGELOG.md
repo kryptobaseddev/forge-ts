@@ -1,5 +1,48 @@
 # @forge-ts/doctest
 
+## 0.20.0
+
+### Minor Changes
+
+- ## v0.20.0 — TypeScript 6.0, @remarks pipeline, staleness detection, barometer
+
+  ### Breaking Changes
+
+  - Upgraded TypeScript from 5.9.3 to 6.0.2 across all packages
+  - Renamed `@cleocode/lafs-protocol` dependency to `@cleocode/lafs`
+
+  ### New Features
+
+  - **@remarks pipeline**: Walker now promotes `@remarks` content to `ForgeSymbol.documentation.remarks`, rendered in `llms-full.txt` and generated docs
+  - **Staleness detection rules (W014-W017)**: Detect documentation drift — param name mismatch, param count mismatch, void @returns, placeholder @remarks
+  - **`forge-ts barometer` command**: Generate documentation effectiveness Q&A from the AST with codified rubric
+  - **`forge-ts version` subcommand**: Also supports `-V` and `-v` flags
+  - **Versionguard integration**: Strict config with husky pre-commit/pre-push hooks
+  - **Package-grouped llms.txt**: Symbols organized by package with @packageDocumentation summaries
+  - **Package descriptions in index.mdx**: Uses @packageDocumentation summaries instead of symbol counts
+
+  ### Fixes
+
+  - Generator project name: uses `config.project.packageName` (was `"."` from rootDir)
+  - OpenAPI metadata: title/version/description from config.project (was "API Reference" v0.0.0)
+  - llms.txt: named functions (was anonymous signatures), filtered noise
+  - Site generator: excludes root config files from package grouping (6 packages, not 7)
+  - Hero example selection: prefers index.ts entry-point functions
+  - TSDoc coverage: 0 errors across 355 symbols (was 95 errors)
+  - EnforceRules TSDoc: documents all 33+ rules (was "E001-E007")
+
+  ### Documentation
+
+  - Full TSDoc coverage across all 6 packages
+  - Documentation effectiveness barometer at `.forge/barometer.md`
+  - Updated VISION.md with TS 6.0.2 and @cleocode/lafs references
+  - Cleaned docs/: removed stale files, kept VISION, ARCHITECTURE, ROADMAP, skill
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @forge-ts/core@0.20.0
+
 ## 0.19.5
 
 ### Patch Changes

@@ -80,6 +80,10 @@ export interface GenerateOptions {
  * if they don't already exist, preserving manual edits across builds.
  * Pass `{ forceStubs: true }` to overwrite stubs.
  *
+ * @remarks
+ * Orchestrates the walker, site generator, llms.txt, and OpenAPI renderers
+ * in sequence, writing all output files to `config.outDir`.
+ *
  * @param config - The resolved {@link ForgeConfig} for the project.
  * @param options - Optional generation flags (e.g., forceStubs).
  * @returns A {@link ForgeResult} describing the outcome.
@@ -117,8 +121,12 @@ export async function generate(
 	}
 
 	// Multi-page site output — writes directly to outDir via adapters
-	const resolvedRoot = config.rootDir === "." ? process.cwd() : config.rootDir;
-	const projectName = resolvedRoot.split("/").pop() ?? "Project";
+	const projectName =
+		config.project.packageName ??
+		(() => {
+			const resolvedRoot = config.rootDir === "." ? process.cwd() : config.rootDir;
+			return resolvedRoot.split("/").pop() ?? "Project";
+		})();
 	const symbolsByPackage = groupSymbolsByPackage(symbols, config.rootDir);
 
 	const target = config.gen.ssgTarget ?? DEFAULT_TARGET;

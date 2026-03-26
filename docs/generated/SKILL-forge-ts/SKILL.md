@@ -1,12 +1,12 @@
 ---
 name: SKILL-forge-ts
 description: >
-  Append-only audit trail for forge-ts configuration and governance events.  Events are stored as JSON Lines in `.forge-audit.jsonl` at the project root. Each line is a single JSON object — the file is never truncated or overwritten. Use when: (1) calling its 97 API functions, (2) configuring forge-ts, (3) understanding its 112 type definitions, (4) user mentions "forge-ts" or asks about its API.
+  Universal TypeScript documentation compiler — enforces TSDoc as a build gate, then generates all artifacts from source in one pass Use when: (1) calling its 97 API functions, (2) configuring forge-ts, (3) understanding its 112 type definitions, (4) user mentions "forge-ts" or asks about its API.
 ---
 
 # forge-ts
 
-Append-only audit trail for forge-ts configuration and governance events.  Events are stored as JSON Lines in `.forge-audit.jsonl` at the project root. Each line is a single JSON object — the file is never truncated or overwritten.
+Universal TypeScript documentation compiler — enforces TSDoc as a build gate, then generates all artifacts from source in one pass
 
 ## Quick Start
 
@@ -155,7 +155,7 @@ When `--json --mvi full`, each error includes `suggestedFix` with the exact TSDo
 - **`Visibility`** — Visibility levels for exported symbols. Derived from TSDoc release tags (`@public`, `@beta`, `@internal`).
 - **`ForgeSymbol`** — A single extracted and annotated symbol from the TypeScript AST.
 - **`RuleSeverity`** — Severity level for an individual enforcement rule. - `"error"` — violation fails the build. - `"warn"`  — violation is reported but does not fail the build. - `"off"`   — rule is disabled entirely.
-- **`EnforceRules`** — Per-rule severity configuration for the TSDoc enforcer. Each key corresponds to one of the E001–E007 rule codes.
+- **`EnforceRules`** — Per-rule severity configuration for the TSDoc enforcer. 33 rules across 4 layers: API (E001-E008, W003-W004), Dev (E013-E015, E017-E018, W005-W006, W009), Consumer (E016, W007-W008, W010-W011), LLM Anti-Pattern (E019-E020, W012-W013).
 - **`ForgeConfig`** — Full configuration for a forge-ts run. Loaded from forge-ts.config.ts or the "forge-ts" key in package.json.
 
 ## References

@@ -81,7 +81,8 @@ export type RuleSeverity = "error" | "warn" | "off";
 
 /**
  * Per-rule severity configuration for the TSDoc enforcer.
- * Each key corresponds to one of the E001–E007 rule codes.
+ * 33 rules across 4 layers: API (E001-E008, W003-W004), Dev (E013-E015, E017-E018, W005-W006, W009),
+ * Consumer (E016, W007-W008, W010-W011), LLM Anti-Pattern (E019-E020, W012-W013).
  * @since 0.1.0
  * @public
  */

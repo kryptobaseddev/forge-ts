@@ -69,6 +69,17 @@ export interface SiteGeneratorOptions {
  *
  * This is exported so SSG adapters can apply it during page transformation.
  *
+ * @remarks
+ * Replaces `{`, `}`, `<`, and `>` with backslash-escaped or HTML-entity equivalents.
+ * Only angle brackets adjacent to word characters are escaped to avoid over-escaping.
+ *
+ * @param text - Raw text that may contain MDX-unsafe characters.
+ * @returns The input string with `{`, `}`, `<`, and `>` escaped for safe MDX rendering.
+ * @example
+ * ```typescript
+ * const safe = escapeMdx("Array<string>");
+ * console.log(safe); // "Array&lt;string&gt;"
+ * ```
  * @public
  */
 export function escapeMdx(text: string): string {
@@ -150,6 +161,10 @@ function buildFrontmatterFields(
  * derived from the directory segment immediately after `packages/`.
  * For non-monorepo projects all symbols fall under the project name.
  *
+ * @remarks
+ * Uses relative path analysis to detect monorepo `packages/<name>/` structure.
+ * Root-level config and test files are excluded from the result.
+ *
  * @param symbols - All extracted symbols.
  * @param rootDir - Absolute path to the project root.
  * @returns A map from package name to symbol list.
@@ -169,6 +184,8 @@ export function groupSymbolsByPackage(
 
 	for (const symbol of symbols) {
 		const rel = relative(rootDir, symbol.filePath);
+		// Skip root-level config/test files that aren't part of any package
+		if (!rel.startsWith("packages") && !rel.startsWith("src")) continue;
 		// Detect monorepo structure: packages/<name>/...
 		const monorepoMatch = /^packages[\\/]([^\\/]+)[\\/]/.exec(rel);
 		const packageName = monorepoMatch ? monorepoMatch[1] : basename(rootDir);
@@ -1386,6 +1403,10 @@ function renderContributingPage(options: SiteGeneratorOptions): string {
  * 3. BUILD — Guides (stub)
  * 4. REFERENCE — API Reference, Types, Configuration, Changelog
  * 5. COMMUNITY — FAQ, Contributing (stubs)
+ *
+ * @remarks
+ * Auto-generated reference pages are rebuilt on every run, while stub pages
+ * (concepts, guides, FAQ, contributing) are only created if they don't exist.
  *
  * @param symbolsByPackage - Symbols grouped by package name.
  * @param config - The resolved {@link ForgeConfig}.

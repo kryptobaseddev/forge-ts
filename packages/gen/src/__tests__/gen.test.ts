@@ -268,7 +268,7 @@ describe("generateLlmsFullTxt", () => {
 
 	it("handles empty symbol list gracefully", () => {
 		const result = generateLlmsFullTxt([], makeConfig());
-		expect(result).toContain("# project - Full Context");
+		expect(result).toContain("# project — Full Context");
 		expect(result).not.toContain("## Functions");
 	});
 });

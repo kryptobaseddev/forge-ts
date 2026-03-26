@@ -1,15 +1,25 @@
+import { resolve } from "node:path";
 import type { ForgeConfig, ForgeSymbol } from "@forge-ts/core";
 
 /**
+ * Resolves the project name from config, preferring package.json name over
+ * rootDir path parsing. Falls back to "Project" if nothing is available.
+ * @internal
+ */
+function resolveProjectName(config: ForgeConfig): string {
+	if (config.project?.packageName) return config.project.packageName;
+	const resolvedRoot = config.rootDir === "." ? process.cwd() : resolve(config.rootDir);
+	return resolvedRoot.split("/").pop() ?? "Project";
+}
+
+/**
  * Derives a compact one-line signature for routing manifest entries.
+ * Always includes the symbol name for LLM readability.
  * @internal
  */
 function compactEntry(symbol: ForgeSymbol): string {
-	if (symbol.signature) {
-		return symbol.signature;
-	}
-	const ext = symbol.kind === "function" ? "()" : "";
-	return `${symbol.kind} ${symbol.name}${ext}`;
+	const ext = symbol.kind === "function" || symbol.kind === "method" ? "()" : "";
+	return `${symbol.name}${ext}`;
 }
 
 /**
@@ -17,6 +27,10 @@ function compactEntry(symbol: ForgeSymbol): string {
  *
  * The file follows the llms.txt specification: a compact, structured overview
  * designed to help large language models navigate a project's documentation.
+ *
+ * @remarks
+ * Filters out non-exported, test, config, and node_modules symbols.
+ * Groups the remaining symbols by kind and renders them as compact one-liners.
  *
  * @param symbols - The symbols to include.
  * @param config - The resolved {@link ForgeConfig}.
@@ -30,13 +44,21 @@ function compactEntry(symbol: ForgeSymbol): string {
  * @public
  */
 export function generateLlmsTxt(symbols: ForgeSymbol[], config: ForgeConfig): string {
-	const exported = symbols.filter((s) => s.exported);
-	const projectName = config.rootDir.split("/").pop() ?? "Project";
+	const exported = symbols.filter(
+		(s) =>
+			s.exported &&
+			s.kind !== "file" &&
+			!s.filePath.includes("node_modules") &&
+			!s.filePath.endsWith(".test.ts") &&
+			!s.filePath.endsWith(".config.ts"),
+	);
+	const projectName = resolveProjectName(config);
 
 	const lines: string[] = [];
 
 	lines.push(`# ${projectName}`);
-	lines.push(`> Auto-generated API documentation`);
+	const desc = config.project?.description;
+	lines.push(`> ${desc ?? `API documentation for ${projectName}`}`);
 	lines.push("");
 
 	// Sections block — link to generated files
@@ -158,6 +180,10 @@ function renderFullSymbol(symbol: ForgeSymbol, depth: number): string {
  * Unlike `llms.txt`, this file contains complete documentation for every
  * exported symbol, intended for LLM ingestion that requires full context.
  *
+ * @remarks
+ * Emits full signatures, descriptions, parameters, and return types for each
+ * exported symbol. Methods and properties are excluded since they appear inline.
+ *
  * @param symbols - The symbols to include.
  * @param config - The resolved {@link ForgeConfig}.
  * @returns The generated `llms-full.txt` content as a string.
@@ -173,13 +199,17 @@ export function generateLlmsFullTxt(symbols: ForgeSymbol[], config: ForgeConfig)
 	const exported = symbols.filter(
 		(s) => s.exported && s.kind !== "method" && s.kind !== "property",
 	);
-	const projectName = config.rootDir.split("/").pop() ?? "Project";
+	const projectName = resolveProjectName(config);
 
 	const lines: string[] = [];
 
-	lines.push(`# ${projectName} - Full Context`);
+	lines.push(`# ${projectName} — Full Context`);
+	if (config.project?.description) {
+		lines.push("");
+		lines.push(`> ${config.project.description}`);
+	}
 	lines.push("");
-	lines.push(`Root: ${config.rootDir}`);
+	lines.push(`Version: ${config.project?.version ?? "unknown"}`);
 	lines.push(`Generated: ${new Date().toISOString()}`);
 	lines.push("");
 

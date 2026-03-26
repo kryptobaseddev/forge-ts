@@ -297,7 +297,7 @@ Updates FORGE:STUB sections in existing content.  Behavior for each stub: - If t
 
 **Returns** — The updated content with stubs inserted or refreshed as needed.
 
-## escapeMdx()
+## escapeMdx(text)
 
 Escape MDX-unsafe characters in text that appears outside code fences.  MDX parses `<Word>` as JSX tags and `{expr}` as JS expressions. In documentation content (summaries, descriptions, table cells), these come from TypeScript generics (`Array<string>`) and TSDoc inline tags (`{@link Foo}`). We escape them so MDX treats them as literal text.  This is exported so SSG adapters can apply it during page transformation.
 
@@ -305,6 +305,21 @@ Escape MDX-unsafe characters in text that appears outside code fences.  MDX pars
 
 ```typescript
 (text: string) => string
+```
+
+**Parameters**
+
+| Name   | Type     | Description                                      |
+| ------ | -------- | ------------------------------------------------ |
+| `text` | `string` | Raw text that may contain MDX-unsafe characters. |
+
+**Returns** — The input string with `{`, `}`, `<`, and `>` escaped for safe MDX rendering.
+
+**Example**
+
+```typescript
+const safe = escapeMdx("Array<string>");
+console.log(safe); // "Array&lt;string&gt;"
 ```
 
 ## groupSymbolsByPackage(symbols, rootDir)

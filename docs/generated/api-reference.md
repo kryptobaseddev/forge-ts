@@ -849,7 +849,7 @@ console.log(sdkTypes.length); // number of public SDK types
 
 ### `generateOpenAPISpec()`
 
-*Defined in `packages/api/src/openapi.ts:41`*
+*Defined in `packages/api/src/openapi.ts:45`*
 
 ```typescript
 (config: ForgeConfig, sdkTypes: SDKType[], symbols?: ForgeSymbol[]) => OpenAPIDocument
@@ -1277,7 +1277,7 @@ Updates FORGE:STUB sections in existing content.  Behavior for each stub: - If t
 
 ### `escapeMdx()`
 
-*Defined in `packages/gen/src/site-generator.ts:74`*
+*Defined in `packages/gen/src/site-generator.ts:85`*
 
 ```typescript
 (text: string) => string
@@ -1285,9 +1285,22 @@ Updates FORGE:STUB sections in existing content.  Behavior for each stub: - If t
 
 Escape MDX-unsafe characters in text that appears outside code fences.  MDX parses `<Word>` as JSX tags and `{expr}` as JS expressions. In documentation content (summaries, descriptions, table cells), these come from TypeScript generics (`Array<string>`) and TSDoc inline tags (`{@link Foo}`). We escape them so MDX treats them as literal text.  This is exported so SSG adapters can apply it during page transformation.
 
+**Parameters**
+
+- `text` — Raw text that may contain MDX-unsafe characters.
+
+**Returns**: The input string with `{`, `}`, `<`, and `>` escaped for safe MDX rendering.
+
+**Examples**
+
+```typescript
+const safe = escapeMdx("Array<string>");
+console.log(safe); // "Array&lt;string&gt;"
+```
+
 ### `groupSymbolsByPackage()`
 
-*Defined in `packages/gen/src/site-generator.ts:164`*
+*Defined in `packages/gen/src/site-generator.ts:179`*
 
 ```typescript
 (symbols: ForgeSymbol[], rootDir: string) => Map<string, ForgeSymbol[]>
@@ -1312,7 +1325,7 @@ console.log(grouped.has("core")); // true for monorepo
 
 ### `generateDocSite()`
 
-*Defined in `packages/gen/src/site-generator.ts:1403`*
+*Defined in `packages/gen/src/site-generator.ts:1424`*
 
 ```typescript
 (symbolsByPackage: Map<string, ForgeSymbol[]>, config: ForgeConfig, options: SiteGeneratorOptions) => DocPage[]
@@ -1406,7 +1419,7 @@ const targets = getAvailableTargets(); // ["mintlify", "docusaurus", ...]
 
 ### `generateLlmsTxt()`
 
-*Defined in `packages/gen/src/llms.ts:32`*
+*Defined in `packages/gen/src/llms.ts:46`*
 
 ```typescript
 (symbols: ForgeSymbol[], config: ForgeConfig) => string
@@ -1431,7 +1444,7 @@ console.log(txt.startsWith("# ")); // true
 
 ### `generateLlmsFullTxt()`
 
-*Defined in `packages/gen/src/llms.ts:172`*
+*Defined in `packages/gen/src/llms.ts:198`*
 
 ```typescript
 (symbols: ForgeSymbol[], config: ForgeConfig) => string
@@ -1585,7 +1598,7 @@ console.log(configs[0].path); // ".vitepress/sidebar.json"
 
 ### `generate()`
 
-*Defined in `packages/gen/src/index.ts:95`*
+*Defined in `packages/gen/src/index.ts:99`*
 
 ```typescript
 (config: ForgeConfig, options?: GenerateOptions) => Promise<ForgeResult>
@@ -2595,17 +2608,17 @@ Whether this symbol is part of the public module exports.
 
 ### `EnforceRules`
 
-*Defined in `packages/core/src/types.ts:88`*
+*Defined in `packages/core/src/types.ts:89`*
 
 ```typescript
 EnforceRules
 ```
 
-Per-rule severity configuration for the TSDoc enforcer. Each key corresponds to one of the E001–E007 rule codes.
+Per-rule severity configuration for the TSDoc enforcer. 33 rules across 4 layers: API (E001-E008, W003-W004), Dev (E013-E015, E017-E018, W005-W006, W009), Consumer (E016, W007-W008, W010-W011), LLM Anti-Pattern (E019-E020, W012-W013).
 
 #### `"require-summary"`
 
-*Defined in `packages/core/src/types.ts:90`*
+*Defined in `packages/core/src/types.ts:91`*
 
 ```typescript
 RuleSeverity
@@ -2615,7 +2628,7 @@ E001: Exported symbol missing TSDoc summary.
 
 #### `"require-param"`
 
-*Defined in `packages/core/src/types.ts:92`*
+*Defined in `packages/core/src/types.ts:93`*
 
 ```typescript
 RuleSeverity
@@ -2625,7 +2638,7 @@ E002: Function parameter missing `\@param` tag.
 
 #### `"require-returns"`
 
-*Defined in `packages/core/src/types.ts:94`*
+*Defined in `packages/core/src/types.ts:95`*
 
 ```typescript
 RuleSeverity
@@ -2635,7 +2648,7 @@ E003: Non-void function missing `\@returns` tag.
 
 #### `"require-example"`
 
-*Defined in `packages/core/src/types.ts:96`*
+*Defined in `packages/core/src/types.ts:97`*
 
 ```typescript
 RuleSeverity
@@ -2645,7 +2658,7 @@ E004: Exported function missing `\@example` block.
 
 #### `"require-package-doc"`
 
-*Defined in `packages/core/src/types.ts:98`*
+*Defined in `packages/core/src/types.ts:99`*
 
 ```typescript
 RuleSeverity
@@ -2655,7 +2668,7 @@ E005: Entry point missing `\@packageDocumentation`.
 
 #### `"require-class-member-doc"`
 
-*Defined in `packages/core/src/types.ts:100`*
+*Defined in `packages/core/src/types.ts:101`*
 
 ```typescript
 RuleSeverity
@@ -2665,7 +2678,7 @@ E006: Class member missing documentation.
 
 #### `"require-interface-member-doc"`
 
-*Defined in `packages/core/src/types.ts:102`*
+*Defined in `packages/core/src/types.ts:103`*
 
 ```typescript
 RuleSeverity
@@ -2675,7 +2688,7 @@ E007: Interface/type member missing documentation.
 
 #### `"require-tsdoc-syntax"`
 
-*Defined in `packages/core/src/types.ts:104`*
+*Defined in `packages/core/src/types.ts:105`*
 
 ```typescript
 RuleSeverity
@@ -2685,7 +2698,7 @@ W006: TSDoc syntax parse error (invalid tag, malformed block, etc.).
 
 #### `"require-remarks"`
 
-*Defined in `packages/core/src/types.ts:106`*
+*Defined in `packages/core/src/types.ts:107`*
 
 ```typescript
 RuleSeverity
@@ -2695,7 +2708,7 @@ E013: Exported function/class is missing a `\@remarks` block.
 
 #### `"require-default-value"`
 
-*Defined in `packages/core/src/types.ts:108`*
+*Defined in `packages/core/src/types.ts:109`*
 
 ```typescript
 RuleSeverity
@@ -2705,7 +2718,7 @@ E014: Optional property with default is missing `\@defaultValue`.
 
 #### `"require-type-param"`
 
-*Defined in `packages/core/src/types.ts:110`*
+*Defined in `packages/core/src/types.ts:111`*
 
 ```typescript
 RuleSeverity
@@ -2715,7 +2728,7 @@ E015: Generic symbol is missing `\@typeParam` for its type parameters.
 
 #### `"require-see"`
 
-*Defined in `packages/core/src/types.ts:112`*
+*Defined in `packages/core/src/types.ts:113`*
 
 ```typescript
 RuleSeverity
@@ -2725,7 +2738,7 @@ W005: Symbol references other symbols via `\@link` but has no `\@see` tags.
 
 #### `"require-release-tag"`
 
-*Defined in `packages/core/src/types.ts:114`*
+*Defined in `packages/core/src/types.ts:115`*
 
 ```typescript
 RuleSeverity
@@ -2735,7 +2748,7 @@ E016: Exported symbol is missing a release tag (`\@public`, `\@beta`, `\@interna
 
 #### `"require-fresh-guides"`
 
-*Defined in `packages/core/src/types.ts:116`*
+*Defined in `packages/core/src/types.ts:117`*
 
 ```typescript
 RuleSeverity
@@ -2745,7 +2758,7 @@ W007: Guide FORGE:AUTO section references a symbol that no longer exists or has 
 
 #### `"require-guide-coverage"`
 
-*Defined in `packages/core/src/types.ts:118`*
+*Defined in `packages/core/src/types.ts:119`*
 
 ```typescript
 RuleSeverity
@@ -2755,7 +2768,7 @@ W008: Exported public symbol is not mentioned in any guide page.
 
 #### `"require-internal-boundary"`
 
-*Defined in `packages/core/src/types.ts:120`*
+*Defined in `packages/core/src/types.ts:121`*
 
 ```typescript
 RuleSeverity
@@ -2765,7 +2778,7 @@ E017: `\@internal` symbol re-exported through public barrel (index.ts).
 
 #### `"require-route-response"`
 
-*Defined in `packages/core/src/types.ts:122`*
+*Defined in `packages/core/src/types.ts:123`*
 
 ```typescript
 RuleSeverity
@@ -2775,7 +2788,7 @@ E018: `\@route`-tagged function missing `\@response` tag.
 
 #### `"require-inheritdoc-source"`
 
-*Defined in `packages/core/src/types.ts:124`*
+*Defined in `packages/core/src/types.ts:125`*
 
 ```typescript
 RuleSeverity
@@ -2785,7 +2798,7 @@ W009: `\@inheritDoc` references a symbol that does not exist.
 
 #### `"require-migration-path"`
 
-*Defined in `packages/core/src/types.ts:126`*
+*Defined in `packages/core/src/types.ts:127`*
 
 ```typescript
 RuleSeverity
@@ -2795,7 +2808,7 @@ W010: `\@breaking` without `\@migration` path.
 
 #### `"require-since"`
 
-*Defined in `packages/core/src/types.ts:128`*
+*Defined in `packages/core/src/types.ts:129`*
 
 ```typescript
 RuleSeverity
@@ -2805,7 +2818,7 @@ W011: New public export missing `\@since` version tag.
 
 #### `"require-fresh-examples"`
 
-*Defined in `packages/core/src/types.ts:130`*
+*Defined in `packages/core/src/types.ts:131`*
 
 ```typescript
 RuleSeverity
@@ -2815,7 +2828,7 @@ W013: `\@example` block may be stale — function call arg count mismatches para
 
 #### `"require-no-ts-ignore"`
 
-*Defined in `packages/core/src/types.ts:132`*
+*Defined in `packages/core/src/types.ts:133`*
 
 ```typescript
 RuleSeverity
@@ -2825,7 +2838,7 @@ E019: Non-test file contains ts-ignore or ts-expect-error directive.
 
 #### `"require-no-any-in-api"`
 
-*Defined in `packages/core/src/types.ts:134`*
+*Defined in `packages/core/src/types.ts:135`*
 
 ```typescript
 RuleSeverity
@@ -2835,7 +2848,7 @@ E020: Exported symbol has `any` in its public API signature.
 
 #### `"require-fresh-link-text"`
 
-*Defined in `packages/core/src/types.ts:136`*
+*Defined in `packages/core/src/types.ts:137`*
 
 ```typescript
 RuleSeverity
@@ -2845,7 +2858,7 @@ W012: `\@link` display text appears stale relative to target summary.
 
 ### `ForgeConfig`
 
-*Defined in `packages/core/src/types.ts:145`*
+*Defined in `packages/core/src/types.ts:146`*
 
 ```typescript
 ForgeConfig
@@ -2855,7 +2868,7 @@ Full configuration for a forge-ts run. Loaded from forge-ts.config.ts or the "fo
 
 #### `rootDir`
 
-*Defined in `packages/core/src/types.ts:147`*
+*Defined in `packages/core/src/types.ts:148`*
 
 ```typescript
 string
@@ -2865,7 +2878,7 @@ Root directory of the project.
 
 #### `tsconfig`
 
-*Defined in `packages/core/src/types.ts:149`*
+*Defined in `packages/core/src/types.ts:150`*
 
 ```typescript
 string
@@ -2875,7 +2888,7 @@ Path to the tsconfig.json to compile against.
 
 #### `outDir`
 
-*Defined in `packages/core/src/types.ts:151`*
+*Defined in `packages/core/src/types.ts:152`*
 
 ```typescript
 string
@@ -2885,7 +2898,7 @@ Output directory for generated files.
 
 #### `enforce`
 
-*Defined in `packages/core/src/types.ts:153`*
+*Defined in `packages/core/src/types.ts:154`*
 
 ```typescript
 { enabled: boolean; minVisibility: Visibility | "public" | "beta" | "internal" | "private"; strict: boolean; rules: EnforceRules; ignoreFile?: string; }
@@ -2895,7 +2908,7 @@ Enforce TSDoc on all public exports.
 
 #### `doctest`
 
-*Defined in `packages/core/src/types.ts:175`*
+*Defined in `packages/core/src/types.ts:176`*
 
 ```typescript
 { enabled: boolean; cacheDir: string; }
@@ -2905,7 +2918,7 @@ DocTest configuration.
 
 #### `api`
 
-*Defined in `packages/core/src/types.ts:181`*
+*Defined in `packages/core/src/types.ts:182`*
 
 ```typescript
 { enabled: boolean; openapi: boolean; openapiPath: string; }
@@ -2915,7 +2928,7 @@ API generation configuration.
 
 #### `gen`
 
-*Defined in `packages/core/src/types.ts:189`*
+*Defined in `packages/core/src/types.ts:190`*
 
 ```typescript
 { enabled: boolean; formats: Array<"markdown" | "mdx">; llmsTxt: boolean; readmeSync: boolean; ssgTarget?: "docusaurus" | "mintlify" | "nextra" | "vitepress"; }
@@ -2925,7 +2938,7 @@ Output generation configuration.
 
 #### `skill`
 
-*Defined in `packages/core/src/types.ts:206`*
+*Defined in `packages/core/src/types.ts:207`*
 
 ```typescript
 { enabled?: boolean; customSections?: Array<{ heading: string; content: string; }>; extraGotchas?: string[]; }
@@ -2935,7 +2948,7 @@ Skill package generation settings. Custom sections here are merged into the gene
 
 #### `tsdoc`
 
-*Defined in `packages/core/src/types.ts:230`*
+*Defined in `packages/core/src/types.ts:231`*
 
 ```typescript
 { writeConfig: boolean; customTags: Array<{ tagName: string; syntaxKind: "block" | "inline" | "modifier"; }>; enforce: { core: "error" | "warn" | "off"; extended: "error" | "warn" | "off"; discretionary: "error" | "warn" | "off"; }; }
@@ -2945,7 +2958,7 @@ TSDoc ecosystem configuration.
 
 #### `bypass`
 
-*Defined in `packages/core/src/types.ts:249`*
+*Defined in `packages/core/src/types.ts:250`*
 
 ```typescript
 { dailyBudget: number; durationHours: number; }
@@ -2955,7 +2968,7 @@ Bypass budget configuration for temporary rule overrides.
 
 #### `guides`
 
-*Defined in `packages/core/src/types.ts:256`*
+*Defined in `packages/core/src/types.ts:257`*
 
 ```typescript
 { enabled: boolean; autoDiscover: boolean; custom: Array<{ slug: string; title: string; sources: string[]; }>; }
@@ -2965,7 +2978,7 @@ Guide generation configuration.
 
 #### `guards`
 
-*Defined in `packages/core/src/types.ts:272`*
+*Defined in `packages/core/src/types.ts:273`*
 
 ```typescript
 { tsconfig: { enabled: boolean; requiredFlags: string[]; }; biome: { enabled: boolean; lockedRules: string[]; }; packageJson: { enabled: boolean; minNodeVersion: string; requiredFields: string[]; }; }
@@ -2975,7 +2988,7 @@ Downstream config drift guards.
 
 #### `_configWarnings`
 
-*Defined in `packages/core/src/types.ts:300`*
+*Defined in `packages/core/src/types.ts:301`*
 
 ```typescript
 string[] | undefined
@@ -2985,7 +2998,7 @@ Warnings generated during config loading (e.g., unknown keys). Populated by load
 
 #### `project`
 
-*Defined in `packages/core/src/types.ts:302`*
+*Defined in `packages/core/src/types.ts:303`*
 
 ```typescript
 { repository?: string; homepage?: string; packageName?: string; description?: string; version?: string; bin?: Record<string, string>; scripts?: Record<string, string>; keywords?: string[]; }
@@ -2995,7 +3008,7 @@ Project metadata — auto-detected from package.json if not provided.
 
 ### `ForgeResult`
 
-*Defined in `packages/core/src/types.ts:327`*
+*Defined in `packages/core/src/types.ts:328`*
 
 ```typescript
 ForgeResult
@@ -3005,7 +3018,7 @@ The result of a forge-ts compilation pass.
 
 #### `success`
 
-*Defined in `packages/core/src/types.ts:329`*
+*Defined in `packages/core/src/types.ts:330`*
 
 ```typescript
 boolean
@@ -3015,7 +3028,7 @@ Whether the run succeeded without errors.
 
 #### `symbols`
 
-*Defined in `packages/core/src/types.ts:331`*
+*Defined in `packages/core/src/types.ts:332`*
 
 ```typescript
 ForgeSymbol[]
@@ -3025,7 +3038,7 @@ All symbols extracted during this run.
 
 #### `errors`
 
-*Defined in `packages/core/src/types.ts:333`*
+*Defined in `packages/core/src/types.ts:334`*
 
 ```typescript
 ForgeError[]
@@ -3035,7 +3048,7 @@ Errors that caused or would cause failure.
 
 #### `warnings`
 
-*Defined in `packages/core/src/types.ts:335`*
+*Defined in `packages/core/src/types.ts:336`*
 
 ```typescript
 ForgeWarning[]
@@ -3045,7 +3058,7 @@ Non-fatal warnings.
 
 #### `duration`
 
-*Defined in `packages/core/src/types.ts:337`*
+*Defined in `packages/core/src/types.ts:338`*
 
 ```typescript
 number
@@ -3055,7 +3068,7 @@ Wall-clock duration of the run in milliseconds.
 
 #### `writtenFiles`
 
-*Defined in `packages/core/src/types.ts:342`*
+*Defined in `packages/core/src/types.ts:343`*
 
 ```typescript
 string[] | undefined
@@ -3065,7 +3078,7 @@ Absolute paths of files written during this run (populated by gen).
 
 ### `ForgeError`
 
-*Defined in `packages/core/src/types.ts:350`*
+*Defined in `packages/core/src/types.ts:351`*
 
 ```typescript
 ForgeError
@@ -3075,7 +3088,7 @@ A diagnostic error produced during a forge-ts run.
 
 #### `code`
 
-*Defined in `packages/core/src/types.ts:352`*
+*Defined in `packages/core/src/types.ts:353`*
 
 ```typescript
 string
@@ -3085,7 +3098,7 @@ Machine-readable error code (e.g. "E001").
 
 #### `message`
 
-*Defined in `packages/core/src/types.ts:354`*
+*Defined in `packages/core/src/types.ts:355`*
 
 ```typescript
 string
@@ -3095,7 +3108,7 @@ Human-readable description of the error.
 
 #### `filePath`
 
-*Defined in `packages/core/src/types.ts:356`*
+*Defined in `packages/core/src/types.ts:357`*
 
 ```typescript
 string
@@ -3105,7 +3118,7 @@ Absolute path of the file where the error occurred.
 
 #### `line`
 
-*Defined in `packages/core/src/types.ts:358`*
+*Defined in `packages/core/src/types.ts:359`*
 
 ```typescript
 number
@@ -3115,7 +3128,7 @@ number
 
 #### `column`
 
-*Defined in `packages/core/src/types.ts:360`*
+*Defined in `packages/core/src/types.ts:361`*
 
 ```typescript
 number
@@ -3125,7 +3138,7 @@ number
 
 #### `suggestedFix`
 
-*Defined in `packages/core/src/types.ts:365`*
+*Defined in `packages/core/src/types.ts:366`*
 
 ```typescript
 string | undefined
@@ -3135,7 +3148,7 @@ Suggested fix for the agent — exact TSDoc block to add.
 
 #### `symbolName`
 
-*Defined in `packages/core/src/types.ts:370`*
+*Defined in `packages/core/src/types.ts:371`*
 
 ```typescript
 string | undefined
@@ -3145,7 +3158,7 @@ The symbol name that needs fixing.
 
 #### `symbolKind`
 
-*Defined in `packages/core/src/types.ts:375`*
+*Defined in `packages/core/src/types.ts:376`*
 
 ```typescript
 string | undefined
@@ -3155,7 +3168,7 @@ The symbol kind (function, class, interface, etc.).
 
 ### `ForgeWarning`
 
-*Defined in `packages/core/src/types.ts:383`*
+*Defined in `packages/core/src/types.ts:384`*
 
 ```typescript
 ForgeWarning
@@ -3165,7 +3178,7 @@ A diagnostic warning produced during a forge-ts run.
 
 #### `code`
 
-*Defined in `packages/core/src/types.ts:385`*
+*Defined in `packages/core/src/types.ts:386`*
 
 ```typescript
 string
@@ -3175,7 +3188,7 @@ Machine-readable warning code (e.g. "W001").
 
 #### `message`
 
-*Defined in `packages/core/src/types.ts:387`*
+*Defined in `packages/core/src/types.ts:388`*
 
 ```typescript
 string
@@ -3185,7 +3198,7 @@ Human-readable description of the warning.
 
 #### `filePath`
 
-*Defined in `packages/core/src/types.ts:389`*
+*Defined in `packages/core/src/types.ts:390`*
 
 ```typescript
 string
@@ -3195,7 +3208,7 @@ Absolute path of the file where the warning occurred.
 
 #### `line`
 
-*Defined in `packages/core/src/types.ts:391`*
+*Defined in `packages/core/src/types.ts:392`*
 
 ```typescript
 number
@@ -3205,7 +3218,7 @@ number
 
 #### `column`
 
-*Defined in `packages/core/src/types.ts:393`*
+*Defined in `packages/core/src/types.ts:394`*
 
 ```typescript
 number
@@ -8237,7 +8250,7 @@ Maps each rule key in `EnforceRules` to its TSDoc standardisation group.  - **co
 *Defined in `packages/cli/src/forge-logger.ts:32`*
 
 ```typescript
-import("/mnt/projects/forge-ts/node_modules/.pnpm/consola@3.4.2/node_modules/consola/dist/core").ConsolaInstance
+import("consola").ConsolaInstance
 ```
 
 Pre-configured consola instance branded for forge-ts.
@@ -8258,7 +8271,7 @@ forgeLogger.debug("Resolved config from forge-ts.config.ts");
 *Defined in `packages/cli/src/commands/audit.ts:137`*
 
 ```typescript
-import("/mnt/projects/forge-ts/node_modules/.pnpm/citty@0.2.1/node_modules/citty/dist/index").CommandDef<{ readonly cwd: { readonly type: "string"; readonly description: "Project root directory"; }; readonly limit: { readonly type: "string"; readonly description: "Maximum events to display (default: 20)"; }; readonly type: { readonly type: "string"; readonly description: "Filter by event type (config.lock, config.unlock, config.drift, bypass.create, bypass.expire, rule.change)"; }; readonly json: { readonly type: "boolean"; readonly description: "Output as LAFS JSON envelope (agent-friendly)"; readonly default: false; }; readonly human: { readonly type: "boolean"; readonly description: "Output as formatted text (default for TTY)"; readonly default: false; }; readonly quiet: { readonly type: "boolean"; readonly description: "Suppress non-essential output"; readonly default: false; }; }>
+import("citty").CommandDef<{ readonly cwd: { readonly type: "string"; readonly description: "Project root directory"; }; readonly limit: { readonly type: "string"; readonly description: "Maximum events to display (default: 20)"; }; readonly type: { readonly type: "string"; readonly description: "Filter by event type (config.lock, config.unlock, config.drift, bypass.create, bypass.expire, rule.change)"; }; readonly json: { readonly type: "boolean"; readonly description: "Output as LAFS JSON envelope (agent-friendly)"; readonly default: false; }; readonly human: { readonly type: "boolean"; readonly description: "Output as formatted text (default for TTY)"; readonly default: false; }; readonly quiet: { readonly type: "boolean"; readonly description: "Suppress non-essential output"; readonly default: false; }; }>
 ```
 
 Citty command definition for `forge-ts audit`.
@@ -8364,7 +8377,7 @@ console.log(configs[0].path); // ".vitepress/config.mts"
 *Defined in `packages/cli/src/commands/build.ts:210`*
 
 ```typescript
-import("/mnt/projects/forge-ts/node_modules/.pnpm/citty@0.2.1/node_modules/citty/dist/index").CommandDef<{ readonly cwd: { readonly type: "string"; readonly description: "Project root directory"; }; readonly "skip-api": { readonly type: "boolean"; readonly description: "Skip OpenAPI generation"; readonly default: false; }; readonly "skip-gen": { readonly type: "boolean"; readonly description: "Skip doc generation"; readonly default: false; }; readonly "force-stubs": { readonly type: "boolean"; readonly description: "Overwrite stub pages even if they exist (reset to scaffolding)"; readonly default: false; }; readonly json: { readonly type: "boolean"; readonly description: "Output as LAFS JSON envelope (agent-friendly)"; readonly default: false; }; readonly human: { readonly type: "boolean"; readonly description: "Output as formatted text (default for TTY)"; readonly default: false; }; readonly quiet: { readonly type: "boolean"; readonly description: "Suppress non-essential output"; readonly default: false; }; readonly mvi: { readonly type: "string"; readonly description: "MVI verbosity level: minimal, standard, full"; }; }>
+import("citty").CommandDef<{ readonly cwd: { readonly type: "string"; readonly description: "Project root directory"; }; readonly "skip-api": { readonly type: "boolean"; readonly description: "Skip OpenAPI generation"; readonly default: false; }; readonly "skip-gen": { readonly type: "boolean"; readonly description: "Skip doc generation"; readonly default: false; }; readonly "force-stubs": { readonly type: "boolean"; readonly description: "Overwrite stub pages even if they exist (reset to scaffolding)"; readonly default: false; }; readonly json: { readonly type: "boolean"; readonly description: "Output as LAFS JSON envelope (agent-friendly)"; readonly default: false; }; readonly human: { readonly type: "boolean"; readonly description: "Output as formatted text (default for TTY)"; readonly default: false; }; readonly quiet: { readonly type: "boolean"; readonly description: "Suppress non-essential output"; readonly default: false; }; readonly mvi: { readonly type: "string"; readonly description: "MVI verbosity level: minimal, standard, full"; }; }>
 ```
 
 Citty command definition for `forge-ts build`.
@@ -8374,7 +8387,7 @@ Citty command definition for `forge-ts build`.
 *Defined in `packages/cli/src/commands/bypass.ts:234`*
 
 ```typescript
-import("/mnt/projects/forge-ts/node_modules/.pnpm/citty@0.2.1/node_modules/citty/dist/index").CommandDef<{ readonly cwd: { readonly type: "string"; readonly description: "Project root directory"; }; readonly reason: { readonly type: "string"; readonly description: "Mandatory justification for bypassing rules"; }; readonly rule: { readonly type: "string"; readonly description: "Specific rule code to bypass (e.g., \"E009\"). Defaults to \"all\""; }; readonly status: { readonly type: "boolean"; readonly description: "Show active bypasses and remaining budget"; readonly default: false; }; readonly json: { readonly type: "boolean"; readonly description: "Output as LAFS JSON envelope (agent-friendly)"; readonly default: false; }; readonly human: { readonly type: "boolean"; readonly description: "Output as formatted text (default for TTY)"; readonly default: false; }; readonly quiet: { readonly type: "boolean"; readonly description: "Suppress non-essential output"; readonly default: false; }; }>
+import("citty").CommandDef<{ readonly cwd: { readonly type: "string"; readonly description: "Project root directory"; }; readonly reason: { readonly type: "string"; readonly description: "Mandatory justification for bypassing rules"; }; readonly rule: { readonly type: "string"; readonly description: "Specific rule code to bypass (e.g., \"E009\"). Defaults to \"all\""; }; readonly status: { readonly type: "boolean"; readonly description: "Show active bypasses and remaining budget"; readonly default: false; }; readonly json: { readonly type: "boolean"; readonly description: "Output as LAFS JSON envelope (agent-friendly)"; readonly default: false; }; readonly human: { readonly type: "boolean"; readonly description: "Output as formatted text (default for TTY)"; readonly default: false; }; readonly quiet: { readonly type: "boolean"; readonly description: "Suppress non-essential output"; readonly default: false; }; }>
 ```
 
 Citty command definition for `forge-ts bypass`.
@@ -8384,7 +8397,7 @@ Citty command definition for `forge-ts bypass`.
 *Defined in `packages/cli/src/commands/check.ts:660`*
 
 ```typescript
-import("/mnt/projects/forge-ts/node_modules/.pnpm/citty@0.2.1/node_modules/citty/dist/index").CommandDef<{ readonly cwd: { readonly type: "string"; readonly description: "Project root directory"; }; readonly strict: { readonly type: "boolean"; readonly description: "Treat warnings as errors"; readonly default: false; }; readonly verbose: { readonly type: "boolean"; readonly description: "Show detailed output"; readonly default: false; }; readonly rule: { readonly type: "string"; readonly description: "Filter by rule code (e.g., E001, W004)"; }; readonly file: { readonly type: "string"; readonly description: "Filter by file path (substring match)"; }; readonly staged: { readonly type: "boolean"; readonly description: "Only check symbols from git-staged .ts/.tsx files"; readonly default: false; }; readonly limit: { readonly type: "string"; readonly description: "Max file groups in output (default: 20)"; }; readonly offset: { readonly type: "string"; readonly description: "Skip N file groups for pagination (default: 0)"; }; readonly json: { readonly type: "boolean"; readonly description: "Output as LAFS JSON envelope (agent-friendly)"; readonly default: false; }; readonly human: { readonly type: "boolean"; readonly description: "Output as formatted text (default for TTY)"; readonly default: false; }; readonly quiet: { readonly type: "boolean"; readonly description: "Suppress non-essential output"; readonly default: false; }; readonly mvi: { readonly type: "string"; readonly description: "MVI verbosity level: minimal, standard, full"; }; }>
+import("citty").CommandDef<{ readonly cwd: { readonly type: "string"; readonly description: "Project root directory"; }; readonly strict: { readonly type: "boolean"; readonly description: "Treat warnings as errors"; readonly default: false; }; readonly verbose: { readonly type: "boolean"; readonly description: "Show detailed output"; readonly default: false; }; readonly rule: { readonly type: "string"; readonly description: "Filter by rule code (e.g., E001, W004)"; }; readonly file: { readonly type: "string"; readonly description: "Filter by file path (substring match)"; }; readonly staged: { readonly type: "boolean"; readonly description: "Only check symbols from git-staged .ts/.tsx files"; readonly default: false; }; readonly limit: { readonly type: "string"; readonly description: "Max file groups in output (default: 20)"; }; readonly offset: { readonly type: "string"; readonly description: "Skip N file groups for pagination (default: 0)"; }; readonly json: { readonly type: "boolean"; readonly description: "Output as LAFS JSON envelope (agent-friendly)"; readonly default: false; }; readonly human: { readonly type: "boolean"; readonly description: "Output as formatted text (default for TTY)"; readonly default: false; }; readonly quiet: { readonly type: "boolean"; readonly description: "Suppress non-essential output"; readonly default: false; }; readonly mvi: { readonly type: "string"; readonly description: "MVI verbosity level: minimal, standard, full"; }; }>
 ```
 
 Citty command definition for `forge-ts check`.
@@ -8394,7 +8407,7 @@ Citty command definition for `forge-ts check`.
 *Defined in `packages/cli/src/commands/docs-dev.ts:85`*
 
 ```typescript
-import("/mnt/projects/forge-ts/node_modules/.pnpm/citty@0.2.1/node_modules/citty/dist/index").CommandDef<{ readonly cwd: { readonly type: "string"; readonly description: "Project root directory"; }; readonly target: { readonly type: "string"; readonly description: "SSG target override (reads from config by default)"; }; readonly port: { readonly type: "string"; readonly description: "Port for the dev server"; }; }>
+import("citty").CommandDef<{ readonly cwd: { readonly type: "string"; readonly description: "Project root directory"; }; readonly target: { readonly type: "string"; readonly description: "SSG target override (reads from config by default)"; }; readonly port: { readonly type: "string"; readonly description: "Port for the dev server"; }; }>
 ```
 
 Citty command definition for `forge-ts docs dev`.
@@ -8410,7 +8423,7 @@ import { docsDevCommand } from "@forge-ts/cli";
 *Defined in `packages/cli/src/commands/init-hooks.ts:536`*
 
 ```typescript
-import("/mnt/projects/forge-ts/node_modules/.pnpm/citty@0.2.1/node_modules/citty/dist/index").CommandDef<{ readonly cwd: { readonly type: "string"; readonly description: "Project root directory"; }; readonly force: { readonly type: "boolean"; readonly description: "Overwrite existing hook files"; readonly default: false; }; readonly json: { readonly type: "boolean"; readonly description: "Output as LAFS JSON envelope"; readonly default: false; }; readonly human: { readonly type: "boolean"; readonly description: "Output as formatted text"; readonly default: false; }; readonly quiet: { readonly type: "boolean"; readonly description: "Suppress non-essential output"; readonly default: false; }; readonly mvi: { readonly type: "string"; readonly description: "MVI verbosity level: minimal, standard, full"; }; }>
+import("citty").CommandDef<{ readonly cwd: { readonly type: "string"; readonly description: "Project root directory"; }; readonly force: { readonly type: "boolean"; readonly description: "Overwrite existing hook files"; readonly default: false; }; readonly json: { readonly type: "boolean"; readonly description: "Output as LAFS JSON envelope"; readonly default: false; }; readonly human: { readonly type: "boolean"; readonly description: "Output as formatted text"; readonly default: false; }; readonly quiet: { readonly type: "boolean"; readonly description: "Suppress non-essential output"; readonly default: false; }; readonly mvi: { readonly type: "string"; readonly description: "MVI verbosity level: minimal, standard, full"; }; }>
 ```
 
 Citty command definition for `forge-ts init hooks`.  Scaffolds git hook integration for the project by detecting the hook manager (husky or lefthook) and generating pre-commit hooks.
@@ -8427,7 +8440,7 @@ import { initHooksCommand } from "@forge-ts/cli/commands/init-hooks";
 *Defined in `packages/cli/src/commands/init-project.ts:612`*
 
 ```typescript
-import("/mnt/projects/forge-ts/node_modules/.pnpm/citty@0.2.1/node_modules/citty/dist/index").CommandDef<{ readonly cwd: { readonly type: "string"; readonly description: "Project root directory"; }; readonly json: { readonly type: "boolean"; readonly description: "Output as LAFS JSON envelope"; readonly default: false; }; readonly human: { readonly type: "boolean"; readonly description: "Output as formatted text"; readonly default: false; }; readonly quiet: { readonly type: "boolean"; readonly description: "Suppress non-essential output"; readonly default: false; }; readonly mvi: { readonly type: "string"; readonly description: "MVI verbosity level: minimal, standard, full"; }; }>
+import("citty").CommandDef<{ readonly cwd: { readonly type: "string"; readonly description: "Project root directory"; }; readonly json: { readonly type: "boolean"; readonly description: "Output as LAFS JSON envelope"; readonly default: false; }; readonly human: { readonly type: "boolean"; readonly description: "Output as formatted text"; readonly default: false; }; readonly quiet: { readonly type: "boolean"; readonly description: "Suppress non-essential output"; readonly default: false; }; readonly mvi: { readonly type: "string"; readonly description: "MVI verbosity level: minimal, standard, full"; }; }>
 ```
 
 Citty command definition for `forge-ts init` (bare — full project setup).  Detects the project environment, writes default configuration files, validates tsconfig/package.json, and reports a summary.
@@ -8444,7 +8457,7 @@ import { initProjectCommand } from "@forge-ts/cli/commands/init-project";
 *Defined in `packages/cli/src/commands/doctor.ts:758`*
 
 ```typescript
-import("/mnt/projects/forge-ts/node_modules/.pnpm/citty@0.2.1/node_modules/citty/dist/index").CommandDef<{ readonly cwd: { readonly type: "string"; readonly description: "Project root directory"; }; readonly fix: { readonly type: "boolean"; readonly description: "Auto-fix resolvable issues"; readonly default: false; }; readonly json: { readonly type: "boolean"; readonly description: "Output as LAFS JSON envelope"; readonly default: false; }; readonly human: { readonly type: "boolean"; readonly description: "Output as formatted text"; readonly default: false; }; readonly quiet: { readonly type: "boolean"; readonly description: "Suppress non-essential output"; readonly default: false; }; readonly mvi: { readonly type: "string"; readonly description: "MVI verbosity level: minimal, standard, full"; }; }>
+import("citty").CommandDef<{ readonly cwd: { readonly type: "string"; readonly description: "Project root directory"; }; readonly fix: { readonly type: "boolean"; readonly description: "Auto-fix resolvable issues"; readonly default: false; }; readonly json: { readonly type: "boolean"; readonly description: "Output as LAFS JSON envelope"; readonly default: false; }; readonly human: { readonly type: "boolean"; readonly description: "Output as formatted text"; readonly default: false; }; readonly quiet: { readonly type: "boolean"; readonly description: "Suppress non-essential output"; readonly default: false; }; readonly mvi: { readonly type: "string"; readonly description: "MVI verbosity level: minimal, standard, full"; }; }>
 ```
 
 Citty command definition for `forge-ts doctor`.  Performs project integrity checks and optionally auto-fixes resolvable issues with `--fix`.
@@ -8461,7 +8474,7 @@ import { doctorCommand } from "@forge-ts/cli/commands/doctor";
 *Defined in `packages/cli/src/commands/init-docs.ts:299`*
 
 ```typescript
-import("/mnt/projects/forge-ts/node_modules/.pnpm/citty@0.2.1/node_modules/citty/dist/index").CommandDef<{ readonly target: { readonly type: "string"; readonly description: `SSG target: ${string} (default: docusaurus)` | `SSG target: ${string} (default: mintlify)` | `SSG target: ${string} (default: nextra)` | `SSG target: ${string} (default: vitepress)`; }; readonly cwd: { readonly type: "string"; readonly description: "Project root directory"; }; readonly "out-dir": { readonly type: "string"; readonly description: "Output directory for doc site (default: ./docs)"; }; readonly force: { readonly type: "boolean"; readonly description: "Overwrite existing scaffold"; readonly default: false; }; readonly json: { readonly type: "boolean"; readonly description: "Output as LAFS JSON envelope"; readonly default: false; }; readonly human: { readonly type: "boolean"; readonly description: "Output as formatted text"; readonly default: false; }; readonly quiet: { readonly type: "boolean"; readonly description: "Suppress non-essential output"; readonly default: false; }; readonly mvi: { readonly type: "string"; readonly description: "MVI verbosity level: minimal, standard, full"; }; }>
+import("citty").CommandDef<{ readonly target: { readonly type: "string"; readonly description: `SSG target: ${string} (default: docusaurus)` | `SSG target: ${string} (default: mintlify)` | `SSG target: ${string} (default: nextra)` | `SSG target: ${string} (default: vitepress)`; }; readonly cwd: { readonly type: "string"; readonly description: "Project root directory"; }; readonly "out-dir": { readonly type: "string"; readonly description: "Output directory for doc site (default: ./docs)"; }; readonly force: { readonly type: "boolean"; readonly description: "Overwrite existing scaffold"; readonly default: false; }; readonly json: { readonly type: "boolean"; readonly description: "Output as LAFS JSON envelope"; readonly default: false; }; readonly human: { readonly type: "boolean"; readonly description: "Output as formatted text"; readonly default: false; }; readonly quiet: { readonly type: "boolean"; readonly description: "Suppress non-essential output"; readonly default: false; }; readonly mvi: { readonly type: "string"; readonly description: "MVI verbosity level: minimal, standard, full"; }; }>
 ```
 
 Citty command definition for `forge-ts init docs`.  Scaffolds a complete documentation site for the target SSG platform. Use `--json` for LAFS JSON envelope output (agent/CI-friendly).
@@ -8478,7 +8491,7 @@ import { initDocsCommand } from "@forge-ts/cli/commands/init-docs";
 *Defined in `packages/cli/src/commands/init-docs.ts:387`*
 
 ```typescript
-import("/mnt/projects/forge-ts/node_modules/.pnpm/citty@0.2.1/node_modules/citty/dist/index").CommandDef<import("/mnt/projects/forge-ts/node_modules/.pnpm/citty@0.2.1/node_modules/citty/dist/index").ArgsDef>
+import("citty").CommandDef<import("citty").ArgsDef>
 ```
 
 Citty command definition for `forge-ts init`.  Exposes subcommands for scaffolding project artefacts.
@@ -8495,7 +8508,7 @@ import { initCommand } from "@forge-ts/cli/commands/init-docs";
 *Defined in `packages/cli/src/commands/lock.ts:151`*
 
 ```typescript
-import("/mnt/projects/forge-ts/node_modules/.pnpm/citty@0.2.1/node_modules/citty/dist/index").CommandDef<{ readonly cwd: { readonly type: "string"; readonly description: "Project root directory"; }; readonly json: { readonly type: "boolean"; readonly description: "Output as LAFS JSON envelope (agent-friendly)"; readonly default: false; }; readonly human: { readonly type: "boolean"; readonly description: "Output as formatted text (default for TTY)"; readonly default: false; }; readonly quiet: { readonly type: "boolean"; readonly description: "Suppress non-essential output"; readonly default: false; }; }>
+import("citty").CommandDef<{ readonly cwd: { readonly type: "string"; readonly description: "Project root directory"; }; readonly json: { readonly type: "boolean"; readonly description: "Output as LAFS JSON envelope (agent-friendly)"; readonly default: false; }; readonly human: { readonly type: "boolean"; readonly description: "Output as formatted text (default for TTY)"; readonly default: false; }; readonly quiet: { readonly type: "boolean"; readonly description: "Suppress non-essential output"; readonly default: false; }; }>
 ```
 
 Citty command definition for `forge-ts lock`.
@@ -8505,7 +8518,7 @@ Citty command definition for `forge-ts lock`.
 *Defined in `packages/cli/src/commands/prepublish.ts:264`*
 
 ```typescript
-import("/mnt/projects/forge-ts/node_modules/.pnpm/citty@0.2.1/node_modules/citty/dist/index").CommandDef<{ readonly cwd: { readonly type: "string"; readonly description: "Project root directory"; }; readonly strict: { readonly type: "boolean"; readonly description: "Treat warnings as errors during check"; readonly default: false; }; readonly json: { readonly type: "boolean"; readonly description: "Output as LAFS JSON envelope (agent-friendly)"; readonly default: false; }; readonly human: { readonly type: "boolean"; readonly description: "Output as formatted text (default for TTY)"; readonly default: false; }; readonly quiet: { readonly type: "boolean"; readonly description: "Suppress non-essential output"; readonly default: false; }; readonly mvi: { readonly type: "string"; readonly description: "MVI verbosity level: minimal, standard, full"; }; }>
+import("citty").CommandDef<{ readonly cwd: { readonly type: "string"; readonly description: "Project root directory"; }; readonly strict: { readonly type: "boolean"; readonly description: "Treat warnings as errors during check"; readonly default: false; }; readonly json: { readonly type: "boolean"; readonly description: "Output as LAFS JSON envelope (agent-friendly)"; readonly default: false; }; readonly human: { readonly type: "boolean"; readonly description: "Output as formatted text (default for TTY)"; readonly default: false; }; readonly quiet: { readonly type: "boolean"; readonly description: "Suppress non-essential output"; readonly default: false; }; readonly mvi: { readonly type: "string"; readonly description: "MVI verbosity level: minimal, standard, full"; }; }>
 ```
 
 Citty command definition for `forge-ts prepublish`.  Runs check then build as a publish safety gate. Add to package.json as: `"prepublishOnly": "forge-ts prepublish"`
@@ -8522,7 +8535,7 @@ import { prepublishCommand } from "@forge-ts/cli/commands/prepublish";
 *Defined in `packages/cli/src/commands/test.ts:128`*
 
 ```typescript
-import("/mnt/projects/forge-ts/node_modules/.pnpm/citty@0.2.1/node_modules/citty/dist/index").CommandDef<{ readonly cwd: { readonly type: "string"; readonly description: "Project root directory"; }; readonly json: { readonly type: "boolean"; readonly description: "Output as LAFS JSON envelope (agent-friendly)"; readonly default: false; }; readonly human: { readonly type: "boolean"; readonly description: "Output as formatted text (default for TTY)"; readonly default: false; }; readonly quiet: { readonly type: "boolean"; readonly description: "Suppress non-essential output"; readonly default: false; }; readonly mvi: { readonly type: "string"; readonly description: "MVI verbosity level: minimal, standard, full"; }; }>
+import("citty").CommandDef<{ readonly cwd: { readonly type: "string"; readonly description: "Project root directory"; }; readonly json: { readonly type: "boolean"; readonly description: "Output as LAFS JSON envelope (agent-friendly)"; readonly default: false; }; readonly human: { readonly type: "boolean"; readonly description: "Output as formatted text (default for TTY)"; readonly default: false; }; readonly quiet: { readonly type: "boolean"; readonly description: "Suppress non-essential output"; readonly default: false; }; readonly mvi: { readonly type: "string"; readonly description: "MVI verbosity level: minimal, standard, full"; }; }>
 ```
 
 Citty command definition for `forge-ts test`.
@@ -8532,7 +8545,7 @@ Citty command definition for `forge-ts test`.
 *Defined in `packages/cli/src/commands/unlock.ts:173`*
 
 ```typescript
-import("/mnt/projects/forge-ts/node_modules/.pnpm/citty@0.2.1/node_modules/citty/dist/index").CommandDef<{ readonly cwd: { readonly type: "string"; readonly description: "Project root directory"; }; readonly reason: { readonly type: "string"; readonly description: "Mandatory reason for unlocking (audit trail)"; readonly required: true; }; readonly json: { readonly type: "boolean"; readonly description: "Output as LAFS JSON envelope (agent-friendly)"; readonly default: false; }; readonly human: { readonly type: "boolean"; readonly description: "Output as formatted text (default for TTY)"; readonly default: false; }; readonly quiet: { readonly type: "boolean"; readonly description: "Suppress non-essential output"; readonly default: false; }; }>
+import("citty").CommandDef<{ readonly cwd: { readonly type: "string"; readonly description: "Project root directory"; }; readonly reason: { readonly type: "string"; readonly description: "Mandatory reason for unlocking (audit trail)"; readonly required: true; }; readonly json: { readonly type: "boolean"; readonly description: "Output as LAFS JSON envelope (agent-friendly)"; readonly default: false; }; readonly human: { readonly type: "boolean"; readonly description: "Output as formatted text (default for TTY)"; readonly default: false; }; readonly quiet: { readonly type: "boolean"; readonly description: "Suppress non-essential output"; readonly default: false; }; }>
 ```
 
 Citty command definition for `forge-ts unlock`.

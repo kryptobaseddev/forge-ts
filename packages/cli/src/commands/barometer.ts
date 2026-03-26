@@ -16,6 +16,17 @@
  * Output is written to `.forge/barometer.json` and optionally summarized to
  * stdout in human-readable form.
  *
+ * **Anti-cheating workflow for testing agents:**
+ * 1. Evaluator runs `forge-ts barometer` → gets `.forge/barometer.json` with
+ *    full answers (gitignored, never committed)
+ * 2. Test agent receives `forge-ts barometer --questions-only --json` → gets
+ *    questions with answers redacted to `"(redacted)"`
+ * 3. Test agent answers questions using ONLY the generated docs (`docs/generated/`)
+ * 4. Evaluator scores the agent's responses against the private answer key
+ *
+ * The `.forge/barometer.json` file is gitignored by default so answer keys
+ * never leak into the repository.
+ *
  * @packageDocumentation
  * @internal
  */
@@ -747,10 +758,9 @@ export const barometerCommand = defineCommand({
 			type: "string",
 			description: "Project root directory",
 		},
-		questionsOnly: {
+		"questions-only": {
 			type: "boolean",
 			description: "Output only questions (no answers) — for test agents",
-			alias: "questions-only",
 			default: false,
 		},
 		json: {
@@ -774,9 +784,10 @@ export const barometerCommand = defineCommand({
 		},
 	},
 	async run({ args }) {
+		const questionsOnly = args["questions-only"] ?? false;
 		const output = await runBarometer({
 			cwd: args.cwd,
-			questionsOnly: args.questionsOnly,
+			questionsOnly,
 			mvi: args.mvi,
 		});
 
@@ -788,7 +799,7 @@ export const barometerCommand = defineCommand({
 		};
 
 		emitResult(output, flags, (data) =>
-			formatBarometerHuman(data, args.questionsOnly ?? false),
+			formatBarometerHuman(data, questionsOnly),
 		);
 
 		const exitCode = resolveExitCode(output);

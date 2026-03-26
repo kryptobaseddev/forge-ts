@@ -1,6 +1,8 @@
 node_modules
 dist
 .cache
+# forge-ts operational output (generated per-run, not committed)
+.forge/barometer.json
 *.tsbuildinfo
 .DS_Store
 *.log

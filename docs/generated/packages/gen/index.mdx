@@ -32,6 +32,7 @@ description: gen package overview
 | [`registerAdapter()`](/packages/gen/api/index#registeradapter)                   | function | Register an SSG adapter. Called once per provider at module load time.           |
 | [`getAdapter()`](/packages/gen/api/index#getadapter)                             | function | Get a registered adapter by target name. Throws if the target is not registered. |
 | [`getAvailableTargets()`](/packages/gen/api/index#getavailabletargets)           | function | Get all registered adapter targets.                                              |
+| [`generateCKM()`](/packages/gen/api/index#generateckm)                           | function | Generates a Codebase Knowledge Manifest from the symbol graph.                   |
 | [`generateLlmsTxt()`](/packages/gen/api/index#generatellmstxt)                   | function | Generates an `llms.txt` routing manifest from the extracted symbols.  The fil... |
 | [`generateLlmsFullTxt()`](/packages/gen/api/index#generatellmsfulltxt)           | function | Generates an `llms-full.txt` dense context file from the extracted symbols....   |
 | [`generateMarkdown()`](/packages/gen/api/index#generatemarkdown)                 | function | Generates a Markdown (or MDX) string from a list of symbols.                     |
@@ -76,6 +77,13 @@ description: gen package overview
 | [`AdapterContext`](/packages/gen/api/index#adaptercontext)             | interface | Context passed to adapter methods.                                               |
 | [`DevServerCommand`](/packages/gen/api/index#devservercommand)         | interface | Command to start a local dev server for doc preview.                             |
 | [`SSGAdapter`](/packages/gen/api/index#ssgadapter)                     | interface | The central SSG adapter interface. Every doc platform provider implements thi... |
+| [`CKMConcept`](/packages/gen/api/index#ckmconcept)                     | interface | A domain concept extracted from the codebase.                                    |
+| [`CKMOperationInput`](/packages/gen/api/index#ckmoperationinput)       | interface | A single input parameter for a CKM operation.                                    |
+| [`CKMOperation`](/packages/gen/api/index#ckmoperation)                 | interface | A user-facing operation extracted from the codebase.                             |
+| [`CKMConstraint`](/packages/gen/api/index#ckmconstraint)               | interface | An enforced constraint or validation rule extracted from the codebase.           |
+| [`CKMWorkflow`](/packages/gen/api/index#ckmworkflow)                   | interface | A multi-step workflow for achieving a common goal.                               |
+| [`CKMConfigEntry`](/packages/gen/api/index#ckmconfigentry)             | interface | A single entry in the configuration schema.                                      |
+| [`CKMManifest`](/packages/gen/api/index#ckmmanifest)                   | interface | The top-level Codebase Knowledge Manifest.                                       |
 | [`MarkdownOptions`](/packages/gen/api/index#markdownoptions)           | interface | Options controlling Markdown output.                                             |
 | [`ReadmeSyncOptions`](/packages/gen/api/index#readmesyncoptions)       | interface | Options controlling README sync behaviour.                                       |
 | [`SkillPackage`](/packages/gen/api/index#skillpackage)                 | interface | A generated skill package following the agentskills.io directory structure. C... |
@@ -103,6 +111,7 @@ description: gen package overview
 | [`vitepressAdapter`](/packages/gen/api/index#vitepressadapter)             | variable | VitePress SSG adapter. Implements the `SSGAdapter` contract for the VitePress... |
 | [`vitepress.ts`](/packages/gen/api/index#vitepressts)                      | file     |                                                                                  |
 | [`index.ts`](/packages/gen/api/index#indexts)                              | file     | SSG adapter registry for documentation generation.  Provides pluggable adapte... |
+| [`ckm-generator.ts`](/packages/gen/api/index#ckm-generatorts)              | file     | Codebase Knowledge Manifest (CKM) generator.  Extracts operational knowledge...  |
 | [`llms.ts`](/packages/gen/api/index#llmsts)                                | file     |                                                                                  |
 | [`markdown.ts`](/packages/gen/api/index#markdownts)                        | file     |                                                                                  |
 | [`readme-sync.ts`](/packages/gen/api/index#readme-syncts)                  | file     |                                                                                  |

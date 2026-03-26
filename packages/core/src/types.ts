@@ -208,6 +208,8 @@ export interface ForgeConfig {
 		readmeSync: boolean;
 		/** Static site generator to target for output format. */
 		ssgTarget?: "docusaurus" | "mintlify" | "nextra" | "vitepress";
+		/** Generate a Codebase Knowledge Manifest (ckm.json) alongside other outputs. */
+		ckm?: boolean;
 	};
 	/**
 	 * Skill package generation settings.

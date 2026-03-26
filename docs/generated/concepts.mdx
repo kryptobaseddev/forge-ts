@@ -129,6 +129,13 @@ forge-ts processes your TypeScript source with a single AST traversal, extractin
 - **`AdapterContext`** — Context passed to adapter methods.
 - **`DevServerCommand`** — Command to start a local dev server for doc preview.
 - **`SSGAdapter`** — The central SSG adapter interface. Every doc platform provider implements this contract. One file per provider. No shared mutable state.
+- **`CKMConcept`** — A domain concept extracted from the codebase.
+- **`CKMOperationInput`** — A single input parameter for a CKM operation.
+- **`CKMOperation`** — A user-facing operation extracted from the codebase.
+- **`CKMConstraint`** — An enforced constraint or validation rule extracted from the codebase.
+- **`CKMWorkflow`** — A multi-step workflow for achieving a common goal.
+- **`CKMConfigEntry`** — A single entry in the configuration schema.
+- **`CKMManifest`** — The top-level Codebase Knowledge Manifest.
 - **`MarkdownOptions`** — Options controlling Markdown output.
 - **`ReadmeSyncOptions`** — Options controlling README sync behaviour.
 - **`SkillPackage`** — A generated skill package following the agentskills.io directory structure. Contains SKILL.md plus optional references and scripts files.

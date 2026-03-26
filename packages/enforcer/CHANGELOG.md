@@ -1,5 +1,35 @@
 # @forge-ts/enforcer
 
+## 0.21.0
+
+### Minor Changes
+
+- ## v0.21.0 — Codebase Knowledge Manifest (CKM) generator
+
+  ### New Features
+
+  - **CKM generator**: `forge-ts build` now produces `ckm.json` — a machine-readable manifest of operational knowledge (concepts, operations, constraints, workflows, config schema)
+  - **3 new TSDoc tags**: `@operation`, `@constraint`, `@workflow` for explicit CKM annotation
+  - **Hybrid extraction**: Heuristic analysis as baseline (function name patterns, interface shapes, @throws tags), TSDoc tags to override/enrich
+  - **Config flag**: `gen.ckm` (default: `true`) controls CKM generation
+
+  ### CKM Output Categories
+
+  - **Concepts**: Domain objects extracted from @concept tags and Config/Options/State interfaces
+  - **Operations**: User-facing actions from @operation tags and run*/create*/validate\* functions
+  - **Constraints**: Enforced rules from @constraint tags and @throws analysis
+  - **Workflows**: Multi-step sequences from @workflow tags with step parsing
+  - **Config Schema**: Full config structure from Config interfaces with types/defaults/effects
+
+  ### forge-ts Self-Report
+
+  - 36 concepts, 53 operations, 2 constraints, 41 config schema entries extracted from own codebase
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @forge-ts/core@0.21.0
+
 ## 0.20.0
 
 ### Minor Changes

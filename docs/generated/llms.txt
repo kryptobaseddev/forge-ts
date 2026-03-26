@@ -1,6 +1,6 @@
 # forge-ts
 > Universal TypeScript documentation compiler — enforces TSDoc as a build gate, then generates all artifacts from source in one pass
-> Version: 0.20.0
+> Version: 0.21.0
 
 ## Install
 
@@ -171,7 +171,7 @@ npm install -D forge-ts
 - UnlockResult — Typed result for the `unlock` command.
 
 ### gen
-33 functions, 36 types
+34 functions, 43 types
 
 - discoverGuides() — Analyze the symbol graph and discover guides using multiple heuristics.  Each heuristic produces zero or more `DiscoveredGuide` entries. When multiple heuristics produce a guide with the same slug, the first one wins (priority order: guide-tag, config-interface, error-types, category, entry-point).
 - serializeMarkdown() — Serialize an mdast tree to a well-formed markdown string.  Uses remark-stringify with GFM table support. The serializer handles all escaping (pipes in table cells, special characters in text, etc.) so callers never need manual escape functions.
@@ -198,6 +198,7 @@ npm install -D forge-ts
 - registerAdapter() — Register an SSG adapter. Called once per provider at module load time.
 - getAdapter() — Get a registered adapter by target name. Throws if the target is not registered.
 - getAvailableTargets() — Get all registered adapter targets.
+- generateCKM() — Generates a Codebase Knowledge Manifest from the symbol graph.
 - generateLlmsTxt() — Generates an `llms.txt` routing manifest from the extracted symbols.  The file follows the llms.txt specification: a compact, structured overview designed to help large language models navigate a project's documentation. Symbols are grouped by package with  summaries.
 - generateLlmsFullTxt() — Generates an `llms-full.txt` dense context file from the extracted symbols.  Unlike `llms.txt`, this file contains complete documentation for every exported symbol, intended for LLM ingestion that requires full context. Symbols are grouped by package with  summaries.
 - generateMarkdown() — Generates a Markdown (or MDX) string from a list of symbols.
@@ -238,6 +239,13 @@ npm install -D forge-ts
 - AdapterContext — Context passed to adapter methods.
 - DevServerCommand — Command to start a local dev server for doc preview.
 - SSGAdapter — The central SSG adapter interface. Every doc platform provider implements this contract. One file per provider. No shared mutable state.
+- CKMConcept — A domain concept extracted from the codebase.
+- CKMOperationInput — A single input parameter for a CKM operation.
+- CKMOperation — A user-facing operation extracted from the codebase.
+- CKMConstraint — An enforced constraint or validation rule extracted from the codebase.
+- CKMWorkflow — A multi-step workflow for achieving a common goal.
+- CKMConfigEntry — A single entry in the configuration schema.
+- CKMManifest — The top-level Codebase Knowledge Manifest.
 - MarkdownOptions — Options controlling Markdown output.
 - ReadmeSyncOptions — Options controlling README sync behaviour.
 - SkillPackage — A generated skill package following the agentskills.io directory structure. Contains SKILL.md plus optional references and scripts files.

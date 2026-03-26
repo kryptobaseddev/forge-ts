@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.21.0] - 2026-03-26
+
+### Added
+- Codebase Knowledge Manifest (CKM) generator: `forge-ts build` produces `ckm.json`
+- 3 new TSDoc tags: `@operation`, `@constraint`, `@workflow`
+- Hybrid extraction: heuristic analysis + TSDoc tag overrides
+- `gen.ckm` config flag (default: `true`)
+
+### CKM Output
+- 36 concepts, 53 operations, 2 constraints, 41 config schema entries (self-report)
+- Concepts from @concept tags and Config/Options/State interfaces
+- Operations from @operation tags and run*/create*/validate* function patterns
+- Constraints from @constraint tags and @throws analysis
+- Config schema from Config interfaces with types/defaults/effects
+
 ## [0.20.0] - 2026-03-26
 
 ### Added

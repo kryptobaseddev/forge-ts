@@ -1,7 +1,7 @@
 ---
 name: SKILL-forge-ts
 description: >
-  Universal TypeScript documentation compiler — enforces TSDoc as a build gate, then generates all artifacts from source in one pass Use when: (1) calling its 110 API functions, (2) configuring forge-ts, (3) understanding its 127 type definitions, (4) user mentions "forge-ts" or asks about its API.
+  Universal TypeScript documentation compiler — enforces TSDoc as a build gate, then generates all artifacts from source in one pass Use when: (1) calling its 111 API functions, (2) configuring forge-ts, (3) understanding its 134 type definitions, (4) user mentions "forge-ts" or asks about its API.
 ---
 
 # forge-ts
@@ -38,7 +38,7 @@ const user = getCurrentUser(); // e.g. "alice"
 | `readLockFile()` | Reads the `.forge-lock.json` file from the given project root. |
 | `writeLockFile()` | Writes a `ForgeLockManifest` to `.forge-lock.json` in the project root. |
 | `removeLockFile()` | Removes the `.forge-lock.json` file from the project root. |
-| ... | 95 more — see API reference |
+| ... | 96 more — see API reference |
 
 ## Configuration
 

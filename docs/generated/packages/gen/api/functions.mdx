@@ -626,6 +626,33 @@ import { getAvailableTargets } from "@forge-ts/gen";
 const targets = getAvailableTargets(); // ["mintlify", "docusaurus", ...]
 ```
 
+## generateCKM(symbols, config)
+
+Generates a Codebase Knowledge Manifest from the symbol graph.
+
+**Signature**
+
+```typescript
+(symbols: ForgeSymbol[], config: ForgeConfig) => CKMManifest
+```
+
+**Parameters**
+
+| Name      | Type            | Description                                 |
+| --------- | --------------- | ------------------------------------------- |
+| `symbols` | `ForgeSymbol[]` | All symbols extracted from the project.     |
+| `config`  | `ForgeConfig`   | The resolved `ForgeConfig` for the project. |
+
+**Returns** — A complete `CKMManifest` ready for JSON serialization.
+
+**Example**
+
+```typescript
+import { generateCKM } from "@forge-ts/gen";
+const manifest = generateCKM(symbols, config);
+console.log(JSON.stringify(manifest, null, 2));
+```
+
 ## generateLlmsTxt(symbols, config)
 
 Generates an `llms.txt` routing manifest from the extracted symbols.  The file follows the llms.txt specification: a compact, structured overview designed to help large language models navigate a project's documentation. Symbols are grouped by package with  summaries.

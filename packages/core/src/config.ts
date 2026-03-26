@@ -141,6 +141,7 @@ export function defaultConfig(rootDir: string): ForgeConfig {
 			formats: ["markdown"],
 			llmsTxt: true,
 			readmeSync: false,
+			ckm: true,
 		},
 		skill: {},
 		bypass: {

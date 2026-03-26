@@ -1,6 +1,6 @@
 {
 	"name": "forge-ts",
-	"version": "0.20.0",
+	"version": "0.21.0",
 	"description": "Universal TypeScript documentation compiler — enforces TSDoc as a build gate, then generates all artifacts from source in one pass",
 	"repository": {
 		"type": "git",

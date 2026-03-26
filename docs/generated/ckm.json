@@ -1,0 +1,2045 @@
+{
+  "$schema": "https://forge-ts.dev/schemas/ckm/v1.json",
+  "version": "1.0.0",
+  "project": "forge-ts",
+  "generated": "2026-03-26T15:10:53.872Z",
+  "concepts": [
+    {
+      "id": "concept-AuditEventType",
+      "name": "AuditEventType",
+      "what": "Discriminated event types recorded in the audit trail."
+    },
+    {
+      "id": "concept-AuditEvent",
+      "name": "AuditEvent",
+      "what": "A single audit event recorded in the forge-ts audit trail.",
+      "properties": [
+        {
+          "name": "timestamp",
+          "type": "string",
+          "description": "ISO 8601 timestamp of when the event occurred."
+        },
+        {
+          "name": "event",
+          "type": "AuditEventType",
+          "description": "Discriminated event type."
+        },
+        {
+          "name": "user",
+          "type": "string",
+          "description": "OS username of the actor (falls back to \"unknown\")."
+        },
+        {
+          "name": "reason",
+          "type": "string | undefined",
+          "description": "Mandatory for lock/unlock/bypass events; optional otherwise."
+        },
+        {
+          "name": "details",
+          "type": "Record<string, unknown>",
+          "description": "Event-specific payload."
+        }
+      ]
+    },
+    {
+      "id": "concept-ReadAuditOptions",
+      "name": "ReadAuditOptions",
+      "what": "Options for reading the audit log.",
+      "properties": [
+        {
+          "name": "limit",
+          "type": "number | undefined",
+          "description": "Maximum number of events to return."
+        },
+        {
+          "name": "eventType",
+          "type": "AuditEventType | undefined",
+          "description": "Filter to a single event type."
+        }
+      ]
+    },
+    {
+      "id": "concept-BypassConfig",
+      "name": "BypassConfig",
+      "what": "Configuration for the bypass budget system.",
+      "properties": [
+        {
+          "name": "dailyBudget",
+          "type": "number",
+          "description": "Maximum number of bypasses allowed per calendar day. Default: 3"
+        },
+        {
+          "name": "durationHours",
+          "type": "number",
+          "description": "Duration in hours before a bypass automatically expires. Default: 24"
+        }
+      ]
+    },
+    {
+      "id": "concept-BypassRecord",
+      "name": "BypassRecord",
+      "what": "A single bypass record stored in `.forge-bypass.json`.",
+      "properties": [
+        {
+          "name": "id",
+          "type": "string",
+          "description": "Unique identifier for this bypass."
+        },
+        {
+          "name": "createdAt",
+          "type": "string",
+          "description": "ISO 8601 timestamp when the bypass was created."
+        },
+        {
+          "name": "expiresAt",
+          "type": "string",
+          "description": "ISO 8601 timestamp when the bypass expires."
+        },
+        {
+          "name": "reason",
+          "type": "string",
+          "description": "Mandatory justification for why the bypass was created."
+        },
+        {
+          "name": "rule",
+          "type": "string",
+          "description": "Specific rule code bypassed (e.g., \"E009\"), or \"all\" for a blanket bypass."
+        },
+        {
+          "name": "user",
+          "type": "string",
+          "description": "OS username of the actor who created the bypass."
+        }
+      ]
+    },
+    {
+      "id": "concept-ForgeConfig",
+      "name": "ForgeConfig",
+      "what": "Full configuration for a forge-ts run. Loaded from forge-ts.config.ts or the \"forge-ts\" key in package.json.",
+      "properties": [
+        {
+          "name": "rootDir",
+          "type": "string",
+          "description": "Root directory of the project."
+        },
+        {
+          "name": "tsconfig",
+          "type": "string",
+          "description": "Path to the tsconfig.json to compile against."
+        },
+        {
+          "name": "outDir",
+          "type": "string",
+          "description": "Output directory for generated files."
+        },
+        {
+          "name": "enforce",
+          "type": "{ enabled: boolean; minVisibility: Visibility | \"public\" | \"beta\" | \"internal\" | \"private\"; strict: boolean; rules: EnforceRules; ignoreFile?: string; }",
+          "description": "Enforce TSDoc on all public exports."
+        },
+        {
+          "name": "doctest",
+          "type": "{ enabled: boolean; cacheDir: string; }",
+          "description": "DocTest configuration."
+        },
+        {
+          "name": "api",
+          "type": "{ enabled: boolean; openapi: boolean; openapiPath: string; }",
+          "description": "API generation configuration."
+        },
+        {
+          "name": "gen",
+          "type": "{ enabled: boolean; formats: Array<\"markdown\" | \"mdx\">; llmsTxt: boolean; readmeSync: boolean; ssgTarget?: \"docusaurus\" | \"mintlify\" | \"nextra\" | \"vitepress\"; ckm?: boolean; }",
+          "description": "Output generation configuration."
+        },
+        {
+          "name": "skill",
+          "type": "{ enabled?: boolean; customSections?: Array<{ heading: string; content: string; }>; extraGotchas?: string[]; }",
+          "description": "Skill package generation settings. Custom sections here are merged into the generated SKILL.md, allowing projects to inject workflow knowledge, domain gotchas, and other context that cannot be derived from symbols alone."
+        },
+        {
+          "name": "tsdoc",
+          "type": "{ writeConfig: boolean; customTags: Array<{ tagName: string; syntaxKind: \"block\" | \"inline\" | \"modifier\"; }>; enforce: { core: \"error\" | \"warn\" | \"off\"; extended: \"error\" | \"warn\" | \"off\"; discretionary: \"error\" | \"warn\" | \"off\"; }; }",
+          "description": "TSDoc ecosystem configuration."
+        },
+        {
+          "name": "bypass",
+          "type": "{ dailyBudget: number; durationHours: number; }",
+          "description": "Bypass budget configuration for temporary rule overrides."
+        },
+        {
+          "name": "guides",
+          "type": "{ enabled: boolean; autoDiscover: boolean; custom: Array<{ slug: string; title: string; sources: string[]; }>; }",
+          "description": "Guide generation configuration."
+        },
+        {
+          "name": "guards",
+          "type": "{ tsconfig: { enabled: boolean; requiredFlags: string[]; }; biome: { enabled: boolean; lockedRules: string[]; }; packageJson: { enabled: boolean; minNodeVersion: string; requiredFields: string[]; }; }",
+          "description": "Downstream config drift guards."
+        },
+        {
+          "name": "_configWarnings",
+          "type": "string[] | undefined",
+          "description": "Warnings generated during config loading (e.g., unknown keys). Populated by loadConfig(). Agents should surface these in output."
+        },
+        {
+          "name": "project",
+          "type": "{ repository?: string; homepage?: string; packageName?: string; description?: string; version?: string; bin?: Record<string, string>; scripts?: Record<string, string>; keywords?: string[]; }",
+          "description": "Project metadata — auto-detected from package.json if not provided."
+        }
+      ]
+    },
+    {
+      "id": "concept-ForgeResult",
+      "name": "ForgeResult",
+      "what": "The result of a forge-ts compilation pass.",
+      "properties": [
+        {
+          "name": "success",
+          "type": "boolean",
+          "description": "Whether the run succeeded without errors."
+        },
+        {
+          "name": "symbols",
+          "type": "ForgeSymbol[]",
+          "description": "All symbols extracted during this run."
+        },
+        {
+          "name": "errors",
+          "type": "ForgeError[]",
+          "description": "Errors that caused or would cause failure."
+        },
+        {
+          "name": "warnings",
+          "type": "ForgeWarning[]",
+          "description": "Non-fatal warnings."
+        },
+        {
+          "name": "duration",
+          "type": "number",
+          "description": "Wall-clock duration of the run in milliseconds."
+        },
+        {
+          "name": "writtenFiles",
+          "type": "string[] | undefined",
+          "description": "Absolute paths of files written during this run (populated by gen)."
+        }
+      ]
+    },
+    {
+      "id": "concept-ReferenceEntry",
+      "name": "ReferenceEntry",
+      "what": "A single entry in the generated API reference.",
+      "properties": [
+        {
+          "name": "name",
+          "type": "string",
+          "description": "Symbol name."
+        },
+        {
+          "name": "kind",
+          "type": "\"function\" | \"class\" | \"interface\" | \"type\" | \"enum\" | \"variable\" | \"method\" | \"property\" | \"file\"",
+          "description": "Symbol kind."
+        },
+        {
+          "name": "summary",
+          "type": "string | undefined",
+          "description": "TSDoc summary."
+        },
+        {
+          "name": "signature",
+          "type": "string | undefined",
+          "description": "Human-readable type signature."
+        },
+        {
+          "name": "visibility",
+          "type": "Visibility",
+          "description": "Resolved visibility level."
+        },
+        {
+          "name": "deprecated",
+          "type": "string | undefined",
+          "description": "Deprecation notice, if present."
+        },
+        {
+          "name": "params",
+          "type": "{ name: string; description: string; type?: string; }[] | undefined",
+          "description": "Documented parameters."
+        },
+        {
+          "name": "returns",
+          "type": "{ description: string; type?: string; } | undefined",
+          "description": "Documented return value."
+        },
+        {
+          "name": "throws",
+          "type": "{ type?: string; description: string; }[] | undefined",
+          "description": "Documented thrown exceptions."
+        },
+        {
+          "name": "examples",
+          "type": "{ code: string; language: string; }[] | undefined",
+          "description": "Code examples from TSDoc `@example` tags."
+        },
+        {
+          "name": "children",
+          "type": "ReferenceEntry[] | undefined",
+          "description": "Nested child symbols (class methods, interface properties, enum members)."
+        },
+        {
+          "name": "location",
+          "type": "{ filePath: string; line: number; }",
+          "description": "Source file location."
+        }
+      ]
+    },
+    {
+      "id": "concept-ForgeLoggerOptions",
+      "name": "ForgeLoggerOptions",
+      "what": "Options for configuring the forge-ts logger at CLI startup.",
+      "properties": [
+        {
+          "name": "quiet",
+          "type": "boolean | undefined",
+          "description": "Suppress all consola output (--quiet flag)."
+        },
+        {
+          "name": "json",
+          "type": "boolean | undefined",
+          "description": "JSON output mode (--json flag). LAFS handles JSON; suppress consola."
+        },
+        {
+          "name": "verbose",
+          "type": "boolean | undefined",
+          "description": "Enable debug-level output (--verbose flag)."
+        }
+      ]
+    },
+    {
+      "id": "concept-AuditResult",
+      "name": "AuditResult",
+      "what": "Typed result for the `audit` command.",
+      "properties": [
+        {
+          "name": "success",
+          "type": "boolean",
+          "description": "Whether the audit log was read successfully."
+        },
+        {
+          "name": "count",
+          "type": "number",
+          "description": "Number of events returned."
+        },
+        {
+          "name": "events",
+          "type": "AuditEvent[]",
+          "description": "The audit events, newest first."
+        }
+      ]
+    },
+    {
+      "id": "concept-BarometerResult",
+      "name": "BarometerResult",
+      "what": "Full barometer output written to `.forge/barometer.json`.",
+      "properties": [
+        {
+          "name": "$schema",
+          "type": "string",
+          "description": "JSON schema URL."
+        },
+        {
+          "name": "version",
+          "type": "string",
+          "description": "Barometer format version."
+        },
+        {
+          "name": "project",
+          "type": "string",
+          "description": "Project name from package.json or config."
+        },
+        {
+          "name": "generated",
+          "type": "string",
+          "description": "ISO 8601 timestamp of when the barometer was generated."
+        },
+        {
+          "name": "symbolCount",
+          "type": "number",
+          "description": "Total number of exported symbols analyzed."
+        },
+        {
+          "name": "questions",
+          "type": "BarometerQuestion[]",
+          "description": "Generated questions with ground-truth answers."
+        },
+        {
+          "name": "rubric",
+          "type": "{ scale: BarometerRatingBand[]; scoring: string; }",
+          "description": "Scoring rubric for evaluating documentation effectiveness."
+        }
+      ]
+    },
+    {
+      "id": "concept-FrontmatterResult",
+      "name": "FrontmatterResult",
+      "what": "Result of parsing frontmatter from markdown/MDX content.",
+      "properties": [
+        {
+          "name": "body",
+          "type": "string",
+          "description": "The body content without the frontmatter block."
+        },
+        {
+          "name": "data",
+          "type": "Record<string, unknown>",
+          "description": "The parsed frontmatter data as a key-value map."
+        }
+      ]
+    },
+    {
+      "id": "concept-SiteGeneratorOptions",
+      "name": "SiteGeneratorOptions",
+      "what": "Options controlling the doc site generator.",
+      "properties": [
+        {
+          "name": "format",
+          "type": "\"markdown\" | \"mdx\"",
+          "description": "Output format"
+        },
+        {
+          "name": "ssgTarget",
+          "type": "\"docusaurus\" | \"mintlify\" | \"nextra\" | \"vitepress\" | undefined",
+          "description": "SSG target for frontmatter."
+        },
+        {
+          "name": "projectName",
+          "type": "string",
+          "description": "Project name"
+        },
+        {
+          "name": "projectDescription",
+          "type": "string | undefined",
+          "description": "Project description."
+        },
+        {
+          "name": "repositoryUrl",
+          "type": "string | undefined",
+          "description": "Repository URL (auto-detected from package.json)."
+        },
+        {
+          "name": "packageName",
+          "type": "string | undefined",
+          "description": "npm package name for install commands."
+        }
+      ]
+    },
+    {
+      "id": "concept-CKMConfigEntry",
+      "name": "CKMConfigEntry",
+      "what": "A single entry in the configuration schema.",
+      "properties": [
+        {
+          "name": "key",
+          "type": "string",
+          "description": "Dot-path key for this config entry (e.g., \"enforce.strict\")."
+        },
+        {
+          "name": "type",
+          "type": "string",
+          "description": "TypeScript type of this config entry."
+        },
+        {
+          "name": "default",
+          "type": "string | undefined",
+          "description": "Default value from `@defaultValue` tag, if present."
+        },
+        {
+          "name": "description",
+          "type": "string",
+          "description": "Human-readable description from the property summary."
+        },
+        {
+          "name": "effect",
+          "type": "string | undefined",
+          "description": "Downstream effect or behaviour this config entry controls, from `@remarks`."
+        }
+      ]
+    },
+    {
+      "id": "concept-MarkdownOptions",
+      "name": "MarkdownOptions",
+      "what": "Options controlling Markdown output.",
+      "properties": [
+        {
+          "name": "mdx",
+          "type": "boolean | undefined",
+          "description": "Whether to use MDX syntax (default: Markdown)."
+        }
+      ]
+    },
+    {
+      "id": "concept-ReadmeSyncOptions",
+      "name": "ReadmeSyncOptions",
+      "what": "Options controlling README sync behaviour.",
+      "properties": [
+        {
+          "name": "badge",
+          "type": "boolean | undefined",
+          "description": "Include a \"Documented with forge-ts\" badge above the API table."
+        },
+        {
+          "name": "includeExamples",
+          "type": "boolean | undefined",
+          "description": "Include first"
+        }
+      ]
+    },
+    {
+      "id": "concept-SSGConfigFile",
+      "name": "SSGConfigFile",
+      "what": "A single generated SSG configuration file.",
+      "properties": [
+        {
+          "name": "path",
+          "type": "string",
+          "description": "Relative path from outDir (e.g., \"mint.json\", \"_meta.json\")"
+        },
+        {
+          "name": "content",
+          "type": "string",
+          "description": "File content"
+        }
+      ]
+    },
+    {
+      "id": "concept-GenerateOptions",
+      "name": "GenerateOptions",
+      "what": "Options for the generation pipeline.",
+      "properties": [
+        {
+          "name": "forceStubs",
+          "type": "boolean | undefined",
+          "description": "When true, overwrite stub pages even if they already exist on disk. Normally stub pages (concepts, guides, faq, contributing, changelog) are only created on the first build to preserve manual edits. Use this to reset stubs to their scaffolding state."
+        }
+      ]
+    },
+    {
+      "id": "concept-BuildResult",
+      "name": "BuildResult",
+      "what": "Typed result for the `build` command.",
+      "properties": [
+        {
+          "name": "success",
+          "type": "boolean",
+          "description": "Whether the build succeeded."
+        },
+        {
+          "name": "summary",
+          "type": "{ steps: number; succeeded: number; failed: number; duration: number; }",
+          "description": "Aggregate pipeline counts — always present."
+        },
+        {
+          "name": "steps",
+          "type": "BuildStep[]",
+          "description": "Per-step details."
+        },
+        {
+          "name": "generatedFiles",
+          "type": "string[] | undefined",
+          "description": "Files written during the build — present at standard and full MVI levels."
+        }
+      ]
+    },
+    {
+      "id": "concept-BypassCreateResult",
+      "name": "BypassCreateResult",
+      "what": "Typed result for the `bypass` command when creating a bypass.",
+      "properties": [
+        {
+          "name": "success",
+          "type": "boolean",
+          "description": "Whether the bypass was successfully created."
+        },
+        {
+          "name": "bypass",
+          "type": "BypassRecord",
+          "description": "The bypass record that was created."
+        },
+        {
+          "name": "remainingBudget",
+          "type": "number",
+          "description": "Number of remaining bypass slots for today after creation."
+        },
+        {
+          "name": "dailyBudget",
+          "type": "number",
+          "description": "The configured daily budget."
+        }
+      ]
+    },
+    {
+      "id": "concept-BypassStatusResult",
+      "name": "BypassStatusResult",
+      "what": "Typed result for the `bypass --status` command.",
+      "properties": [
+        {
+          "name": "success",
+          "type": "boolean",
+          "description": "Always true for status queries."
+        },
+        {
+          "name": "activeBypasses",
+          "type": "BypassRecord[]",
+          "description": "Active (non-expired) bypass records."
+        },
+        {
+          "name": "remainingBudget",
+          "type": "number",
+          "description": "Number of remaining bypass slots for today."
+        },
+        {
+          "name": "dailyBudget",
+          "type": "number",
+          "description": "The configured daily budget."
+        },
+        {
+          "name": "expiredRemoved",
+          "type": "number",
+          "description": "Number of expired bypasses that were cleaned up."
+        }
+      ]
+    },
+    {
+      "id": "concept-FormatOptions",
+      "name": "FormatOptions",
+      "what": "Options that control how `formatResults` renders its output.",
+      "properties": [
+        {
+          "name": "colors",
+          "type": "boolean",
+          "description": "Emit ANSI colour escape sequences when `true`."
+        },
+        {
+          "name": "verbose",
+          "type": "boolean",
+          "description": "When `true`, include the symbol's type signature alongside each diagnostic so the reader has immediate context."
+        }
+      ]
+    },
+    {
+      "id": "concept-CheckResult",
+      "name": "CheckResult",
+      "what": "Typed result for the `check` command.",
+      "properties": [
+        {
+          "name": "success",
+          "type": "boolean",
+          "description": "Whether the check passed without errors."
+        },
+        {
+          "name": "summary",
+          "type": "{ errors: number; warnings: number; files: number; symbols: number; duration: number; }",
+          "description": "Aggregate counts — always present regardless of MVI level."
+        },
+        {
+          "name": "triage",
+          "type": "CheckTriage | undefined",
+          "description": "Triage data for prioritizing fixes — present when errors  0 (except minimal)."
+        },
+        {
+          "name": "byFile",
+          "type": "CheckFileGroup[] | undefined",
+          "description": "Per-file breakdown — present at standard and full MVI levels, paginated."
+        },
+        {
+          "name": "page",
+          "type": "CheckPage | undefined",
+          "description": "Pagination metadata when byFile is paginated."
+        },
+        {
+          "name": "filters",
+          "type": "{ rule?: string; file?: string; } | undefined",
+          "description": "Active filters applied to this result."
+        },
+        {
+          "name": "nextCommand",
+          "type": "string | undefined",
+          "description": "CLI command hint for the agent to run next."
+        }
+      ]
+    },
+    {
+      "id": "concept-InitHooksResult",
+      "name": "InitHooksResult",
+      "what": "Result of the `init hooks` command.",
+      "properties": [
+        {
+          "name": "success",
+          "type": "boolean",
+          "description": "Whether the hook scaffolding succeeded."
+        },
+        {
+          "name": "hookManager",
+          "type": "HookManager",
+          "description": "The detected or chosen hook manager."
+        },
+        {
+          "name": "summary",
+          "type": "{ filesWritten: number; filesSkipped: number; }",
+          "description": "Summary of what was created."
+        },
+        {
+          "name": "files",
+          "type": "string[]",
+          "description": "Relative paths of all files written."
+        },
+        {
+          "name": "instructions",
+          "type": "string[]",
+          "description": "Post-scaffold instructions for the user."
+        }
+      ]
+    },
+    {
+      "id": "concept-InitProjectResult",
+      "name": "InitProjectResult",
+      "what": "Result of the `init` (project setup) command.",
+      "properties": [
+        {
+          "name": "success",
+          "type": "boolean",
+          "description": "Whether the init succeeded."
+        },
+        {
+          "name": "created",
+          "type": "string[]",
+          "description": "Files that were created."
+        },
+        {
+          "name": "skipped",
+          "type": "string[]",
+          "description": "Files that already existed and were skipped."
+        },
+        {
+          "name": "warnings",
+          "type": "string[]",
+          "description": "Warning messages collected during init."
+        },
+        {
+          "name": "environment",
+          "type": "InitProjectEnvironment",
+          "description": "Detected project environment."
+        },
+        {
+          "name": "nextSteps",
+          "type": "string[]",
+          "description": "Next steps for the user."
+        },
+        {
+          "name": "scriptsAdded",
+          "type": "string[]",
+          "description": "Scripts that were added to package.json (empty if none were added)."
+        }
+      ]
+    },
+    {
+      "id": "concept-DoctorCheckStatus",
+      "name": "DoctorCheckStatus",
+      "what": "Status of a single doctor check."
+    },
+    {
+      "id": "concept-DoctorCheckResult",
+      "name": "DoctorCheckResult",
+      "what": "Result of a single doctor check.",
+      "properties": [
+        {
+          "name": "name",
+          "type": "string",
+          "description": "Name of the check."
+        },
+        {
+          "name": "status",
+          "type": "DoctorCheckStatus",
+          "description": "Status of the check."
+        },
+        {
+          "name": "message",
+          "type": "string",
+          "description": "Human-readable message."
+        },
+        {
+          "name": "fixable",
+          "type": "boolean",
+          "description": "Whether this issue can be auto-fixed with --fix."
+        }
+      ]
+    },
+    {
+      "id": "concept-DoctorResult",
+      "name": "DoctorResult",
+      "what": "Result of the `doctor` command.",
+      "properties": [
+        {
+          "name": "success",
+          "type": "boolean",
+          "description": "Whether all checks passed without errors."
+        },
+        {
+          "name": "checks",
+          "type": "DoctorCheckResult[]",
+          "description": "Individual check results."
+        },
+        {
+          "name": "summary",
+          "type": "{ passed: number; warnings: number; errors: number; info: number; }",
+          "description": "Summary counts."
+        },
+        {
+          "name": "fixed",
+          "type": "string[]",
+          "description": "Files that were fixed (only populated when --fix is used)."
+        }
+      ]
+    },
+    {
+      "id": "concept-InitDocsResult",
+      "name": "InitDocsResult",
+      "what": "Result of the `init docs` command.",
+      "properties": [
+        {
+          "name": "success",
+          "type": "boolean",
+          "description": "Whether the scaffold succeeded."
+        },
+        {
+          "name": "target",
+          "type": "SSGTarget",
+          "description": "The SSG target that was scaffolded."
+        },
+        {
+          "name": "summary",
+          "type": "{ filesCreated: number; dependencies: number; scripts: number; }",
+          "description": "Summary of what was created."
+        },
+        {
+          "name": "files",
+          "type": "string[]",
+          "description": "Relative paths of all files created."
+        },
+        {
+          "name": "instructions",
+          "type": "string[]",
+          "description": "Post-scaffold instructions for the user."
+        }
+      ]
+    },
+    {
+      "id": "concept-LockResult",
+      "name": "LockResult",
+      "what": "Typed result for the `lock` command.",
+      "properties": [
+        {
+          "name": "success",
+          "type": "boolean",
+          "description": "Whether the lock was successfully created."
+        },
+        {
+          "name": "lockFile",
+          "type": "string",
+          "description": "Path to the lock file that was written."
+        },
+        {
+          "name": "lockedAt",
+          "type": "string",
+          "description": "ISO-8601 timestamp when the lock was created."
+        },
+        {
+          "name": "lockedBy",
+          "type": "string",
+          "description": "Identifier of who created the lock."
+        },
+        {
+          "name": "locked",
+          "type": "{ rules: number; tsconfig: boolean; biome: boolean; }",
+          "description": "Summary of what was locked."
+        },
+        {
+          "name": "overwrote",
+          "type": "boolean",
+          "description": "Whether a previous lock file was overwritten."
+        }
+      ]
+    },
+    {
+      "id": "concept-PrepublishResult",
+      "name": "PrepublishResult",
+      "what": "Typed result for the `prepublish` command.",
+      "properties": [
+        {
+          "name": "success",
+          "type": "boolean",
+          "description": "Whether both check and build passed."
+        },
+        {
+          "name": "summary",
+          "type": "{ steps: number; passed: number; failed: number; duration: number; }",
+          "description": "Summary of the prepublish pipeline."
+        },
+        {
+          "name": "check",
+          "type": "{ success: boolean; errors: number; warnings: number; duration: number; }",
+          "description": "Result of the check step."
+        },
+        {
+          "name": "build",
+          "type": "{ success: boolean; steps: number; succeeded: number; failed: number; duration: number; } | undefined",
+          "description": "Result of the build step (absent if check failed and build was skipped)."
+        },
+        {
+          "name": "skippedReason",
+          "type": "string | undefined",
+          "description": "If check failed, the reason build was skipped."
+        }
+      ]
+    },
+    {
+      "id": "concept-GeneratorOptions",
+      "name": "GeneratorOptions",
+      "what": "Options for virtual test file generation.",
+      "properties": [
+        {
+          "name": "cacheDir",
+          "type": "string",
+          "description": "Directory where virtual test files will be written."
+        }
+      ]
+    },
+    {
+      "id": "concept-RunResult",
+      "name": "RunResult",
+      "what": "Result of running the generated test files.",
+      "properties": [
+        {
+          "name": "success",
+          "type": "boolean",
+          "description": "Whether all tests passed."
+        },
+        {
+          "name": "passed",
+          "type": "number",
+          "description": "Number of tests that passed."
+        },
+        {
+          "name": "failed",
+          "type": "number",
+          "description": "Number of tests that failed."
+        },
+        {
+          "name": "output",
+          "type": "string",
+          "description": "Combined stdout + stderr output from the test runner."
+        },
+        {
+          "name": "tests",
+          "type": "TestCaseResult[]",
+          "description": "Individual test results with name and status."
+        }
+      ]
+    },
+    {
+      "id": "concept-TestCaseResult",
+      "name": "TestCaseResult",
+      "what": "The result of a single test case.",
+      "properties": [
+        {
+          "name": "name",
+          "type": "string",
+          "description": "The full test name as reported by the runner."
+        },
+        {
+          "name": "passed",
+          "type": "boolean",
+          "description": "Whether this test passed."
+        },
+        {
+          "name": "sourceFile",
+          "type": "string | undefined",
+          "description": "The source file this test was generated from, if determinable."
+        }
+      ]
+    },
+    {
+      "id": "concept-TestResult",
+      "name": "TestResult",
+      "what": "Typed result for the `test` command.",
+      "properties": [
+        {
+          "name": "success",
+          "type": "boolean",
+          "description": "Whether all doctests passed."
+        },
+        {
+          "name": "summary",
+          "type": "{ passed: number; failed: number; total: number; duration: number; }",
+          "description": "Aggregate counts — always present regardless of MVI level."
+        },
+        {
+          "name": "failures",
+          "type": "TestFailure[] | undefined",
+          "description": "Per-failure details — present at standard and full MVI levels."
+        }
+      ]
+    },
+    {
+      "id": "concept-UnlockResult",
+      "name": "UnlockResult",
+      "what": "Typed result for the `unlock` command.",
+      "properties": [
+        {
+          "name": "success",
+          "type": "boolean",
+          "description": "Whether the unlock was successful."
+        },
+        {
+          "name": "reason",
+          "type": "string",
+          "description": "The reason provided for unlocking."
+        },
+        {
+          "name": "previousLockedBy",
+          "type": "string | null",
+          "description": "Who originally locked the config, if known."
+        },
+        {
+          "name": "previousLockedAt",
+          "type": "string | null",
+          "description": "When the config was originally locked, if known."
+        }
+      ]
+    }
+  ],
+  "operations": [
+    {
+      "id": "op-createBypass",
+      "name": "createBypass",
+      "what": "Creates a new bypass record, writes it to `.forge-bypass.json`, and appends an audit event.",
+      "inputs": [
+        {
+          "name": "rootDir",
+          "type": "unknown",
+          "required": true,
+          "description": "Absolute path to the project root directory."
+        },
+        {
+          "name": "reason",
+          "type": "unknown",
+          "required": true,
+          "description": "Mandatory justification for the bypass."
+        },
+        {
+          "name": "rule",
+          "type": "unknown",
+          "required": true,
+          "description": "Specific rule code to bypass (e.g., \"E009\"), or \"all\". Defaults to \"all\"."
+        },
+        {
+          "name": "config",
+          "type": "unknown",
+          "required": true,
+          "description": "Optional bypass budget configuration overrides."
+        }
+      ],
+      "preconditions": [
+        "Error when the daily bypass budget is exhausted."
+      ],
+      "outputs": {
+        "text": "The created bypass record."
+      }
+    },
+    {
+      "id": "op-createLockManifest",
+      "name": "createLockManifest",
+      "what": "Creates a `ForgeLockManifest` from the current project config.",
+      "inputs": [
+        {
+          "name": "config",
+          "type": "unknown",
+          "required": true,
+          "description": "The fully-resolved `ForgeConfig` to snapshot."
+        },
+        {
+          "name": "lockedBy",
+          "type": "unknown",
+          "required": true,
+          "description": "Identifier of the user or agent creating the lock. Defaults to `\"forge-ts lock\"`."
+        }
+      ],
+      "outputs": {
+        "text": "A new lock manifest ready to be written with `writeLockFile`."
+      }
+    },
+    {
+      "id": "op-validateAgainstLock",
+      "name": "validateAgainstLock",
+      "what": "Validates the current config against a locked manifest.",
+      "inputs": [
+        {
+          "name": "config",
+          "type": "unknown",
+          "required": true,
+          "description": "The current fully-resolved `ForgeConfig`."
+        },
+        {
+          "name": "lock",
+          "type": "unknown",
+          "required": true,
+          "description": "The lock manifest to validate against."
+        }
+      ],
+      "outputs": {
+        "text": "An array of `LockViolation` entries. Empty means no weakening detected."
+      }
+    },
+    {
+      "id": "op-createWalker",
+      "name": "createWalker",
+      "what": "Creates an `ASTWalker` configured for the given forge config.",
+      "inputs": [
+        {
+          "name": "config",
+          "type": "unknown",
+          "required": true,
+          "description": "The resolved `ForgeConfig` for the project."
+        }
+      ],
+      "outputs": {
+        "text": "An `ASTWalker` instance whose `walk()` method performs the extraction."
+      }
+    },
+    {
+      "id": "op-generateOpenAPISpec",
+      "name": "generateOpenAPISpec",
+      "what": "Generates a production-quality OpenAPI 3.2 document from the extracted SDK types.  The document is populated with: - An `info` block sourced from the config or reasonable defaults. - A `components.schemas` section with one schema per exported type. - `tags` derived from unique source file paths (grouping by file). - Visibility filtering: `@internal` symbols are never emitted. - HTTP paths are extracted from `@route` tags and appropriately mapped.",
+      "inputs": [
+        {
+          "name": "config",
+          "type": "unknown",
+          "required": true,
+          "description": "The resolved `ForgeConfig`."
+        },
+        {
+          "name": "sdkTypes",
+          "type": "unknown",
+          "required": true,
+          "description": "SDK types to include as component schemas."
+        },
+        {
+          "name": "symbols",
+          "type": "unknown",
+          "required": true,
+          "description": "Raw symbols used to extract HTTP route paths from `@route` tags."
+        }
+      ],
+      "outputs": {
+        "text": "An `OpenAPIDocument` object."
+      }
+    },
+    {
+      "id": "op-buildReference",
+      "name": "buildReference",
+      "what": "Builds a structured API reference from a list of exported symbols.  Unlike the minimal stub, this version includes nested children (class methods, interface properties) and all available TSDoc metadata.  Symbols with `Visibility.Internal` or `Visibility.Private` are excluded from the top-level results. Children with private/internal visibility are also filtered out.",
+      "inputs": [
+        {
+          "name": "symbols",
+          "type": "unknown",
+          "required": true,
+          "description": "All symbols from the AST walker."
+        }
+      ],
+      "outputs": {
+        "text": "An array of `ReferenceEntry` objects sorted by name."
+      }
+    },
+    {
+      "id": "op-generateApi",
+      "name": "generateApi",
+      "what": "Runs the API generation pipeline: walk → extract → generate → write.",
+      "inputs": [
+        {
+          "name": "config",
+          "type": "unknown",
+          "required": true,
+          "description": "The resolved `ForgeConfig` for the project."
+        }
+      ],
+      "outputs": {
+        "text": "A `ForgeResult` with success/failure and any diagnostics."
+      }
+    },
+    {
+      "id": "op-runAudit",
+      "name": "runAudit",
+      "what": "Reads the audit log and returns a typed command output.",
+      "inputs": [
+        {
+          "name": "args",
+          "type": "unknown",
+          "required": true,
+          "description": "CLI arguments for the audit command."
+        }
+      ],
+      "outputs": {
+        "text": "A typed `CommandOutput<AuditResult>`."
+      }
+    },
+    {
+      "id": "op-auditCommand",
+      "name": "auditCommand",
+      "what": "Citty command definition for `forge-ts audit`.",
+      "inputs": []
+    },
+    {
+      "id": "op-runBarometer",
+      "name": "runBarometer",
+      "what": "Runs the barometer generation pass.  Loads the project config, walks the symbol graph, extracts testable facts from five categories, generates questions with ground-truth answers, and writes the result to `.forge/barometer.json`.",
+      "inputs": [
+        {
+          "name": "args",
+          "type": "unknown",
+          "required": true,
+          "description": "CLI arguments for the barometer command."
+        }
+      ],
+      "outputs": {
+        "text": "A typed `CommandOutput<BarometerResult>`."
+      }
+    },
+    {
+      "id": "op-barometerCommand",
+      "name": "barometerCommand",
+      "what": "Citty command definition for `forge-ts barometer`.  Generates a documentation effectiveness test (questions + answers + rubric) from the project's source code.",
+      "inputs": []
+    },
+    {
+      "id": "op-generateDocSite",
+      "name": "generateDocSite",
+      "what": "Generates a full multi-page documentation site from symbols grouped by package.  Follows a 5-stage information architecture: 1. ORIENT — Landing page, Getting Started 2. LEARN — Concepts (stub) 3. BUILD — Guides (stub) 4. REFERENCE — API Reference, Types, Configuration, Changelog 5. COMMUNITY — FAQ, Contributing (stubs)",
+      "inputs": [
+        {
+          "name": "symbolsByPackage",
+          "type": "unknown",
+          "required": true,
+          "description": "Symbols grouped by package name."
+        },
+        {
+          "name": "config",
+          "type": "unknown",
+          "required": true,
+          "description": "The resolved `ForgeConfig`."
+        },
+        {
+          "name": "options",
+          "type": "unknown",
+          "required": true,
+          "description": "Site generation options."
+        }
+      ],
+      "outputs": {
+        "text": "An array of `DocPage` objects ready to be written to disk."
+      }
+    },
+    {
+      "id": "op-generateCKM",
+      "name": "generateCKM",
+      "what": "Generates a Codebase Knowledge Manifest from the symbol graph.",
+      "inputs": [
+        {
+          "name": "symbols",
+          "type": "unknown",
+          "required": true,
+          "description": "All symbols extracted from the project."
+        },
+        {
+          "name": "config",
+          "type": "unknown",
+          "required": true,
+          "description": "The resolved `ForgeConfig` for the project."
+        }
+      ],
+      "outputs": {
+        "text": "A complete `CKMManifest` ready for JSON serialization."
+      }
+    },
+    {
+      "id": "op-generateLlmsTxt",
+      "name": "generateLlmsTxt",
+      "what": "Generates an `llms.txt` routing manifest from the extracted symbols.  The file follows the llms.txt specification: a compact, structured overview designed to help large language models navigate a project's documentation. Symbols are grouped by package with  summaries.",
+      "inputs": [
+        {
+          "name": "symbols",
+          "type": "unknown",
+          "required": true,
+          "description": "The symbols to include."
+        },
+        {
+          "name": "config",
+          "type": "unknown",
+          "required": true,
+          "description": "The resolved `ForgeConfig`."
+        }
+      ],
+      "outputs": {
+        "text": "The generated `llms.txt` content as a string."
+      }
+    },
+    {
+      "id": "op-generateLlmsFullTxt",
+      "name": "generateLlmsFullTxt",
+      "what": "Generates an `llms-full.txt` dense context file from the extracted symbols.  Unlike `llms.txt`, this file contains complete documentation for every exported symbol, intended for LLM ingestion that requires full context. Symbols are grouped by package with  summaries.",
+      "inputs": [
+        {
+          "name": "symbols",
+          "type": "unknown",
+          "required": true,
+          "description": "The symbols to include."
+        },
+        {
+          "name": "config",
+          "type": "unknown",
+          "required": true,
+          "description": "The resolved `ForgeConfig`."
+        }
+      ],
+      "outputs": {
+        "text": "The generated `llms-full.txt` content as a string."
+      }
+    },
+    {
+      "id": "op-generateMarkdown",
+      "name": "generateMarkdown",
+      "what": "Generates a Markdown (or MDX) string from a list of symbols.",
+      "inputs": [
+        {
+          "name": "symbols",
+          "type": "unknown",
+          "required": true,
+          "description": "The symbols to document."
+        },
+        {
+          "name": "config",
+          "type": "unknown",
+          "required": true,
+          "description": "The resolved `ForgeConfig`."
+        },
+        {
+          "name": "options",
+          "type": "unknown",
+          "required": true,
+          "description": "Rendering options."
+        }
+      ],
+      "outputs": {
+        "text": "The generated Markdown string."
+      }
+    },
+    {
+      "id": "op-generateSkillPackage",
+      "name": "generateSkillPackage",
+      "what": "Generates an agentskills.io-compliant skill package for ANY TypeScript project.  All content is derived from the project's exported symbols and metadata. No hardcoded project-specific content. Works for any project that forge-ts analyzes.",
+      "inputs": [
+        {
+          "name": "symbols",
+          "type": "unknown",
+          "required": true,
+          "description": "All symbols from the project."
+        },
+        {
+          "name": "config",
+          "type": "unknown",
+          "required": true,
+          "description": "The resolved forge-ts config."
+        }
+      ],
+      "outputs": {
+        "text": "A `SkillPackage` describing the directory and its files."
+      }
+    },
+    {
+      "id": "op-generateSkillMd",
+      "name": "generateSkillMd",
+      "what": "Generates a SKILL.md string following the Agent Skills specification. Generic for any TypeScript project — content derived from symbols.",
+      "inputs": [
+        {
+          "name": "symbols",
+          "type": "unknown",
+          "required": true,
+          "description": "All symbols from the project."
+        },
+        {
+          "name": "config",
+          "type": "unknown",
+          "required": true,
+          "description": "The resolved forge-ts config."
+        }
+      ],
+      "outputs": {
+        "text": "The SKILL.md content as a string."
+      }
+    },
+    {
+      "id": "op-generateSSGConfigs",
+      "name": "generateSSGConfigs",
+      "what": "Generate navigation configuration file(s) for the given SSG target.  Returns one file for most targets, but multiple files for Nextra (which uses per-directory `_meta.json` files).",
+      "inputs": [
+        {
+          "name": "pages",
+          "type": "unknown",
+          "required": true,
+          "description": "The `DocPage` array produced by `generateDocSite`."
+        },
+        {
+          "name": "target",
+          "type": "unknown",
+          "required": true,
+          "description": "The SSG target."
+        },
+        {
+          "name": "projectName",
+          "type": "unknown",
+          "required": true,
+          "description": "The project name (used in config metadata)."
+        }
+      ],
+      "outputs": {
+        "text": "An array of `SSGConfigFile` objects ready to be written to disk."
+      }
+    },
+    {
+      "id": "op-generate",
+      "name": "generate",
+      "what": "Runs the full generation pipeline: walk → render → write.  Auto-generated pages are always regenerated from source code. Stub pages (scaffolding for human/agent editing) are only created if they don't already exist, preserving manual edits across builds. Pass `{ forceStubs: true }` to overwrite stubs.",
+      "inputs": [
+        {
+          "name": "config",
+          "type": "unknown",
+          "required": true,
+          "description": "The resolved `ForgeConfig` for the project."
+        },
+        {
+          "name": "options",
+          "type": "unknown",
+          "required": true,
+          "description": "Optional generation flags (e.g., forceStubs)."
+        }
+      ],
+      "outputs": {
+        "text": "A `ForgeResult` describing the outcome."
+      }
+    },
+    {
+      "id": "op-runBuild",
+      "name": "runBuild",
+      "what": "Runs the full build pipeline and returns a typed command output.",
+      "inputs": [
+        {
+          "name": "args",
+          "type": "unknown",
+          "required": true,
+          "description": "CLI arguments for the build command."
+        }
+      ],
+      "outputs": {
+        "text": "A typed `CommandOutput<BuildResult>`."
+      }
+    },
+    {
+      "id": "op-buildCommand",
+      "name": "buildCommand",
+      "what": "Citty command definition for `forge-ts build`.",
+      "inputs": []
+    },
+    {
+      "id": "op-runBypassCreate",
+      "name": "runBypassCreate",
+      "what": "Runs the bypass creation: creates a new bypass record with budget enforcement.",
+      "inputs": [
+        {
+          "name": "args",
+          "type": "unknown",
+          "required": true,
+          "description": "CLI arguments for the bypass command."
+        }
+      ],
+      "outputs": {
+        "text": "A typed `CommandOutput<BypassCreateResult>`."
+      }
+    },
+    {
+      "id": "op-runBypassStatus",
+      "name": "runBypassStatus",
+      "what": "Runs the bypass status query: shows active bypasses and remaining budget.",
+      "inputs": [
+        {
+          "name": "args",
+          "type": "unknown",
+          "required": true,
+          "description": "CLI arguments for the bypass status command."
+        }
+      ],
+      "outputs": {
+        "text": "A typed `CommandOutput<BypassStatusResult>`."
+      }
+    },
+    {
+      "id": "op-bypassCommand",
+      "name": "bypassCommand",
+      "what": "Citty command definition for `forge-ts bypass`.",
+      "inputs": []
+    },
+    {
+      "id": "op-enforce",
+      "name": "enforce",
+      "what": "Runs the TSDoc enforcement pass against a project.  The enforcer walks all exported symbols that meet the configured minimum visibility threshold and emits diagnostics for any documentation deficiencies it finds.  ### Error codes | Code | Severity | Condition | |------|----------|-----------| | E001 | error    | Exported symbol is missing a TSDoc summary. | | E002 | error    | Function/method parameter lacks a `@param` tag. | | E003 | error    | Non-void function/method lacks a `@returns` tag. | | E004 | error    | Exported function/method is missing an `@example` block. | | E005 | error    | Package entry point (index.ts) is missing `@packageDocumentation`. | | E006 | error    | Public/protected class member is missing a TSDoc comment. | | E007 | error    | Interface/type alias property is missing a TSDoc comment. | | W001 | warning  | TSDoc comment contains parse errors. | | W002 | warning  | Function body throws but has no `@throws` tag. | | W003 | warning  | `@deprecated` tag is present without explanation. | | W006 | warning  | TSDoc parser-level syntax error (invalid tag, malformed block, etc.). | | E009 | error    | tsconfig.json required strict-mode flag is missing or disabled (guard). | | E010 | error    | Config drift: a rule severity is weaker than the locked value. | | E013 | error    | Exported function/class is missing a `@remarks` block. | | E014 | warn     | Optional property of interface/type is missing `@defaultValue`. | | E015 | error    | Generic symbol is missing `@typeParam` for a type parameter. | | W005 | warn     | Symbol references other symbols via `{@link}` but has no `@see` tags. | | W007 | warn     | Guide FORGE:AUTO section references a symbol that no longer exists. | | W008 | warn     | Exported public symbol is not mentioned in any guide page. | | E017 | error    | `@internal` symbol re-exported through public barrel (index.ts). | | E018 | warn     | `@route`-tagged function missing `@response` tag. | | W009 | warn     | `{@inheritDoc}` references a symbol that does not exist. | | W010 | warn     | `@breaking` tag present without `@migration` path. | | W011 | warn     | New public export missing `@since` version tag. | | E019 | error    | Non-test file contains `@ts-expect-error` / `@ts-expect-error`. | | E020 | error    | Exported symbol has `any` in its public API signature. | | W012 | warn     | `{@link}` display text appears stale relative to target summary. | | W013 | warn     | `@example` block may be stale (arg count mismatch). | | W014 | warn     | `@param` name in TSDoc doesn't match actual parameter name. | | W015 | warn     | `@param` count in TSDoc doesn't match actual parameter count. | | W016 | warn     | `@returns` tag on a void/Promise function. | | W017 | warn     | `@remarks` block is empty or contains only placeholder text. |  When `config.enforce.strict` is `true` all warnings are promoted to errors.",
+      "inputs": [
+        {
+          "name": "config",
+          "type": "unknown",
+          "required": true,
+          "description": "The resolved `ForgeConfig` for the project."
+        }
+      ],
+      "outputs": {
+        "text": "A `ForgeResult` describing which symbols passed or failed."
+      }
+    },
+    {
+      "id": "op-runCheck",
+      "name": "runCheck",
+      "what": "Runs the TSDoc enforcement pass and returns a typed command output.",
+      "inputs": [
+        {
+          "name": "args",
+          "type": "unknown",
+          "required": true,
+          "description": "CLI arguments for the check command."
+        }
+      ],
+      "outputs": {
+        "text": "A typed `CommandOutput<CheckResult>`."
+      }
+    },
+    {
+      "id": "op-checkCommand",
+      "name": "checkCommand",
+      "what": "Citty command definition for `forge-ts check`.",
+      "inputs": []
+    },
+    {
+      "id": "op-runDocsDev",
+      "name": "runDocsDev",
+      "what": "Starts the local dev server for the configured SSG target.  Reads `gen.ssgTarget` from the forge-ts config, resolves the adapter, and spawns the platform's dev server in the output directory.",
+      "inputs": [
+        {
+          "name": "args",
+          "type": "unknown",
+          "required": true,
+          "description": "Command arguments."
+        }
+      ],
+      "outputs": {
+        "text": "A promise that resolves when the server exits."
+      }
+    },
+    {
+      "id": "op-docsDevCommand",
+      "name": "docsDevCommand",
+      "what": "Citty command definition for `forge-ts docs dev`.",
+      "inputs": []
+    },
+    {
+      "id": "op-generateHuskyHook",
+      "name": "generateHuskyHook",
+      "what": "Generates the husky pre-commit hook file content (modern husky v9+).",
+      "inputs": []
+    },
+    {
+      "id": "op-generateHuskyPrePushHook",
+      "name": "generateHuskyPrePushHook",
+      "what": "Generates the husky pre-push hook file content (modern husky v9+).",
+      "inputs": []
+    },
+    {
+      "id": "op-generateLefthookBlock",
+      "name": "generateLefthookBlock",
+      "what": "Generates the lefthook block with both pre-commit and pre-push sections.",
+      "inputs": []
+    },
+    {
+      "id": "op-runInitHooks",
+      "name": "runInitHooks",
+      "what": "Scaffolds git hook integration for the project.  Detects the hook manager (husky or lefthook), generates appropriate hook files, and reports what was written.",
+      "inputs": [
+        {
+          "name": "args",
+          "type": "unknown",
+          "required": true,
+          "description": "CLI arguments for the init hooks command."
+        }
+      ],
+      "outputs": {
+        "text": "A typed `CommandOutput<InitHooksResult>`."
+      }
+    },
+    {
+      "id": "op-initHooksCommand",
+      "name": "initHooksCommand",
+      "what": "Citty command definition for `forge-ts init hooks`.  Scaffolds git hook integration for the project by detecting the hook manager (husky or lefthook) and generating pre-commit hooks.",
+      "inputs": []
+    },
+    {
+      "id": "op-buildTsdocContent",
+      "name": "buildTsdocContent",
+      "what": "Builds tsdoc.json content, merging in customTags from the forge config.  When `customTags` is non-empty, the written tsdoc.json includes both `tagDefinitions` and `supportForTags` entries so that the TSDoc parser (and any editor extensions) recognise the custom tags.",
+      "inputs": [
+        {
+          "name": "customTags",
+          "type": "unknown",
+          "required": true,
+          "description": "Custom tag definitions from `ForgeConfig.tsdoc.customTags`."
+        }
+      ],
+      "outputs": {
+        "text": "A JSON string for tsdoc.json."
+      }
+    },
+    {
+      "id": "op-runInitProject",
+      "name": "runInitProject",
+      "what": "Runs the full project init flow.",
+      "inputs": [
+        {
+          "name": "args",
+          "type": "unknown",
+          "required": true,
+          "description": "CLI arguments for the init command."
+        }
+      ],
+      "outputs": {
+        "text": "A typed `CommandOutput<InitProjectResult>`."
+      }
+    },
+    {
+      "id": "op-initProjectCommand",
+      "name": "initProjectCommand",
+      "what": "Citty command definition for `forge-ts init` (bare — full project setup).  Detects the project environment, writes default configuration files, validates tsconfig/package.json, and reports a summary.",
+      "inputs": []
+    },
+    {
+      "id": "op-runDoctor",
+      "name": "runDoctor",
+      "what": "Runs the doctor integrity check flow.",
+      "inputs": [
+        {
+          "name": "args",
+          "type": "unknown",
+          "required": true,
+          "description": "CLI arguments for the doctor command."
+        }
+      ],
+      "outputs": {
+        "text": "A typed `CommandOutput<DoctorResult>`."
+      }
+    },
+    {
+      "id": "op-doctorCommand",
+      "name": "doctorCommand",
+      "what": "Citty command definition for `forge-ts doctor`.  Performs project integrity checks and optionally auto-fixes resolvable issues with `--fix`.",
+      "inputs": []
+    },
+    {
+      "id": "op-runInitDocs",
+      "name": "runInitDocs",
+      "what": "Scaffolds a documentation site for the target SSG platform.  Resolves the target from args, validates it, checks for an existing scaffold, calls the adapter's `scaffold()` method, and writes all files produced by the manifest to `outDir`.",
+      "inputs": [
+        {
+          "name": "args",
+          "type": "unknown",
+          "required": true,
+          "description": "CLI arguments for the init docs command."
+        }
+      ],
+      "outputs": {
+        "text": "A typed `CommandOutput<InitDocsResult>`."
+      }
+    },
+    {
+      "id": "op-initDocsCommand",
+      "name": "initDocsCommand",
+      "what": "Citty command definition for `forge-ts init docs`.  Scaffolds a complete documentation site for the target SSG platform. Use `--json` for LAFS JSON envelope output (agent/CI-friendly).",
+      "inputs": []
+    },
+    {
+      "id": "op-initCommand",
+      "name": "initCommand",
+      "what": "Citty command definition for `forge-ts init`.  Exposes subcommands for scaffolding project artefacts.",
+      "inputs": []
+    },
+    {
+      "id": "op-runLock",
+      "name": "runLock",
+      "what": "Runs the lock command: reads current config and creates `.forge-lock.json`.",
+      "inputs": [
+        {
+          "name": "args",
+          "type": "unknown",
+          "required": true,
+          "description": "CLI arguments for the lock command."
+        }
+      ],
+      "outputs": {
+        "text": "A typed `CommandOutput<LockResult>`."
+      }
+    },
+    {
+      "id": "op-lockCommand",
+      "name": "lockCommand",
+      "what": "Citty command definition for `forge-ts lock`.",
+      "inputs": []
+    },
+    {
+      "id": "op-runPrepublish",
+      "name": "runPrepublish",
+      "what": "Runs the prepublish safety gate: check then build.  If the check step fails, the build step is skipped entirely. Both steps use the same project root (cwd).",
+      "inputs": [
+        {
+          "name": "args",
+          "type": "unknown",
+          "required": true,
+          "description": "CLI arguments for the prepublish command."
+        }
+      ],
+      "outputs": {
+        "text": "A typed `CommandOutput<PrepublishResult>`."
+      }
+    },
+    {
+      "id": "op-prepublishCommand",
+      "name": "prepublishCommand",
+      "what": "Citty command definition for `forge-ts prepublish`.  Runs check then build as a publish safety gate. Add to package.json as: `\"prepublishOnly\": \"forge-ts prepublish\"`",
+      "inputs": []
+    },
+    {
+      "id": "op-generateTestFiles",
+      "name": "generateTestFiles",
+      "what": "Generates a virtual test file for a set of extracted examples.  Each example is wrapped in an `it()` block using the Node built-in `node:test` runner so that no additional test framework is required. Auto-imports the tested symbol from the source file, processes `// =>` assertion patterns, and appends an inline source map.",
+      "inputs": [
+        {
+          "name": "examples",
+          "type": "unknown",
+          "required": true,
+          "description": "Examples to include in the generated file."
+        },
+        {
+          "name": "options",
+          "type": "unknown",
+          "required": true,
+          "description": "Output configuration."
+        }
+      ],
+      "outputs": {
+        "text": "An array of `VirtualTestFile` objects (one per source file)."
+      }
+    },
+    {
+      "id": "op-runTests",
+      "name": "runTests",
+      "what": "Writes virtual test files to disk and executes them with Node 24 native TypeScript support (`--experimental-strip-types --test`).",
+      "inputs": [
+        {
+          "name": "files",
+          "type": "unknown",
+          "required": true,
+          "description": "The virtual test files to write and run."
+        }
+      ],
+      "outputs": {
+        "text": "A `RunResult` summarising the test outcome."
+      }
+    },
+    {
+      "id": "op-runTest",
+      "name": "runTest",
+      "what": "Runs the doctest pipeline and returns a typed command output.",
+      "inputs": [
+        {
+          "name": "args",
+          "type": "unknown",
+          "required": true,
+          "description": "CLI arguments for the test command."
+        }
+      ],
+      "outputs": {
+        "text": "A typed `CommandOutput<TestResult>`."
+      }
+    },
+    {
+      "id": "op-testCommand",
+      "name": "testCommand",
+      "what": "Citty command definition for `forge-ts test`.",
+      "inputs": []
+    },
+    {
+      "id": "op-runUnlock",
+      "name": "runUnlock",
+      "what": "Runs the unlock command: removes `.forge-lock.json` with a mandatory reason.",
+      "inputs": [
+        {
+          "name": "args",
+          "type": "unknown",
+          "required": true,
+          "description": "CLI arguments for the unlock command."
+        }
+      ],
+      "outputs": {
+        "text": "A typed `CommandOutput<UnlockResult>`."
+      }
+    },
+    {
+      "id": "op-unlockCommand",
+      "name": "unlockCommand",
+      "what": "Citty command definition for `forge-ts unlock`.",
+      "inputs": []
+    }
+  ],
+  "constraints": [
+    {
+      "id": "constraint-createBypass-Error-when-the-daily-bypass-bu",
+      "rule": "Error when the daily bypass budget is exhausted.",
+      "enforcedBy": "createBypass"
+    },
+    {
+      "id": "constraint-getAdapter--Error--if-the-target-is-not-r",
+      "rule": "`Error` if the target is not registered.",
+      "enforcedBy": "getAdapter"
+    }
+  ],
+  "workflows": [],
+  "configSchema": [
+    {
+      "key": "ReadAuditOptions.limit",
+      "type": "number | undefined",
+      "description": "Maximum number of events to return.",
+      "default": "undefined"
+    },
+    {
+      "key": "ReadAuditOptions.eventType",
+      "type": "AuditEventType | undefined",
+      "description": "Filter to a single event type.",
+      "default": "undefined"
+    },
+    {
+      "key": "BypassConfig.dailyBudget",
+      "type": "number",
+      "description": "Maximum number of bypasses allowed per calendar day. Default: 3"
+    },
+    {
+      "key": "BypassConfig.durationHours",
+      "type": "number",
+      "description": "Duration in hours before a bypass automatically expires. Default: 24"
+    },
+    {
+      "key": "ForgeConfig.rootDir",
+      "type": "string",
+      "description": "Root directory of the project."
+    },
+    {
+      "key": "ForgeConfig.tsconfig",
+      "type": "string",
+      "description": "Path to the tsconfig.json to compile against."
+    },
+    {
+      "key": "ForgeConfig.outDir",
+      "type": "string",
+      "description": "Output directory for generated files."
+    },
+    {
+      "key": "ForgeConfig.enforce",
+      "type": "{ enabled: boolean; minVisibility: Visibility | \"public\" | \"beta\" | \"internal\" | \"private\"; strict: boolean; rules: EnforceRules; ignoreFile?: string; }",
+      "description": "Enforce TSDoc on all public exports."
+    },
+    {
+      "key": "ForgeConfig.doctest",
+      "type": "{ enabled: boolean; cacheDir: string; }",
+      "description": "DocTest configuration."
+    },
+    {
+      "key": "ForgeConfig.api",
+      "type": "{ enabled: boolean; openapi: boolean; openapiPath: string; }",
+      "description": "API generation configuration."
+    },
+    {
+      "key": "ForgeConfig.gen",
+      "type": "{ enabled: boolean; formats: Array<\"markdown\" | \"mdx\">; llmsTxt: boolean; readmeSync: boolean; ssgTarget?: \"docusaurus\" | \"mintlify\" | \"nextra\" | \"vitepress\"; ckm?: boolean; }",
+      "description": "Output generation configuration."
+    },
+    {
+      "key": "ForgeConfig.skill",
+      "type": "{ enabled?: boolean; customSections?: Array<{ heading: string; content: string; }>; extraGotchas?: string[]; }",
+      "description": "Skill package generation settings. Custom sections here are merged into the generated SKILL.md, allowing projects to inject workflow knowledge, domain gotchas, and other context that cannot be derived from symbols alone."
+    },
+    {
+      "key": "ForgeConfig.tsdoc",
+      "type": "{ writeConfig: boolean; customTags: Array<{ tagName: string; syntaxKind: \"block\" | \"inline\" | \"modifier\"; }>; enforce: { core: \"error\" | \"warn\" | \"off\"; extended: \"error\" | \"warn\" | \"off\"; discretionary: \"error\" | \"warn\" | \"off\"; }; }",
+      "description": "TSDoc ecosystem configuration."
+    },
+    {
+      "key": "ForgeConfig.bypass",
+      "type": "{ dailyBudget: number; durationHours: number; }",
+      "description": "Bypass budget configuration for temporary rule overrides."
+    },
+    {
+      "key": "ForgeConfig.guides",
+      "type": "{ enabled: boolean; autoDiscover: boolean; custom: Array<{ slug: string; title: string; sources: string[]; }>; }",
+      "description": "Guide generation configuration."
+    },
+    {
+      "key": "ForgeConfig.guards",
+      "type": "{ tsconfig: { enabled: boolean; requiredFlags: string[]; }; biome: { enabled: boolean; lockedRules: string[]; }; packageJson: { enabled: boolean; minNodeVersion: string; requiredFields: string[]; }; }",
+      "description": "Downstream config drift guards."
+    },
+    {
+      "key": "ForgeConfig._configWarnings",
+      "type": "string[] | undefined",
+      "description": "Warnings generated during config loading (e.g., unknown keys). Populated by loadConfig(). Agents should surface these in output.",
+      "default": "undefined"
+    },
+    {
+      "key": "ForgeConfig.project",
+      "type": "{ repository?: string; homepage?: string; packageName?: string; description?: string; version?: string; bin?: Record<string, string>; scripts?: Record<string, string>; keywords?: string[]; }",
+      "description": "Project metadata — auto-detected from package.json if not provided."
+    },
+    {
+      "key": "ForgeLoggerOptions.quiet",
+      "type": "boolean | undefined",
+      "description": "Suppress all consola output (--quiet flag)."
+    },
+    {
+      "key": "ForgeLoggerOptions.json",
+      "type": "boolean | undefined",
+      "description": "JSON output mode (--json flag). LAFS handles JSON; suppress consola."
+    },
+    {
+      "key": "ForgeLoggerOptions.verbose",
+      "type": "boolean | undefined",
+      "description": "Enable debug-level output (--verbose flag)."
+    },
+    {
+      "key": "SiteGeneratorOptions.format",
+      "type": "\"markdown\" | \"mdx\"",
+      "description": "Output format"
+    },
+    {
+      "key": "SiteGeneratorOptions.ssgTarget",
+      "type": "\"docusaurus\" | \"mintlify\" | \"nextra\" | \"vitepress\" | undefined",
+      "description": "SSG target for frontmatter.",
+      "default": "undefined"
+    },
+    {
+      "key": "SiteGeneratorOptions.projectName",
+      "type": "string",
+      "description": "Project name"
+    },
+    {
+      "key": "SiteGeneratorOptions.projectDescription",
+      "type": "string | undefined",
+      "description": "Project description.",
+      "default": "undefined"
+    },
+    {
+      "key": "SiteGeneratorOptions.repositoryUrl",
+      "type": "string | undefined",
+      "description": "Repository URL (auto-detected from package.json).",
+      "default": "undefined"
+    },
+    {
+      "key": "SiteGeneratorOptions.packageName",
+      "type": "string | undefined",
+      "description": "npm package name for install commands.",
+      "default": "undefined"
+    },
+    {
+      "key": "CKMConfigEntry.key",
+      "type": "string",
+      "description": "Dot-path key for this config entry (e.g., \"enforce.strict\")."
+    },
+    {
+      "key": "CKMConfigEntry.type",
+      "type": "string",
+      "description": "TypeScript type of this config entry."
+    },
+    {
+      "key": "CKMConfigEntry.default",
+      "type": "string | undefined",
+      "description": "Default value from `@defaultValue` tag, if present."
+    },
+    {
+      "key": "CKMConfigEntry.description",
+      "type": "string",
+      "description": "Human-readable description from the property summary."
+    },
+    {
+      "key": "CKMConfigEntry.effect",
+      "type": "string | undefined",
+      "description": "Downstream effect or behaviour this config entry controls, from `@remarks`."
+    },
+    {
+      "key": "MarkdownOptions.mdx",
+      "type": "boolean | undefined",
+      "description": "Whether to use MDX syntax (default: Markdown).",
+      "default": "false"
+    },
+    {
+      "key": "ReadmeSyncOptions.badge",
+      "type": "boolean | undefined",
+      "description": "Include a \"Documented with forge-ts\" badge above the API table.",
+      "default": "false"
+    },
+    {
+      "key": "ReadmeSyncOptions.includeExamples",
+      "type": "boolean | undefined",
+      "description": "Include first",
+      "default": "false"
+    },
+    {
+      "key": "SSGConfigFile.path",
+      "type": "string",
+      "description": "Relative path from outDir (e.g., \"mint.json\", \"_meta.json\")"
+    },
+    {
+      "key": "SSGConfigFile.content",
+      "type": "string",
+      "description": "File content"
+    },
+    {
+      "key": "GenerateOptions.forceStubs",
+      "type": "boolean | undefined",
+      "description": "When true, overwrite stub pages even if they already exist on disk. Normally stub pages (concepts, guides, faq, contributing, changelog) are only created on the first build to preserve manual edits. Use this to reset stubs to their scaffolding state.",
+      "default": "false"
+    },
+    {
+      "key": "FormatOptions.colors",
+      "type": "boolean",
+      "description": "Emit ANSI colour escape sequences when `true`."
+    },
+    {
+      "key": "FormatOptions.verbose",
+      "type": "boolean",
+      "description": "When `true`, include the symbol's type signature alongside each diagnostic so the reader has immediate context."
+    },
+    {
+      "key": "GeneratorOptions.cacheDir",
+      "type": "string",
+      "description": "Directory where virtual test files will be written."
+    }
+  ]
+}

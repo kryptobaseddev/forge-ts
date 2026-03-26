@@ -16,7 +16,10 @@
 		{ "tagName": "@breaking", "syntaxKind": "block" },
 		{ "tagName": "@migration", "syntaxKind": "block" },
 		{ "tagName": "@complexity", "syntaxKind": "block" },
-		{ "tagName": "@forgeIgnore", "syntaxKind": "modifier" }
+		{ "tagName": "@forgeIgnore", "syntaxKind": "modifier" },
+		{ "tagName": "@operation", "syntaxKind": "block" },
+		{ "tagName": "@constraint", "syntaxKind": "block" },
+		{ "tagName": "@workflow", "syntaxKind": "block" }
 	],
 	"supportForTags": {
 		"@alpha": true,
@@ -57,6 +60,9 @@
 		"@breaking": true,
 		"@migration": true,
 		"@complexity": true,
-		"@forgeIgnore": true
+		"@forgeIgnore": true,
+		"@operation": true,
+		"@constraint": true,
+		"@workflow": true
 	}
 }

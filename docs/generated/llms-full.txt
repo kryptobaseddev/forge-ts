@@ -2,8 +2,8 @@
 
 > Universal TypeScript documentation compiler — enforces TSDoc as a build gate, then generates all artifacts from source in one pass
 
-Version: 0.20.0
-Generated: 2026-03-26T06:57:12.693Z
+Version: 0.21.0
+Generated: 2026-03-26T15:10:53.866Z
 
 ## Package: core
 
@@ -835,7 +835,7 @@ API generation configuration.
 
 ##### gen
 
-{ enabled: boolean; formats: Array<"markdown" | "mdx">; llmsTxt: boolean; readmeSync: boolean; ssgTarget?: "docusaurus" | "mintlify" | "nextra" | "vitepress"; }
+{ enabled: boolean; formats: Array<"markdown" | "mdx">; llmsTxt: boolean; readmeSync: boolean; ssgTarget?: "docusaurus" | "mintlify" | "nextra" | "vitepress"; ckm?: boolean; }
 
 Output generation configuration.
 
@@ -4159,7 +4159,7 @@ Citty command definition for `forge-ts audit`.
 
 #### barometerCommand
 
-import("citty").CommandDef<{ readonly cwd: { readonly type: "string"; readonly description: "Project root directory"; }; readonly questionsOnly: { readonly type: "boolean"; readonly description: "Output only questions (no answers) — for test agents"; readonly alias: "questions-only"; readonly default: false; }; readonly json: { readonly type: "boolean"; readonly description: "Output as LAFS JSON envelope"; readonly default: false; }; readonly human: { readonly type: "boolean"; readonly description: "Output as formatted text"; readonly default: false; }; readonly quiet: { readonly type: "boolean"; readonly description: "Suppress non-essential output"; readonly default: false; }; readonly mvi: { readonly type: "string"; readonly description: "MVI verbosity level: minimal, standard, full"; }; }>
+import("citty").CommandDef<{ readonly cwd: { readonly type: "string"; readonly description: "Project root directory"; }; readonly "questions-only": { readonly type: "boolean"; readonly description: "Output only questions (no answers) — for test agents"; readonly default: false; }; readonly json: { readonly type: "boolean"; readonly description: "Output as LAFS JSON envelope"; readonly default: false; }; readonly human: { readonly type: "boolean"; readonly description: "Output as formatted text"; readonly default: false; }; readonly quiet: { readonly type: "boolean"; readonly description: "Suppress non-essential output"; readonly default: false; }; readonly mvi: { readonly type: "string"; readonly description: "MVI verbosity level: minimal, standard, full"; }; }>
 
 Citty command definition for `forge-ts barometer`.  Generates a documentation effectiveness test (questions + answers + rubric) from the project's source code.
 
@@ -4697,6 +4697,25 @@ Returns: An array of all registered `SSGTarget` identifiers.
 Example:
   import { getAvailableTargets } from "@forge-ts/gen";
   const targets = getAvailableTargets(); // ["mintlify", "docusaurus", ...]
+
+#### generateCKM()
+
+(symbols: ForgeSymbol[], config: ForgeConfig) => CKMManifest
+
+Generates a Codebase Knowledge Manifest from the symbol graph.
+
+Orchestrates the five extraction passes (concepts, operations, constraints, workflows, config schema) and assembles them into a `CKMManifest`. Uses a hybrid approach where explicit TSDoc tags (`@concept`, `@operation`, `@constraint`, `@workflow`) take precedence, with heuristic analysis as a baseline for projects that lack custom tags.
+
+Parameters:
+- symbols: All symbols extracted from the project.
+- config: The resolved `ForgeConfig` for the project.
+
+Returns: A complete `CKMManifest` ready for JSON serialization.
+
+Example:
+  import { generateCKM } from "@forge-ts/gen";
+  const manifest = generateCKM(symbols, config);
+  console.log(JSON.stringify(manifest, null, 2));
 
 #### generateLlmsTxt()
 
@@ -5678,6 +5697,372 @@ Example:
   const adapter = getAdapter("mintlify");
   const exists = await adapter.detectExisting("./docs");
   if (exists) console.log("Scaffold already present");
+
+#### CKMConcept
+
+CKMConcept
+
+A domain concept extracted from the codebase.
+
+Concepts are identified either by an explicit `@concept` TSDoc tag or by heuristic name-matching on exported interfaces/types whose names indicate domain objects (e.g., Config, Options, State, Result).
+
+Example:
+  const concept: CKMConcept = {
+    id: "concept-ForgeConfig",
+    name: "ForgeConfig",
+    what: "Full configuration for a forge-ts run.",
+    properties: [{ name: "rootDir", type: "string", description: "Root directory." }],
+    rules: ["rootDir must be an absolute path"],
+    relatedTo: ["EnforceRules"],
+  };
+
+Members:
+
+##### id
+
+string
+
+Stable identifier for this concept (e.g., "concept-ForgeConfig").
+
+##### name
+
+string
+
+The declared name of the concept type or interface.
+
+##### what
+
+string
+
+Human-readable description from `@concept` tag content or summary.
+
+##### properties
+
+{ name: string; type: string; description: string; }[] | undefined
+
+Properties of this concept extracted from child symbols.
+
+##### rules
+
+string[] | undefined
+
+Validation rules extracted from `@constraint` tags or `@remarks` bullet points.
+
+##### relatedTo
+
+string[] | undefined
+
+Related concept names from `@see` tags or type references.
+
+#### CKMOperationInput
+
+CKMOperationInput
+
+A single input parameter for a CKM operation.
+
+Derived from `@param` TSDoc tags, with type and default information extracted from the function signature and `@defaultValue` tags.
+
+Members:
+
+##### name
+
+string
+
+Parameter name.
+
+##### type
+
+string
+
+TypeScript type of the parameter.
+
+##### required
+
+boolean
+
+Whether this parameter is required (non-optional).
+
+##### default
+
+string | undefined
+
+Default value from `@defaultValue` tag, if present.
+
+##### description
+
+string
+
+Description from `@param` tag.
+
+#### CKMOperation
+
+CKMOperation
+
+A user-facing operation extracted from the codebase.
+
+Operations are identified either by an explicit `@operation` TSDoc tag or by heuristic name-matching on exported functions whose names start with action verbs (run, create, validate, init, generate, build, check, enforce).
+
+Example:
+  const op: CKMOperation = {
+    id: "op-runBuild",
+    name: "runBuild",
+    what: "Runs the full build pipeline.",
+    inputs: [{ name: "args", type: "BuildArgs", required: true, description: "CLI arguments." }],
+    outputs: { json: "CommandOutput<BuildResult>" },
+  };
+
+Members:
+
+##### id
+
+string
+
+Stable identifier for this operation (e.g., "op-runBuild").
+
+##### name
+
+string
+
+The function or command name.
+
+##### what
+
+string
+
+Human-readable description from `@operation` tag content or summary.
+
+##### preconditions
+
+string[] | undefined
+
+Preconditions extracted from `@remarks` or `@throws` tags.
+
+##### inputs
+
+CKMOperationInput[]
+
+Input parameters derived from `@param` tags.
+
+##### outputs
+
+{ text?: string; json?: string; } | undefined
+
+Output descriptions for text and JSON formats.
+
+##### exitCodes
+
+Record<string, string> | undefined
+
+Exit codes and their meanings, if documented.
+
+##### checksPerformed
+
+string[] | undefined
+
+Checks or validations performed by this operation, from `@remarks`.
+
+#### CKMConstraint
+
+CKMConstraint
+
+An enforced constraint or validation rule extracted from the codebase.
+
+Constraints are identified either by an explicit `@constraint` TSDoc tag or heuristically from functions that contain `@throws` tags indicating validation failures.
+
+Example:
+  const constraint: CKMConstraint = {
+    id: "constraint-require-summary",
+    rule: "Exported symbol must have a TSDoc summary.",
+    enforcedBy: "checkRequireSummary",
+    configKey: "enforce.rules.require-summary",
+    default: "error",
+    security: false,
+  };
+
+Members:
+
+##### id
+
+string
+
+Stable identifier for this constraint (e.g., "constraint-require-summary").
+
+##### rule
+
+string
+
+The rule description from `@constraint` tag content.
+
+##### enforcedBy
+
+string
+
+Name of the function that enforces this constraint.
+
+##### configKey
+
+string | undefined
+
+Config key that controls this constraint, from `@remarks`.
+
+##### default
+
+string | undefined
+
+Default value for the config key.
+
+##### security
+
+boolean | undefined
+
+Whether this constraint has security implications (from `@constraint security` keyword).
+
+#### CKMWorkflow
+
+CKMWorkflow
+
+A multi-step workflow for achieving a common goal.
+
+Workflows are identified by an explicit `@workflow` TSDoc tag. The tag content is parsed for numbered steps, backtick-wrapped commands, and expected outcomes.
+
+Example:
+  const workflow: CKMWorkflow = {
+    id: "workflow-first-time-setup",
+    goal: "Set up forge-ts in a new project",
+    steps: [
+      { command: "npx forge-ts init", expect: "Creates forge-ts.config.ts" },
+      { command: "npx forge-ts check", expect: "Reports documentation gaps" },
+    ],
+  };
+
+Members:
+
+##### id
+
+string
+
+Stable identifier for this workflow (e.g., "workflow-first-time-setup").
+
+##### goal
+
+string
+
+The goal this workflow achieves, from `@workflow` tag content.
+
+##### steps
+
+{ command?: string; manual?: string; expect?: string; note?: string; }[]
+
+Ordered steps to complete this workflow.
+
+#### CKMConfigEntry
+
+CKMConfigEntry
+
+A single entry in the configuration schema.
+
+Extracted from interfaces whose names contain "Config" or "Options". Each property of such an interface becomes a config entry with its type, default value, description, and downstream effect.
+
+Members:
+
+##### key
+
+string
+
+Dot-path key for this config entry (e.g., "enforce.strict").
+
+##### type
+
+string
+
+TypeScript type of this config entry.
+
+##### default
+
+string | undefined
+
+Default value from `@defaultValue` tag, if present.
+
+##### description
+
+string
+
+Human-readable description from the property summary.
+
+##### effect
+
+string | undefined
+
+Downstream effect or behaviour this config entry controls, from `@remarks`.
+
+#### CKMManifest
+
+CKMManifest
+
+The top-level Codebase Knowledge Manifest.
+
+This is the root schema for the CKM JSON output. It aggregates all five categories of operational knowledge: concepts, operations, constraints, workflows, and config schema entries.
+
+Example:
+  import { generateCKM } from "@forge-ts/gen";
+  const manifest = generateCKM(symbols, config);
+  console.log(manifest.concepts.length); // number of extracted concepts
+
+Members:
+
+##### $schema
+
+string
+
+JSON Schema URI for the CKM format.
+
+##### version
+
+string
+
+CKM format version.
+
+##### project
+
+string
+
+Project name from config.
+
+##### generated
+
+string
+
+ISO 8601 timestamp of when the manifest was generated.
+
+##### concepts
+
+CKMConcept[]
+
+Domain concepts extracted from the codebase.
+
+##### operations
+
+CKMOperation[]
+
+User-facing operations extracted from the codebase.
+
+##### constraints
+
+CKMConstraint[]
+
+Enforced constraints and validation rules.
+
+##### workflows
+
+CKMWorkflow[]
+
+Multi-step workflows for common goals.
+
+##### configSchema
+
+CKMConfigEntry[]
+
+Configuration schema entries.
 
 #### MarkdownOptions
 

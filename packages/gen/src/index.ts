@@ -9,6 +9,16 @@
  */
 
 export * from "./adapters/index.js";
+export {
+	type CKMConcept,
+	type CKMConfigEntry,
+	type CKMConstraint,
+	type CKMManifest,
+	type CKMOperation,
+	type CKMOperationInput,
+	type CKMWorkflow,
+	generateCKM,
+} from "./ckm-generator.js";
 export { type DiscoveredGuide, discoverGuides, type GuideSource } from "./guide-discovery.js";
 export { generateLlmsFullTxt, generateLlmsTxt } from "./llms.js";
 export {
@@ -45,6 +55,7 @@ import { dirname, join } from "node:path";
 import { createWalker, type ForgeConfig, type ForgeResult } from "@forge-ts/core";
 import { DEFAULT_TARGET, getAdapter } from "./adapters/index.js";
 import type { AdapterContext } from "./adapters/types.js";
+import { generateCKM } from "./ckm-generator.js";
 import { generateLlmsFullTxt, generateLlmsTxt } from "./llms.js";
 import { generateMarkdown } from "./markdown.js";
 import { updateAutoSections } from "./markdown-utils.js";
@@ -211,6 +222,13 @@ export async function generate(
 				writtenFiles.push(filePath);
 			}
 		}
+	}
+
+	if (config.gen.ckm !== false) {
+		const ckmManifest = generateCKM(symbols, config);
+		const ckmPath = join(config.outDir, "ckm.json");
+		await writeFile(ckmPath, JSON.stringify(ckmManifest, null, 2), "utf8");
+		writtenFiles.push(ckmPath);
 	}
 
 	if (config.gen.readmeSync) {

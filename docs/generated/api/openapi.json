@@ -2,7 +2,7 @@
   "openapi": "3.2.0",
   "info": {
     "title": "forge-ts",
-    "version": "0.20.0",
+    "version": "0.21.0",
     "description": "Universal TypeScript documentation compiler — enforces TSDoc as a build gate, then generates all artifacts from source in one pass"
   },
   "tags": [
@@ -20,6 +20,9 @@
     },
     {
       "name": "check"
+    },
+    {
+      "name": "ckm-generator"
     },
     {
       "name": "deprecation-tracker"
@@ -2576,6 +2579,309 @@
           "target",
           "displayName",
           "styleGuide"
+        ]
+      },
+      "CKMConcept": {
+        "description": "A domain concept extracted from the codebase.",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Stable identifier for this concept (e.g., \"concept-ForgeConfig\")."
+          },
+          "name": {
+            "type": "string",
+            "description": "The declared name of the concept type or interface."
+          },
+          "what": {
+            "type": "string",
+            "description": "Human-readable description from `@concept` tag content or summary."
+          },
+          "properties": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            },
+            "description": "Properties of this concept extracted from child symbols."
+          },
+          "rules": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Validation rules extracted from `@constraint` tags or `@remarks` bullet points."
+          },
+          "relatedTo": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Related concept names from `@see` tags or type references."
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "what",
+          "properties",
+          "rules",
+          "relatedTo"
+        ]
+      },
+      "CKMOperationInput": {
+        "description": "A single input parameter for a CKM operation.",
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Parameter name."
+          },
+          "type": {
+            "type": "string",
+            "description": "TypeScript type of the parameter."
+          },
+          "required": {
+            "type": "boolean",
+            "description": "Whether this parameter is required (non-optional)."
+          },
+          "default": {
+            "type": "string",
+            "description": "Default value from `@defaultValue` tag, if present."
+          },
+          "description": {
+            "type": "string",
+            "description": "Description from `@param` tag."
+          }
+        },
+        "required": [
+          "name",
+          "type",
+          "required",
+          "default",
+          "description"
+        ]
+      },
+      "CKMOperation": {
+        "description": "A user-facing operation extracted from the codebase.",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Stable identifier for this operation (e.g., \"op-runBuild\")."
+          },
+          "name": {
+            "type": "string",
+            "description": "The function or command name."
+          },
+          "what": {
+            "type": "string",
+            "description": "Human-readable description from `@operation` tag content or summary."
+          },
+          "preconditions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Preconditions extracted from `@remarks` or `@throws` tags."
+          },
+          "inputs": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            },
+            "description": "Input parameters derived from `@param` tags."
+          },
+          "outputs": {
+            "type": "object",
+            "description": "Output descriptions for text and JSON formats."
+          },
+          "exitCodes": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "Exit codes and their meanings, if documented."
+          },
+          "checksPerformed": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Checks or validations performed by this operation, from `@remarks`."
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "what",
+          "preconditions",
+          "inputs",
+          "exitCodes",
+          "checksPerformed"
+        ]
+      },
+      "CKMConstraint": {
+        "description": "An enforced constraint or validation rule extracted from the codebase.",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Stable identifier for this constraint (e.g., \"constraint-require-summary\")."
+          },
+          "rule": {
+            "type": "string",
+            "description": "The rule description from `@constraint` tag content."
+          },
+          "enforcedBy": {
+            "type": "string",
+            "description": "Name of the function that enforces this constraint."
+          },
+          "configKey": {
+            "type": "string",
+            "description": "Config key that controls this constraint, from `@remarks`."
+          },
+          "default": {
+            "type": "string",
+            "description": "Default value for the config key."
+          },
+          "security": {
+            "type": "boolean",
+            "description": "Whether this constraint has security implications (from `@constraint security` keyword)."
+          }
+        },
+        "required": [
+          "id",
+          "rule",
+          "enforcedBy",
+          "configKey",
+          "default",
+          "security"
+        ]
+      },
+      "CKMWorkflow": {
+        "description": "A multi-step workflow for achieving a common goal.",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Stable identifier for this workflow (e.g., \"workflow-first-time-setup\")."
+          },
+          "goal": {
+            "type": "string",
+            "description": "The goal this workflow achieves, from `@workflow` tag content."
+          },
+          "steps": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            },
+            "description": "Ordered steps to complete this workflow."
+          }
+        },
+        "required": [
+          "id",
+          "goal"
+        ]
+      },
+      "CKMConfigEntry": {
+        "description": "A single entry in the configuration schema.",
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string",
+            "description": "Dot-path key for this config entry (e.g., \"enforce.strict\")."
+          },
+          "type": {
+            "type": "string",
+            "description": "TypeScript type of this config entry."
+          },
+          "default": {
+            "type": "string",
+            "description": "Default value from `@defaultValue` tag, if present."
+          },
+          "description": {
+            "type": "string",
+            "description": "Human-readable description from the property summary."
+          },
+          "effect": {
+            "type": "string",
+            "description": "Downstream effect or behaviour this config entry controls, from `@remarks`."
+          }
+        },
+        "required": [
+          "key",
+          "type",
+          "default",
+          "description",
+          "effect"
+        ]
+      },
+      "CKMManifest": {
+        "description": "The top-level Codebase Knowledge Manifest.",
+        "type": "object",
+        "properties": {
+          "$schema": {
+            "type": "string",
+            "description": "JSON Schema URI for the CKM format."
+          },
+          "version": {
+            "type": "string",
+            "description": "CKM format version."
+          },
+          "project": {
+            "type": "string",
+            "description": "Project name from config."
+          },
+          "generated": {
+            "type": "string",
+            "description": "ISO 8601 timestamp of when the manifest was generated."
+          },
+          "concepts": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            },
+            "description": "Domain concepts extracted from the codebase."
+          },
+          "operations": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            },
+            "description": "User-facing operations extracted from the codebase."
+          },
+          "constraints": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            },
+            "description": "Enforced constraints and validation rules."
+          },
+          "workflows": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            },
+            "description": "Multi-step workflows for common goals."
+          },
+          "configSchema": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            },
+            "description": "Configuration schema entries."
+          }
+        },
+        "required": [
+          "$schema",
+          "version",
+          "project",
+          "generated",
+          "concepts",
+          "operations",
+          "constraints",
+          "workflows",
+          "configSchema"
         ]
       },
       "MarkdownOptions": {

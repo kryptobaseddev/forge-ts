@@ -1,4 +1,4 @@
-# forge-ts
-npx --no-install forge-ts prepublish
+# forge-ts — check core package (CI dogfood gate)
+npx --no-install forge-ts check --cwd packages/core
 # versionguard
 npx --no-install versionguard validate --hook=pre-push

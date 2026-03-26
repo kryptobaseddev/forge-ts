@@ -57,8 +57,9 @@ npx forge-ts build
 Your code examples become live documentation:
 
 ```typescript
-import { getCurrentUser } from "@forge-ts/core/audit";
-const user = getCurrentUser(); // e.g. "alice"
+import { generateApi } from "@forge-ts/api";
+const result = await generateApi(config);
+console.log(result.success); // true if spec was written successfully
 ```
 
 ## What's Next?

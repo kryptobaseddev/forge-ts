@@ -208,15 +208,15 @@ describe("generateMarkdown", () => {
 // ---------------------------------------------------------------------------
 
 describe("generateLlmsTxt", () => {
-	it("produces a routing manifest with Sections block", () => {
+	it("produces a routing manifest with Documentation and Packages sections", () => {
 		const result = generateLlmsTxt([fnAdd], makeConfig());
-		expect(result).toContain("## Sections");
+		expect(result).toContain("## Documentation");
 		expect(result).toContain("./api-reference.md");
+		expect(result).toContain("## Packages");
 	});
 
-	it("includes Quick Reference block with compact entries", () => {
+	it("includes package-grouped entries with summaries", () => {
 		const result = generateLlmsTxt([fnAdd, ifaceConfig], makeConfig());
-		expect(result).toContain("## Quick Reference");
 		expect(result).toContain("Adds two numbers together.");
 		expect(result).toContain("Configuration options for the tool.");
 	});
@@ -228,8 +228,8 @@ describe("generateLlmsTxt", () => {
 
 	it("handles empty symbol list", () => {
 		const result = generateLlmsTxt([], makeConfig());
-		expect(result).toContain("## Sections");
-		expect(result).not.toContain("## Quick Reference");
+		expect(result).toContain("## Documentation");
+		expect(result).not.toContain("## Packages");
 	});
 });
 

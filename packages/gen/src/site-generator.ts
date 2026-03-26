@@ -268,15 +268,31 @@ function renderProjectIndexPage(
 	nodes.push(md.heading(2, md.text("Installation")));
 	nodes.push(md.code("bash", `npm install -D ${options.packageName ?? "@forge-ts/cli"}`));
 
-	// Quick Example — first @example from any exported function
+	// Quick Example — prefer entry-point functions from index.ts files,
+	// then fall back to any exported function with an @example.
 	let firstExample: { code: string; language: string } | undefined;
-	outer: for (const [, symbols] of symbolsByPackage) {
+	// Pass 1: entry-point functions (from index.ts)
+	outer1: for (const [, symbols] of symbolsByPackage) {
 		for (const s of symbols) {
 			if (!s.exported || s.kind !== "function") continue;
+			if (!s.filePath.endsWith("index.ts")) continue;
 			const ex = s.documentation?.examples?.[0];
 			if (ex) {
 				firstExample = ex;
-				break outer;
+				break outer1;
+			}
+		}
+	}
+	// Pass 2: any exported function
+	if (!firstExample) {
+		outer2: for (const [, symbols] of symbolsByPackage) {
+			for (const s of symbols) {
+				if (!s.exported || s.kind !== "function") continue;
+				const ex = s.documentation?.examples?.[0];
+				if (ex) {
+					firstExample = ex;
+					break outer2;
+				}
 			}
 		}
 	}
@@ -296,9 +312,11 @@ function renderProjectIndexPage(
 		);
 		const dataRows: MdTableRow[] = [];
 		for (const [pkgName, symbols] of symbolsByPackage) {
-			const pkgDoc = symbols
-				.map((s) => s.documentation?.tags?.packageDocumentation?.[0])
-				.find(Boolean);
+			// Prefer the summary from the index.ts file-level symbol (@packageDocumentation)
+			const indexFile = symbols.find(
+				(s) => s.kind === "file" && s.filePath.endsWith("index.ts") && s.documentation?.summary,
+			);
+			const pkgDoc = indexFile?.documentation?.summary;
 			const exported = symbols.filter(
 				(s) => s.exported && s.kind !== "method" && s.kind !== "property",
 			);
@@ -351,17 +369,32 @@ function renderGettingStartedPage(
 	symbolsByPackage: Map<string, ForgeSymbol[]>,
 	options: SiteGeneratorOptions,
 ): string {
-	// Find the first exported function with an example
+	// Find the first exported function with an example — prefer index.ts entry points
 	let firstExample: { code: string; language: string } | undefined;
 
-	outer: for (const [, symbols] of symbolsByPackage) {
+	for (const [, symbols] of symbolsByPackage) {
 		for (const s of symbols) {
 			if (!s.exported || s.kind !== "function") continue;
+			if (!s.filePath.endsWith("index.ts")) continue;
 			const ex = s.documentation?.examples?.[0];
 			if (ex) {
 				firstExample = ex;
-				break outer;
+				break;
 			}
+		}
+		if (firstExample) break;
+	}
+	if (!firstExample) {
+		for (const [, symbols] of symbolsByPackage) {
+			for (const s of symbols) {
+				if (!s.exported || s.kind !== "function") continue;
+				const ex = s.documentation?.examples?.[0];
+				if (ex) {
+					firstExample = ex;
+					break;
+				}
+			}
+			if (firstExample) break;
 		}
 	}
 

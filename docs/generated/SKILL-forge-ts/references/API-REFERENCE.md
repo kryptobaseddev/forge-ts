@@ -988,7 +988,7 @@ const targets = getAvailableTargets(); // ["mintlify", "docusaurus", ...]
 
 ### `generateLlmsTxt`
 
-Generates an `llms.txt` routing manifest from the extracted symbols.  The file follows the llms.txt specification: a compact, structured overview designed to help large language models navigate a project's documentation.
+Generates an `llms.txt` routing manifest from the extracted symbols.  The file follows the llms.txt specification: a compact, structured overview designed to help large language models navigate a project's documentation. Symbols are grouped by package with  summaries.
 
 ```typescript
 (symbols: ForgeSymbol[], config: ForgeConfig) => string
@@ -1009,7 +1009,7 @@ console.log(txt.startsWith("# ")); // true
 
 ### `generateLlmsFullTxt`
 
-Generates an `llms-full.txt` dense context file from the extracted symbols.  Unlike `llms.txt`, this file contains complete documentation for every exported symbol, intended for LLM ingestion that requires full context.
+Generates an `llms-full.txt` dense context file from the extracted symbols.  Unlike `llms.txt`, this file contains complete documentation for every exported symbol, intended for LLM ingestion that requires full context. Symbols are grouped by package with  summaries.
 
 ```typescript
 (symbols: ForgeSymbol[], config: ForgeConfig) => string

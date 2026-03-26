@@ -20,20 +20,21 @@ npm install -D forge-ts
 ## Quick Example
 
 ```typescript
-import { getCurrentUser } from "@forge-ts/core/audit";
-const user = getCurrentUser(); // e.g. "alice"
+import { generateApi } from "@forge-ts/api";
+const result = await generateApi(config);
+console.log(result.success); // true if spec was written successfully
 ```
 
 ## Packages
 
-| Package                                | Description             |
-| -------------------------------------- | ----------------------- |
-| [`core`](/packages/core/index)         | 64 exported symbol(s).  |
-| [`api`](/packages/api/index)           | 15 exported symbol(s).  |
-| [`cli`](/packages/cli/index)           | 108 exported symbol(s). |
-| [`gen`](/packages/gen/index)           | 100 exported symbol(s). |
-| [`enforcer`](/packages/enforcer/index) | 11 exported symbol(s).  |
-| [`doctest`](/packages/doctest/index)   | 16 exported symbol(s).  |
+| Package                                | Description                                                                        |
+| -------------------------------------- | ---------------------------------------------------------------------------------- |
+| [`core`](/packages/core/index)         | forge-ts/core — Shared types, interfaces, config loader, and AST walker.  Thi...   |
+| [`api`](/packages/api/index)           | forge-ts/api — OpenAPI spec and API reference generator.  Extracts public SDK...   |
+| [`cli`](/packages/cli/index)           | forge-ts/cli — Command-line interface for the forge-ts toolchain.  Usage:   f...   |
+| [`gen`](/packages/gen/index)           | SSG adapter registry for documentation generation.  Provides pluggable adapte...   |
+| [`enforcer`](/packages/enforcer/index) | forge-ts/enforcer — TSDoc enforcement linter.  Walks all exported symbols and...   |
+| [`doctest`](/packages/doctest/index)   | forge-ts/doctest — TSDoc \`@example\` block extractor and test runner.  Extract... |
 
 ## Next Steps
 

@@ -1325,7 +1325,7 @@ console.log(grouped.has("core")); // true for monorepo
 
 ### `generateDocSite()`
 
-*Defined in `packages/gen/src/site-generator.ts:1424`*
+*Defined in `packages/gen/src/site-generator.ts:1457`*
 
 ```typescript
 (symbolsByPackage: Map<string, ForgeSymbol[]>, config: ForgeConfig, options: SiteGeneratorOptions) => DocPage[]
@@ -1419,13 +1419,13 @@ const targets = getAvailableTargets(); // ["mintlify", "docusaurus", ...]
 
 ### `generateLlmsTxt()`
 
-*Defined in `packages/gen/src/llms.ts:46`*
+*Defined in `packages/gen/src/llms.ts:92`*
 
 ```typescript
 (symbols: ForgeSymbol[], config: ForgeConfig) => string
 ```
 
-Generates an `llms.txt` routing manifest from the extracted symbols.  The file follows the llms.txt specification: a compact, structured overview designed to help large language models navigate a project's documentation.
+Generates an `llms.txt` routing manifest from the extracted symbols.  The file follows the llms.txt specification: a compact, structured overview designed to help large language models navigate a project's documentation. Symbols are grouped by package with  summaries.
 
 **Parameters**
 
@@ -1444,13 +1444,13 @@ console.log(txt.startsWith("# ")); // true
 
 ### `generateLlmsFullTxt()`
 
-*Defined in `packages/gen/src/llms.ts:198`*
+*Defined in `packages/gen/src/llms.ts:279`*
 
 ```typescript
 (symbols: ForgeSymbol[], config: ForgeConfig) => string
 ```
 
-Generates an `llms-full.txt` dense context file from the extracted symbols.  Unlike `llms.txt`, this file contains complete documentation for every exported symbol, intended for LLM ingestion that requires full context.
+Generates an `llms-full.txt` dense context file from the extracted symbols.  Unlike `llms.txt`, this file contains complete documentation for every exported symbol, intended for LLM ingestion that requires full context. Symbols are grouped by package with  summaries.
 
 **Parameters**
 

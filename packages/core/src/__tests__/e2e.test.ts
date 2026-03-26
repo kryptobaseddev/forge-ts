@@ -311,10 +311,9 @@ describe("E2E — gen integration", () => {
 		expect(llms.length).toBeGreaterThan(0);
 		// Must start with a title heading
 		expect(llms).toMatch(/^# /m);
-		// Should have a Sections block
-		expect(llms).toContain("## Sections");
-		// Should have a Quick Reference block
-		expect(llms).toContain("## Quick Reference");
+		// Should have Documentation and Packages sections
+		expect(llms).toContain("## Documentation");
+		expect(llms).toContain("## Packages");
 		// Should reference the markdown API reference
 		expect(llms).toContain("api-reference.md");
 	});

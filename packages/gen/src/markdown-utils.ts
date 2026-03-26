@@ -112,6 +112,17 @@ function getProtectedRangesSafe(content: string): SourceRange[] {
  * Uses gray-matter for robust YAML parsing — handles multi-line values,
  * quoted strings, and edge cases that regex-based stripping misses.
  *
+ * @remarks
+ * Delegates entirely to gray-matter's parser, which handles edge cases like
+ * multi-line YAML values and unquoted colons that naive regex approaches miss.
+ * The returned `data` object is a shallow clone — mutations won't affect the cache.
+ *
+ * @example
+ * ```ts
+ * const { body, data } = parseFrontmatter("---\ntitle: Hello\n---\n# Body");
+ * // data.title === "Hello", body === "# Body"
+ * ```
+ *
  * @param content - The full file content including frontmatter.
  * @returns The body (without frontmatter) and the parsed data object.
  * @public
@@ -133,6 +144,17 @@ export function parseFrontmatter(content: string): FrontmatterResult {
  * body
  * ```
  *
+ * @remarks
+ * Normalizes the body to start with a newline before passing to gray-matter's
+ * stringify, which prevents the frontmatter closing `---` from butting up
+ * against the first line of content. Empty data objects skip serialization entirely.
+ *
+ * @example
+ * ```ts
+ * const output = stringifyWithFrontmatter("# Hello", { title: "Greeting" });
+ * // "---\ntitle: Greeting\n---\n\n# Hello\n"
+ * ```
+ *
  * @param body - The markdown body content (without frontmatter).
  * @param data - The frontmatter fields to serialize.
  * @returns The combined frontmatter + body string.
@@ -150,6 +172,16 @@ export function stringifyWithFrontmatter(
 
 /**
  * Strip frontmatter from content, returning only the body.
+ *
+ * @remarks
+ * A convenience wrapper around gray-matter that discards the parsed data entirely.
+ * Useful when you need the body for rendering but don't care about metadata fields.
+ *
+ * @example
+ * ```ts
+ * const body = stripFrontmatter("---\ntitle: Hello\n---\n# Content");
+ * // body === "# Content"
+ * ```
  *
  * @param content - The full file content including frontmatter.
  * @returns The body content without the frontmatter block.
@@ -176,6 +208,17 @@ const inlineParser = unified().use(remarkParse).use(remarkGfm);
  * This prevents double-escaping: backticks become proper `inlineCode`
  * nodes instead of text that gets escaped by the serializer.
  *
+ * @remarks
+ * Parses the string as a full document but only returns children of the first
+ * paragraph node. If the input produces a non-paragraph root child (e.g., a
+ * heading), falls back to a plain text node wrapping the original string.
+ *
+ * @example
+ * ```ts
+ * const nodes = parseInline("Use `forEach` for iteration");
+ * // Returns [text("Use "), inlineCode("forEach"), text(" for iteration")]
+ * ```
+ *
  * @param markdown - The TSDoc content string (may contain markdown).
  * @returns Array of inline mdast nodes.
  * @public
@@ -196,6 +239,17 @@ export function parseInline(markdown: string): MdPhrasing[] {
  *
  * Use for multi-line TSDoc content that may contain headings,
  * lists, blockquotes, code blocks, etc.
+ *
+ * @remarks
+ * Returns all top-level children of the parsed AST root, cast to the
+ * `MdBlock` union type. Unlike {@link parseInline}, this preserves
+ * block-level structure like headings, lists, and fenced code blocks.
+ *
+ * @example
+ * ```ts
+ * const blocks = parseBlocks("# Title\n\nSome paragraph text.");
+ * // Returns [heading(1, "Title"), paragraph("Some paragraph text.")]
+ * ```
  *
  * @param markdown - The markdown string to parse.
  * @returns Array of block-level mdast nodes.
@@ -274,6 +328,18 @@ function isProtected(offset: number, ranges: SourceRange[]): boolean {
  * - HTML comments to MDX comments
  * - Curly braces in text escaped (prevents MDX expression parsing)
  * - Angle brackets around word chars escaped (prevents JSX tag parsing)
+ *
+ * @remarks
+ * Replacements are applied in reverse position order (sorted by descending
+ * `start` offset) so that earlier replacements do not invalidate the character
+ * offsets of later replacements. This is the key strategy that keeps all
+ * position-based transforms correct across multiple simultaneous edits.
+ *
+ * @example
+ * ```ts
+ * const safe = sanitizeForMdx("Value is <T> and {x}");
+ * // "Value is &lt;T&gt; and \\{x\\}"
+ * ```
  *
  * @param content - The markdown content to sanitize.
  * @returns The sanitized content safe for MDX consumption.
@@ -583,6 +649,18 @@ function findStubSections(content: string): Map<string, StubSection> {
  * edited the content — or the hash comment was removed, the section is
  * considered modified and should be preserved.
  *
+ * @remarks
+ * Detection is purely hash-based against the existing content on disk —
+ * the `_generatedContent` parameter is unused (kept for API symmetry).
+ * A missing hash comment is treated as "modified" because the user may
+ * have intentionally removed the tracking marker.
+ *
+ * @example
+ * ```ts
+ * const doc = "<!-- FORGE:STUB-START api -->\n<!-- FORGE:STUB-HASH abc -->\noriginal\n<!-- FORGE:STUB-END api -->";
+ * isStubModified(doc, "api", ""); // false — hash still matches
+ * ```
+ *
  * @param existingContent - The full document content on disk.
  * @param stubId - The identifier of the FORGE:STUB section.
  * @param _generatedContent - Unused; kept for API symmetry. Detection is purely hash-based.
@@ -618,6 +696,18 @@ export function isStubModified(
  * Each generated stub includes a `FORGE:STUB-HASH` comment containing a
  * fingerprint of the generated content. On subsequent builds, this hash is
  * compared to determine whether the user has made edits.
+ *
+ * @remarks
+ * Replacements are applied in reverse position order to preserve character
+ * offsets. New stubs that don't exist in the file are appended at the end
+ * rather than injected at a guessed position, keeping existing content stable.
+ *
+ * @example
+ * ```ts
+ * const updated = updateStubSections(existingMdx, [
+ *   { id: "api-table", content: "| Method | Description |\n|---|---|" },
+ * ]);
+ * ```
  *
  * @param existingContent - The current file content on disk.
  * @param stubs - Array of stub definitions with their IDs and generated content.

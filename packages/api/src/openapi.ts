@@ -29,6 +29,11 @@ export type { OpenAPIDocument };
  * Produces an OpenAPI 3.2.0 document. Symbols marked `@internal` or `@private`
  * are filtered out before schema generation.
  *
+ * HTTP paths are extracted from `@route` tags in the format `METHOD /path`.
+ * Path template variables like `{id}` become required path parameters
+ * (`in: "path"`). Any `@param` entries whose names are NOT found in the
+ * route path template are classified as query parameters (`in: "query"`).
+ *
  * @param config - The resolved {@link ForgeConfig}.
  * @param sdkTypes - SDK types to include as component schemas.
  * @param symbols - Raw symbols used to extract HTTP route paths from `@route` tags.

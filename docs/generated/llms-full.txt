@@ -3,7 +3,7 @@
 > Universal TypeScript documentation compiler — enforces TSDoc as a build gate, then generates all artifacts from source in one pass
 
 Version: 0.19.5
-Generated: 2026-03-26T06:09:00.651Z
+Generated: 2026-03-26T06:15:42.237Z
 
 ## Package: core
 
@@ -3816,10 +3816,16 @@ Strip extension from a link path and normalize to a slug. Produces bare slug lin
 
 Parse frontmatter from markdown/MDX content.  Uses gray-matter for robust YAML parsing — handles multi-line values, quoted strings, and edge cases that regex-based stripping misses.
 
+Delegates entirely to gray-matter's parser, which handles edge cases like multi-line YAML values and unquoted colons that naive regex approaches miss. The returned `data` object is a shallow clone — mutations won't affect the cache.
+
 Parameters:
 - content: The full file content including frontmatter.
 
 Returns: The body (without frontmatter) and the parsed data object.
+
+Example:
+  const { body, data } = parseFrontmatter("---\ntitle: Hello\n---\n# Body");
+  // data.title === "Hello", body === "# Body"
 
 #### stringifyWithFrontmatter()
 
@@ -3827,11 +3833,17 @@ Returns: The body (without frontmatter) and the parsed data object.
 
 Serialize content with frontmatter prepended.  Produces the standard format:
 
+Normalizes the body to start with a newline before passing to gray-matter's stringify, which prevents the frontmatter closing `---` from butting up against the first line of content. Empty data objects skip serialization entirely.
+
 Parameters:
 - body: The markdown body content (without frontmatter).
 - data: The frontmatter fields to serialize.
 
 Returns: The combined frontmatter + body string.
+
+Example:
+  const output = stringifyWithFrontmatter("# Hello", { title: "Greeting" });
+  // "---\ntitle: Greeting\n---\n\n# Hello\n"
 
 #### stripFrontmatter()
 
@@ -3839,10 +3851,16 @@ Returns: The combined frontmatter + body string.
 
 Strip frontmatter from content, returning only the body.
 
+A convenience wrapper around gray-matter that discards the parsed data entirely. Useful when you need the body for rendering but don't care about metadata fields.
+
 Parameters:
 - content: The full file content including frontmatter.
 
 Returns: The body content without the frontmatter block.
+
+Example:
+  const body = stripFrontmatter("---\ntitle: Hello\n---\n# Content");
+  // body === "# Content"
 
 #### parseInline()
 
@@ -3850,10 +3868,16 @@ Returns: The body content without the frontmatter block.
 
 Parse a markdown string and extract inline (phrasing) content.  Use for TSDoc text that may contain backtick code, bold, links, etc. The returned nodes can be spread into paragraphs, table cells, or any other context that accepts inline content.  This prevents double-escaping: backticks become proper `inlineCode` nodes instead of text that gets escaped by the serializer.
 
+Parses the string as a full document but only returns children of the first paragraph node. If the input produces a non-paragraph root child (e.g., a heading), falls back to a plain text node wrapping the original string.
+
 Parameters:
 - markdown: The TSDoc content string (may contain markdown).
 
 Returns: Array of inline mdast nodes.
+
+Example:
+  const nodes = parseInline("Use `forEach` for iteration");
+  // Returns [text("Use "), inlineCode("forEach"), text(" for iteration")]
 
 #### parseBlocks()
 
@@ -3861,10 +3885,16 @@ Returns: Array of inline mdast nodes.
 
 Parse a markdown string and extract block-level content.  Use for multi-line TSDoc content that may contain headings, lists, blockquotes, code blocks, etc.
 
+Returns all top-level children of the parsed AST root, cast to the `MdBlock` union type. Unlike `parseInline`, this preserves block-level structure like headings, lists, and fenced code blocks.
+
 Parameters:
 - markdown: The markdown string to parse.
 
 Returns: Array of block-level mdast nodes.
+
+Example:
+  const blocks = parseBlocks("# Title\n\nSome paragraph text.");
+  // Returns [heading(1, "Title"), paragraph("Some paragraph text.")]
 
 #### sanitizeForMdx()
 
@@ -3878,6 +3908,10 @@ Parameters:
 - content: The markdown content to sanitize.
 
 Returns: The sanitized content safe for MDX consumption.
+
+Example:
+  const safe = sanitizeForMdx("Value is <T> and {x}");
+  // "Value is &lt;T&gt; and \\{x\\}"
 
 #### updateAutoSections()
 
@@ -3908,6 +3942,8 @@ Returns: An 8-character alphanumeric hash string.
 
 Checks if a FORGE:STUB section has been modified by the user.  Compares the embedded hash (from the FORGE:STUB-HASH comment) against a freshly computed hash of the current inner content (with the hash comment itself stripped out). If the hashes diverge — meaning the user edited the content — or the hash comment was removed, the section is considered modified and should be preserved.
 
+Detection is purely hash-based against the existing content on disk — the `_generatedContent` parameter is unused (kept for API symmetry). A missing hash comment is treated as "modified" because the user may have intentionally removed the tracking marker.
+
 Parameters:
 - existingContent: The full document content on disk.
 - stubId: The identifier of the FORGE:STUB section.
@@ -3915,17 +3951,28 @@ Parameters:
 
 Returns: `true` if the user has modified the stub (preserve it), `false` if unmodified (safe to regenerate).
 
+Example:
+  const doc = "<!-- FORGE:STUB-START api -->\n<!-- FORGE:STUB-HASH abc -->\noriginal\n<!-- FORGE:STUB-END api -->";
+  isStubModified(doc, "api", ""); // false — hash still matches
+
 #### updateStubSections()
 
 (existingContent: string, stubs: Array<{ id: string; content: string; }>) => string
 
 Updates FORGE:STUB sections in existing content.  Behavior for each stub: - If the stub doesn't exist yet, appends it at the end of the content. - If the stub exists but is unmodified (hash matches generated content), regenerates it. - If the stub exists and was modified by user (hash mismatch), PRESERVES user content.  Each generated stub includes a `FORGE:STUB-HASH` comment containing a fingerprint of the generated content. On subsequent builds, this hash is compared to determine whether the user has made edits.
 
+Replacements are applied in reverse position order to preserve character offsets. New stubs that don't exist in the file are appended at the end rather than injected at a guessed position, keeping existing content stable.
+
 Parameters:
 - existingContent: The current file content on disk.
 - stubs: Array of stub definitions with their IDs and generated content.
 
 Returns: The updated content with stubs inserted or refreshed as needed.
+
+Example:
+  const updated = updateStubSections(existingMdx, [
+    { id: "api-table", content: "| Method | Description |\n|---|---|" },
+  ]);
 
 #### escapeMdx()
 

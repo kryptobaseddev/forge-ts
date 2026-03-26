@@ -132,6 +132,11 @@ function encodeVlq(value: number): string {
  * Auto-imports the tested symbol from the source file, processes `// =>`
  * assertion patterns, and appends an inline source map.
  *
+ * @remarks
+ * Source file imports are rewritten from `.ts`/`.tsx` to `.js` for ESM
+ * compatibility using `relative(...).replace(/\.tsx?$/, ".js")`. This ensures
+ * the generated test files use valid ESM import specifiers at runtime.
+ *
  * @param examples - Examples to include in the generated file.
  * @param options - Output configuration.
  * @returns An array of {@link VirtualTestFile} objects (one per source file).

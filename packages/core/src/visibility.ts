@@ -10,6 +10,13 @@ import { type ForgeSymbol, Visibility } from "./types.js";
  * 3. `\@public`    → {@link Visibility.Public}
  * 4. (no tag)     → {@link Visibility.Public} (default for exports)
  *
+ * When multiple release tags are present on the same symbol, the most
+ * restrictive tag wins because the tags are checked in descending
+ * restriction order (`@internal` first). For example, a symbol tagged
+ * with both `@public` and `@internal` resolves to
+ * {@link Visibility.Internal}. Internal symbols are excluded from
+ * generated documentation output.
+ *
  * @param tags - The parsed `tags` map from `ForgeSymbol.documentation`.
  * @returns The resolved {@link Visibility} value.
  * @see {@link Visibility}

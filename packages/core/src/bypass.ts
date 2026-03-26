@@ -276,6 +276,9 @@ export function isRuleBypassed(rootDir: string, ruleCode: string): boolean {
  *
  * @remarks
  * Counts bypasses created today (UTC) against the configured daily budget.
+ * The daily budget resets at 00:00 UTC (midnight UTC) — the `startOfToday()`
+ * helper computes the UTC day boundary using `Date.UTC(y, m, d)`, and only
+ * bypasses with `createdAt >= startOfToday()` count toward today's usage.
  * When no config override is provided, the default budget of 3 is used.
  *
  * @param rootDir - Absolute path to the project root directory.

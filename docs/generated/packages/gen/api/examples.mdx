@@ -5,6 +5,95 @@ description: Usage examples for the gen package
 
 All usage examples from the package, aggregated for quick reference.
 
+## `parseFrontmatter()`
+
+*Parse frontmatter from markdown/MDX content.  Uses gray-matter for robust YAML parsing — handles multi-line values, quoted strings, and edge cases that regex-based stripping misses.*
+
+[View in API reference](/packages/gen/api/functions#parsefrontmatter)
+
+```ts
+const { body, data } = parseFrontmatter("---\ntitle: Hello\n---\n# Body");
+// data.title === "Hello", body === "# Body"
+```
+
+## `stringifyWithFrontmatter()`
+
+*Serialize content with frontmatter prepended.  Produces the standard format:*
+
+[View in API reference](/packages/gen/api/functions#stringifywithfrontmatter)
+
+```ts
+const output = stringifyWithFrontmatter("# Hello", { title: "Greeting" });
+// "---\ntitle: Greeting\n---\n\n# Hello\n"
+```
+
+## `stripFrontmatter()`
+
+*Strip frontmatter from content, returning only the body.*
+
+[View in API reference](/packages/gen/api/functions#stripfrontmatter)
+
+```ts
+const body = stripFrontmatter("---\ntitle: Hello\n---\n# Content");
+// body === "# Content"
+```
+
+## `parseInline()`
+
+*Parse a markdown string and extract inline (phrasing) content.  Use for TSDoc text that may contain backtick code, bold, links, etc. The returned nodes can be spread into paragraphs, table cells, or any other context that accepts inline content.  This prevents double-escaping: backticks become proper `inlineCode` nodes instead of text that gets escaped by the serializer.*
+
+[View in API reference](/packages/gen/api/functions#parseinline)
+
+```ts
+const nodes = parseInline("Use `forEach` for iteration");
+// Returns [text("Use "), inlineCode("forEach"), text(" for iteration")]
+```
+
+## `parseBlocks()`
+
+*Parse a markdown string and extract block-level content.  Use for multi-line TSDoc content that may contain headings, lists, blockquotes, code blocks, etc.*
+
+[View in API reference](/packages/gen/api/functions#parseblocks)
+
+```ts
+const blocks = parseBlocks("# Title\n\nSome paragraph text.");
+// Returns [heading(1, "Title"), paragraph("Some paragraph text.")]
+```
+
+## `sanitizeForMdx()`
+
+*Sanitize markdown content for MDX compatibility using AST-aware processing.  Parses the document with remark to understand its structure, then applies targeted string replacements only to text and HTML comment nodes — code blocks, inline code, and frontmatter are automatically preserved.  Transformations applied outside code: - HTML comments to MDX comments - Curly braces in text escaped (prevents MDX expression parsing) - Angle brackets around word chars escaped (prevents JSX tag parsing)*
+
+[View in API reference](/packages/gen/api/functions#sanitizeformdx)
+
+```ts
+const safe = sanitizeForMdx("Value is <T> and {x}");
+// "Value is &lt;T&gt; and \\{x\\}"
+```
+
+## `isStubModified()`
+
+*Checks if a FORGE:STUB section has been modified by the user.  Compares the embedded hash (from the FORGE:STUB-HASH comment) against a freshly computed hash of the current inner content (with the hash comment itself stripped out). If the hashes diverge — meaning the user edited the content — or the hash comment was removed, the section is considered modified and should be preserved.*
+
+[View in API reference](/packages/gen/api/functions#isstubmodified)
+
+```ts
+const doc = "<!-- FORGE:STUB-START api -->\n<!-- FORGE:STUB-HASH abc -->\noriginal\n<!-- FORGE:STUB-END api -->";
+isStubModified(doc, "api", ""); // false — hash still matches
+```
+
+## `updateStubSections()`
+
+*Updates FORGE:STUB sections in existing content.  Behavior for each stub: - If the stub doesn't exist yet, appends it at the end of the content. - If the stub exists but is unmodified (hash matches generated content), regenerates it. - If the stub exists and was modified by user (hash mismatch), PRESERVES user content.  Each generated stub includes a `FORGE:STUB-HASH` comment containing a fingerprint of the generated content. On subsequent builds, this hash is compared to determine whether the user has made edits.*
+
+[View in API reference](/packages/gen/api/functions#updatestubsections)
+
+```ts
+const updated = updateStubSections(existingMdx, [
+  { id: "api-table", content: "| Method | Description |\n|---|---|" },
+]);
+```
+
 ## `escapeMdx()`
 
 *Escape MDX-unsafe characters in text that appears outside code fences.  MDX parses `<Word>` as JSX tags and `{expr}` as JS expressions. In documentation content (summaries, descriptions, table cells), these come from TypeScript generics (`Array<string>`) and TSDoc inline tags (`{@link Foo}`). We escape them so MDX treats them as literal text.  This is exported so SSG adapters can apply it during page transformation.*

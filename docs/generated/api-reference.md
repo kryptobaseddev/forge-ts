@@ -1112,7 +1112,7 @@ Strip extension from a link path and normalize to a slug. Produces bare slug lin
 
 ### `parseFrontmatter()`
 
-*Defined in `packages/gen/src/markdown-utils.ts:119`*
+*Defined in `packages/gen/src/markdown-utils.ts:130`*
 
 ```typescript
 (content: string) => FrontmatterResult
@@ -1126,9 +1126,16 @@ Parse frontmatter from markdown/MDX content.  Uses gray-matter for robust YAML p
 
 **Returns**: The body (without frontmatter) and the parsed data object.
 
+**Examples**
+
+```ts
+const { body, data } = parseFrontmatter("---\ntitle: Hello\n---\n# Body");
+// data.title === "Hello", body === "# Body"
+```
+
 ### `stringifyWithFrontmatter()`
 
-*Defined in `packages/gen/src/markdown-utils.ts:141`*
+*Defined in `packages/gen/src/markdown-utils.ts:163`*
 
 ```typescript
 (body: string, data: Record<string, string | number | boolean>) => string
@@ -1143,9 +1150,16 @@ Serialize content with frontmatter prepended.  Produces the standard format:
 
 **Returns**: The combined frontmatter + body string.
 
+**Examples**
+
+```ts
+const output = stringifyWithFrontmatter("# Hello", { title: "Greeting" });
+// "---\ntitle: Greeting\n---\n\n# Hello\n"
+```
+
 ### `stripFrontmatter()`
 
-*Defined in `packages/gen/src/markdown-utils.ts:158`*
+*Defined in `packages/gen/src/markdown-utils.ts:190`*
 
 ```typescript
 (content: string) => string
@@ -1159,9 +1173,16 @@ Strip frontmatter from content, returning only the body.
 
 **Returns**: The body content without the frontmatter block.
 
+**Examples**
+
+```ts
+const body = stripFrontmatter("---\ntitle: Hello\n---\n# Content");
+// body === "# Content"
+```
+
 ### `parseInline()`
 
-*Defined in `packages/gen/src/markdown-utils.ts:183`*
+*Defined in `packages/gen/src/markdown-utils.ts:226`*
 
 ```typescript
 (markdown: string) => MdPhrasing[]
@@ -1175,9 +1196,16 @@ Parse a markdown string and extract inline (phrasing) content.  Use for TSDoc te
 
 **Returns**: Array of inline mdast nodes.
 
+**Examples**
+
+```ts
+const nodes = parseInline("Use `forEach` for iteration");
+// Returns [text("Use "), inlineCode("forEach"), text(" for iteration")]
+```
+
 ### `parseBlocks()`
 
-*Defined in `packages/gen/src/markdown-utils.ts:204`*
+*Defined in `packages/gen/src/markdown-utils.ts:258`*
 
 ```typescript
 (markdown: string) => MdBlock[]
@@ -1191,9 +1219,16 @@ Parse a markdown string and extract block-level content.  Use for multi-line TSD
 
 **Returns**: Array of block-level mdast nodes.
 
+**Examples**
+
+```ts
+const blocks = parseBlocks("# Title\n\nSome paragraph text.");
+// Returns [heading(1, "Title"), paragraph("Some paragraph text.")]
+```
+
 ### `sanitizeForMdx()`
 
-*Defined in `packages/gen/src/markdown-utils.ts:288`*
+*Defined in `packages/gen/src/markdown-utils.ts:348`*
 
 ```typescript
 (content: string) => string
@@ -1207,9 +1242,16 @@ Sanitize markdown content for MDX compatibility using AST-aware processing.  Par
 
 **Returns**: The sanitized content safe for MDX consumption.
 
+**Examples**
+
+```ts
+const safe = sanitizeForMdx("Value is <T> and {x}");
+// "Value is &lt;T&gt; and \\{x\\}"
+```
+
 ### `updateAutoSections()`
 
-*Defined in `packages/gen/src/markdown-utils.ts:431`*
+*Defined in `packages/gen/src/markdown-utils.ts:491`*
 
 ```typescript
 (existing: string, generated: string) => string | null
@@ -1226,7 +1268,7 @@ Updates auto-enriched sections in an existing stub file.  Uses AST-aware parsing
 
 ### `stubHash()`
 
-*Defined in `packages/gen/src/markdown-utils.ts:473`*
+*Defined in `packages/gen/src/markdown-utils.ts:533`*
 
 ```typescript
 (content: string) => string
@@ -1242,7 +1284,7 @@ Compute a short fingerprint hash for content change detection.  Uses a simple DJ
 
 ### `isStubModified()`
 
-*Defined in `packages/gen/src/markdown-utils.ts:598`*
+*Defined in `packages/gen/src/markdown-utils.ts:670`*
 
 ```typescript
 (existingContent: string, stubId: string, _generatedContent: string) => boolean
@@ -1258,9 +1300,16 @@ Checks if a FORGE:STUB section has been modified by the user.  Compares the embe
 
 **Returns**: `true` if the user has modified the stub (preserve it), `false` if unmodified (safe to regenerate).
 
+**Examples**
+
+```ts
+const doc = "<!-- FORGE:STUB-START api -->\n<!-- FORGE:STUB-HASH abc -->\noriginal\n<!-- FORGE:STUB-END api -->";
+isStubModified(doc, "api", ""); // false — hash still matches
+```
+
 ### `updateStubSections()`
 
-*Defined in `packages/gen/src/markdown-utils.ts:633`*
+*Defined in `packages/gen/src/markdown-utils.ts:717`*
 
 ```typescript
 (existingContent: string, stubs: Array<{ id: string; content: string; }>) => string
@@ -1274,6 +1323,14 @@ Updates FORGE:STUB sections in existing content.  Behavior for each stub: - If t
 - `stubs` — Array of stub definitions with their IDs and generated content.
 
 **Returns**: The updated content with stubs inserted or refreshed as needed.
+
+**Examples**
+
+```ts
+const updated = updateStubSections(existingMdx, [
+  { id: "api-table", content: "| Method | Description |\n|---|---|" },
+]);
+```
 
 ### `escapeMdx()`
 

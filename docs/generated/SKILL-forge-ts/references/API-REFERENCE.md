@@ -741,6 +741,11 @@ Parse frontmatter from markdown/MDX content.  Uses gray-matter for robust YAML p
 
 **Returns:** The body (without frontmatter) and the parsed data object.
 
+```ts
+const { body, data } = parseFrontmatter("---\ntitle: Hello\n---\n# Body");
+// data.title === "Hello", body === "# Body"
+```
+
 ### `stringifyWithFrontmatter`
 
 Serialize content with frontmatter prepended.  Produces the standard format:
@@ -756,6 +761,11 @@ Serialize content with frontmatter prepended.  Produces the standard format:
 
 **Returns:** The combined frontmatter + body string.
 
+```ts
+const output = stringifyWithFrontmatter("# Hello", { title: "Greeting" });
+// "---\ntitle: Greeting\n---\n\n# Hello\n"
+```
+
 ### `stripFrontmatter`
 
 Strip frontmatter from content, returning only the body.
@@ -769,6 +779,11 @@ Strip frontmatter from content, returning only the body.
 - `content` — The full file content including frontmatter.
 
 **Returns:** The body content without the frontmatter block.
+
+```ts
+const body = stripFrontmatter("---\ntitle: Hello\n---\n# Content");
+// body === "# Content"
+```
 
 ### `parseInline`
 
@@ -784,6 +799,11 @@ Parse a markdown string and extract inline (phrasing) content.  Use for TSDoc te
 
 **Returns:** Array of inline mdast nodes.
 
+```ts
+const nodes = parseInline("Use `forEach` for iteration");
+// Returns [text("Use "), inlineCode("forEach"), text(" for iteration")]
+```
+
 ### `parseBlocks`
 
 Parse a markdown string and extract block-level content.  Use for multi-line TSDoc content that may contain headings, lists, blockquotes, code blocks, etc.
@@ -798,6 +818,11 @@ Parse a markdown string and extract block-level content.  Use for multi-line TSD
 
 **Returns:** Array of block-level mdast nodes.
 
+```ts
+const blocks = parseBlocks("# Title\n\nSome paragraph text.");
+// Returns [heading(1, "Title"), paragraph("Some paragraph text.")]
+```
+
 ### `sanitizeForMdx`
 
 Sanitize markdown content for MDX compatibility using AST-aware processing.  Parses the document with remark to understand its structure, then applies targeted string replacements only to text and HTML comment nodes — code blocks, inline code, and frontmatter are automatically preserved.  Transformations applied outside code: - HTML comments to MDX comments - Curly braces in text escaped (prevents MDX expression parsing) - Angle brackets around word chars escaped (prevents JSX tag parsing)
@@ -811,6 +836,11 @@ Sanitize markdown content for MDX compatibility using AST-aware processing.  Par
 - `content` — The markdown content to sanitize.
 
 **Returns:** The sanitized content safe for MDX consumption.
+
+```ts
+const safe = sanitizeForMdx("Value is <T> and {x}");
+// "Value is &lt;T&gt; and \\{x\\}"
+```
 
 ### `updateAutoSections`
 
@@ -857,6 +887,11 @@ Checks if a FORGE:STUB section has been modified by the user.  Compares the embe
 
 **Returns:** `true` if the user has modified the stub (preserve it), `false` if unmodified (safe to regenerate).
 
+```ts
+const doc = "<!-- FORGE:STUB-START api -->\n<!-- FORGE:STUB-HASH abc -->\noriginal\n<!-- FORGE:STUB-END api -->";
+isStubModified(doc, "api", ""); // false — hash still matches
+```
+
 ### `updateStubSections`
 
 Updates FORGE:STUB sections in existing content.  Behavior for each stub: - If the stub doesn't exist yet, appends it at the end of the content. - If the stub exists but is unmodified (hash matches generated content), regenerates it. - If the stub exists and was modified by user (hash mismatch), PRESERVES user content.  Each generated stub includes a `FORGE:STUB-HASH` comment containing a fingerprint of the generated content. On subsequent builds, this hash is compared to determine whether the user has made edits.
@@ -871,6 +906,12 @@ Updates FORGE:STUB sections in existing content.  Behavior for each stub: - If t
 - `stubs` — Array of stub definitions with their IDs and generated content.
 
 **Returns:** The updated content with stubs inserted or refreshed as needed.
+
+```ts
+const updated = updateStubSections(existingMdx, [
+  { id: "api-table", content: "| Method | Description |\n|---|---|" },
+]);
+```
 
 ### `escapeMdx`
 

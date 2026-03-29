@@ -1059,7 +1059,8 @@ describe("runBarometer", () => {
 			kind: "type",
 			documentation: {
 				summary: "A CalVer format string.",
-				remarks: "The CalVer specification uses MICRO; PATCH is accepted as a SemVer-familiar alias.",
+				remarks:
+					"The CalVer specification uses MICRO; PATCH is accepted as a SemVer-familiar alias.",
 			},
 		});
 
@@ -1083,8 +1084,7 @@ describe("runBarometer", () => {
 			signature: "(name: string) => string",
 			documentation: {
 				summary: "Generates a hook script.",
-				remarks:
-					"Uses delimited block markers for cooperative installation with other hook tools.",
+				remarks: "Uses delimited block markers for cooperative installation with other hook tools.",
 			},
 		});
 

@@ -141,12 +141,20 @@ export function generateLlmsTxt(symbols: ForgeSymbol[], config: ForgeConfig): st
 		const exported = pkgSymbols.filter((s) => s.kind !== "file");
 		const fns = exported.filter((s) => s.kind === "function");
 		const types = exported.filter((s) => ["interface", "type", "enum"].includes(s.kind));
+		const classes = exported.filter((s) => s.kind === "class");
+		const variables = exported.filter((s) => s.kind === "variable");
 
 		lines.push(`### ${pkgName}`);
 		if (pkgDoc) {
 			lines.push(pkgDoc);
 		}
-		lines.push(`${fns.length} functions, ${types.length} types`);
+		// Summary line counts all listed symbols, not just functions/types
+		const parts: string[] = [];
+		if (fns.length > 0) parts.push(`${fns.length} functions`);
+		if (types.length > 0) parts.push(`${types.length} types`);
+		if (classes.length > 0) parts.push(`${classes.length} classes`);
+		if (variables.length > 0) parts.push(`${variables.length} variables`);
+		lines.push(parts.join(", ") || `${exported.length} exports`);
 		lines.push("");
 
 		// Functions — compact one-liners
@@ -158,11 +166,29 @@ export function generateLlmsTxt(symbols: ForgeSymbol[], config: ForgeConfig): st
 			lines.push("");
 		}
 
+		// Classes — compact one-liners
+		if (classes.length > 0) {
+			for (const cls of classes) {
+				const summary = cls.documentation?.summary ?? "";
+				lines.push(`- ${cls.name} — ${summary}`);
+			}
+			lines.push("");
+		}
+
 		// Types — compact one-liners
 		if (types.length > 0) {
 			for (const t of types) {
 				const summary = t.documentation?.summary ?? "";
 				lines.push(`- ${t.name} — ${summary}`);
+			}
+			lines.push("");
+		}
+
+		// Variables — compact one-liners
+		if (variables.length > 0) {
+			for (const v of variables) {
+				const summary = v.documentation?.summary ?? "";
+				lines.push(`- ${v.name} — ${summary}`);
 			}
 			lines.push("");
 		}

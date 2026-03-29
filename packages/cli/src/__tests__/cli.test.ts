@@ -1052,6 +1052,55 @@ describe("runBarometer", () => {
 		expect(configQs).toHaveLength(0);
 	});
 
+	it("skips strategy questions for type aliases", async () => {
+		const { loadConfig, createWalker } = await import("@forge-ts/core");
+
+		const typeAlias = makeSymbol("CalVerFormat", {
+			kind: "type",
+			documentation: {
+				summary: "A CalVer format string.",
+				remarks: "The CalVer specification uses MICRO; PATCH is accepted as a SemVer-familiar alias.",
+			},
+		});
+
+		vi.mocked(loadConfig).mockResolvedValue(makeBarometerConfig());
+		vi.mocked(createWalker).mockReturnValue({ walk: () => [typeAlias] } as ReturnType<
+			typeof createWalker
+		>);
+
+		const output = await runBarometer({ cwd: tmpDir });
+		const strategyQs = output.data.questions.filter((q) =>
+			q.question.includes("strategy or approach"),
+		);
+		expect(strategyQs).toHaveLength(0);
+	});
+
+	it("generates strategy questions for functions with @remarks", async () => {
+		const { loadConfig, createWalker } = await import("@forge-ts/core");
+
+		const fn = makeSymbol("generateHookScript", {
+			kind: "function",
+			signature: "(name: string) => string",
+			documentation: {
+				summary: "Generates a hook script.",
+				remarks:
+					"Uses delimited block markers for cooperative installation with other hook tools.",
+			},
+		});
+
+		vi.mocked(loadConfig).mockResolvedValue(makeBarometerConfig());
+		vi.mocked(createWalker).mockReturnValue({ walk: () => [fn] } as ReturnType<
+			typeof createWalker
+		>);
+
+		const output = await runBarometer({ cwd: tmpDir });
+		const strategyQs = output.data.questions.filter((q) =>
+			q.question.includes("strategy or approach"),
+		);
+		expect(strategyQs).toHaveLength(1);
+		expect(strategyQs[0].question).toContain("generateHookScript");
+	});
+
 	it("includes instructions in questions-only output", async () => {
 		const { loadConfig, createWalker } = await import("@forge-ts/core");
 

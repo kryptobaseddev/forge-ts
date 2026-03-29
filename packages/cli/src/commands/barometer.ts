@@ -555,16 +555,19 @@ function extractFacts(
 			});
 		}
 
-		// Strategy/approach patterns
-		const strategyMatch = /(?:uses?|applies?|employs?)\s+(.{10,80}?)(?:\.|$)/i.exec(remarks);
-		if (strategyMatch) {
-			facts.push({
-				category: "remarks",
-				difficulty: "medium",
-				question: `What strategy or approach does ${sym.name} use?`,
-				answer: strategyMatch[1].trim(),
-				source: { symbol: sym.name, file: rel(sym.filePath), field: "remarks" },
-			});
+		// Strategy/approach patterns — only for functions/methods where "uses" describes
+		// an algorithmic strategy, not type aliases or interfaces where it's incidental
+		if (sym.kind === "function" || sym.kind === "method") {
+			const strategyMatch = /(?:uses?|applies?|employs?)\s+(.{10,80}?)(?:\.|$)/i.exec(remarks);
+			if (strategyMatch) {
+				facts.push({
+					category: "remarks",
+					difficulty: "medium",
+					question: `What strategy or approach does ${sym.name} use?`,
+					answer: strategyMatch[1].trim(),
+					source: { symbol: sym.name, file: rel(sym.filePath), field: "remarks" },
+				});
+			}
 		}
 
 		// Specific numeric claims (e.g. "max 20 files", "9 rules")
@@ -660,8 +663,10 @@ function extractFacts(
 		});
 	}
 
-	// Count exported symbols
-	const exportedCount = symbols.filter((s) => s.exported && s.kind !== "file").length;
+	// Count exported symbols — exclude file/method/property to match what
+	// appears in the generated docs (llms.txt, llms-full.txt)
+	const docExcludedKinds = new Set(["file", "method", "property"]);
+	const exportedCount = symbols.filter((s) => s.exported && !docExcludedKinds.has(s.kind)).length;
 	facts.push({
 		category: "architecture",
 		difficulty: "easy",

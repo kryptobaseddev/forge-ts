@@ -231,6 +231,19 @@ describe("generateLlmsTxt", () => {
 		expect(result).toContain("## Documentation");
 		expect(result).not.toContain("## Packages");
 	});
+
+	it("summary line counts all symbol kinds, not just functions and types", () => {
+		const varSym = sym({
+			name: "VERSION",
+			kind: "variable",
+			documentation: { summary: "Current version." },
+		});
+		const result = generateLlmsTxt([fnAdd, ifaceConfig, classLogger, varSym], makeConfig());
+		expect(result).toContain("1 functions");
+		expect(result).toContain("1 types");
+		expect(result).toContain("1 classes");
+		expect(result).toContain("1 variables");
+	});
 });
 
 // ---------------------------------------------------------------------------

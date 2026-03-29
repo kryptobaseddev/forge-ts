@@ -581,44 +581,52 @@ function extractFacts(
 	}
 
 	// -----------------------------------------------------------------------
-	// C. Config default facts
+	// C. Config default facts (forge-ts internal — skip for consumer projects)
 	// -----------------------------------------------------------------------
 
-	facts.push({
-		category: "config",
-		difficulty: "medium",
-		question: "What is the default value of the bypass dailyBudget config option?",
-		answer: String(config.bypass.dailyBudget),
-		source: {
-			symbol: "ForgeConfig",
-			file: "packages/core/src/types.ts",
-			field: "bypass.dailyBudget",
-		},
-	});
+	const projectPkgName = config.project?.packageName ?? "";
+	const isForgeTsProject =
+		projectPkgName === "forge-ts" ||
+		projectPkgName.startsWith("@forge-ts/") ||
+		symbols.some((s) => s.filePath.includes("packages/enforcer/src/enforcer.ts"));
 
-	facts.push({
-		category: "config",
-		difficulty: "medium",
-		question: "What is the default bypass duration in hours before automatic expiry?",
-		answer: String(config.bypass.durationHours),
-		source: {
-			symbol: "ForgeConfig",
-			file: "packages/core/src/types.ts",
-			field: "bypass.durationHours",
-		},
-	});
+	if (isForgeTsProject) {
+		facts.push({
+			category: "config",
+			difficulty: "medium",
+			question: "What is the default value of the bypass dailyBudget config option?",
+			answer: String(config.bypass.dailyBudget),
+			source: {
+				symbol: "ForgeConfig",
+				file: "packages/core/src/types.ts",
+				field: "bypass.dailyBudget",
+			},
+		});
 
-	facts.push({
-		category: "config",
-		difficulty: "easy",
-		question: "What is the default minimum Node.js version required by the packageJson guard?",
-		answer: config.guards.packageJson.minNodeVersion,
-		source: {
-			symbol: "ForgeConfig",
-			file: "packages/core/src/types.ts",
-			field: "guards.packageJson.minNodeVersion",
-		},
-	});
+		facts.push({
+			category: "config",
+			difficulty: "medium",
+			question: "What is the default bypass duration in hours before automatic expiry?",
+			answer: String(config.bypass.durationHours),
+			source: {
+				symbol: "ForgeConfig",
+				file: "packages/core/src/types.ts",
+				field: "bypass.durationHours",
+			},
+		});
+
+		facts.push({
+			category: "config",
+			difficulty: "easy",
+			question: "What is the default minimum Node.js version required by the packageJson guard?",
+			answer: config.guards.packageJson.minNodeVersion,
+			source: {
+				symbol: "ForgeConfig",
+				file: "packages/core/src/types.ts",
+				field: "guards.packageJson.minNodeVersion",
+			},
+		});
+	}
 
 	// -----------------------------------------------------------------------
 	// D. Package architecture facts
@@ -681,31 +689,32 @@ function extractFacts(
 	}
 
 	// -----------------------------------------------------------------------
-	// E. Rule facts
+	// E. Rule facts (forge-ts internal — skip for consumer projects)
 	// -----------------------------------------------------------------------
 
-	// Pick a selection of rules for question generation
-	const ruleEntries = Object.entries(RULE_DEFINITIONS);
-	for (const [code, rule] of ruleEntries) {
-		facts.push({
-			category: "rules",
-			difficulty: "medium",
-			question: `What does rule ${code} (${rule.name}) check for?`,
-			answer: rule.description,
-			source: {
-				symbol: code,
-				file: "packages/enforcer/src/enforcer.ts",
-				field: "rule-description",
-			},
-		});
+	if (isForgeTsProject) {
+		const ruleEntries = Object.entries(RULE_DEFINITIONS);
+		for (const [code, rule] of ruleEntries) {
+			facts.push({
+				category: "rules",
+				difficulty: "medium",
+				question: `What does rule ${code} (${rule.name}) check for?`,
+				answer: rule.description,
+				source: {
+					symbol: code,
+					file: "packages/enforcer/src/enforcer.ts",
+					field: "rule-description",
+				},
+			});
 
-		facts.push({
-			category: "rules",
-			difficulty: "medium",
-			question: `What is the default severity of rule ${code} (${rule.name})?`,
-			answer: rule.defaultSeverity,
-			source: { symbol: code, file: "packages/core/src/config.ts", field: "rule-severity" },
-		});
+			facts.push({
+				category: "rules",
+				difficulty: "medium",
+				question: `What is the default severity of rule ${code} (${rule.name})?`,
+				answer: rule.defaultSeverity,
+				source: { symbol: code, file: "packages/core/src/config.ts", field: "rule-severity" },
+			});
+		}
 	}
 
 	return facts;
@@ -971,15 +980,35 @@ function formatBarometerHuman(result: BarometerResult, questionsOnly: boolean): 
  *
  * @param expected - Ground-truth answer from the answer key.
  * @param got - Agent's submitted answer.
- * @returns "correct" for exact match, "partial" for substring containment, "wrong" otherwise.
+ * @param category - Question category, used for category-specific leniency.
+ * @returns "correct" for exact or superset match, "partial" for substring or high word overlap, "wrong" otherwise.
  * @internal
  */
-function scoreAnswer(expected: string, got: string): "correct" | "partial" | "wrong" {
+function scoreAnswer(
+	expected: string,
+	got: string,
+	category?: string,
+): "correct" | "partial" | "wrong" {
 	const e = expected.trim().toLowerCase();
 	const g = got.trim().toLowerCase();
 	if (!g) return "wrong";
 	if (e === g) return "correct";
-	if (g.includes(e) || e.includes(g)) return "partial";
+	// Agent answer contains the full expected answer — superset is correct
+	// for multi-word answers; single-word matches remain partial
+	const expectedWordCount = e.split(/\s+/).length;
+	if (g.includes(e)) return expectedWordCount >= 3 ? "correct" : "partial";
+	// Expected contains the agent answer — subset is partial
+	if (e.includes(g)) return "partial";
+	// For remarks questions, use word-overlap scoring since agent answers
+	// may rephrase or expand on the expected answer with intervening words
+	if (category === "remarks") {
+		const eWords = e.split(/\s+/).filter((w) => w.length > 2);
+		const gWords = new Set(g.split(/\s+/));
+		const matched = eWords.filter((w) => gWords.has(w)).length;
+		const overlap = eWords.length > 0 ? matched / eWords.length : 0;
+		if (overlap >= 0.8) return "correct";
+		if (overlap >= 0.5) return "partial";
+	}
 	return "wrong";
 }
 
@@ -1083,7 +1112,7 @@ export async function runBarometerScore(args: {
 	for (const q of answerKey.questions) {
 		if (q.answer === "(redacted)") continue; // Skip redacted entries
 		const agentAnswer = agentMap.get(q.id) ?? "";
-		const verdict = scoreAnswer(q.answer, agentAnswer);
+		const verdict = scoreAnswer(q.answer, agentAnswer, q.category);
 
 		if (verdict === "correct") {
 			correct++;

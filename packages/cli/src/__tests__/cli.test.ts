@@ -1021,7 +1021,9 @@ describe("runBarometer", () => {
 	it("includes W014-W020 rule questions", async () => {
 		const { loadConfig, createWalker } = await import("@forge-ts/core");
 
-		vi.mocked(loadConfig).mockResolvedValue(makeBarometerConfig());
+		vi.mocked(loadConfig).mockResolvedValue(
+			makeConfig({ rootDir: tmpDir, project: { packageName: "forge-ts" } }),
+		);
 		vi.mocked(createWalker).mockReturnValue({ walk: () => [] } as ReturnType<typeof createWalker>);
 
 		const output = await runBarometer({ cwd: tmpDir });
@@ -1033,6 +1035,21 @@ describe("runBarometer", () => {
 		for (const code of ["W014", "W015", "W016", "W017", "W018", "W019", "W020"]) {
 			expect(ruleCodes.has(code)).toBe(true);
 		}
+	});
+
+	it("skips rule and config questions for consumer projects", async () => {
+		const { loadConfig, createWalker } = await import("@forge-ts/core");
+
+		vi.mocked(loadConfig).mockResolvedValue(
+			makeConfig({ rootDir: tmpDir, project: { packageName: "@consumer/lib" } }),
+		);
+		vi.mocked(createWalker).mockReturnValue({ walk: () => [] } as ReturnType<typeof createWalker>);
+
+		const output = await runBarometer({ cwd: tmpDir });
+		const ruleQs = output.data.questions.filter((q) => q.category === "rules");
+		const configQs = output.data.questions.filter((q) => q.category === "config");
+		expect(ruleQs).toHaveLength(0);
+		expect(configQs).toHaveLength(0);
 	});
 
 	it("includes instructions in questions-only output", async () => {
@@ -1162,6 +1179,50 @@ describe("runBarometerScore", () => {
 		expect(output.data.partial).toBe(1);
 		expect(output.data.correct).toBe(0);
 		expect(output.data.score).toBe(50);
+	});
+
+	it("scores multi-word superset answers as correct", async () => {
+		const { runBarometerScore: scoreFn } = await import("../commands/barometer.js");
+		await setupAnswerKey([
+			{
+				id: "Q001",
+				answer: "delimited block markers for cooperative installation",
+				category: "remarks",
+			},
+		]);
+		const answersPath = await writeAnswers([
+			{
+				id: "Q001",
+				answer:
+					"Delegates to npx validate, using delimited block markers for cooperative installation with other tools",
+			},
+		]);
+
+		const output = await scoreFn({ cwd: tmpDir, answersPath });
+		expect(output.data.correct).toBe(1);
+		expect(output.data.score).toBe(100);
+	});
+
+	it("scores remarks answers with high word overlap as correct", async () => {
+		const { runBarometerScore: scoreFn } = await import("../commands/barometer.js");
+		await setupAnswerKey([
+			{
+				id: "Q001",
+				answer: "the first bullet point as a concise release summary",
+				category: "remarks",
+			},
+		]);
+		const answersPath = await writeAnswers([
+			{
+				id: "Q001",
+				answer:
+					"Uses the first bullet point from a matching changelog entry as a concise release summary",
+			},
+		]);
+
+		const output = await scoreFn({ cwd: tmpDir, answersPath });
+		// High word overlap (>80%) should score as correct for remarks
+		expect(output.data.correct).toBe(1);
 	});
 
 	it("scores empty answers as wrong", async () => {

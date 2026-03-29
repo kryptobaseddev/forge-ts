@@ -45,12 +45,16 @@ const pkg = require("../package.json") as { version: string };
 
 export { type AuditResult, auditCommand } from "./commands/audit.js";
 export {
+	type BarometerInstructions,
 	type BarometerQuestion,
 	type BarometerRatingBand,
 	type BarometerResult,
+	type BarometerScoredAnswer,
+	type BarometerScoreResult,
 	type BarometerSource,
 	barometerCommand,
 	runBarometer,
+	runBarometerScore,
 } from "./commands/barometer.js";
 export { type BuildResult, type BuildStep, buildCommand } from "./commands/build.js";
 export {

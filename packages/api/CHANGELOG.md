@@ -1,5 +1,25 @@
 # @forge-ts/api
 
+## 0.22.0
+
+### Minor Changes
+
+- feat: barometer end-to-end agent workflow with score subcommand
+
+  - fix: `--json` output no longer includes trailing log line — JSON is now valid and parseable ([#16](https://github.com/kryptobaseddev/forge-ts/issues/16))
+  - fix: add missing W014-W020 rules to barometer RULE_DEFINITIONS — all 40 rules now generate questions ([#14](https://github.com/kryptobaseddev/forge-ts/issues/14))
+  - fix: derive KNOWN_RULE_KEYS from defaultConfig() to prevent future rule sync bugs ([#14](https://github.com/kryptobaseddev/forge-ts/issues/14))
+  - feat: `forge-ts barometer score --answers <file>` subcommand — scores agent answers against the answer key with exact/partial/wrong verdicts, rating band, and missed category analysis ([#17](https://github.com/kryptobaseddev/forge-ts/issues/17))
+  - feat: `--questions-only` output now includes `instructions` field with task description, docsPath, and responseFormat so agents can self-serve without reading source code ([#19](https://github.com/kryptobaseddev/forge-ts/issues/19))
+  - feat: `--questions-only` no longer overwrites `.forge/barometer.json` with redacted answers — the disk file always contains the full answer key ([#19](https://github.com/kryptobaseddev/forge-ts/issues/19))
+  - feat: comprehensive `--help` text documents the full 4-step workflow, rubric, answer format spec, and output files ([#18](https://github.com/kryptobaseddev/forge-ts/issues/18))
+  - test: 12 new tests covering barometer generation, redaction, instructions, disk file integrity, and scoring (6 scenarios)
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @forge-ts/core@0.22.0
+
 ## 0.21.1
 
 ### Patch Changes

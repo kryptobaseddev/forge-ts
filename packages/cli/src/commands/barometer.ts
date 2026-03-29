@@ -32,11 +32,11 @@
  */
 
 import { existsSync } from "node:fs";
-import { mkdir, writeFile } from "node:fs/promises";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { join, relative } from "node:path";
 import { createWalker, type ForgeConfig, type ForgeSymbol, loadConfig } from "@forge-ts/core";
 import { defineCommand } from "citty";
-import { forgeLogger } from "../forge-logger.js";
+import { configureLogger, forgeLogger } from "../forge-logger.js";
 import { type CommandOutput, emitResult, type OutputFlags, resolveExitCode } from "../output.js";
 
 // ---------------------------------------------------------------------------
@@ -94,6 +94,26 @@ export interface BarometerRatingBand {
 }
 
 /**
+ * Agent instructions included in `--questions-only` output.
+ *
+ * @since 0.22.0
+ * @public
+ */
+export interface BarometerInstructions {
+	/** Task description for the agent. */
+	task: string;
+	/** Path to generated documentation the agent should use. */
+	docsPath: string;
+	/** Expected response format. */
+	responseFormat: {
+		/** Description of the expected format. */
+		description: string;
+		/** Example response structure. */
+		example: { answers: Array<{ id: string; answer: string }> };
+	};
+}
+
+/**
  * Full barometer output written to `.forge/barometer.json`.
  *
  * @public
@@ -118,6 +138,52 @@ export interface BarometerResult {
 		/** Description of how scoring works. */
 		scoring: string;
 	};
+	/** Agent instructions — present only in `--questions-only` output. */
+	instructions?: BarometerInstructions;
+}
+
+/**
+ * A single scored answer in the barometer score output.
+ *
+ * @since 0.22.0
+ * @public
+ */
+export interface BarometerScoredAnswer {
+	/** Question ID. */
+	id: string;
+	/** Expected answer from the answer key. */
+	expected: string;
+	/** Agent's submitted answer. */
+	got: string;
+	/** Scoring verdict. */
+	verdict: "correct" | "partial" | "wrong";
+	/** Question category for aggregate analysis. */
+	category: string;
+}
+
+/**
+ * Full barometer score output.
+ *
+ * @since 0.22.0
+ * @public
+ */
+export interface BarometerScoreResult {
+	/** Score as a percentage (0-100). */
+	score: number;
+	/** Rating band label (e.g. "Elite SSoT"). */
+	rating: string;
+	/** Rating band description. */
+	ratingDescription: string;
+	/** Number of fully correct answers. */
+	correct: number;
+	/** Number of partially correct answers. */
+	partial: number;
+	/** Number of wrong answers. */
+	wrong: number;
+	/** Total questions scored. */
+	total: number;
+	/** Details for every non-correct answer. */
+	missed: BarometerScoredAnswer[];
 }
 
 /**
@@ -287,6 +353,43 @@ const RULE_DEFINITIONS: Record<
 	W013: {
 		name: "require-fresh-examples",
 		description: "@example block may be stale (arg count mismatch)",
+		defaultSeverity: "warn",
+	},
+	W014: {
+		name: "require-fresh-params",
+		description: "@param name in TSDoc doesn't match actual parameter name",
+		defaultSeverity: "warn",
+	},
+	W015: {
+		name: "require-param-count",
+		description: "@param count in TSDoc doesn't match actual parameter count",
+		defaultSeverity: "warn",
+	},
+	W016: {
+		name: "require-fresh-returns",
+		description: "@returns tag on a void/Promise<void> function",
+		defaultSeverity: "warn",
+	},
+	W017: {
+		name: "require-meaningful-remarks",
+		description: "@remarks block is empty or contains only placeholder text",
+		defaultSeverity: "warn",
+	},
+	W018: {
+		name: "require-operation-completeness",
+		description:
+			"@operation-tagged function missing required CKM documentation (@param, @returns, @remarks, @example)",
+		defaultSeverity: "warn",
+	},
+	W019: {
+		name: "require-ckm-tag-content",
+		description:
+			"CKM tag (@operation, @constraint, @workflow, @concept) has empty or insufficient content",
+		defaultSeverity: "warn",
+	},
+	W020: {
+		name: "require-constraint-throws",
+		description: "@constraint-tagged symbol missing @throws to document constraint violation error",
 		defaultSeverity: "warn",
 	},
 };
@@ -752,13 +855,30 @@ export async function runBarometer(args: BarometerArgs): Promise<CommandOutput<B
 		rubric: buildRubric(),
 	};
 
-	// Step 7: Write to .forge/barometer.json
+	// Add agent instructions when questions-only mode
+	if (args.questionsOnly) {
+		result.instructions = {
+			task: "Answer each question using ONLY the documentation files in the docsPath below. Do NOT read source code.",
+			docsPath: "docs/generated/",
+			responseFormat: {
+				description:
+					"Return a JSON object with an 'answers' array containing your answers keyed by question ID.",
+				example: { answers: [{ id: "Q001", answer: "your answer" }] },
+			},
+		};
+	}
+
+	// Step 7: Write to .forge/barometer.json (always full answers — the answer key)
 	const forgeDirPath = join(rootDir, ".forge");
 	if (!existsSync(forgeDirPath)) {
 		await mkdir(forgeDirPath, { recursive: true });
 	}
 	const outputPath = join(forgeDirPath, "barometer.json");
-	await writeFile(outputPath, JSON.stringify(result, null, 2) + "\n", "utf8");
+	// When --questions-only, still write the FULL answer key to disk
+	const fileResult: BarometerResult = args.questionsOnly
+		? { ...result, questions, instructions: undefined }
+		: result;
+	await writeFile(outputPath, `${JSON.stringify(fileResult, null, 2)}\n`, "utf8");
 
 	const duration = Date.now() - start;
 
@@ -843,36 +963,257 @@ function formatBarometerHuman(result: BarometerResult, questionsOnly: boolean): 
 }
 
 // ---------------------------------------------------------------------------
-// Citty command definition
+// Scoring logic
 // ---------------------------------------------------------------------------
 
 /**
- * Citty command definition for `forge-ts barometer`.
+ * Compares an agent answer against the expected answer.
  *
- * Generates a documentation effectiveness test (questions + answers + rubric)
- * from the project's source code.
+ * @param expected - Ground-truth answer from the answer key.
+ * @param got - Agent's submitted answer.
+ * @returns "correct" for exact match, "partial" for substring containment, "wrong" otherwise.
+ * @internal
+ */
+function scoreAnswer(expected: string, got: string): "correct" | "partial" | "wrong" {
+	const e = expected.trim().toLowerCase();
+	const g = got.trim().toLowerCase();
+	if (!g) return "wrong";
+	if (e === g) return "correct";
+	if (g.includes(e) || e.includes(g)) return "partial";
+	return "wrong";
+}
+
+/**
+ * Scores agent answers against the barometer answer key.
  *
+ * @remarks
+ * Reads the answer key from `.forge/barometer.json` (generated by `runBarometer`)
+ * and compares each agent answer against the ground truth. Exact case-insensitive
+ * matches score full credit, substring containment scores half credit, and
+ * everything else (including unanswered questions) scores zero.
+ *
+ * @param args - CLI arguments including project root and path to agent answers file.
+ * @returns A typed `CommandOutput<BarometerScoreResult>`.
  * @example
  * ```typescript
- * import { barometerCommand } from "@forge-ts/cli/commands/barometer";
- * // Registered as a top-level subcommand of `forge-ts`
+ * import { runBarometerScore } from "@forge-ts/cli/commands/barometer";
+ * const output = await runBarometerScore({ answersPath: "answers.json" });
+ * console.log(`Score: ${output.data.score}%`);
  * ```
+ * @since 0.22.0
  * @public
  */
-export const barometerCommand = defineCommand({
+export async function runBarometerScore(args: {
+	cwd?: string;
+	answersPath: string;
+}): Promise<CommandOutput<BarometerScoreResult>> {
+	const start = Date.now();
+	const rootDir = args.cwd ?? process.cwd();
+
+	// Load the answer key
+	const keyPath = join(rootDir, ".forge", "barometer.json");
+	if (!existsSync(keyPath)) {
+		return {
+			operation: "barometer.score",
+			success: false,
+			data: {
+				score: 0,
+				rating: "N/A",
+				ratingDescription: "No answer key found",
+				correct: 0,
+				partial: 0,
+				wrong: 0,
+				total: 0,
+				missed: [],
+			},
+			errors: [
+				{
+					code: "BAROMETER_NO_KEY",
+					message: `Answer key not found at ${keyPath}. Run "forge-ts barometer" first to generate it.`,
+				},
+			],
+			duration: Date.now() - start,
+		};
+	}
+
+	const keyRaw = await readFile(keyPath, "utf8");
+	const answerKey = JSON.parse(keyRaw) as BarometerResult;
+
+	// Load agent answers
+	const answersRaw = await readFile(args.answersPath, "utf8");
+	const agentData = JSON.parse(answersRaw) as { answers: Array<{ id: string; answer: string }> };
+
+	if (!agentData.answers || !Array.isArray(agentData.answers)) {
+		return {
+			operation: "barometer.score",
+			success: false,
+			data: {
+				score: 0,
+				rating: "N/A",
+				ratingDescription: "Invalid answer file",
+				correct: 0,
+				partial: 0,
+				wrong: 0,
+				total: 0,
+				missed: [],
+			},
+			errors: [
+				{
+					code: "BAROMETER_INVALID_ANSWERS",
+					message: `Answers file must contain { "answers": [{ "id": "Q001", "answer": "..." }] }`,
+				},
+			],
+			duration: Date.now() - start,
+		};
+	}
+
+	// Index agent answers by ID
+	const agentMap = new Map<string, string>();
+	for (const a of agentData.answers) {
+		agentMap.set(a.id, a.answer);
+	}
+
+	// Score each question
+	let correct = 0;
+	let partial = 0;
+	let wrong = 0;
+	const missed: BarometerScoredAnswer[] = [];
+	const totalQuestions = answerKey.questions.length;
+
+	for (const q of answerKey.questions) {
+		if (q.answer === "(redacted)") continue; // Skip redacted entries
+		const agentAnswer = agentMap.get(q.id) ?? "";
+		const verdict = scoreAnswer(q.answer, agentAnswer);
+
+		if (verdict === "correct") {
+			correct++;
+		} else if (verdict === "partial") {
+			partial++;
+			missed.push({
+				id: q.id,
+				expected: q.answer,
+				got: agentAnswer,
+				verdict,
+				category: q.category,
+			});
+		} else {
+			wrong++;
+			missed.push({
+				id: q.id,
+				expected: q.answer,
+				got: agentAnswer,
+				verdict,
+				category: q.category,
+			});
+		}
+	}
+
+	// Calculate score: full credit for correct, half for partial
+	const rawScore = totalQuestions > 0 ? ((correct + partial * 0.5) / totalQuestions) * 100 : 0;
+	const score = Math.round(rawScore * 10) / 10;
+
+	// Determine rating band
+	const rubric = buildRubric();
+	const band =
+		rubric.scale.find((b) => score >= b.min && score <= b.max) ??
+		rubric.scale[rubric.scale.length - 1];
+
+	const duration = Date.now() - start;
+
+	return {
+		operation: "barometer.score",
+		success: true,
+		data: {
+			score,
+			rating: band.rating,
+			ratingDescription: band.description,
+			correct,
+			partial,
+			wrong,
+			total: totalQuestions,
+			missed,
+		},
+		duration,
+	};
+}
+
+/**
+ * Formats a BarometerScoreResult as human-readable text.
+ *
+ * @internal
+ */
+function formatScoreHuman(result: BarometerScoreResult): string {
+	const lines: string[] = [];
+	lines.push(`\nforge-ts barometer score\n`);
+	lines.push(`  Questions: ${result.total}`);
+	lines.push(
+		`  Correct:   ${result.correct} (${result.total > 0 ? ((result.correct / result.total) * 100).toFixed(1) : 0}%)`,
+	);
+	lines.push(
+		`  Partial:   ${result.partial} (${result.total > 0 ? ((result.partial / result.total) * 100).toFixed(1) : 0}%)`,
+	);
+	lines.push(
+		`  Wrong:     ${result.wrong} (${result.total > 0 ? ((result.wrong / result.total) * 100).toFixed(1) : 0}%)`,
+	);
+	lines.push("");
+	lines.push(`  Score:  ${result.score}%`);
+	lines.push(`  Rating: ${result.rating}`);
+	lines.push(`    ${result.ratingDescription}`);
+
+	// Top missed categories
+	if (result.missed.length > 0) {
+		const catCounts = new Map<string, number>();
+		for (const m of result.missed) {
+			catCounts.set(m.category, (catCounts.get(m.category) ?? 0) + 1);
+		}
+		const sorted = Array.from(catCounts.entries()).sort((a, b) => b[1] - a[1]);
+		lines.push("");
+		lines.push("  Top missed categories:");
+		for (const [cat, count] of sorted.slice(0, 5)) {
+			const pct = ((count / result.missed.length) * 100).toFixed(0);
+			lines.push(`    ${cat}: ${count} missed (${pct}% of misses)`);
+		}
+	}
+
+	return lines.join("\n");
+}
+
+// ---------------------------------------------------------------------------
+// Score subcommand
+// ---------------------------------------------------------------------------
+
+/**
+ * Citty command definition for `forge-ts barometer score`.
+ *
+ * @public
+ */
+const barometerScoreCommand = defineCommand({
 	meta: {
-		name: "barometer",
-		description: "Generate documentation effectiveness test from source code",
+		name: "score",
+		description: `Score agent answers against the barometer answer key.
+
+Reads .forge/barometer.json as the answer key and compares against agent answers.
+
+USAGE
+  forge-ts barometer score --answers agent-answers.json
+
+ANSWER FORMAT (agent-answers.json)
+  {
+    "answers": [
+      { "id": "Q001", "answer": "SemVerConfig" },
+      { "id": "Q002", "answer": "1" }
+    ]
+  }`,
 	},
 	args: {
 		cwd: {
 			type: "string",
 			description: "Project root directory",
 		},
-		"questions-only": {
-			type: "boolean",
-			description: "Output only questions (no answers) — for test agents",
-			default: false,
+		answers: {
+			type: "string",
+			description: "Path to agent answers JSON file",
+			required: true,
 		},
 		json: {
 			type: "boolean",
@@ -895,6 +1236,129 @@ export const barometerCommand = defineCommand({
 		},
 	},
 	async run({ args }) {
+		configureLogger({ json: args.json, quiet: args.quiet });
+
+		const output = await runBarometerScore({
+			cwd: args.cwd,
+			answersPath: args.answers,
+		});
+
+		const flags: OutputFlags = {
+			json: args.json,
+			human: args.human,
+			quiet: args.quiet,
+			mvi: args.mvi,
+		};
+
+		emitResult(output, flags, (data) => formatScoreHuman(data));
+
+		const exitCode = resolveExitCode(output);
+		if (output.success) {
+			forgeLogger.success(`Score: ${output.data.score}% — ${output.data.rating}`);
+		}
+		process.exit(exitCode);
+	},
+});
+
+// ---------------------------------------------------------------------------
+// Citty command definition
+// ---------------------------------------------------------------------------
+
+/**
+ * Citty command definition for `forge-ts barometer`.
+ *
+ * Generates a documentation effectiveness test (questions + answers + rubric)
+ * from the project's source code. Includes a `score` subcommand for evaluating
+ * agent answers.
+ *
+ * @example
+ * ```typescript
+ * import { barometerCommand } from "@forge-ts/cli/commands/barometer";
+ * // Registered as a top-level subcommand of `forge-ts`
+ * ```
+ * @public
+ */
+export const barometerCommand = defineCommand({
+	meta: {
+		name: "barometer",
+		description: `Documentation effectiveness test — measures whether generated docs
+faithfully reflect source code by generating questions only answerable from docs.
+
+WORKFLOW (run these steps in order)
+
+  Step 1: Generate answer key
+    $ forge-ts barometer
+    Output: .forge/barometer.json (questions + answers + rubric)
+
+  Step 2: Generate agent test
+    $ forge-ts barometer --questions-only --json > test.json
+    Output: Same questions with answers set to "(redacted)"
+            Includes agent instructions and expected response format
+
+  Step 3: Run the test
+    Give an LLM agent ONLY these inputs:
+      - test.json (the redacted questions)
+      - docs/generated/ directory (generated documentation)
+    Prohibit access to: src/, packages/, any source code
+    Agent writes answers to: answers.json (format shown below)
+
+  Step 4: Score
+    $ forge-ts barometer score --answers answers.json
+    Output: Score percentage + rating band + missed categories
+
+ANSWER FORMAT (answers.json)
+  { "answers": [{ "id": "Q001", "answer": "your answer" }] }
+
+RUBRIC
+  90-100%  Elite SSoT      Agents can operate with zero source code access
+  70-89%   High Fidelity   Excellent, may miss @remarks details
+  50-69%   Standard        API usage OK, architecture needs source access
+  0-49%    Stale/Shallow   Needs deeper @remarks and @example coverage
+
+OUTPUT FILES
+  .forge/barometer.json   Full answer key (gitignored, never committed)
+  stdout (--human)        Summary with sample questions
+  stdout (--json)         LAFS envelope for programmatic use`,
+	},
+	args: {
+		cwd: {
+			type: "string",
+			description: "Project root directory",
+		},
+		"questions-only": {
+			type: "boolean",
+			description: "Redact answers and include agent instructions for testing",
+			default: false,
+		},
+		json: {
+			type: "boolean",
+			description: "Output as LAFS JSON envelope",
+			default: false,
+		},
+		human: {
+			type: "boolean",
+			description: "Output as formatted text",
+			default: false,
+		},
+		quiet: {
+			type: "boolean",
+			description: "Suppress non-essential output",
+			default: false,
+		},
+		mvi: {
+			type: "string",
+			description: "MVI verbosity level: minimal, standard, full",
+		},
+	},
+	subCommands: {
+		score: barometerScoreCommand,
+	},
+	async run({ rawArgs, args }) {
+		// If score subcommand was dispatched, citty already ran it
+		if (rawArgs.some((arg) => arg === "score")) return;
+
+		configureLogger({ json: args.json, quiet: args.quiet });
+
 		const questionsOnly = args["questions-only"] ?? false;
 		const output = await runBarometer({
 			cwd: args.cwd,

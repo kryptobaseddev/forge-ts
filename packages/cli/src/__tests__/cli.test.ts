@@ -1,6 +1,8 @@
+import { join } from "node:path";
 import type { ForgeConfig, ForgeResult, ForgeSymbol } from "@forge-ts/core";
 import { Visibility } from "@forge-ts/core";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { runBarometer } from "../commands/barometer.js";
 import { runBuild } from "../commands/build.js";
 import { getStagedFiles, runCheck } from "../commands/check.js";
 import { runTest } from "../commands/test.js";
@@ -16,6 +18,7 @@ vi.mock("@forge-ts/core", async (importOriginal) => {
 	return {
 		...actual,
 		loadConfig: vi.fn(),
+		createWalker: vi.fn(),
 	};
 });
 
@@ -76,8 +79,15 @@ function makeConfig(overrides: Partial<ForgeConfig> = {}): ForgeConfig {
 		doctest: { enabled: false, cacheDir: "/fake/.cache" },
 		api: { enabled: false, openapi: false, openapiPath: "/fake/docs/openapi.json" },
 		gen: { enabled: false, formats: [], llmsTxt: false, readmeSync: false },
+		bypass: { dailyBudget: 3, durationHours: 4 },
+		guards: {
+			tsconfig: { enabled: false, requiredFlags: {} },
+			biome: { enabled: false, lockedRules: [] },
+			packageJson: { enabled: false, minNodeVersion: "18.0.0", requiredFields: [] },
+		},
+		project: {},
 		...overrides,
-	};
+	} as ForgeConfig;
 }
 
 function makeResult(overrides: Partial<ForgeResult> = {}): ForgeResult {
@@ -938,5 +948,274 @@ describe("configureLogger", () => {
 	it("json takes precedence over verbose", () => {
 		configureLogger({ json: true, verbose: true });
 		expect(forgeLogger.level).toBe(0);
+	});
+});
+
+// ---------------------------------------------------------------------------
+// runBarometer tests
+// ---------------------------------------------------------------------------
+
+describe("runBarometer", () => {
+	const tmpDir = join(process.cwd(), ".forge-test-tmp");
+
+	afterEach(async () => {
+		vi.clearAllMocks();
+		// Clean up temp dir
+		const { rm } = await import("node:fs/promises");
+		await rm(tmpDir, { recursive: true, force: true });
+	});
+
+	function makeBarometerConfig() {
+		return makeConfig({ rootDir: tmpDir });
+	}
+
+	it("generates questions from exported symbols", async () => {
+		const { loadConfig, createWalker } = await import("@forge-ts/core");
+
+		const sym = makeSymbol("doThing", {
+			kind: "function",
+			signature: "(input: string) => boolean",
+			documentation: { summary: "Does a thing." },
+		});
+
+		vi.mocked(loadConfig).mockResolvedValue(makeBarometerConfig());
+		vi.mocked(createWalker).mockReturnValue({ walk: () => [sym] } as ReturnType<
+			typeof createWalker
+		>);
+
+		const output = await runBarometer({ cwd: tmpDir });
+		expect(output.success).toBe(true);
+		expect(output.data.questions.length).toBeGreaterThan(0);
+
+		// Should include signature questions about doThing
+		const returnQ = output.data.questions.find(
+			(q) => q.question.includes("doThing()") && q.question.includes("return"),
+		);
+		expect(returnQ).toBeDefined();
+		expect(returnQ?.answer).toBe("boolean");
+	});
+
+	it("redacts answers when questionsOnly is true", async () => {
+		const { loadConfig, createWalker } = await import("@forge-ts/core");
+
+		const sym = makeSymbol("doThing", {
+			kind: "function",
+			signature: "(input: string) => boolean",
+			documentation: { summary: "Does a thing." },
+		});
+
+		vi.mocked(loadConfig).mockResolvedValue(makeBarometerConfig());
+		vi.mocked(createWalker).mockReturnValue({ walk: () => [sym] } as ReturnType<
+			typeof createWalker
+		>);
+
+		const output = await runBarometer({ cwd: tmpDir, questionsOnly: true });
+		expect(output.success).toBe(true);
+
+		// Every answer must be "(redacted)"
+		for (const q of output.data.questions) {
+			expect(q.answer).toBe("(redacted)");
+		}
+	});
+
+	it("includes W014-W020 rule questions", async () => {
+		const { loadConfig, createWalker } = await import("@forge-ts/core");
+
+		vi.mocked(loadConfig).mockResolvedValue(makeBarometerConfig());
+		vi.mocked(createWalker).mockReturnValue({ walk: () => [] } as ReturnType<typeof createWalker>);
+
+		const output = await runBarometer({ cwd: tmpDir });
+
+		// Should generate questions for all rules including W014-W020
+		const ruleCodes = new Set(
+			output.data.questions.filter((q) => q.category === "rules").map((q) => q.source.symbol),
+		);
+		for (const code of ["W014", "W015", "W016", "W017", "W018", "W019", "W020"]) {
+			expect(ruleCodes.has(code)).toBe(true);
+		}
+	});
+
+	it("includes instructions in questions-only output", async () => {
+		const { loadConfig, createWalker } = await import("@forge-ts/core");
+
+		vi.mocked(loadConfig).mockResolvedValue(makeBarometerConfig());
+		vi.mocked(createWalker).mockReturnValue({ walk: () => [] } as ReturnType<typeof createWalker>);
+
+		const output = await runBarometer({ cwd: tmpDir, questionsOnly: true });
+		expect(output.data.instructions).toBeDefined();
+		expect(output.data.instructions?.task).toContain("ONLY the documentation");
+		expect(output.data.instructions?.docsPath).toBe("docs/generated/");
+		expect(output.data.instructions?.responseFormat.example.answers).toBeDefined();
+	});
+
+	it("does not include instructions when questionsOnly is false", async () => {
+		const { loadConfig, createWalker } = await import("@forge-ts/core");
+
+		vi.mocked(loadConfig).mockResolvedValue(makeBarometerConfig());
+		vi.mocked(createWalker).mockReturnValue({ walk: () => [] } as ReturnType<typeof createWalker>);
+
+		const output = await runBarometer({ cwd: tmpDir });
+		expect(output.data.instructions).toBeUndefined();
+	});
+
+	it("writes full answers to disk even when questionsOnly is true", async () => {
+		const { loadConfig, createWalker } = await import("@forge-ts/core");
+		const { readFile: readFileAsync } = await import("node:fs/promises");
+
+		const sym = makeSymbol("doThing", {
+			kind: "function",
+			signature: "(input: string) => boolean",
+			documentation: { summary: "Does a thing." },
+		});
+
+		vi.mocked(loadConfig).mockResolvedValue(makeBarometerConfig());
+		vi.mocked(createWalker).mockReturnValue({ walk: () => [sym] } as ReturnType<
+			typeof createWalker
+		>);
+
+		await runBarometer({ cwd: tmpDir, questionsOnly: true });
+
+		// The disk file should have full answers, not redacted
+		const diskContent = JSON.parse(
+			await readFileAsync(join(tmpDir, ".forge", "barometer.json"), "utf8"),
+		);
+		const sigQuestions = diskContent.questions.filter(
+			(q: { category: string }) => q.category === "signature",
+		);
+		for (const q of sigQuestions) {
+			expect(q.answer).not.toBe("(redacted)");
+		}
+		// Instructions should not be in the disk file
+		expect(diskContent.instructions).toBeUndefined();
+	});
+});
+
+// ---------------------------------------------------------------------------
+// runBarometerScore tests
+// ---------------------------------------------------------------------------
+
+describe("runBarometerScore", () => {
+	const tmpDir = join(process.cwd(), ".forge-score-test-tmp");
+
+	afterEach(async () => {
+		vi.clearAllMocks();
+		const { rm } = await import("node:fs/promises");
+		await rm(tmpDir, { recursive: true, force: true });
+	});
+
+	async function setupAnswerKey(
+		questions: Array<{ id: string; answer: string; category: string }>,
+	) {
+		const { mkdir: mkdirAsync, writeFile: writeFileAsync } = await import("node:fs/promises");
+		const forgeDir = join(tmpDir, ".forge");
+		await mkdirAsync(forgeDir, { recursive: true });
+		const result = {
+			$schema: "https://forge-ts.dev/schemas/v1/barometer.schema.json",
+			version: "1.0.0",
+			project: "test",
+			generated: new Date().toISOString(),
+			symbolCount: 1,
+			questions: questions.map((q) => ({
+				id: q.id,
+				category: q.category,
+				difficulty: "easy",
+				question: `Question ${q.id}`,
+				answer: q.answer,
+				source: { symbol: "test", file: "test.ts", field: "test" },
+			})),
+			rubric: { scale: [], scoring: "" },
+		};
+		await writeFileAsync(join(forgeDir, "barometer.json"), JSON.stringify(result), "utf8");
+	}
+
+	async function writeAnswers(answers: Array<{ id: string; answer: string }>) {
+		const { mkdir: mkdirAsync, writeFile: writeFileAsync } = await import("node:fs/promises");
+		await mkdirAsync(tmpDir, { recursive: true });
+		const path = join(tmpDir, "agent-answers.json");
+		await writeFileAsync(path, JSON.stringify({ answers }), "utf8");
+		return path;
+	}
+
+	it("scores exact matches as correct", async () => {
+		const { runBarometerScore: scoreFn } = await import("../commands/barometer.js");
+		await setupAnswerKey([
+			{ id: "Q001", answer: "boolean", category: "signature" },
+			{ id: "Q002", answer: "string", category: "signature" },
+		]);
+		const answersPath = await writeAnswers([
+			{ id: "Q001", answer: "boolean" },
+			{ id: "Q002", answer: "string" },
+		]);
+
+		const output = await scoreFn({ cwd: tmpDir, answersPath });
+		expect(output.success).toBe(true);
+		expect(output.data.correct).toBe(2);
+		expect(output.data.score).toBe(100);
+	});
+
+	it("scores partial matches as partial", async () => {
+		const { runBarometerScore: scoreFn } = await import("../commands/barometer.js");
+		await setupAnswerKey([{ id: "Q001", answer: "boolean", category: "signature" }]);
+		const answersPath = await writeAnswers([{ id: "Q001", answer: "It returns a boolean value" }]);
+
+		const output = await scoreFn({ cwd: tmpDir, answersPath });
+		expect(output.data.partial).toBe(1);
+		expect(output.data.correct).toBe(0);
+		expect(output.data.score).toBe(50);
+	});
+
+	it("scores empty answers as wrong", async () => {
+		const { runBarometerScore: scoreFn } = await import("../commands/barometer.js");
+		await setupAnswerKey([{ id: "Q001", answer: "boolean", category: "signature" }]);
+		const answersPath = await writeAnswers([{ id: "Q001", answer: "" }]);
+
+		const output = await scoreFn({ cwd: tmpDir, answersPath });
+		expect(output.data.wrong).toBe(1);
+		expect(output.data.score).toBe(0);
+	});
+
+	it("scores unanswered questions as wrong", async () => {
+		const { runBarometerScore: scoreFn } = await import("../commands/barometer.js");
+		await setupAnswerKey([
+			{ id: "Q001", answer: "boolean", category: "signature" },
+			{ id: "Q002", answer: "string", category: "signature" },
+		]);
+		// Only answer Q001
+		const answersPath = await writeAnswers([{ id: "Q001", answer: "boolean" }]);
+
+		const output = await scoreFn({ cwd: tmpDir, answersPath });
+		expect(output.data.correct).toBe(1);
+		expect(output.data.wrong).toBe(1);
+		expect(output.data.score).toBe(50);
+	});
+
+	it("returns error when answer key is missing", async () => {
+		const { runBarometerScore: scoreFn } = await import("../commands/barometer.js");
+		const { mkdir: mkdirAsync, writeFile: writeFileAsync } = await import("node:fs/promises");
+		await mkdirAsync(tmpDir, { recursive: true });
+		const answersPath = join(tmpDir, "answers.json");
+		await writeFileAsync(answersPath, JSON.stringify({ answers: [] }), "utf8");
+
+		const output = await scoreFn({ cwd: tmpDir, answersPath });
+		expect(output.success).toBe(false);
+		expect(output.errors?.[0]?.code).toBe("BAROMETER_NO_KEY");
+	});
+
+	it("assigns correct rating band", async () => {
+		const { runBarometerScore: scoreFn } = await import("../commands/barometer.js");
+		const questions = Array.from({ length: 10 }, (_, i) => ({
+			id: `Q${String(i + 1).padStart(3, "0")}`,
+			answer: `answer${i}`,
+			category: "signature",
+		}));
+		await setupAnswerKey(questions);
+		// Answer 9 of 10 correctly
+		const answersPath = await writeAnswers(
+			questions.slice(0, 9).map((q) => ({ id: q.id, answer: q.answer })),
+		);
+
+		const output = await scoreFn({ cwd: tmpDir, answersPath });
+		expect(output.data.rating).toBe("Elite SSoT");
+		expect(output.data.score).toBe(90);
 	});
 });

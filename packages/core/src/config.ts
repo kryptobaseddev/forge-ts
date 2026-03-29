@@ -233,41 +233,14 @@ const KNOWN_TOP_KEYS = new Set([
 
 /**
  * Known keys within `enforce.rules`.
+ *
+ * Derived from `defaultConfig()` to ensure the valid rules list is always
+ * in sync with the defaults. Adding a rule to `defaultConfig()` automatically
+ * makes it a known rule — no manual duplication required.
+ *
  * @internal
  */
-const KNOWN_RULE_KEYS = new Set([
-	"require-summary",
-	"require-param",
-	"require-returns",
-	"require-example",
-	"require-package-doc",
-	"require-class-member-doc",
-	"require-interface-member-doc",
-	"require-tsdoc-syntax",
-	"require-remarks",
-	"require-default-value",
-	"require-type-param",
-	"require-see",
-	"require-release-tag",
-	"require-fresh-guides",
-	"require-guide-coverage",
-	"require-internal-boundary",
-	"require-route-response",
-	"require-inheritdoc-source",
-	"require-migration-path",
-	"require-since",
-	"require-fresh-examples",
-	"require-no-ts-ignore",
-	"require-no-any-in-api",
-	"require-fresh-link-text",
-	"require-fresh-params",
-	"require-param-count",
-	"require-fresh-returns",
-	"require-meaningful-remarks",
-	"require-operation-completeness",
-	"require-ckm-tag-content",
-	"require-constraint-throws",
-]);
+const KNOWN_RULE_KEYS = new Set(Object.keys(defaultConfig("/").enforce.rules));
 
 /**
  * Known keys within `tsdoc`.

@@ -1,5 +1,18 @@
 # @forge-ts/cli
 
+## 0.22.1
+
+### Patch Changes
+
+- [`cabf04e`](https://github.com/kryptobaseddev/forge-ts/commit/cabf04e24158014f3f229b732475f16ba8c06ceb) Thanks [@kryptobaseddev](https://github.com/kryptobaseddev)! - fix: barometer skips forge-ts internal questions for consumer projects, improves score matching, restricts strategy regex to functions, and aligns symbol counts between llms.txt and barometer
+
+- Updated dependencies [[`cabf04e`](https://github.com/kryptobaseddev/forge-ts/commit/cabf04e24158014f3f229b732475f16ba8c06ceb)]:
+  - @forge-ts/gen@0.22.1
+  - @forge-ts/core@0.22.1
+  - @forge-ts/enforcer@0.22.1
+  - @forge-ts/doctest@0.22.1
+  - @forge-ts/api@0.22.1
+
 ## 0.22.0
 
 ### Minor Changes

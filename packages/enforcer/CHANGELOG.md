@@ -1,5 +1,12 @@
 # @forge-ts/enforcer
 
+## 0.23.0
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @forge-ts/core@0.23.0
+
 ## 0.22.1
 
 ### Patch Changes

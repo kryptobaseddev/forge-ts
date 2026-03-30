@@ -67,9 +67,21 @@ const output = await runBarometer({ cwd: process.cwd() });
 console.log(`Generated ${output.data.questions.length} questions`);
 ```
 
+## `runBarometerScore()`
+
+*Scores agent answers against the barometer answer key.*
+
+[View in API reference](/packages/cli/api/functions#runbarometerscore)
+
+```typescript
+import { runBarometerScore } from "@forge-ts/cli/commands/barometer";
+const output = await runBarometerScore({ answersPath: "answers.json" });
+console.log(`Score: ${output.data.score}%`);
+```
+
 ## `barometerCommand`
 
-*Citty command definition for `forge-ts barometer`.  Generates a documentation effectiveness test (questions + answers + rubric) from the project's source code.*
+*Citty command definition for `forge-ts barometer`.  Generates a documentation effectiveness test (questions + answers + rubric) from the project's source code. Includes a `score` subcommand for evaluating agent answers.*
 
 [View in API reference](/packages/cli/api/functions#barometercommand)
 

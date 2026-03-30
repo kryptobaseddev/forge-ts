@@ -76,35 +76,6 @@ const config: Partial<ForgeConfig> = {
 | `_configWarnings` | `string[] | undefined` | Warnings generated during config loading (e.g., unknown keys). Populated by loadConfig(). Agents should surface these in output. |
 | `project` | `{ repository?: string; homepage?: string; packageName?: string; description?: string; version?: string; bin?: Record<string, string>; scripts?: Record<string, string>; keywords?: string[]; }` | Project metadata — auto-detected from package.json if not provided. |
 
-## `CKMConfigEntry`
-
-A single entry in the configuration schema.
-
-```typescript
-import type { CKMConfigEntry } from "forge-ts";
-
-const config: Partial<CKMConfigEntry> = {
-  // Dot-path key for this config entry (e.g., "enforce.strict").
-  key: "...",
-  // TypeScript type of this config entry.
-  type: "...",
-  // Default value from `@defaultValue` tag, if present.
-  default: "...",
-  // Human-readable description from the property summary.
-  description: "...",
-  // Downstream effect or behaviour this config entry controls, from `@remarks`.
-  effect: "...",
-};
-```
-
-| Property | Type | Description |
-|----------|------|-------------|
-| `key` | `string` | Dot-path key for this config entry (e.g., "enforce.strict"). |
-| `type` | `string` | TypeScript type of this config entry. |
-| `default` | `string | undefined` | Default value from `@defaultValue` tag, if present. |
-| `description` | `string` | Human-readable description from the property summary. |
-| `effect` | `string | undefined` | Downstream effect or behaviour this config entry controls, from `@remarks`. |
-
 ## `SSGConfigFile`
 
 A single generated SSG configuration file.

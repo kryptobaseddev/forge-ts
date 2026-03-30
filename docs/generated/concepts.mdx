@@ -63,7 +63,10 @@ forge-ts processes your TypeScript source with a single AST traversal, extractin
 - **`BarometerSource`** — Source provenance for a barometer question.
 - **`BarometerQuestion`** — A single barometer question with its ground-truth answer.
 - **`BarometerRatingBand`** — A single rating band in the barometer scoring rubric.
+- **`BarometerInstructions`** — Agent instructions included in `--questions-only` output.
 - **`BarometerResult`** — Full barometer output written to `.forge/barometer.json`.
+- **`BarometerScoredAnswer`** — A single scored answer in the barometer score output.
+- **`BarometerScoreResult`** — Full barometer score output.
 - **`BarometerArgs`** — Arguments for the `barometer` command.
 - **`BuildArgs`** — Arguments for the `build` command.
 - **`BuildStep`** — A single step in the build pipeline.
@@ -130,12 +133,11 @@ forge-ts processes your TypeScript source with a single AST traversal, extractin
 - **`DevServerCommand`** — Command to start a local dev server for doc preview.
 - **`SSGAdapter`** — The central SSG adapter interface. Every doc platform provider implements this contract. One file per provider. No shared mutable state.
 - **`CKMConcept`** — A domain concept extracted from the codebase.
-- **`CKMOperationInput`** — A single input parameter for a CKM operation.
 - **`CKMOperation`** — A user-facing operation extracted from the codebase.
 - **`CKMConstraint`** — An enforced constraint or validation rule extracted from the codebase.
 - **`CKMWorkflow`** — A multi-step workflow for achieving a common goal.
 - **`CKMConfigEntry`** — A single entry in the configuration schema.
-- **`CKMManifest`** — The top-level Codebase Knowledge Manifest.
+- **`CKMManifest`** — The top-level Codebase Knowledge Manifest (v2).
 - **`MarkdownOptions`** — Options controlling Markdown output.
 - **`ReadmeSyncOptions`** — Options controlling README sync behaviour.
 - **`SkillPackage`** — A generated skill package following the agentskills.io directory structure. Contains SKILL.md plus optional references and scripts files.

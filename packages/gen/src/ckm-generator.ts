@@ -17,241 +17,126 @@
  */
 
 import type { ForgeConfig, ForgeSymbol } from "@forge-ts/core";
+import type {
+	CanonicalType,
+	CkmConcept,
+	CkmConfigEntry,
+	CkmConstraint,
+	CkmManifest,
+	CkmOperation,
+	CkmTypeRef,
+	CkmWorkflow,
+} from "ckm-sdk";
+import { validateManifest } from "ckm-sdk";
 
 // ---------------------------------------------------------------------------
-// CKM Schema Types
+// Re-export SDK types under the legacy CKM* names for backward compat
 // ---------------------------------------------------------------------------
 
 /**
  * A domain concept extracted from the codebase.
- *
- * @remarks
- * Concepts are identified either by an explicit `@concept` TSDoc tag or by
- * heuristic name-matching on exported interfaces/types whose names indicate
- * domain objects (e.g., Config, Options, State, Result).
- *
- * @example
- * ```typescript
- * const concept: CKMConcept = {
- *   id: "concept-ForgeConfig",
- *   name: "ForgeConfig",
- *   what: "Full configuration for a forge-ts run.",
- *   properties: [{ name: "rootDir", type: "string", description: "Root directory." }],
- *   rules: ["rootDir must be an absolute path"],
- *   relatedTo: ["EnforceRules"],
- * };
- * ```
  * @public
  */
-export interface CKMConcept {
-	/** Stable identifier for this concept (e.g., "concept-ForgeConfig"). */
-	id: string;
-	/** The declared name of the concept type or interface. */
-	name: string;
-	/** Human-readable description from `@concept` tag content or summary. */
-	what: string;
-	/** Properties of this concept extracted from child symbols. */
-	properties?: Array<{ name: string; type: string; description: string }>;
-	/** Validation rules extracted from `@constraint` tags or `@remarks` bullet points. */
-	rules?: string[];
-	/** Related concept names from `@see` tags or type references. */
-	relatedTo?: string[];
-}
+export type CKMConcept = CkmConcept;
 
 /**
  * A single input parameter for a CKM operation.
- *
- * @remarks
- * Derived from `@param` TSDoc tags, with type and default information
- * extracted from the function signature and `@defaultValue` tags.
- *
  * @public
  */
-export interface CKMOperationInput {
-	/** Parameter name. */
-	name: string;
-	/** TypeScript type of the parameter. */
-	type: string;
-	/** Whether this parameter is required (non-optional). */
-	required: boolean;
-	/** Default value from `@defaultValue` tag, if present. */
-	default?: string;
-	/** Description from `@param` tag. */
-	description: string;
-}
+export type { CkmInput as CKMOperationInput } from "ckm-sdk";
 
 /**
  * A user-facing operation extracted from the codebase.
- *
- * @remarks
- * Operations are identified either by an explicit `@operation` TSDoc tag
- * or by heuristic name-matching on exported functions whose names start
- * with action verbs (run, create, validate, init, generate, build, check, enforce).
- *
- * @example
- * ```typescript
- * const op: CKMOperation = {
- *   id: "op-runBuild",
- *   name: "runBuild",
- *   what: "Runs the full build pipeline.",
- *   inputs: [{ name: "args", type: "BuildArgs", required: true, description: "CLI arguments." }],
- *   outputs: { json: "CommandOutput<BuildResult>" },
- * };
- * ```
  * @public
  */
-export interface CKMOperation {
-	/** Stable identifier for this operation (e.g., "op-runBuild"). */
-	id: string;
-	/** The function or command name. */
-	name: string;
-	/** Human-readable description from `@operation` tag content or summary. */
-	what: string;
-	/** Preconditions extracted from `@remarks` or `@throws` tags. */
-	preconditions?: string[];
-	/** Input parameters derived from `@param` tags. */
-	inputs: CKMOperationInput[];
-	/** Output descriptions for text and JSON formats. */
-	outputs?: { text?: string; json?: string };
-	/** Exit codes and their meanings, if documented. */
-	exitCodes?: Record<string, string>;
-	/** Checks or validations performed by this operation, from `@remarks`. */
-	checksPerformed?: string[];
-}
+export type CKMOperation = CkmOperation;
 
 /**
  * An enforced constraint or validation rule extracted from the codebase.
- *
- * @remarks
- * Constraints are identified either by an explicit `@constraint` TSDoc tag
- * or heuristically from functions that contain `@throws` tags indicating
- * validation failures.
- *
- * @example
- * ```typescript
- * const constraint: CKMConstraint = {
- *   id: "constraint-require-summary",
- *   rule: "Exported symbol must have a TSDoc summary.",
- *   enforcedBy: "checkRequireSummary",
- *   configKey: "enforce.rules.require-summary",
- *   default: "error",
- *   security: false,
- * };
- * ```
  * @public
  */
-export interface CKMConstraint {
-	/** Stable identifier for this constraint (e.g., "constraint-require-summary"). */
-	id: string;
-	/** The rule description from `@constraint` tag content. */
-	rule: string;
-	/** Name of the function that enforces this constraint. */
-	enforcedBy: string;
-	/** Config key that controls this constraint, from `@remarks`. */
-	configKey?: string;
-	/** Default value for the config key. */
-	default?: string;
-	/** Whether this constraint has security implications (from `@constraint security` keyword). */
-	security?: boolean;
-}
+export type CKMConstraint = CkmConstraint;
 
 /**
  * A multi-step workflow for achieving a common goal.
- *
- * @remarks
- * Workflows are identified by an explicit `@workflow` TSDoc tag.
- * The tag content is parsed for numbered steps, backtick-wrapped commands,
- * and expected outcomes.
- *
- * @example
- * ```typescript
- * const workflow: CKMWorkflow = {
- *   id: "workflow-first-time-setup",
- *   goal: "Set up forge-ts in a new project",
- *   steps: [
- *     { command: "npx forge-ts init", expect: "Creates forge-ts.config.ts" },
- *     { command: "npx forge-ts check", expect: "Reports documentation gaps" },
- *   ],
- * };
- * ```
  * @public
  */
-export interface CKMWorkflow {
-	/** Stable identifier for this workflow (e.g., "workflow-first-time-setup"). */
-	id: string;
-	/** The goal this workflow achieves, from `@workflow` tag content. */
-	goal: string;
-	/** Ordered steps to complete this workflow. */
-	steps: Array<{
-		/** Shell or CLI command to run (extracted from backtick-wrapped text). */
-		command?: string;
-		/** Manual instruction when no command is applicable. */
-		manual?: string;
-		/** Expected outcome of this step. */
-		expect?: string;
-		/** Additional note or caveat for this step. */
-		note?: string;
-	}>;
-}
+export type CKMWorkflow = CkmWorkflow;
 
 /**
  * A single entry in the configuration schema.
- *
- * @remarks
- * Extracted from interfaces whose names contain "Config" or "Options".
- * Each property of such an interface becomes a config entry with its
- * type, default value, description, and downstream effect.
- *
  * @public
  */
-export interface CKMConfigEntry {
-	/** Dot-path key for this config entry (e.g., "enforce.strict"). */
-	key: string;
-	/** TypeScript type of this config entry. */
-	type: string;
-	/** Default value from `@defaultValue` tag, if present. */
-	default?: string;
-	/** Human-readable description from the property summary. */
-	description: string;
-	/** Downstream effect or behaviour this config entry controls, from `@remarks`. */
-	effect?: string;
-}
+export type CKMConfigEntry = CkmConfigEntry;
 
 /**
- * The top-level Codebase Knowledge Manifest.
+ * The top-level Codebase Knowledge Manifest (v2).
  *
  * @remarks
- * This is the root schema for the CKM JSON output. It aggregates all five
- * categories of operational knowledge: concepts, operations, constraints,
- * workflows, and config schema entries.
+ * Uses the canonical schema types from `ckm-sdk` for compile-time
+ * contract enforcement between generator and consumer.
  *
- * @example
- * ```typescript
- * import { generateCKM } from "@forge-ts/gen";
- * const manifest = generateCKM(symbols, config);
- * console.log(manifest.concepts.length); // number of extracted concepts
- * ```
  * @public
  */
-export interface CKMManifest {
-	/** JSON Schema URI for the CKM format. */
-	$schema: string;
-	/** CKM format version. */
-	version: string;
-	/** Project name from config. */
-	project: string;
-	/** ISO 8601 timestamp of when the manifest was generated. */
-	generated: string;
-	/** Domain concepts extracted from the codebase. */
-	concepts: CKMConcept[];
-	/** User-facing operations extracted from the codebase. */
-	operations: CKMOperation[];
-	/** Enforced constraints and validation rules. */
-	constraints: CKMConstraint[];
-	/** Multi-step workflows for common goals. */
-	workflows: CKMWorkflow[];
-	/** Configuration schema entries. */
-	configSchema: CKMConfigEntry[];
+export type CKMManifest = CkmManifest;
+
+// ---------------------------------------------------------------------------
+// Internal extraction types (pre-SDK mapping)
+// ---------------------------------------------------------------------------
+
+/** @internal */
+interface RawConcept {
+	id: string;
+	name: string;
+	what: string;
+	properties?: Array<{ name: string; type: string; description: string }>;
+	rules?: string[];
+	relatedTo?: string[];
+}
+
+/** @internal */
+interface RawOperationInput {
+	name: string;
+	type: string;
+	required: boolean;
+	description: string;
+}
+
+/** @internal */
+interface RawOperation {
+	id: string;
+	name: string;
+	what: string;
+	preconditions?: string[];
+	inputs: RawOperationInput[];
+	outputs?: { text?: string; json?: string };
+	checksPerformed?: string[];
+}
+
+/** @internal */
+interface RawConstraint {
+	id: string;
+	rule: string;
+	enforcedBy: string;
+	configKey?: string;
+	default?: string;
+	security?: boolean;
+}
+
+/** @internal */
+interface RawWorkflow {
+	id: string;
+	goal: string;
+	steps: Array<{ command?: string; manual?: string; expect?: string; note?: string }>;
+}
+
+/** @internal */
+interface RawConfigEntry {
+	key: string;
+	type: string;
+	default?: string;
+	description: string;
+	effect?: string;
 }
 
 // ---------------------------------------------------------------------------
@@ -259,10 +144,55 @@ export interface CKMManifest {
 // ---------------------------------------------------------------------------
 
 /** CKM format version. */
-const CKM_VERSION = "1.0.0";
+const CKM_VERSION = "2.0.0";
 
 /** CKM JSON Schema URI. */
-const CKM_SCHEMA = "https://forge-ts.dev/schemas/ckm/v1.json";
+const CKM_SCHEMA = "https://ckm.dev/schemas/v2.json";
+
+/** Derives a topic slug from a concept name. */
+function deriveSlug(name: string): string {
+	return name
+		.replace(/Config$/, "")
+		.replace(/Result$/, "")
+		.replace(/Options$/, "")
+		.replace(/Settings$/, "")
+		.toLowerCase();
+}
+
+/** Infers semantic tags from a concept name. Every concept gets at least one tag. */
+function inferConceptTags(name: string): string[] {
+	const tags: string[] = [];
+	if (/Config$/i.test(name)) tags.push("config");
+	if (/Result$/i.test(name)) tags.push("result");
+	if (/Options$/i.test(name) || /Settings$/i.test(name)) tags.push("options");
+	if (/State$/i.test(name) || /Status$/i.test(name)) tags.push("state");
+	if (/Record$/i.test(name) || /Entry$/i.test(name)) tags.push("data");
+	if (/Event$/i.test(name)) tags.push("event");
+	// Fallback: every concept must have at least one tag for topic derivation
+	if (tags.length === 0) tags.push("domain");
+	return tags;
+}
+
+/** Maps a TypeScript type string to a canonical CKM type. */
+function inferCanonical(tsType: string): CanonicalType {
+	const lower = tsType.toLowerCase().trim();
+	if (lower === "string") return "string";
+	if (lower === "boolean") return "boolean";
+	if (lower === "number") return "number";
+	if (lower.includes("[]") || lower.startsWith("array")) return "array";
+	if (lower === "object" || lower.startsWith("record")) return "object";
+	if (lower === "null" || lower === "undefined" || lower === "void") return "null";
+	if (lower === "unknown" || lower === "any") return "any";
+	if (lower.includes("|")) return "string";
+	return "object";
+}
+
+/** Converts a raw TS type string to a CkmTypeRef object. */
+function toTypeRef(tsType: string): CkmTypeRef {
+	const canonical = inferCanonical(tsType);
+	if (canonical === tsType.toLowerCase()) return { canonical };
+	return { canonical, original: tsType };
+}
 
 /**
  * Regex for heuristic concept detection from interface/type names.
@@ -409,8 +339,8 @@ function isConceptKind(kind: ForgeSymbol["kind"]): boolean {
  * @returns An array of {@link CKMConcept} entries.
  * @internal
  */
-function extractConcepts(symbols: ForgeSymbol[]): CKMConcept[] {
-	const concepts: CKMConcept[] = [];
+function extractConcepts(symbols: ForgeSymbol[]): RawConcept[] {
+	const concepts: RawConcept[] = [];
 	const seen = new Set<string>();
 
 	for (const sym of symbols) {
@@ -426,7 +356,7 @@ function extractConcepts(symbols: ForgeSymbol[]): CKMConcept[] {
 
 		const what = getTagValue(sym, "concept") ?? sym.documentation?.summary ?? "";
 
-		const properties: CKMConcept["properties"] = [];
+		const properties: RawConcept["properties"] = [];
 		for (const child of sym.children ?? []) {
 			properties.push({
 				name: child.name,
@@ -438,7 +368,7 @@ function extractConcepts(symbols: ForgeSymbol[]): CKMConcept[] {
 		const rules = extractRulesFromRemarks(sym.documentation?.remarks);
 		const relatedTo = extractSeeRefs(sym.documentation?.tags);
 
-		const concept: CKMConcept = {
+		const concept: RawConcept = {
 			id: makeId("concept", sym.name),
 			name: sym.name,
 			what,
@@ -466,8 +396,8 @@ function extractConcepts(symbols: ForgeSymbol[]): CKMConcept[] {
  * @returns An array of {@link CKMOperation} entries.
  * @internal
  */
-function extractOperations(symbols: ForgeSymbol[]): CKMOperation[] {
-	const operations: CKMOperation[] = [];
+function extractOperations(symbols: ForgeSymbol[]): RawOperation[] {
+	const operations: RawOperation[] = [];
 	const seen = new Set<string>();
 
 	for (const sym of symbols) {
@@ -484,7 +414,7 @@ function extractOperations(symbols: ForgeSymbol[]): CKMOperation[] {
 
 		const what = getTagValue(sym, "operation") ?? sym.documentation?.summary ?? "";
 
-		const inputs: CKMOperationInput[] = [];
+		const inputs: RawOperationInput[] = [];
 		for (const param of sym.documentation?.params ?? []) {
 			inputs.push({
 				name: param.name,
@@ -499,7 +429,7 @@ function extractOperations(symbols: ForgeSymbol[]): CKMOperation[] {
 			preconditions.push(t.type ? `${t.type}: ${t.description}` : t.description);
 		}
 
-		const outputs: CKMOperation["outputs"] = {};
+		const outputs: RawOperation["outputs"] = {};
 		if (sym.documentation?.returns) {
 			const retType = sym.documentation.returns.type;
 			if (retType?.toLowerCase().includes("json") || retType?.toLowerCase().includes("object")) {
@@ -521,7 +451,7 @@ function extractOperations(symbols: ForgeSymbol[]): CKMOperation[] {
 			}
 		}
 
-		const op: CKMOperation = {
+		const op: RawOperation = {
 			id: makeId("op", sym.name),
 			name: sym.name,
 			what,
@@ -550,8 +480,8 @@ function extractOperations(symbols: ForgeSymbol[]): CKMOperation[] {
  * @returns An array of {@link CKMConstraint} entries.
  * @internal
  */
-function extractConstraints(symbols: ForgeSymbol[]): CKMConstraint[] {
-	const constraints: CKMConstraint[] = [];
+function extractConstraints(symbols: ForgeSymbol[]): RawConstraint[] {
+	const constraints: RawConstraint[] = [];
 	const seen = new Set<string>();
 
 	for (const sym of symbols) {
@@ -624,8 +554,8 @@ function extractConstraints(symbols: ForgeSymbol[]): CKMConstraint[] {
  * @returns An array of {@link CKMWorkflow} entries.
  * @internal
  */
-function extractWorkflows(symbols: ForgeSymbol[]): CKMWorkflow[] {
-	const workflows: CKMWorkflow[] = [];
+function extractWorkflows(symbols: ForgeSymbol[]): RawWorkflow[] {
+	const workflows: RawWorkflow[] = [];
 
 	for (const sym of symbols) {
 		if (!sym.exported) continue;
@@ -636,7 +566,7 @@ function extractWorkflows(symbols: ForgeSymbol[]): CKMWorkflow[] {
 		const lines = workflowTag.split("\n");
 		const goal = lines[0]?.trim() ?? sym.documentation?.summary ?? "";
 
-		const steps: CKMWorkflow["steps"] = [];
+		const steps: RawWorkflow["steps"] = [];
 		for (let i = 1; i < lines.length; i++) {
 			const line = lines[i].trim();
 			if (!line) continue;
@@ -645,7 +575,7 @@ function extractWorkflows(symbols: ForgeSymbol[]): CKMWorkflow[] {
 			const cleaned = line.replace(/^\d+[.)]\s*/, "");
 			if (!cleaned) continue;
 
-			const step: CKMWorkflow["steps"][number] = {};
+			const step: RawWorkflow["steps"][number] = {};
 
 			// Look for backtick-wrapped commands
 			const cmdMatch = /`([^`]+)`/.exec(cleaned);
@@ -694,8 +624,8 @@ function extractWorkflows(symbols: ForgeSymbol[]): CKMWorkflow[] {
  * @returns An array of {@link CKMConfigEntry} entries.
  * @internal
  */
-function extractConfigSchema(symbols: ForgeSymbol[], prefix = ""): CKMConfigEntry[] {
-	const entries: CKMConfigEntry[] = [];
+function extractConfigSchema(symbols: ForgeSymbol[], prefix = ""): RawConfigEntry[] {
+	const entries: RawConfigEntry[] = [];
 	const seen = new Set<string>();
 
 	for (const sym of symbols) {
@@ -752,18 +682,120 @@ function extractConfigSchema(symbols: ForgeSymbol[], prefix = ""): CKMConfigEntr
  * ```
  * @public
  */
-export function generateCKM(symbols: ForgeSymbol[], config: ForgeConfig): CKMManifest {
+export function generateCKM(symbols: ForgeSymbol[], config: ForgeConfig): CkmManifest {
 	const projectName = config.project.packageName ?? config.rootDir.split("/").pop() ?? "Project";
+	const rawConcepts = extractConcepts(symbols);
 
-	return {
+	const manifest: CkmManifest = {
 		$schema: CKM_SCHEMA,
 		version: CKM_VERSION,
-		project: projectName,
-		generated: new Date().toISOString(),
-		concepts: extractConcepts(symbols),
-		operations: extractOperations(symbols),
-		constraints: extractConstraints(symbols),
-		workflows: extractWorkflows(symbols),
-		configSchema: extractConfigSchema(symbols),
+		meta: {
+			project: projectName,
+			language: "typescript",
+			generator: `forge-ts@${config.project.version ?? "unknown"}`,
+			generated: new Date().toISOString(),
+		},
+		concepts: rawConcepts.map((c) => ({
+			id: c.id,
+			name: c.name,
+			slug: deriveSlug(c.name),
+			what: c.what,
+			tags: inferConceptTags(c.name),
+			properties: c.properties?.map((p) => ({
+				name: p.name,
+				type: toTypeRef(p.type),
+				description: p.description,
+				required: true,
+				default: null,
+			})),
+			rules: c.rules,
+			relatedTo: c.relatedTo,
+		})),
+		operations: extractOperations(symbols).map((op) => ({
+			id: op.id,
+			name: op.name,
+			what: op.what,
+			tags: inferOperationTags(op, rawConcepts),
+			preconditions: op.preconditions,
+			inputs: op.inputs?.map((i) => ({
+				name: i.name,
+				type: toTypeRef(i.type),
+				required: i.required,
+				description: i.description,
+			})),
+			outputs: op.outputs?.text
+				? { type: toTypeRef(op.outputs.text), description: op.outputs.text }
+				: op.outputs?.json
+					? { type: toTypeRef(op.outputs.json), description: op.outputs.json }
+					: undefined,
+			checksPerformed: op.checksPerformed,
+		})),
+		constraints: extractConstraints(symbols).map((c) => ({
+			id: c.id,
+			rule: c.rule,
+			enforcedBy: c.enforcedBy,
+			severity: "error" as const,
+			configKey: c.configKey,
+			default: c.default,
+			security: c.security,
+		})),
+		workflows: extractWorkflows(symbols).map((wf) => ({
+			id: wf.id,
+			goal: wf.goal,
+			tags: [] as string[],
+			steps: wf.steps.map((s) => {
+				if (s.command) return { action: "command" as const, value: s.command, note: s.note };
+				if (s.manual) return { action: "manual" as const, value: s.manual, note: s.note };
+				return { action: "manual" as const, value: "" as string, note: s.note };
+			}),
+		})),
+		configSchema: extractConfigSchema(symbols).map((entry) => ({
+			key: migrateConfigKey(entry.key, rawConcepts),
+			type: toTypeRef(entry.type),
+			description: entry.description,
+			required: true,
+			default: entry.default ?? null,
+			effect: entry.effect,
+		})),
 	};
+
+	// Validate generated manifest against the v2 schema
+	const result = validateManifest(manifest);
+	if (!result.valid) {
+		const errorSummary = result.errors
+			.slice(0, 5)
+			.map((e) => `  ${e.path}: ${e.message}`)
+			.join("\n");
+		console.warn(
+			`[forge-ts] CKM manifest has ${result.errors.length} validation error(s):\n${errorSummary}`,
+		);
+	}
+
+	return manifest;
+}
+
+/** Infers operation tags by matching against concept slugs. */
+function inferOperationTags(op: RawOperation, concepts: RawConcept[]): string[] {
+	const tags: string[] = [];
+	const haystack = `${op.name} ${op.what}`.toLowerCase();
+	for (const c of concepts) {
+		const slug = deriveSlug(c.name);
+		if (slug && haystack.includes(slug)) tags.push(slug);
+	}
+	return [...new Set(tags)];
+}
+
+/** Migrates a config key from ConceptName.prop to slug.prop format. */
+function migrateConfigKey(key: string, concepts: RawConcept[]): string {
+	const parts = key.split(".");
+	if (parts.length >= 2) {
+		const conceptPart = parts[0] ?? "";
+		for (const c of concepts) {
+			if (c.name === conceptPart) {
+				return [deriveSlug(c.name), ...parts.slice(1)].join(".");
+			}
+		}
+		return [conceptPart.toLowerCase(), ...parts.slice(1)].join(".");
+	}
+	return key.toLowerCase();
 }

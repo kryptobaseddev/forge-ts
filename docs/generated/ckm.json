@@ -1,13 +1,21 @@
 {
-  "$schema": "https://forge-ts.dev/schemas/ckm/v1.json",
-  "version": "1.0.0",
+  "$schema": "https://ckm.dev/schemas/v2.json",
+  "version": "2.0.0",
+  "meta": {
+    "project": "forge-ts",
+    "language": "typescript",
+    "generator": "forge-ts@0.22.0",
+    "generated": "2026-03-30T14:32:17.614Z"
+  },
   "project": "forge-ts",
-  "generated": "2026-03-26T15:20:47.229Z",
+  "generated": "2026-03-30T14:32:17.614Z",
   "concepts": [
     {
       "id": "concept-AuditEventType",
       "name": "AuditEventType",
-      "what": "Discriminated event types recorded in the audit trail."
+      "what": "Discriminated event types recorded in the audit trail.",
+      "slug": "auditeventtype",
+      "tags": []
     },
     {
       "id": "concept-AuditEvent",
@@ -16,30 +24,55 @@
       "properties": [
         {
           "name": "timestamp",
-          "type": "string",
-          "description": "ISO 8601 timestamp of when the event occurred."
+          "type": {
+            "canonical": "string"
+          },
+          "description": "ISO 8601 timestamp of when the event occurred.",
+          "required": true,
+          "default": null
         },
         {
           "name": "event",
-          "type": "AuditEventType",
-          "description": "Discriminated event type."
+          "type": {
+            "canonical": "object",
+            "original": "AuditEventType"
+          },
+          "description": "Discriminated event type.",
+          "required": true,
+          "default": null
         },
         {
           "name": "user",
-          "type": "string",
-          "description": "OS username of the actor (falls back to \"unknown\")."
+          "type": {
+            "canonical": "string"
+          },
+          "description": "OS username of the actor (falls back to \"unknown\").",
+          "required": true,
+          "default": null
         },
         {
           "name": "reason",
-          "type": "string | undefined",
-          "description": "Mandatory for lock/unlock/bypass events; optional otherwise."
+          "type": {
+            "canonical": "string",
+            "original": "string | undefined"
+          },
+          "description": "Mandatory for lock/unlock/bypass events; optional otherwise.",
+          "required": true,
+          "default": null
         },
         {
           "name": "details",
-          "type": "Record<string, unknown>",
-          "description": "Event-specific payload."
+          "type": {
+            "canonical": "object",
+            "original": "Record<string, unknown>"
+          },
+          "description": "Event-specific payload.",
+          "required": true,
+          "default": null
         }
-      ]
+      ],
+      "slug": "auditevent",
+      "tags": []
     },
     {
       "id": "concept-ReadAuditOptions",
@@ -48,14 +81,28 @@
       "properties": [
         {
           "name": "limit",
-          "type": "number | undefined",
-          "description": "Maximum number of events to return."
+          "type": {
+            "canonical": "string",
+            "original": "number | undefined"
+          },
+          "description": "Maximum number of events to return.",
+          "required": true,
+          "default": null
         },
         {
           "name": "eventType",
-          "type": "AuditEventType | undefined",
-          "description": "Filter to a single event type."
+          "type": {
+            "canonical": "string",
+            "original": "AuditEventType | undefined"
+          },
+          "description": "Filter to a single event type.",
+          "required": true,
+          "default": null
         }
+      ],
+      "slug": "readaudit",
+      "tags": [
+        "options"
       ]
     },
     {
@@ -65,14 +112,26 @@
       "properties": [
         {
           "name": "dailyBudget",
-          "type": "number",
-          "description": "Maximum number of bypasses allowed per calendar day. Default: 3"
+          "type": {
+            "canonical": "number"
+          },
+          "description": "Maximum number of bypasses allowed per calendar day. Default: 3",
+          "required": true,
+          "default": null
         },
         {
           "name": "durationHours",
-          "type": "number",
-          "description": "Duration in hours before a bypass automatically expires. Default: 24"
+          "type": {
+            "canonical": "number"
+          },
+          "description": "Duration in hours before a bypass automatically expires. Default: 24",
+          "required": true,
+          "default": null
         }
+      ],
+      "slug": "bypass",
+      "tags": [
+        "config"
       ]
     },
     {
@@ -82,35 +141,61 @@
       "properties": [
         {
           "name": "id",
-          "type": "string",
-          "description": "Unique identifier for this bypass."
+          "type": {
+            "canonical": "string"
+          },
+          "description": "Unique identifier for this bypass.",
+          "required": true,
+          "default": null
         },
         {
           "name": "createdAt",
-          "type": "string",
-          "description": "ISO 8601 timestamp when the bypass was created."
+          "type": {
+            "canonical": "string"
+          },
+          "description": "ISO 8601 timestamp when the bypass was created.",
+          "required": true,
+          "default": null
         },
         {
           "name": "expiresAt",
-          "type": "string",
-          "description": "ISO 8601 timestamp when the bypass expires."
+          "type": {
+            "canonical": "string"
+          },
+          "description": "ISO 8601 timestamp when the bypass expires.",
+          "required": true,
+          "default": null
         },
         {
           "name": "reason",
-          "type": "string",
-          "description": "Mandatory justification for why the bypass was created."
+          "type": {
+            "canonical": "string"
+          },
+          "description": "Mandatory justification for why the bypass was created.",
+          "required": true,
+          "default": null
         },
         {
           "name": "rule",
-          "type": "string",
-          "description": "Specific rule code bypassed (e.g., \"E009\"), or \"all\" for a blanket bypass."
+          "type": {
+            "canonical": "string"
+          },
+          "description": "Specific rule code bypassed (e.g., \"E009\"), or \"all\" for a blanket bypass.",
+          "required": true,
+          "default": null
         },
         {
           "name": "user",
-          "type": "string",
-          "description": "OS username of the actor who created the bypass."
+          "type": {
+            "canonical": "string"
+          },
+          "description": "OS username of the actor who created the bypass.",
+          "required": true,
+          "default": null
         }
-      ]
+      ],
+      "slug": "bypassrecord",
+      "tags": []
     },
     {
       "id": "concept-ForgeConfig",
@@ -119,74 +204,145 @@
       "properties": [
         {
           "name": "rootDir",
-          "type": "string",
-          "description": "Root directory of the project."
+          "type": {
+            "canonical": "string"
+          },
+          "description": "Root directory of the project.",
+          "required": true,
+          "default": null
         },
         {
           "name": "tsconfig",
-          "type": "string",
-          "description": "Path to the tsconfig.json to compile against."
+          "type": {
+            "canonical": "string"
+          },
+          "description": "Path to the tsconfig.json to compile against.",
+          "required": true,
+          "default": null
         },
         {
           "name": "outDir",
-          "type": "string",
-          "description": "Output directory for generated files."
+          "type": {
+            "canonical": "string"
+          },
+          "description": "Output directory for generated files.",
+          "required": true,
+          "default": null
         },
         {
           "name": "enforce",
-          "type": "{ enabled: boolean; minVisibility: Visibility | \"public\" | \"beta\" | \"internal\" | \"private\"; strict: boolean; rules: EnforceRules; ignoreFile?: string; }",
-          "description": "Enforce TSDoc on all public exports."
+          "type": {
+            "canonical": "string",
+            "original": "{ enabled: boolean; minVisibility: Visibility | \"public\" | \"beta\" | \"internal\" | \"private\"; strict: boolean; rules: EnforceRules; ignoreFile?: string; }"
+          },
+          "description": "Enforce TSDoc on all public exports.",
+          "required": true,
+          "default": null
         },
         {
           "name": "doctest",
-          "type": "{ enabled: boolean; cacheDir: string; }",
-          "description": "DocTest configuration."
+          "type": {
+            "canonical": "object",
+            "original": "{ enabled: boolean; cacheDir: string; }"
+          },
+          "description": "DocTest configuration.",
+          "required": true,
+          "default": null
         },
         {
           "name": "api",
-          "type": "{ enabled: boolean; openapi: boolean; openapiPath: string; }",
-          "description": "API generation configuration."
+          "type": {
+            "canonical": "object",
+            "original": "{ enabled: boolean; openapi: boolean; openapiPath: string; }"
+          },
+          "description": "API generation configuration.",
+          "required": true,
+          "default": null
         },
         {
           "name": "gen",
-          "type": "{ enabled: boolean; formats: Array<\"markdown\" | \"mdx\">; llmsTxt: boolean; readmeSync: boolean; ssgTarget?: \"docusaurus\" | \"mintlify\" | \"nextra\" | \"vitepress\"; ckm?: boolean; }",
-          "description": "Output generation configuration."
+          "type": {
+            "canonical": "string",
+            "original": "{ enabled: boolean; formats: Array<\"markdown\" | \"mdx\">; llmsTxt: boolean; readmeSync: boolean; ssgTarget?: \"docusaurus\" | \"mintlify\" | \"nextra\" | \"vitepress\"; ckm?: boolean; }"
+          },
+          "description": "Output generation configuration.",
+          "required": true,
+          "default": null
         },
         {
           "name": "skill",
-          "type": "{ enabled?: boolean; customSections?: Array<{ heading: string; content: string; }>; extraGotchas?: string[]; }",
-          "description": "Skill package generation settings. Custom sections here are merged into the generated SKILL.md, allowing projects to inject workflow knowledge, domain gotchas, and other context that cannot be derived from symbols alone."
+          "type": {
+            "canonical": "array",
+            "original": "{ enabled?: boolean; customSections?: Array<{ heading: string; content: string; }>; extraGotchas?: string[]; }"
+          },
+          "description": "Skill package generation settings. Custom sections here are merged into the generated SKILL.md, allowing projects to inject workflow knowledge, domain gotchas, and other context that cannot be derived from symbols alone.",
+          "required": true,
+          "default": null
         },
         {
           "name": "tsdoc",
-          "type": "{ writeConfig: boolean; customTags: Array<{ tagName: string; syntaxKind: \"block\" | \"inline\" | \"modifier\"; }>; enforce: { core: \"error\" | \"warn\" | \"off\"; extended: \"error\" | \"warn\" | \"off\"; discretionary: \"error\" | \"warn\" | \"off\"; }; }",
-          "description": "TSDoc ecosystem configuration."
+          "type": {
+            "canonical": "string",
+            "original": "{ writeConfig: boolean; customTags: Array<{ tagName: string; syntaxKind: \"block\" | \"inline\" | \"modifier\"; }>; enforce: { core: \"error\" | \"warn\" | \"off\"; extended: \"error\" | \"warn\" | \"off\"; discretionary: \"error\" | \"warn\" | \"off\"; }; }"
+          },
+          "description": "TSDoc ecosystem configuration.",
+          "required": true,
+          "default": null
         },
         {
           "name": "bypass",
-          "type": "{ dailyBudget: number; durationHours: number; }",
-          "description": "Bypass budget configuration for temporary rule overrides."
+          "type": {
+            "canonical": "object",
+            "original": "{ dailyBudget: number; durationHours: number; }"
+          },
+          "description": "Bypass budget configuration for temporary rule overrides.",
+          "required": true,
+          "default": null
         },
         {
           "name": "guides",
-          "type": "{ enabled: boolean; autoDiscover: boolean; custom: Array<{ slug: string; title: string; sources: string[]; }>; }",
-          "description": "Guide generation configuration."
+          "type": {
+            "canonical": "array",
+            "original": "{ enabled: boolean; autoDiscover: boolean; custom: Array<{ slug: string; title: string; sources: string[]; }>; }"
+          },
+          "description": "Guide generation configuration.",
+          "required": true,
+          "default": null
         },
         {
           "name": "guards",
-          "type": "{ tsconfig: { enabled: boolean; requiredFlags: string[]; }; biome: { enabled: boolean; lockedRules: string[]; }; packageJson: { enabled: boolean; minNodeVersion: string; requiredFields: string[]; }; }",
-          "description": "Downstream config drift guards."
+          "type": {
+            "canonical": "array",
+            "original": "{ tsconfig: { enabled: boolean; requiredFlags: string[]; }; biome: { enabled: boolean; lockedRules: string[]; }; packageJson: { enabled: boolean; minNodeVersion: string; requiredFields: string[]; }; }"
+          },
+          "description": "Downstream config drift guards.",
+          "required": true,
+          "default": null
         },
         {
           "name": "_configWarnings",
-          "type": "string[] | undefined",
-          "description": "Warnings generated during config loading (e.g., unknown keys). Populated by loadConfig(). Agents should surface these in output."
+          "type": {
+            "canonical": "array",
+            "original": "string[] | undefined"
+          },
+          "description": "Warnings generated during config loading (e.g., unknown keys). Populated by loadConfig(). Agents should surface these in output.",
+          "required": true,
+          "default": null
         },
         {
           "name": "project",
-          "type": "{ repository?: string; homepage?: string; packageName?: string; description?: string; version?: string; bin?: Record<string, string>; scripts?: Record<string, string>; keywords?: string[]; }",
-          "description": "Project metadata — auto-detected from package.json if not provided."
+          "type": {
+            "canonical": "array",
+            "original": "{ repository?: string; homepage?: string; packageName?: string; description?: string; version?: string; bin?: Record<string, string>; scripts?: Record<string, string>; keywords?: string[]; }"
+          },
+          "description": "Project metadata — auto-detected from package.json if not provided.",
+          "required": true,
+          "default": null
         }
+      ],
+      "slug": "forge",
+      "tags": [
+        "config"
       ]
     },
     {
@@ -196,34 +352,66 @@
       "properties": [
         {
           "name": "success",
-          "type": "boolean",
-          "description": "Whether the run succeeded without errors."
+          "type": {
+            "canonical": "boolean"
+          },
+          "description": "Whether the run succeeded without errors.",
+          "required": true,
+          "default": null
         },
         {
           "name": "symbols",
-          "type": "ForgeSymbol[]",
-          "description": "All symbols extracted during this run."
+          "type": {
+            "canonical": "array",
+            "original": "ForgeSymbol[]"
+          },
+          "description": "All symbols extracted during this run.",
+          "required": true,
+          "default": null
         },
         {
           "name": "errors",
-          "type": "ForgeError[]",
-          "description": "Errors that caused or would cause failure."
+          "type": {
+            "canonical": "array",
+            "original": "ForgeError[]"
+          },
+          "description": "Errors that caused or would cause failure.",
+          "required": true,
+          "default": null
         },
         {
           "name": "warnings",
-          "type": "ForgeWarning[]",
-          "description": "Non-fatal warnings."
+          "type": {
+            "canonical": "array",
+            "original": "ForgeWarning[]"
+          },
+          "description": "Non-fatal warnings.",
+          "required": true,
+          "default": null
         },
         {
           "name": "duration",
-          "type": "number",
-          "description": "Wall-clock duration of the run in milliseconds."
+          "type": {
+            "canonical": "number"
+          },
+          "description": "Wall-clock duration of the run in milliseconds.",
+          "required": true,
+          "default": null
         },
         {
           "name": "writtenFiles",
-          "type": "string[] | undefined",
-          "description": "Absolute paths of files written during this run (populated by gen)."
+          "type": {
+            "canonical": "array",
+            "original": "string[] | undefined"
+          },
+          "description": "Absolute paths of files written during this run (populated by gen).",
+          "required": true,
+          "default": null
         }
+      ],
+      "slug": "forge",
+      "tags": [
+        "result"
       ]
     },
     {
@@ -233,65 +421,126 @@
       "properties": [
         {
           "name": "name",
-          "type": "string",
-          "description": "Symbol name."
+          "type": {
+            "canonical": "string"
+          },
+          "description": "Symbol name.",
+          "required": true,
+          "default": null
         },
         {
           "name": "kind",
-          "type": "\"function\" | \"class\" | \"interface\" | \"type\" | \"enum\" | \"variable\" | \"method\" | \"property\" | \"file\"",
-          "description": "Symbol kind."
+          "type": {
+            "canonical": "string",
+            "original": "\"function\" | \"class\" | \"interface\" | \"type\" | \"enum\" | \"variable\" | \"method\" | \"property\" | \"file\""
+          },
+          "description": "Symbol kind.",
+          "required": true,
+          "default": null
         },
         {
           "name": "summary",
-          "type": "string | undefined",
-          "description": "TSDoc summary."
+          "type": {
+            "canonical": "string",
+            "original": "string | undefined"
+          },
+          "description": "TSDoc summary.",
+          "required": true,
+          "default": null
         },
         {
           "name": "signature",
-          "type": "string | undefined",
-          "description": "Human-readable type signature."
+          "type": {
+            "canonical": "string",
+            "original": "string | undefined"
+          },
+          "description": "Human-readable type signature.",
+          "required": true,
+          "default": null
         },
         {
           "name": "visibility",
-          "type": "Visibility",
-          "description": "Resolved visibility level."
+          "type": {
+            "canonical": "object",
+            "original": "Visibility"
+          },
+          "description": "Resolved visibility level.",
+          "required": true,
+          "default": null
         },
         {
           "name": "deprecated",
-          "type": "string | undefined",
-          "description": "Deprecation notice, if present."
+          "type": {
+            "canonical": "string",
+            "original": "string | undefined"
+          },
+          "description": "Deprecation notice, if present.",
+          "required": true,
+          "default": null
         },
         {
           "name": "params",
-          "type": "{ name: string; description: string; type?: string; }[] | undefined",
-          "description": "Documented parameters."
+          "type": {
+            "canonical": "array",
+            "original": "{ name: string; description: string; type?: string; }[] | undefined"
+          },
+          "description": "Documented parameters.",
+          "required": true,
+          "default": null
         },
         {
           "name": "returns",
-          "type": "{ description: string; type?: string; } | undefined",
-          "description": "Documented return value."
+          "type": {
+            "canonical": "string",
+            "original": "{ description: string; type?: string; } | undefined"
+          },
+          "description": "Documented return value.",
+          "required": true,
+          "default": null
         },
         {
           "name": "throws",
-          "type": "{ type?: string; description: string; }[] | undefined",
-          "description": "Documented thrown exceptions."
+          "type": {
+            "canonical": "array",
+            "original": "{ type?: string; description: string; }[] | undefined"
+          },
+          "description": "Documented thrown exceptions.",
+          "required": true,
+          "default": null
         },
         {
           "name": "examples",
-          "type": "{ code: string; language: string; }[] | undefined",
-          "description": "Code examples from TSDoc `@example` tags."
+          "type": {
+            "canonical": "array",
+            "original": "{ code: string; language: string; }[] | undefined"
+          },
+          "description": "Code examples from TSDoc `@example` tags.",
+          "required": true,
+          "default": null
         },
         {
           "name": "children",
-          "type": "ReferenceEntry[] | undefined",
-          "description": "Nested child symbols (class methods, interface properties, enum members)."
+          "type": {
+            "canonical": "array",
+            "original": "ReferenceEntry[] | undefined"
+          },
+          "description": "Nested child symbols (class methods, interface properties, enum members).",
+          "required": true,
+          "default": null
         },
         {
           "name": "location",
-          "type": "{ filePath: string; line: number; }",
-          "description": "Source file location."
+          "type": {
+            "canonical": "object",
+            "original": "{ filePath: string; line: number; }"
+          },
+          "description": "Source file location.",
+          "required": true,
+          "default": null
         }
-      ]
+      ],
+      "slug": "referenceentry",
+      "tags": []
     },
     {
       "id": "concept-ForgeLoggerOptions",
@@ -300,19 +549,38 @@
       "properties": [
         {
           "name": "quiet",
-          "type": "boolean | undefined",
-          "description": "Suppress all consola output (--quiet flag)."
+          "type": {
+            "canonical": "string",
+            "original": "boolean | undefined"
+          },
+          "description": "Suppress all consola output (--quiet flag).",
+          "required": true,
+          "default": null
         },
         {
           "name": "json",
-          "type": "boolean | undefined",
-          "description": "JSON output mode (--json flag). LAFS handles JSON; suppress consola."
+          "type": {
+            "canonical": "string",
+            "original": "boolean | undefined"
+          },
+          "description": "JSON output mode (--json flag). LAFS handles JSON; suppress consola.",
+          "required": true,
+          "default": null
         },
         {
           "name": "verbose",
-          "type": "boolean | undefined",
-          "description": "Enable debug-level output (--verbose flag)."
+          "type": {
+            "canonical": "string",
+            "original": "boolean | undefined"
+          },
+          "description": "Enable debug-level output (--verbose flag).",
+          "required": true,
+          "default": null
         }
+      ],
+      "slug": "forgelogger",
+      "tags": [
+        "options"
       ]
     },
     {
@@ -322,19 +590,36 @@
       "properties": [
         {
           "name": "success",
-          "type": "boolean",
-          "description": "Whether the audit log was read successfully."
+          "type": {
+            "canonical": "boolean"
+          },
+          "description": "Whether the audit log was read successfully.",
+          "required": true,
+          "default": null
         },
         {
           "name": "count",
-          "type": "number",
-          "description": "Number of events returned."
+          "type": {
+            "canonical": "number"
+          },
+          "description": "Number of events returned.",
+          "required": true,
+          "default": null
         },
         {
           "name": "events",
-          "type": "AuditEvent[]",
-          "description": "The audit events, newest first."
+          "type": {
+            "canonical": "array",
+            "original": "AuditEvent[]"
+          },
+          "description": "The audit events, newest first.",
+          "required": true,
+          "default": null
         }
+      ],
+      "slug": "audit",
+      "tags": [
+        "result"
       ]
     },
     {
@@ -344,39 +629,167 @@
       "properties": [
         {
           "name": "$schema",
-          "type": "string",
-          "description": "JSON schema URL."
+          "type": {
+            "canonical": "string"
+          },
+          "description": "JSON schema URL.",
+          "required": true,
+          "default": null
         },
         {
           "name": "version",
-          "type": "string",
-          "description": "Barometer format version."
+          "type": {
+            "canonical": "string"
+          },
+          "description": "Barometer format version.",
+          "required": true,
+          "default": null
         },
         {
           "name": "project",
-          "type": "string",
-          "description": "Project name from package.json or config."
+          "type": {
+            "canonical": "string"
+          },
+          "description": "Project name from package.json or config.",
+          "required": true,
+          "default": null
         },
         {
           "name": "generated",
-          "type": "string",
-          "description": "ISO 8601 timestamp of when the barometer was generated."
+          "type": {
+            "canonical": "string"
+          },
+          "description": "ISO 8601 timestamp of when the barometer was generated.",
+          "required": true,
+          "default": null
         },
         {
           "name": "symbolCount",
-          "type": "number",
-          "description": "Total number of exported symbols analyzed."
+          "type": {
+            "canonical": "number"
+          },
+          "description": "Total number of exported symbols analyzed.",
+          "required": true,
+          "default": null
         },
         {
           "name": "questions",
-          "type": "BarometerQuestion[]",
-          "description": "Generated questions with ground-truth answers."
+          "type": {
+            "canonical": "array",
+            "original": "BarometerQuestion[]"
+          },
+          "description": "Generated questions with ground-truth answers.",
+          "required": true,
+          "default": null
         },
         {
           "name": "rubric",
-          "type": "{ scale: BarometerRatingBand[]; scoring: string; }",
-          "description": "Scoring rubric for evaluating documentation effectiveness."
+          "type": {
+            "canonical": "array",
+            "original": "{ scale: BarometerRatingBand[]; scoring: string; }"
+          },
+          "description": "Scoring rubric for evaluating documentation effectiveness.",
+          "required": true,
+          "default": null
+        },
+        {
+          "name": "instructions",
+          "type": {
+            "canonical": "string",
+            "original": "BarometerInstructions | undefined"
+          },
+          "description": "Agent instructions — present only in `--questions-only` output.",
+          "required": true,
+          "default": null
         }
+      ],
+      "slug": "barometer",
+      "tags": [
+        "result"
+      ]
+    },
+    {
+      "id": "concept-BarometerScoreResult",
+      "name": "BarometerScoreResult",
+      "what": "Full barometer score output.",
+      "properties": [
+        {
+          "name": "score",
+          "type": {
+            "canonical": "number"
+          },
+          "description": "Score as a percentage (0-100).",
+          "required": true,
+          "default": null
+        },
+        {
+          "name": "rating",
+          "type": {
+            "canonical": "string"
+          },
+          "description": "Rating band label (e.g. \"Elite SSoT\").",
+          "required": true,
+          "default": null
+        },
+        {
+          "name": "ratingDescription",
+          "type": {
+            "canonical": "string"
+          },
+          "description": "Rating band description.",
+          "required": true,
+          "default": null
+        },
+        {
+          "name": "correct",
+          "type": {
+            "canonical": "number"
+          },
+          "description": "Number of fully correct answers.",
+          "required": true,
+          "default": null
+        },
+        {
+          "name": "partial",
+          "type": {
+            "canonical": "number"
+          },
+          "description": "Number of partially correct answers.",
+          "required": true,
+          "default": null
+        },
+        {
+          "name": "wrong",
+          "type": {
+            "canonical": "number"
+          },
+          "description": "Number of wrong answers.",
+          "required": true,
+          "default": null
+        },
+        {
+          "name": "total",
+          "type": {
+            "canonical": "number"
+          },
+          "description": "Total questions scored.",
+          "required": true,
+          "default": null
+        },
+        {
+          "name": "missed",
+          "type": {
+            "canonical": "array",
+            "original": "BarometerScoredAnswer[]"
+          },
+          "description": "Details for every non-correct answer.",
+          "required": true,
+          "default": null
+        }
+      ],
+      "slug": "barometerscore",
+      "tags": [
+        "result"
       ]
     },
     {
@@ -386,14 +799,27 @@
       "properties": [
         {
           "name": "body",
-          "type": "string",
-          "description": "The body content without the frontmatter block."
+          "type": {
+            "canonical": "string"
+          },
+          "description": "The body content without the frontmatter block.",
+          "required": true,
+          "default": null
         },
         {
           "name": "data",
-          "type": "Record<string, unknown>",
-          "description": "The parsed frontmatter data as a key-value map."
+          "type": {
+            "canonical": "object",
+            "original": "Record<string, unknown>"
+          },
+          "description": "The parsed frontmatter data as a key-value map.",
+          "required": true,
+          "default": null
         }
+      ],
+      "slug": "frontmatter",
+      "tags": [
+        "result"
       ]
     },
     {
@@ -403,34 +829,67 @@
       "properties": [
         {
           "name": "format",
-          "type": "\"markdown\" | \"mdx\"",
-          "description": "Output format"
+          "type": {
+            "canonical": "string",
+            "original": "\"markdown\" | \"mdx\""
+          },
+          "description": "Output format",
+          "required": true,
+          "default": null
         },
         {
           "name": "ssgTarget",
-          "type": "\"docusaurus\" | \"mintlify\" | \"nextra\" | \"vitepress\" | undefined",
-          "description": "SSG target for frontmatter."
+          "type": {
+            "canonical": "string",
+            "original": "\"docusaurus\" | \"mintlify\" | \"nextra\" | \"vitepress\" | undefined"
+          },
+          "description": "SSG target for frontmatter.",
+          "required": true,
+          "default": null
         },
         {
           "name": "projectName",
-          "type": "string",
-          "description": "Project name"
+          "type": {
+            "canonical": "string"
+          },
+          "description": "Project name",
+          "required": true,
+          "default": null
         },
         {
           "name": "projectDescription",
-          "type": "string | undefined",
-          "description": "Project description."
+          "type": {
+            "canonical": "string",
+            "original": "string | undefined"
+          },
+          "description": "Project description.",
+          "required": true,
+          "default": null
         },
         {
           "name": "repositoryUrl",
-          "type": "string | undefined",
-          "description": "Repository URL (auto-detected from package.json)."
+          "type": {
+            "canonical": "string",
+            "original": "string | undefined"
+          },
+          "description": "Repository URL (auto-detected from package.json).",
+          "required": true,
+          "default": null
         },
         {
           "name": "packageName",
-          "type": "string | undefined",
-          "description": "npm package name for install commands."
+          "type": {
+            "canonical": "string",
+            "original": "string | undefined"
+          },
+          "description": "npm package name for install commands.",
+          "required": true,
+          "default": null
         }
+      ],
+      "slug": "sitegenerator",
+      "tags": [
+        "options"
       ]
     },
     {
@@ -440,30 +899,54 @@
       "properties": [
         {
           "name": "key",
-          "type": "string",
-          "description": "Dot-path key for this config entry (e.g., \"enforce.strict\")."
+          "type": {
+            "canonical": "string"
+          },
+          "description": "Dot-path key for this config entry (e.g., \"enforce.strict\").",
+          "required": true,
+          "default": null
         },
         {
           "name": "type",
-          "type": "string",
-          "description": "TypeScript type of this config entry."
+          "type": {
+            "canonical": "string"
+          },
+          "description": "TypeScript type of this config entry.",
+          "required": true,
+          "default": null
         },
         {
           "name": "default",
-          "type": "string | undefined",
-          "description": "Default value from `@defaultValue` tag, if present."
+          "type": {
+            "canonical": "string",
+            "original": "string | undefined"
+          },
+          "description": "Default value from `@defaultValue` tag, if present.",
+          "required": true,
+          "default": null
         },
         {
           "name": "description",
-          "type": "string",
-          "description": "Human-readable description from the property summary."
+          "type": {
+            "canonical": "string"
+          },
+          "description": "Human-readable description from the property summary.",
+          "required": true,
+          "default": null
         },
         {
           "name": "effect",
-          "type": "string | undefined",
-          "description": "Downstream effect or behaviour this config entry controls, from `@remarks`."
+          "type": {
+            "canonical": "string",
+            "original": "string | undefined"
+          },
+          "description": "Downstream effect or behaviour this config entry controls, from `@remarks`.",
+          "required": true,
+          "default": null
         }
-      ]
+      ],
+      "slug": "ckmconfigentry",
+      "tags": []
     },
     {
       "id": "concept-MarkdownOptions",
@@ -472,9 +955,18 @@
       "properties": [
         {
           "name": "mdx",
-          "type": "boolean | undefined",
-          "description": "Whether to use MDX syntax (default: Markdown)."
+          "type": {
+            "canonical": "string",
+            "original": "boolean | undefined"
+          },
+          "description": "Whether to use MDX syntax (default: Markdown).",
+          "required": true,
+          "default": null
         }
+      ],
+      "slug": "markdown",
+      "tags": [
+        "options"
       ]
     },
     {
@@ -484,14 +976,28 @@
       "properties": [
         {
           "name": "badge",
-          "type": "boolean | undefined",
-          "description": "Include a \"Documented with forge-ts\" badge above the API table."
+          "type": {
+            "canonical": "string",
+            "original": "boolean | undefined"
+          },
+          "description": "Include a \"Documented with forge-ts\" badge above the API table.",
+          "required": true,
+          "default": null
         },
         {
           "name": "includeExamples",
-          "type": "boolean | undefined",
-          "description": "Include first"
+          "type": {
+            "canonical": "string",
+            "original": "boolean | undefined"
+          },
+          "description": "Include first",
+          "required": true,
+          "default": null
         }
+      ],
+      "slug": "readmesync",
+      "tags": [
+        "options"
       ]
     },
     {
@@ -501,15 +1007,25 @@
       "properties": [
         {
           "name": "path",
-          "type": "string",
-          "description": "Relative path from outDir (e.g., \"mint.json\", \"_meta.json\")"
+          "type": {
+            "canonical": "string"
+          },
+          "description": "Relative path from outDir (e.g., \"mint.json\", \"_meta.json\")",
+          "required": true,
+          "default": null
         },
         {
           "name": "content",
-          "type": "string",
-          "description": "File content"
+          "type": {
+            "canonical": "string"
+          },
+          "description": "File content",
+          "required": true,
+          "default": null
         }
-      ]
+      ],
+      "slug": "ssgconfigfile",
+      "tags": []
     },
     {
       "id": "concept-GenerateOptions",
@@ -518,9 +1034,18 @@
       "properties": [
         {
           "name": "forceStubs",
-          "type": "boolean | undefined",
-          "description": "When true, overwrite stub pages even if they already exist on disk. Normally stub pages (concepts, guides, faq, contributing, changelog) are only created on the first build to preserve manual edits. Use this to reset stubs to their scaffolding state."
+          "type": {
+            "canonical": "string",
+            "original": "boolean | undefined"
+          },
+          "description": "When true, overwrite stub pages even if they already exist on disk. Normally stub pages (concepts, guides, faq, contributing, changelog) are only created on the first build to preserve manual edits. Use this to reset stubs to their scaffolding state.",
+          "required": true,
+          "default": null
         }
+      ],
+      "slug": "generate",
+      "tags": [
+        "options"
       ]
     },
     {
@@ -530,24 +1055,47 @@
       "properties": [
         {
           "name": "success",
-          "type": "boolean",
-          "description": "Whether the build succeeded."
+          "type": {
+            "canonical": "boolean"
+          },
+          "description": "Whether the build succeeded.",
+          "required": true,
+          "default": null
         },
         {
           "name": "summary",
-          "type": "{ steps: number; succeeded: number; failed: number; duration: number; }",
-          "description": "Aggregate pipeline counts — always present."
+          "type": {
+            "canonical": "object",
+            "original": "{ steps: number; succeeded: number; failed: number; duration: number; }"
+          },
+          "description": "Aggregate pipeline counts — always present.",
+          "required": true,
+          "default": null
         },
         {
           "name": "steps",
-          "type": "BuildStep[]",
-          "description": "Per-step details."
+          "type": {
+            "canonical": "array",
+            "original": "BuildStep[]"
+          },
+          "description": "Per-step details.",
+          "required": true,
+          "default": null
         },
         {
           "name": "generatedFiles",
-          "type": "string[] | undefined",
-          "description": "Files written during the build — present at standard and full MVI levels."
+          "type": {
+            "canonical": "array",
+            "original": "string[] | undefined"
+          },
+          "description": "Files written during the build — present at standard and full MVI levels.",
+          "required": true,
+          "default": null
         }
+      ],
+      "slug": "build",
+      "tags": [
+        "result"
       ]
     },
     {
@@ -557,24 +1105,45 @@
       "properties": [
         {
           "name": "success",
-          "type": "boolean",
-          "description": "Whether the bypass was successfully created."
+          "type": {
+            "canonical": "boolean"
+          },
+          "description": "Whether the bypass was successfully created.",
+          "required": true,
+          "default": null
         },
         {
           "name": "bypass",
-          "type": "BypassRecord",
-          "description": "The bypass record that was created."
+          "type": {
+            "canonical": "object",
+            "original": "BypassRecord"
+          },
+          "description": "The bypass record that was created.",
+          "required": true,
+          "default": null
         },
         {
           "name": "remainingBudget",
-          "type": "number",
-          "description": "Number of remaining bypass slots for today after creation."
+          "type": {
+            "canonical": "number"
+          },
+          "description": "Number of remaining bypass slots for today after creation.",
+          "required": true,
+          "default": null
         },
         {
           "name": "dailyBudget",
-          "type": "number",
-          "description": "The configured daily budget."
+          "type": {
+            "canonical": "number"
+          },
+          "description": "The configured daily budget.",
+          "required": true,
+          "default": null
         }
+      ],
+      "slug": "bypasscreate",
+      "tags": [
+        "result"
       ]
     },
     {
@@ -584,29 +1153,54 @@
       "properties": [
         {
           "name": "success",
-          "type": "boolean",
-          "description": "Always true for status queries."
+          "type": {
+            "canonical": "boolean"
+          },
+          "description": "Always true for status queries.",
+          "required": true,
+          "default": null
         },
         {
           "name": "activeBypasses",
-          "type": "BypassRecord[]",
-          "description": "Active (non-expired) bypass records."
+          "type": {
+            "canonical": "array",
+            "original": "BypassRecord[]"
+          },
+          "description": "Active (non-expired) bypass records.",
+          "required": true,
+          "default": null
         },
         {
           "name": "remainingBudget",
-          "type": "number",
-          "description": "Number of remaining bypass slots for today."
+          "type": {
+            "canonical": "number"
+          },
+          "description": "Number of remaining bypass slots for today.",
+          "required": true,
+          "default": null
         },
         {
           "name": "dailyBudget",
-          "type": "number",
-          "description": "The configured daily budget."
+          "type": {
+            "canonical": "number"
+          },
+          "description": "The configured daily budget.",
+          "required": true,
+          "default": null
         },
         {
           "name": "expiredRemoved",
-          "type": "number",
-          "description": "Number of expired bypasses that were cleaned up."
+          "type": {
+            "canonical": "number"
+          },
+          "description": "Number of expired bypasses that were cleaned up.",
+          "required": true,
+          "default": null
         }
+      ],
+      "slug": "bypassstatus",
+      "tags": [
+        "result"
       ]
     },
     {
@@ -616,14 +1210,26 @@
       "properties": [
         {
           "name": "colors",
-          "type": "boolean",
-          "description": "Emit ANSI colour escape sequences when `true`."
+          "type": {
+            "canonical": "boolean"
+          },
+          "description": "Emit ANSI colour escape sequences when `true`.",
+          "required": true,
+          "default": null
         },
         {
           "name": "verbose",
-          "type": "boolean",
-          "description": "When `true`, include the symbol's type signature alongside each diagnostic so the reader has immediate context."
+          "type": {
+            "canonical": "boolean"
+          },
+          "description": "When `true`, include the symbol's type signature alongside each diagnostic so the reader has immediate context.",
+          "required": true,
+          "default": null
         }
+      ],
+      "slug": "format",
+      "tags": [
+        "options"
       ]
     },
     {
@@ -633,39 +1239,77 @@
       "properties": [
         {
           "name": "success",
-          "type": "boolean",
-          "description": "Whether the check passed without errors."
+          "type": {
+            "canonical": "boolean"
+          },
+          "description": "Whether the check passed without errors.",
+          "required": true,
+          "default": null
         },
         {
           "name": "summary",
-          "type": "{ errors: number; warnings: number; files: number; symbols: number; duration: number; }",
-          "description": "Aggregate counts — always present regardless of MVI level."
+          "type": {
+            "canonical": "object",
+            "original": "{ errors: number; warnings: number; files: number; symbols: number; duration: number; }"
+          },
+          "description": "Aggregate counts — always present regardless of MVI level.",
+          "required": true,
+          "default": null
         },
         {
           "name": "triage",
-          "type": "CheckTriage | undefined",
-          "description": "Triage data for prioritizing fixes — present when errors  0 (except minimal)."
+          "type": {
+            "canonical": "string",
+            "original": "CheckTriage | undefined"
+          },
+          "description": "Triage data for prioritizing fixes — present when errors  0 (except minimal).",
+          "required": true,
+          "default": null
         },
         {
           "name": "byFile",
-          "type": "CheckFileGroup[] | undefined",
-          "description": "Per-file breakdown — present at standard and full MVI levels, paginated."
+          "type": {
+            "canonical": "array",
+            "original": "CheckFileGroup[] | undefined"
+          },
+          "description": "Per-file breakdown — present at standard and full MVI levels, paginated.",
+          "required": true,
+          "default": null
         },
         {
           "name": "page",
-          "type": "CheckPage | undefined",
-          "description": "Pagination metadata when byFile is paginated."
+          "type": {
+            "canonical": "string",
+            "original": "CheckPage | undefined"
+          },
+          "description": "Pagination metadata when byFile is paginated.",
+          "required": true,
+          "default": null
         },
         {
           "name": "filters",
-          "type": "{ rule?: string; file?: string; } | undefined",
-          "description": "Active filters applied to this result."
+          "type": {
+            "canonical": "string",
+            "original": "{ rule?: string; file?: string; } | undefined"
+          },
+          "description": "Active filters applied to this result.",
+          "required": true,
+          "default": null
         },
         {
           "name": "nextCommand",
-          "type": "string | undefined",
-          "description": "CLI command hint for the agent to run next."
+          "type": {
+            "canonical": "string",
+            "original": "string | undefined"
+          },
+          "description": "CLI command hint for the agent to run next.",
+          "required": true,
+          "default": null
         }
+      ],
+      "slug": "check",
+      "tags": [
+        "result"
       ]
     },
     {
@@ -675,29 +1319,57 @@
       "properties": [
         {
           "name": "success",
-          "type": "boolean",
-          "description": "Whether the hook scaffolding succeeded."
+          "type": {
+            "canonical": "boolean"
+          },
+          "description": "Whether the hook scaffolding succeeded.",
+          "required": true,
+          "default": null
         },
         {
           "name": "hookManager",
-          "type": "HookManager",
-          "description": "The detected or chosen hook manager."
+          "type": {
+            "canonical": "object",
+            "original": "HookManager"
+          },
+          "description": "The detected or chosen hook manager.",
+          "required": true,
+          "default": null
         },
         {
           "name": "summary",
-          "type": "{ filesWritten: number; filesSkipped: number; }",
-          "description": "Summary of what was created."
+          "type": {
+            "canonical": "object",
+            "original": "{ filesWritten: number; filesSkipped: number; }"
+          },
+          "description": "Summary of what was created.",
+          "required": true,
+          "default": null
         },
         {
           "name": "files",
-          "type": "string[]",
-          "description": "Relative paths of all files written."
+          "type": {
+            "canonical": "array",
+            "original": "string[]"
+          },
+          "description": "Relative paths of all files written.",
+          "required": true,
+          "default": null
         },
         {
           "name": "instructions",
-          "type": "string[]",
-          "description": "Post-scaffold instructions for the user."
+          "type": {
+            "canonical": "array",
+            "original": "string[]"
+          },
+          "description": "Post-scaffold instructions for the user.",
+          "required": true,
+          "default": null
         }
+      ],
+      "slug": "inithooks",
+      "tags": [
+        "result"
       ]
     },
     {
@@ -707,45 +1379,85 @@
       "properties": [
         {
           "name": "success",
-          "type": "boolean",
-          "description": "Whether the init succeeded."
+          "type": {
+            "canonical": "boolean"
+          },
+          "description": "Whether the init succeeded.",
+          "required": true,
+          "default": null
         },
         {
           "name": "created",
-          "type": "string[]",
-          "description": "Files that were created."
+          "type": {
+            "canonical": "array",
+            "original": "string[]"
+          },
+          "description": "Files that were created.",
+          "required": true,
+          "default": null
         },
         {
           "name": "skipped",
-          "type": "string[]",
-          "description": "Files that already existed and were skipped."
+          "type": {
+            "canonical": "array",
+            "original": "string[]"
+          },
+          "description": "Files that already existed and were skipped.",
+          "required": true,
+          "default": null
         },
         {
           "name": "warnings",
-          "type": "string[]",
-          "description": "Warning messages collected during init."
+          "type": {
+            "canonical": "array",
+            "original": "string[]"
+          },
+          "description": "Warning messages collected during init.",
+          "required": true,
+          "default": null
         },
         {
           "name": "environment",
-          "type": "InitProjectEnvironment",
-          "description": "Detected project environment."
+          "type": {
+            "canonical": "object",
+            "original": "InitProjectEnvironment"
+          },
+          "description": "Detected project environment.",
+          "required": true,
+          "default": null
         },
         {
           "name": "nextSteps",
-          "type": "string[]",
-          "description": "Next steps for the user."
+          "type": {
+            "canonical": "array",
+            "original": "string[]"
+          },
+          "description": "Next steps for the user.",
+          "required": true,
+          "default": null
         },
         {
           "name": "scriptsAdded",
-          "type": "string[]",
-          "description": "Scripts that were added to package.json (empty if none were added)."
+          "type": {
+            "canonical": "array",
+            "original": "string[]"
+          },
+          "description": "Scripts that were added to package.json (empty if none were added).",
+          "required": true,
+          "default": null
         }
+      ],
+      "slug": "initproject",
+      "tags": [
+        "result"
       ]
     },
     {
       "id": "concept-DoctorCheckStatus",
       "name": "DoctorCheckStatus",
-      "what": "Status of a single doctor check."
+      "what": "Status of a single doctor check.",
+      "slug": "doctorcheckstatus",
+      "tags": []
     },
     {
       "id": "concept-DoctorCheckResult",
@@ -754,24 +1466,45 @@
       "properties": [
         {
           "name": "name",
-          "type": "string",
-          "description": "Name of the check."
+          "type": {
+            "canonical": "string"
+          },
+          "description": "Name of the check.",
+          "required": true,
+          "default": null
         },
         {
           "name": "status",
-          "type": "DoctorCheckStatus",
-          "description": "Status of the check."
+          "type": {
+            "canonical": "object",
+            "original": "DoctorCheckStatus"
+          },
+          "description": "Status of the check.",
+          "required": true,
+          "default": null
         },
         {
           "name": "message",
-          "type": "string",
-          "description": "Human-readable message."
+          "type": {
+            "canonical": "string"
+          },
+          "description": "Human-readable message.",
+          "required": true,
+          "default": null
         },
         {
           "name": "fixable",
-          "type": "boolean",
-          "description": "Whether this issue can be auto-fixed with --fix."
+          "type": {
+            "canonical": "boolean"
+          },
+          "description": "Whether this issue can be auto-fixed with --fix.",
+          "required": true,
+          "default": null
         }
+      ],
+      "slug": "doctorcheck",
+      "tags": [
+        "result"
       ]
     },
     {
@@ -781,24 +1514,47 @@
       "properties": [
         {
           "name": "success",
-          "type": "boolean",
-          "description": "Whether all checks passed without errors."
+          "type": {
+            "canonical": "boolean"
+          },
+          "description": "Whether all checks passed without errors.",
+          "required": true,
+          "default": null
         },
         {
           "name": "checks",
-          "type": "DoctorCheckResult[]",
-          "description": "Individual check results."
+          "type": {
+            "canonical": "array",
+            "original": "DoctorCheckResult[]"
+          },
+          "description": "Individual check results.",
+          "required": true,
+          "default": null
         },
         {
           "name": "summary",
-          "type": "{ passed: number; warnings: number; errors: number; info: number; }",
-          "description": "Summary counts."
+          "type": {
+            "canonical": "object",
+            "original": "{ passed: number; warnings: number; errors: number; info: number; }"
+          },
+          "description": "Summary counts.",
+          "required": true,
+          "default": null
         },
         {
           "name": "fixed",
-          "type": "string[]",
-          "description": "Files that were fixed (only populated when --fix is used)."
+          "type": {
+            "canonical": "array",
+            "original": "string[]"
+          },
+          "description": "Files that were fixed (only populated when --fix is used).",
+          "required": true,
+          "default": null
         }
+      ],
+      "slug": "doctor",
+      "tags": [
+        "result"
       ]
     },
     {
@@ -808,29 +1564,57 @@
       "properties": [
         {
           "name": "success",
-          "type": "boolean",
-          "description": "Whether the scaffold succeeded."
+          "type": {
+            "canonical": "boolean"
+          },
+          "description": "Whether the scaffold succeeded.",
+          "required": true,
+          "default": null
         },
         {
           "name": "target",
-          "type": "SSGTarget",
-          "description": "The SSG target that was scaffolded."
+          "type": {
+            "canonical": "object",
+            "original": "SSGTarget"
+          },
+          "description": "The SSG target that was scaffolded.",
+          "required": true,
+          "default": null
         },
         {
           "name": "summary",
-          "type": "{ filesCreated: number; dependencies: number; scripts: number; }",
-          "description": "Summary of what was created."
+          "type": {
+            "canonical": "object",
+            "original": "{ filesCreated: number; dependencies: number; scripts: number; }"
+          },
+          "description": "Summary of what was created.",
+          "required": true,
+          "default": null
         },
         {
           "name": "files",
-          "type": "string[]",
-          "description": "Relative paths of all files created."
+          "type": {
+            "canonical": "array",
+            "original": "string[]"
+          },
+          "description": "Relative paths of all files created.",
+          "required": true,
+          "default": null
         },
         {
           "name": "instructions",
-          "type": "string[]",
-          "description": "Post-scaffold instructions for the user."
+          "type": {
+            "canonical": "array",
+            "original": "string[]"
+          },
+          "description": "Post-scaffold instructions for the user.",
+          "required": true,
+          "default": null
         }
+      ],
+      "slug": "initdocs",
+      "tags": [
+        "result"
       ]
     },
     {
@@ -840,34 +1624,63 @@
       "properties": [
         {
           "name": "success",
-          "type": "boolean",
-          "description": "Whether the lock was successfully created."
+          "type": {
+            "canonical": "boolean"
+          },
+          "description": "Whether the lock was successfully created.",
+          "required": true,
+          "default": null
         },
         {
           "name": "lockFile",
-          "type": "string",
-          "description": "Path to the lock file that was written."
+          "type": {
+            "canonical": "string"
+          },
+          "description": "Path to the lock file that was written.",
+          "required": true,
+          "default": null
         },
         {
           "name": "lockedAt",
-          "type": "string",
-          "description": "ISO-8601 timestamp when the lock was created."
+          "type": {
+            "canonical": "string"
+          },
+          "description": "ISO-8601 timestamp when the lock was created.",
+          "required": true,
+          "default": null
         },
         {
           "name": "lockedBy",
-          "type": "string",
-          "description": "Identifier of who created the lock."
+          "type": {
+            "canonical": "string"
+          },
+          "description": "Identifier of who created the lock.",
+          "required": true,
+          "default": null
         },
         {
           "name": "locked",
-          "type": "{ rules: number; tsconfig: boolean; biome: boolean; }",
-          "description": "Summary of what was locked."
+          "type": {
+            "canonical": "object",
+            "original": "{ rules: number; tsconfig: boolean; biome: boolean; }"
+          },
+          "description": "Summary of what was locked.",
+          "required": true,
+          "default": null
         },
         {
           "name": "overwrote",
-          "type": "boolean",
-          "description": "Whether a previous lock file was overwritten."
+          "type": {
+            "canonical": "boolean"
+          },
+          "description": "Whether a previous lock file was overwritten.",
+          "required": true,
+          "default": null
         }
+      ],
+      "slug": "lock",
+      "tags": [
+        "result"
       ]
     },
     {
@@ -877,29 +1690,57 @@
       "properties": [
         {
           "name": "success",
-          "type": "boolean",
-          "description": "Whether both check and build passed."
+          "type": {
+            "canonical": "boolean"
+          },
+          "description": "Whether both check and build passed.",
+          "required": true,
+          "default": null
         },
         {
           "name": "summary",
-          "type": "{ steps: number; passed: number; failed: number; duration: number; }",
-          "description": "Summary of the prepublish pipeline."
+          "type": {
+            "canonical": "object",
+            "original": "{ steps: number; passed: number; failed: number; duration: number; }"
+          },
+          "description": "Summary of the prepublish pipeline.",
+          "required": true,
+          "default": null
         },
         {
           "name": "check",
-          "type": "{ success: boolean; errors: number; warnings: number; duration: number; }",
-          "description": "Result of the check step."
+          "type": {
+            "canonical": "object",
+            "original": "{ success: boolean; errors: number; warnings: number; duration: number; }"
+          },
+          "description": "Result of the check step.",
+          "required": true,
+          "default": null
         },
         {
           "name": "build",
-          "type": "{ success: boolean; steps: number; succeeded: number; failed: number; duration: number; } | undefined",
-          "description": "Result of the build step (absent if check failed and build was skipped)."
+          "type": {
+            "canonical": "string",
+            "original": "{ success: boolean; steps: number; succeeded: number; failed: number; duration: number; } | undefined"
+          },
+          "description": "Result of the build step (absent if check failed and build was skipped).",
+          "required": true,
+          "default": null
         },
         {
           "name": "skippedReason",
-          "type": "string | undefined",
-          "description": "If check failed, the reason build was skipped."
+          "type": {
+            "canonical": "string",
+            "original": "string | undefined"
+          },
+          "description": "If check failed, the reason build was skipped.",
+          "required": true,
+          "default": null
         }
+      ],
+      "slug": "prepublish",
+      "tags": [
+        "result"
       ]
     },
     {
@@ -909,9 +1750,17 @@
       "properties": [
         {
           "name": "cacheDir",
-          "type": "string",
-          "description": "Directory where virtual test files will be written."
+          "type": {
+            "canonical": "string"
+          },
+          "description": "Directory where virtual test files will be written.",
+          "required": true,
+          "default": null
         }
+      ],
+      "slug": "generator",
+      "tags": [
+        "options"
       ]
     },
     {
@@ -921,29 +1770,54 @@
       "properties": [
         {
           "name": "success",
-          "type": "boolean",
-          "description": "Whether all tests passed."
+          "type": {
+            "canonical": "boolean"
+          },
+          "description": "Whether all tests passed.",
+          "required": true,
+          "default": null
         },
         {
           "name": "passed",
-          "type": "number",
-          "description": "Number of tests that passed."
+          "type": {
+            "canonical": "number"
+          },
+          "description": "Number of tests that passed.",
+          "required": true,
+          "default": null
         },
         {
           "name": "failed",
-          "type": "number",
-          "description": "Number of tests that failed."
+          "type": {
+            "canonical": "number"
+          },
+          "description": "Number of tests that failed.",
+          "required": true,
+          "default": null
         },
         {
           "name": "output",
-          "type": "string",
-          "description": "Combined stdout + stderr output from the test runner."
+          "type": {
+            "canonical": "string"
+          },
+          "description": "Combined stdout + stderr output from the test runner.",
+          "required": true,
+          "default": null
         },
         {
           "name": "tests",
-          "type": "TestCaseResult[]",
-          "description": "Individual test results with name and status."
+          "type": {
+            "canonical": "array",
+            "original": "TestCaseResult[]"
+          },
+          "description": "Individual test results with name and status.",
+          "required": true,
+          "default": null
         }
+      ],
+      "slug": "run",
+      "tags": [
+        "result"
       ]
     },
     {
@@ -953,19 +1827,36 @@
       "properties": [
         {
           "name": "name",
-          "type": "string",
-          "description": "The full test name as reported by the runner."
+          "type": {
+            "canonical": "string"
+          },
+          "description": "The full test name as reported by the runner.",
+          "required": true,
+          "default": null
         },
         {
           "name": "passed",
-          "type": "boolean",
-          "description": "Whether this test passed."
+          "type": {
+            "canonical": "boolean"
+          },
+          "description": "Whether this test passed.",
+          "required": true,
+          "default": null
         },
         {
           "name": "sourceFile",
-          "type": "string | undefined",
-          "description": "The source file this test was generated from, if determinable."
+          "type": {
+            "canonical": "string",
+            "original": "string | undefined"
+          },
+          "description": "The source file this test was generated from, if determinable.",
+          "required": true,
+          "default": null
         }
+      ],
+      "slug": "testcase",
+      "tags": [
+        "result"
       ]
     },
     {
@@ -975,19 +1866,37 @@
       "properties": [
         {
           "name": "success",
-          "type": "boolean",
-          "description": "Whether all doctests passed."
+          "type": {
+            "canonical": "boolean"
+          },
+          "description": "Whether all doctests passed.",
+          "required": true,
+          "default": null
         },
         {
           "name": "summary",
-          "type": "{ passed: number; failed: number; total: number; duration: number; }",
-          "description": "Aggregate counts — always present regardless of MVI level."
+          "type": {
+            "canonical": "object",
+            "original": "{ passed: number; failed: number; total: number; duration: number; }"
+          },
+          "description": "Aggregate counts — always present regardless of MVI level.",
+          "required": true,
+          "default": null
         },
         {
           "name": "failures",
-          "type": "TestFailure[] | undefined",
-          "description": "Per-failure details — present at standard and full MVI levels."
+          "type": {
+            "canonical": "array",
+            "original": "TestFailure[] | undefined"
+          },
+          "description": "Per-failure details — present at standard and full MVI levels.",
+          "required": true,
+          "default": null
         }
+      ],
+      "slug": "test",
+      "tags": [
+        "result"
       ]
     },
     {
@@ -997,24 +1906,46 @@
       "properties": [
         {
           "name": "success",
-          "type": "boolean",
-          "description": "Whether the unlock was successful."
+          "type": {
+            "canonical": "boolean"
+          },
+          "description": "Whether the unlock was successful.",
+          "required": true,
+          "default": null
         },
         {
           "name": "reason",
-          "type": "string",
-          "description": "The reason provided for unlocking."
+          "type": {
+            "canonical": "string"
+          },
+          "description": "The reason provided for unlocking.",
+          "required": true,
+          "default": null
         },
         {
           "name": "previousLockedBy",
-          "type": "string | null",
-          "description": "Who originally locked the config, if known."
+          "type": {
+            "canonical": "string",
+            "original": "string | null"
+          },
+          "description": "Who originally locked the config, if known.",
+          "required": true,
+          "default": null
         },
         {
           "name": "previousLockedAt",
-          "type": "string | null",
-          "description": "When the config was originally locked, if known."
+          "type": {
+            "canonical": "string",
+            "original": "string | null"
+          },
+          "description": "When the config was originally locked, if known.",
+          "required": true,
+          "default": null
         }
+      ],
+      "slug": "unlock",
+      "tags": [
+        "result"
       ]
     }
   ],
@@ -1026,25 +1957,37 @@
       "inputs": [
         {
           "name": "rootDir",
-          "type": "unknown",
+          "type": {
+            "canonical": "any",
+            "original": "unknown"
+          },
           "required": true,
           "description": "Absolute path to the project root directory."
         },
         {
           "name": "reason",
-          "type": "unknown",
+          "type": {
+            "canonical": "any",
+            "original": "unknown"
+          },
           "required": true,
           "description": "Mandatory justification for the bypass."
         },
         {
           "name": "rule",
-          "type": "unknown",
+          "type": {
+            "canonical": "any",
+            "original": "unknown"
+          },
           "required": true,
           "description": "Specific rule code to bypass (e.g., \"E009\"), or \"all\". Defaults to \"all\"."
         },
         {
           "name": "config",
-          "type": "unknown",
+          "type": {
+            "canonical": "any",
+            "original": "unknown"
+          },
           "required": true,
           "description": "Optional bypass budget configuration overrides."
         }
@@ -1053,8 +1996,17 @@
         "Error when the daily bypass budget is exhausted."
       ],
       "outputs": {
-        "text": "The created bypass record."
-      }
+        "type": {
+          "canonical": "object",
+          "original": "The created bypass record."
+        },
+        "description": "The created bypass record."
+      },
+      "tags": [
+        "bypass",
+        "forge",
+        "audit"
+      ]
     },
     {
       "id": "op-createLockManifest",
@@ -1063,20 +2015,34 @@
       "inputs": [
         {
           "name": "config",
-          "type": "unknown",
+          "type": {
+            "canonical": "any",
+            "original": "unknown"
+          },
           "required": true,
           "description": "The fully-resolved `ForgeConfig` to snapshot."
         },
         {
           "name": "lockedBy",
-          "type": "unknown",
+          "type": {
+            "canonical": "any",
+            "original": "unknown"
+          },
           "required": true,
           "description": "Identifier of the user or agent creating the lock. Defaults to `\"forge-ts lock\"`."
         }
       ],
       "outputs": {
-        "text": "A new lock manifest ready to be written with `writeLockFile`."
-      }
+        "type": {
+          "canonical": "object",
+          "original": "A new lock manifest ready to be written with `writeLockFile`."
+        },
+        "description": "A new lock manifest ready to be written with `writeLockFile`."
+      },
+      "tags": [
+        "forge",
+        "lock"
+      ]
     },
     {
       "id": "op-validateAgainstLock",
@@ -1085,20 +2051,33 @@
       "inputs": [
         {
           "name": "config",
-          "type": "unknown",
+          "type": {
+            "canonical": "any",
+            "original": "unknown"
+          },
           "required": true,
           "description": "The current fully-resolved `ForgeConfig`."
         },
         {
           "name": "lock",
-          "type": "unknown",
+          "type": {
+            "canonical": "any",
+            "original": "unknown"
+          },
           "required": true,
           "description": "The lock manifest to validate against."
         }
       ],
       "outputs": {
-        "text": "An array of `LockViolation` entries. Empty means no weakening detected."
-      }
+        "type": {
+          "canonical": "object",
+          "original": "An array of `LockViolation` entries. Empty means no weakening detected."
+        },
+        "description": "An array of `LockViolation` entries. Empty means no weakening detected."
+      },
+      "tags": [
+        "lock"
+      ]
     },
     {
       "id": "op-createWalker",
@@ -1107,14 +2086,24 @@
       "inputs": [
         {
           "name": "config",
-          "type": "unknown",
+          "type": {
+            "canonical": "any",
+            "original": "unknown"
+          },
           "required": true,
           "description": "The resolved `ForgeConfig` for the project."
         }
       ],
       "outputs": {
-        "text": "An `ASTWalker` instance whose `walk()` method performs the extraction."
-      }
+        "type": {
+          "canonical": "object",
+          "original": "An `ASTWalker` instance whose `walk()` method performs the extraction."
+        },
+        "description": "An `ASTWalker` instance whose `walk()` method performs the extraction."
+      },
+      "tags": [
+        "forge"
+      ]
     },
     {
       "id": "op-generateOpenAPISpec",
@@ -1123,26 +2112,43 @@
       "inputs": [
         {
           "name": "config",
-          "type": "unknown",
+          "type": {
+            "canonical": "any",
+            "original": "unknown"
+          },
           "required": true,
           "description": "The resolved `ForgeConfig`."
         },
         {
           "name": "sdkTypes",
-          "type": "unknown",
+          "type": {
+            "canonical": "any",
+            "original": "unknown"
+          },
           "required": true,
           "description": "SDK types to include as component schemas."
         },
         {
           "name": "symbols",
-          "type": "unknown",
+          "type": {
+            "canonical": "any",
+            "original": "unknown"
+          },
           "required": true,
           "description": "Raw symbols used to extract HTTP route paths from `@route` tags."
         }
       ],
       "outputs": {
-        "text": "An `OpenAPIDocument` object."
-      }
+        "type": {
+          "canonical": "object",
+          "original": "An `OpenAPIDocument` object."
+        },
+        "description": "An `OpenAPIDocument` object."
+      },
+      "tags": [
+        "generate",
+        "lock"
+      ]
     },
     {
       "id": "op-buildReference",
@@ -1151,14 +2157,24 @@
       "inputs": [
         {
           "name": "symbols",
-          "type": "unknown",
+          "type": {
+            "canonical": "any",
+            "original": "unknown"
+          },
           "required": true,
           "description": "All symbols from the AST walker."
         }
       ],
       "outputs": {
-        "text": "An array of `ReferenceEntry` objects sorted by name."
-      }
+        "type": {
+          "canonical": "object",
+          "original": "An array of `ReferenceEntry` objects sorted by name."
+        },
+        "description": "An array of `ReferenceEntry` objects sorted by name."
+      },
+      "tags": [
+        "build"
+      ]
     },
     {
       "id": "op-generateApi",
@@ -1167,14 +2183,25 @@
       "inputs": [
         {
           "name": "config",
-          "type": "unknown",
+          "type": {
+            "canonical": "any",
+            "original": "unknown"
+          },
           "required": true,
           "description": "The resolved `ForgeConfig` for the project."
         }
       ],
       "outputs": {
-        "text": "A `ForgeResult` with success/failure and any diagnostics."
-      }
+        "type": {
+          "canonical": "object",
+          "original": "A `ForgeResult` with success/failure and any diagnostics."
+        },
+        "description": "A `ForgeResult` with success/failure and any diagnostics."
+      },
+      "tags": [
+        "generate",
+        "run"
+      ]
     },
     {
       "id": "op-runAudit",
@@ -1183,20 +2210,35 @@
       "inputs": [
         {
           "name": "args",
-          "type": "unknown",
+          "type": {
+            "canonical": "any",
+            "original": "unknown"
+          },
           "required": true,
           "description": "CLI arguments for the audit command."
         }
       ],
       "outputs": {
-        "text": "A typed `CommandOutput<AuditResult>`."
-      }
+        "type": {
+          "canonical": "object",
+          "original": "A typed `CommandOutput<AuditResult>`."
+        },
+        "description": "A typed `CommandOutput<AuditResult>`."
+      },
+      "tags": [
+        "audit",
+        "run"
+      ]
     },
     {
       "id": "op-auditCommand",
       "name": "auditCommand",
       "what": "Citty command definition for `forge-ts audit`.",
-      "inputs": []
+      "inputs": [],
+      "tags": [
+        "forge",
+        "audit"
+      ]
     },
     {
       "id": "op-runBarometer",
@@ -1205,20 +2247,68 @@
       "inputs": [
         {
           "name": "args",
-          "type": "unknown",
+          "type": {
+            "canonical": "any",
+            "original": "unknown"
+          },
           "required": true,
           "description": "CLI arguments for the barometer command."
         }
       ],
       "outputs": {
-        "text": "A typed `CommandOutput<BarometerResult>`."
-      }
+        "type": {
+          "canonical": "object",
+          "original": "A typed `CommandOutput<BarometerResult>`."
+        },
+        "description": "A typed `CommandOutput<BarometerResult>`."
+      },
+      "tags": [
+        "forge",
+        "barometer",
+        "generate",
+        "run",
+        "test"
+      ]
+    },
+    {
+      "id": "op-runBarometerScore",
+      "name": "runBarometerScore",
+      "what": "Scores agent answers against the barometer answer key.",
+      "inputs": [
+        {
+          "name": "args",
+          "type": {
+            "canonical": "any",
+            "original": "unknown"
+          },
+          "required": true,
+          "description": "CLI arguments including project root and path to agent answers file."
+        }
+      ],
+      "outputs": {
+        "type": {
+          "canonical": "object",
+          "original": "A typed `CommandOutput<BarometerScoreResult>`."
+        },
+        "description": "A typed `CommandOutput<BarometerScoreResult>`."
+      },
+      "tags": [
+        "barometer",
+        "barometerscore",
+        "run"
+      ]
     },
     {
       "id": "op-barometerCommand",
       "name": "barometerCommand",
-      "what": "Citty command definition for `forge-ts barometer`.  Generates a documentation effectiveness test (questions + answers + rubric) from the project's source code.",
-      "inputs": []
+      "what": "Citty command definition for `forge-ts barometer`.  Generates a documentation effectiveness test (questions + answers + rubric) from the project's source code. Includes a `score` subcommand for evaluating agent answers.",
+      "inputs": [],
+      "tags": [
+        "forge",
+        "barometer",
+        "generate",
+        "test"
+      ]
     },
     {
       "id": "op-generateDocSite",
@@ -1227,26 +2317,44 @@
       "inputs": [
         {
           "name": "symbolsByPackage",
-          "type": "unknown",
+          "type": {
+            "canonical": "any",
+            "original": "unknown"
+          },
           "required": true,
           "description": "Symbols grouped by package name."
         },
         {
           "name": "config",
-          "type": "unknown",
+          "type": {
+            "canonical": "any",
+            "original": "unknown"
+          },
           "required": true,
           "description": "The resolved `ForgeConfig`."
         },
         {
           "name": "options",
-          "type": "unknown",
+          "type": {
+            "canonical": "any",
+            "original": "unknown"
+          },
           "required": true,
           "description": "Site generation options."
         }
       ],
       "outputs": {
-        "text": "An array of `DocPage` objects ready to be written to disk."
-      }
+        "type": {
+          "canonical": "object",
+          "original": "An array of `DocPage` objects ready to be written to disk."
+        },
+        "description": "An array of `DocPage` objects ready to be written to disk."
+      },
+      "tags": [
+        "generate",
+        "build",
+        "format"
+      ]
     },
     {
       "id": "op-generateCKM",
@@ -1255,20 +2363,33 @@
       "inputs": [
         {
           "name": "symbols",
-          "type": "unknown",
+          "type": {
+            "canonical": "any",
+            "original": "unknown"
+          },
           "required": true,
           "description": "All symbols extracted from the project."
         },
         {
           "name": "config",
-          "type": "unknown",
+          "type": {
+            "canonical": "any",
+            "original": "unknown"
+          },
           "required": true,
           "description": "The resolved `ForgeConfig` for the project."
         }
       ],
       "outputs": {
-        "text": "A complete `CKMManifest` ready for JSON serialization."
-      }
+        "type": {
+          "canonical": "object",
+          "original": "A complete `CKMManifest` ready for JSON serialization."
+        },
+        "description": "A complete `CKMManifest` ready for JSON serialization."
+      },
+      "tags": [
+        "generate"
+      ]
     },
     {
       "id": "op-generateLlmsTxt",
@@ -1277,20 +2398,33 @@
       "inputs": [
         {
           "name": "symbols",
-          "type": "unknown",
+          "type": {
+            "canonical": "any",
+            "original": "unknown"
+          },
           "required": true,
           "description": "The symbols to include."
         },
         {
           "name": "config",
-          "type": "unknown",
+          "type": {
+            "canonical": "any",
+            "original": "unknown"
+          },
           "required": true,
           "description": "The resolved `ForgeConfig`."
         }
       ],
       "outputs": {
-        "text": "The generated `llms.txt` content as a string."
-      }
+        "type": {
+          "canonical": "object",
+          "original": "The generated `llms.txt` content as a string."
+        },
+        "description": "The generated `llms.txt` content as a string."
+      },
+      "tags": [
+        "generate"
+      ]
     },
     {
       "id": "op-generateLlmsFullTxt",
@@ -1299,20 +2433,33 @@
       "inputs": [
         {
           "name": "symbols",
-          "type": "unknown",
+          "type": {
+            "canonical": "any",
+            "original": "unknown"
+          },
           "required": true,
           "description": "The symbols to include."
         },
         {
           "name": "config",
-          "type": "unknown",
+          "type": {
+            "canonical": "any",
+            "original": "unknown"
+          },
           "required": true,
           "description": "The resolved `ForgeConfig`."
         }
       ],
       "outputs": {
-        "text": "The generated `llms-full.txt` content as a string."
-      }
+        "type": {
+          "canonical": "object",
+          "original": "The generated `llms-full.txt` content as a string."
+        },
+        "description": "The generated `llms-full.txt` content as a string."
+      },
+      "tags": [
+        "generate"
+      ]
     },
     {
       "id": "op-generateMarkdown",
@@ -1321,26 +2468,43 @@
       "inputs": [
         {
           "name": "symbols",
-          "type": "unknown",
+          "type": {
+            "canonical": "any",
+            "original": "unknown"
+          },
           "required": true,
           "description": "The symbols to document."
         },
         {
           "name": "config",
-          "type": "unknown",
+          "type": {
+            "canonical": "any",
+            "original": "unknown"
+          },
           "required": true,
           "description": "The resolved `ForgeConfig`."
         },
         {
           "name": "options",
-          "type": "unknown",
+          "type": {
+            "canonical": "any",
+            "original": "unknown"
+          },
           "required": true,
           "description": "Rendering options."
         }
       ],
       "outputs": {
-        "text": "The generated Markdown string."
-      }
+        "type": {
+          "canonical": "object",
+          "original": "The generated Markdown string."
+        },
+        "description": "The generated Markdown string."
+      },
+      "tags": [
+        "markdown",
+        "generate"
+      ]
     },
     {
       "id": "op-generateSkillPackage",
@@ -1349,20 +2513,34 @@
       "inputs": [
         {
           "name": "symbols",
-          "type": "unknown",
+          "type": {
+            "canonical": "any",
+            "original": "unknown"
+          },
           "required": true,
           "description": "All symbols from the project."
         },
         {
           "name": "config",
-          "type": "unknown",
+          "type": {
+            "canonical": "any",
+            "original": "unknown"
+          },
           "required": true,
           "description": "The resolved forge-ts config."
         }
       ],
       "outputs": {
-        "text": "A `SkillPackage` describing the directory and its files."
-      }
+        "type": {
+          "canonical": "object",
+          "original": "A `SkillPackage` describing the directory and its files."
+        },
+        "description": "A `SkillPackage` describing the directory and its files."
+      },
+      "tags": [
+        "forge",
+        "generate"
+      ]
     },
     {
       "id": "op-generateSkillMd",
@@ -1371,20 +2549,33 @@
       "inputs": [
         {
           "name": "symbols",
-          "type": "unknown",
+          "type": {
+            "canonical": "any",
+            "original": "unknown"
+          },
           "required": true,
           "description": "All symbols from the project."
         },
         {
           "name": "config",
-          "type": "unknown",
+          "type": {
+            "canonical": "any",
+            "original": "unknown"
+          },
           "required": true,
           "description": "The resolved forge-ts config."
         }
       ],
       "outputs": {
-        "text": "The SKILL.md content as a string."
-      }
+        "type": {
+          "canonical": "object",
+          "original": "The SKILL.md content as a string."
+        },
+        "description": "The SKILL.md content as a string."
+      },
+      "tags": [
+        "generate"
+      ]
     },
     {
       "id": "op-generateSSGConfigs",
@@ -1393,26 +2584,42 @@
       "inputs": [
         {
           "name": "pages",
-          "type": "unknown",
+          "type": {
+            "canonical": "any",
+            "original": "unknown"
+          },
           "required": true,
           "description": "The `DocPage` array produced by `generateDocSite`."
         },
         {
           "name": "target",
-          "type": "unknown",
+          "type": {
+            "canonical": "any",
+            "original": "unknown"
+          },
           "required": true,
           "description": "The SSG target."
         },
         {
           "name": "projectName",
-          "type": "unknown",
+          "type": {
+            "canonical": "any",
+            "original": "unknown"
+          },
           "required": true,
           "description": "The project name (used in config metadata)."
         }
       ],
       "outputs": {
-        "text": "An array of `SSGConfigFile` objects ready to be written to disk."
-      }
+        "type": {
+          "canonical": "object",
+          "original": "An array of `SSGConfigFile` objects ready to be written to disk."
+        },
+        "description": "An array of `SSGConfigFile` objects ready to be written to disk."
+      },
+      "tags": [
+        "generate"
+      ]
     },
     {
       "id": "op-generate",
@@ -1421,20 +2628,35 @@
       "inputs": [
         {
           "name": "config",
-          "type": "unknown",
+          "type": {
+            "canonical": "any",
+            "original": "unknown"
+          },
           "required": true,
           "description": "The resolved `ForgeConfig` for the project."
         },
         {
           "name": "options",
-          "type": "unknown",
+          "type": {
+            "canonical": "any",
+            "original": "unknown"
+          },
           "required": true,
           "description": "Optional generation flags (e.g., forceStubs)."
         }
       ],
       "outputs": {
-        "text": "A `ForgeResult` describing the outcome."
-      }
+        "type": {
+          "canonical": "object",
+          "original": "A `ForgeResult` describing the outcome."
+        },
+        "description": "A `ForgeResult` describing the outcome."
+      },
+      "tags": [
+        "generate",
+        "build",
+        "run"
+      ]
     },
     {
       "id": "op-runBuild",
@@ -1443,20 +2665,35 @@
       "inputs": [
         {
           "name": "args",
-          "type": "unknown",
+          "type": {
+            "canonical": "any",
+            "original": "unknown"
+          },
           "required": true,
           "description": "CLI arguments for the build command."
         }
       ],
       "outputs": {
-        "text": "A typed `CommandOutput<BuildResult>`."
-      }
+        "type": {
+          "canonical": "object",
+          "original": "A typed `CommandOutput<BuildResult>`."
+        },
+        "description": "A typed `CommandOutput<BuildResult>`."
+      },
+      "tags": [
+        "build",
+        "run"
+      ]
     },
     {
       "id": "op-buildCommand",
       "name": "buildCommand",
       "what": "Citty command definition for `forge-ts build`.",
-      "inputs": []
+      "inputs": [],
+      "tags": [
+        "forge",
+        "build"
+      ]
     },
     {
       "id": "op-runBypassCreate",
@@ -1465,14 +2702,26 @@
       "inputs": [
         {
           "name": "args",
-          "type": "unknown",
+          "type": {
+            "canonical": "any",
+            "original": "unknown"
+          },
           "required": true,
           "description": "CLI arguments for the bypass command."
         }
       ],
       "outputs": {
-        "text": "A typed `CommandOutput<BypassCreateResult>`."
-      }
+        "type": {
+          "canonical": "object",
+          "original": "A typed `CommandOutput<BypassCreateResult>`."
+        },
+        "description": "A typed `CommandOutput<BypassCreateResult>`."
+      },
+      "tags": [
+        "bypass",
+        "bypasscreate",
+        "run"
+      ]
     },
     {
       "id": "op-runBypassStatus",
@@ -1481,20 +2730,36 @@
       "inputs": [
         {
           "name": "args",
-          "type": "unknown",
+          "type": {
+            "canonical": "any",
+            "original": "unknown"
+          },
           "required": true,
           "description": "CLI arguments for the bypass status command."
         }
       ],
       "outputs": {
-        "text": "A typed `CommandOutput<BypassStatusResult>`."
-      }
+        "type": {
+          "canonical": "object",
+          "original": "A typed `CommandOutput<BypassStatusResult>`."
+        },
+        "description": "A typed `CommandOutput<BypassStatusResult>`."
+      },
+      "tags": [
+        "bypass",
+        "bypassstatus",
+        "run"
+      ]
     },
     {
       "id": "op-bypassCommand",
       "name": "bypassCommand",
       "what": "Citty command definition for `forge-ts bypass`.",
-      "inputs": []
+      "inputs": [],
+      "tags": [
+        "bypass",
+        "forge"
+      ]
     },
     {
       "id": "op-enforce",
@@ -1503,14 +2768,27 @@
       "inputs": [
         {
           "name": "config",
-          "type": "unknown",
+          "type": {
+            "canonical": "any",
+            "original": "unknown"
+          },
           "required": true,
           "description": "The resolved `ForgeConfig` for the project."
         }
       ],
       "outputs": {
-        "text": "A `ForgeResult` describing which symbols passed or failed."
-      }
+        "type": {
+          "canonical": "object",
+          "original": "A `ForgeResult` describing which symbols passed or failed."
+        },
+        "description": "A `ForgeResult` describing which symbols passed or failed."
+      },
+      "tags": [
+        "forge",
+        "lock",
+        "run",
+        "test"
+      ]
     },
     {
       "id": "op-runCheck",
@@ -1519,20 +2797,35 @@
       "inputs": [
         {
           "name": "args",
-          "type": "unknown",
+          "type": {
+            "canonical": "any",
+            "original": "unknown"
+          },
           "required": true,
           "description": "CLI arguments for the check command."
         }
       ],
       "outputs": {
-        "text": "A typed `CommandOutput<CheckResult>`."
-      }
+        "type": {
+          "canonical": "object",
+          "original": "A typed `CommandOutput<CheckResult>`."
+        },
+        "description": "A typed `CommandOutput<CheckResult>`."
+      },
+      "tags": [
+        "check",
+        "run"
+      ]
     },
     {
       "id": "op-checkCommand",
       "name": "checkCommand",
       "what": "Citty command definition for `forge-ts check`.",
-      "inputs": []
+      "inputs": [],
+      "tags": [
+        "forge",
+        "check"
+      ]
     },
     {
       "id": "op-runDocsDev",
@@ -1541,38 +2834,62 @@
       "inputs": [
         {
           "name": "args",
-          "type": "unknown",
+          "type": {
+            "canonical": "any",
+            "original": "unknown"
+          },
           "required": true,
           "description": "Command arguments."
         }
       ],
       "outputs": {
-        "text": "A promise that resolves when the server exits."
-      }
+        "type": {
+          "canonical": "object",
+          "original": "A promise that resolves when the server exits."
+        },
+        "description": "A promise that resolves when the server exits."
+      },
+      "tags": [
+        "forge",
+        "run"
+      ]
     },
     {
       "id": "op-docsDevCommand",
       "name": "docsDevCommand",
       "what": "Citty command definition for `forge-ts docs dev`.",
-      "inputs": []
+      "inputs": [],
+      "tags": [
+        "forge"
+      ]
     },
     {
       "id": "op-generateHuskyHook",
       "name": "generateHuskyHook",
       "what": "Generates the husky pre-commit hook file content (modern husky v9+).",
-      "inputs": []
+      "inputs": [],
+      "tags": [
+        "generate"
+      ]
     },
     {
       "id": "op-generateHuskyPrePushHook",
       "name": "generateHuskyPrePushHook",
       "what": "Generates the husky pre-push hook file content (modern husky v9+).",
-      "inputs": []
+      "inputs": [],
+      "tags": [
+        "generate"
+      ]
     },
     {
       "id": "op-generateLefthookBlock",
       "name": "generateLefthookBlock",
       "what": "Generates the lefthook block with both pre-commit and pre-push sections.",
-      "inputs": []
+      "inputs": [],
+      "tags": [
+        "generate",
+        "lock"
+      ]
     },
     {
       "id": "op-runInitHooks",
@@ -1581,20 +2898,36 @@
       "inputs": [
         {
           "name": "args",
-          "type": "unknown",
+          "type": {
+            "canonical": "any",
+            "original": "unknown"
+          },
           "required": true,
           "description": "CLI arguments for the init hooks command."
         }
       ],
       "outputs": {
-        "text": "A typed `CommandOutput<InitHooksResult>`."
-      }
+        "type": {
+          "canonical": "object",
+          "original": "A typed `CommandOutput<InitHooksResult>`."
+        },
+        "description": "A typed `CommandOutput<InitHooksResult>`."
+      },
+      "tags": [
+        "generate",
+        "inithooks",
+        "run"
+      ]
     },
     {
       "id": "op-initHooksCommand",
       "name": "initHooksCommand",
       "what": "Citty command definition for `forge-ts init hooks`.  Scaffolds git hook integration for the project by detecting the hook manager (husky or lefthook) and generating pre-commit hooks.",
-      "inputs": []
+      "inputs": [],
+      "tags": [
+        "forge",
+        "inithooks"
+      ]
     },
     {
       "id": "op-buildTsdocContent",
@@ -1603,14 +2936,25 @@
       "inputs": [
         {
           "name": "customTags",
-          "type": "unknown",
+          "type": {
+            "canonical": "any",
+            "original": "unknown"
+          },
           "required": true,
           "description": "Custom tag definitions from `ForgeConfig.tsdoc.customTags`."
         }
       ],
       "outputs": {
-        "text": "A JSON string for tsdoc.json."
-      }
+        "type": {
+          "canonical": "object",
+          "original": "A JSON string for tsdoc.json."
+        },
+        "description": "A JSON string for tsdoc.json."
+      },
+      "tags": [
+        "forge",
+        "build"
+      ]
     },
     {
       "id": "op-runInitProject",
@@ -1619,20 +2963,35 @@
       "inputs": [
         {
           "name": "args",
-          "type": "unknown",
+          "type": {
+            "canonical": "any",
+            "original": "unknown"
+          },
           "required": true,
           "description": "CLI arguments for the init command."
         }
       ],
       "outputs": {
-        "text": "A typed `CommandOutput<InitProjectResult>`."
-      }
+        "type": {
+          "canonical": "object",
+          "original": "A typed `CommandOutput<InitProjectResult>`."
+        },
+        "description": "A typed `CommandOutput<InitProjectResult>`."
+      },
+      "tags": [
+        "initproject",
+        "run"
+      ]
     },
     {
       "id": "op-initProjectCommand",
       "name": "initProjectCommand",
       "what": "Citty command definition for `forge-ts init` (bare — full project setup).  Detects the project environment, writes default configuration files, validates tsconfig/package.json, and reports a summary.",
-      "inputs": []
+      "inputs": [],
+      "tags": [
+        "forge",
+        "initproject"
+      ]
     },
     {
       "id": "op-runDoctor",
@@ -1641,20 +3000,37 @@
       "inputs": [
         {
           "name": "args",
-          "type": "unknown",
+          "type": {
+            "canonical": "any",
+            "original": "unknown"
+          },
           "required": true,
           "description": "CLI arguments for the doctor command."
         }
       ],
       "outputs": {
-        "text": "A typed `CommandOutput<DoctorResult>`."
-      }
+        "type": {
+          "canonical": "object",
+          "original": "A typed `CommandOutput<DoctorResult>`."
+        },
+        "description": "A typed `CommandOutput<DoctorResult>`."
+      },
+      "tags": [
+        "check",
+        "doctor",
+        "run"
+      ]
     },
     {
       "id": "op-doctorCommand",
       "name": "doctorCommand",
       "what": "Citty command definition for `forge-ts doctor`.  Performs project integrity checks and optionally auto-fixes resolvable issues with `--fix`.",
-      "inputs": []
+      "inputs": [],
+      "tags": [
+        "forge",
+        "check",
+        "doctor"
+      ]
     },
     {
       "id": "op-runInitDocs",
@@ -1663,26 +3039,45 @@
       "inputs": [
         {
           "name": "args",
-          "type": "unknown",
+          "type": {
+            "canonical": "any",
+            "original": "unknown"
+          },
           "required": true,
           "description": "CLI arguments for the init docs command."
         }
       ],
       "outputs": {
-        "text": "A typed `CommandOutput<InitDocsResult>`."
-      }
+        "type": {
+          "canonical": "object",
+          "original": "A typed `CommandOutput<InitDocsResult>`."
+        },
+        "description": "A typed `CommandOutput<InitDocsResult>`."
+      },
+      "tags": [
+        "check",
+        "initdocs",
+        "run"
+      ]
     },
     {
       "id": "op-initDocsCommand",
       "name": "initDocsCommand",
       "what": "Citty command definition for `forge-ts init docs`.  Scaffolds a complete documentation site for the target SSG platform. Use `--json` for LAFS JSON envelope output (agent/CI-friendly).",
-      "inputs": []
+      "inputs": [],
+      "tags": [
+        "forge",
+        "initdocs"
+      ]
     },
     {
       "id": "op-initCommand",
       "name": "initCommand",
       "what": "Citty command definition for `forge-ts init`.  Exposes subcommands for scaffolding project artefacts.",
-      "inputs": []
+      "inputs": [],
+      "tags": [
+        "forge"
+      ]
     },
     {
       "id": "op-runLock",
@@ -1691,20 +3086,37 @@
       "inputs": [
         {
           "name": "args",
-          "type": "unknown",
+          "type": {
+            "canonical": "any",
+            "original": "unknown"
+          },
           "required": true,
           "description": "CLI arguments for the lock command."
         }
       ],
       "outputs": {
-        "text": "A typed `CommandOutput<LockResult>`."
-      }
+        "type": {
+          "canonical": "object",
+          "original": "A typed `CommandOutput<LockResult>`."
+        },
+        "description": "A typed `CommandOutput<LockResult>`."
+      },
+      "tags": [
+        "forge",
+        "lock",
+        "run",
+        "unlock"
+      ]
     },
     {
       "id": "op-lockCommand",
       "name": "lockCommand",
       "what": "Citty command definition for `forge-ts lock`.",
-      "inputs": []
+      "inputs": [],
+      "tags": [
+        "forge",
+        "lock"
+      ]
     },
     {
       "id": "op-runPrepublish",
@@ -1713,20 +3125,40 @@
       "inputs": [
         {
           "name": "args",
-          "type": "unknown",
+          "type": {
+            "canonical": "any",
+            "original": "unknown"
+          },
           "required": true,
           "description": "CLI arguments for the prepublish command."
         }
       ],
       "outputs": {
-        "text": "A typed `CommandOutput<PrepublishResult>`."
-      }
+        "type": {
+          "canonical": "object",
+          "original": "A typed `CommandOutput<PrepublishResult>`."
+        },
+        "description": "A typed `CommandOutput<PrepublishResult>`."
+      },
+      "tags": [
+        "build",
+        "check",
+        "prepublish",
+        "run"
+      ]
     },
     {
       "id": "op-prepublishCommand",
       "name": "prepublishCommand",
       "what": "Citty command definition for `forge-ts prepublish`.  Runs check then build as a publish safety gate. Add to package.json as: `\"prepublishOnly\": \"forge-ts prepublish\"`",
-      "inputs": []
+      "inputs": [],
+      "tags": [
+        "forge",
+        "build",
+        "check",
+        "prepublish",
+        "run"
+      ]
     },
     {
       "id": "op-generateTestFiles",
@@ -1735,20 +3167,36 @@
       "inputs": [
         {
           "name": "examples",
-          "type": "unknown",
+          "type": {
+            "canonical": "any",
+            "original": "unknown"
+          },
           "required": true,
           "description": "Examples to include in the generated file."
         },
         {
           "name": "options",
-          "type": "unknown",
+          "type": {
+            "canonical": "any",
+            "original": "unknown"
+          },
           "required": true,
           "description": "Output configuration."
         }
       ],
       "outputs": {
-        "text": "An array of `VirtualTestFile` objects (one per source file)."
-      }
+        "type": {
+          "canonical": "object",
+          "original": "An array of `VirtualTestFile` objects (one per source file)."
+        },
+        "description": "An array of `VirtualTestFile` objects (one per source file)."
+      },
+      "tags": [
+        "generate",
+        "lock",
+        "run",
+        "test"
+      ]
     },
     {
       "id": "op-runTests",
@@ -1757,14 +3205,25 @@
       "inputs": [
         {
           "name": "files",
-          "type": "unknown",
+          "type": {
+            "canonical": "any",
+            "original": "unknown"
+          },
           "required": true,
           "description": "The virtual test files to write and run."
         }
       ],
       "outputs": {
-        "text": "A `RunResult` summarising the test outcome."
-      }
+        "type": {
+          "canonical": "object",
+          "original": "A `RunResult` summarising the test outcome."
+        },
+        "description": "A `RunResult` summarising the test outcome."
+      },
+      "tags": [
+        "run",
+        "test"
+      ]
     },
     {
       "id": "op-runTest",
@@ -1773,20 +3232,35 @@
       "inputs": [
         {
           "name": "args",
-          "type": "unknown",
+          "type": {
+            "canonical": "any",
+            "original": "unknown"
+          },
           "required": true,
           "description": "CLI arguments for the test command."
         }
       ],
       "outputs": {
-        "text": "A typed `CommandOutput<TestResult>`."
-      }
+        "type": {
+          "canonical": "object",
+          "original": "A typed `CommandOutput<TestResult>`."
+        },
+        "description": "A typed `CommandOutput<TestResult>`."
+      },
+      "tags": [
+        "run",
+        "test"
+      ]
     },
     {
       "id": "op-testCommand",
       "name": "testCommand",
       "what": "Citty command definition for `forge-ts test`.",
-      "inputs": []
+      "inputs": [],
+      "tags": [
+        "forge",
+        "test"
+      ]
     },
     {
       "id": "op-runUnlock",
@@ -1795,251 +3269,451 @@
       "inputs": [
         {
           "name": "args",
-          "type": "unknown",
+          "type": {
+            "canonical": "any",
+            "original": "unknown"
+          },
           "required": true,
           "description": "CLI arguments for the unlock command."
         }
       ],
       "outputs": {
-        "text": "A typed `CommandOutput<UnlockResult>`."
-      }
+        "type": {
+          "canonical": "object",
+          "original": "A typed `CommandOutput<UnlockResult>`."
+        },
+        "description": "A typed `CommandOutput<UnlockResult>`."
+      },
+      "tags": [
+        "forge",
+        "lock",
+        "run",
+        "unlock"
+      ]
     },
     {
       "id": "op-unlockCommand",
       "name": "unlockCommand",
       "what": "Citty command definition for `forge-ts unlock`.",
-      "inputs": []
+      "inputs": [],
+      "tags": [
+        "forge",
+        "lock",
+        "unlock"
+      ]
     }
   ],
   "constraints": [
     {
       "id": "constraint-createBypass-Error-when-the-daily-bypass-bu",
       "rule": "Error when the daily bypass budget is exhausted.",
-      "enforcedBy": "createBypass"
+      "enforcedBy": "createBypass",
+      "severity": "error"
     },
     {
       "id": "constraint-getAdapter--Error--if-the-target-is-not-r",
       "rule": "`Error` if the target is not registered.",
-      "enforcedBy": "getAdapter"
+      "enforcedBy": "getAdapter",
+      "severity": "error"
     }
   ],
   "workflows": [],
   "configSchema": [
     {
-      "key": "ReadAuditOptions.limit",
-      "type": "number | undefined",
+      "key": "readaudit.limit",
+      "type": {
+        "canonical": "string",
+        "original": "number | undefined"
+      },
       "description": "Maximum number of events to return.",
-      "default": "undefined"
+      "default": "undefined",
+      "required": true
     },
     {
-      "key": "ReadAuditOptions.eventType",
-      "type": "AuditEventType | undefined",
+      "key": "readaudit.eventType",
+      "type": {
+        "canonical": "string",
+        "original": "AuditEventType | undefined"
+      },
       "description": "Filter to a single event type.",
-      "default": "undefined"
+      "default": "undefined",
+      "required": true
     },
     {
-      "key": "BypassConfig.dailyBudget",
-      "type": "number",
-      "description": "Maximum number of bypasses allowed per calendar day. Default: 3"
+      "key": "bypass.dailyBudget",
+      "type": {
+        "canonical": "number"
+      },
+      "description": "Maximum number of bypasses allowed per calendar day. Default: 3",
+      "required": true,
+      "default": null
     },
     {
-      "key": "BypassConfig.durationHours",
-      "type": "number",
-      "description": "Duration in hours before a bypass automatically expires. Default: 24"
+      "key": "bypass.durationHours",
+      "type": {
+        "canonical": "number"
+      },
+      "description": "Duration in hours before a bypass automatically expires. Default: 24",
+      "required": true,
+      "default": null
     },
     {
-      "key": "ForgeConfig.rootDir",
-      "type": "string",
-      "description": "Root directory of the project."
+      "key": "forge.rootDir",
+      "type": {
+        "canonical": "string"
+      },
+      "description": "Root directory of the project.",
+      "required": true,
+      "default": null
     },
     {
-      "key": "ForgeConfig.tsconfig",
-      "type": "string",
-      "description": "Path to the tsconfig.json to compile against."
+      "key": "forge.tsconfig",
+      "type": {
+        "canonical": "string"
+      },
+      "description": "Path to the tsconfig.json to compile against.",
+      "required": true,
+      "default": null
     },
     {
-      "key": "ForgeConfig.outDir",
-      "type": "string",
-      "description": "Output directory for generated files."
+      "key": "forge.outDir",
+      "type": {
+        "canonical": "string"
+      },
+      "description": "Output directory for generated files.",
+      "required": true,
+      "default": null
     },
     {
-      "key": "ForgeConfig.enforce",
-      "type": "{ enabled: boolean; minVisibility: Visibility | \"public\" | \"beta\" | \"internal\" | \"private\"; strict: boolean; rules: EnforceRules; ignoreFile?: string; }",
-      "description": "Enforce TSDoc on all public exports."
+      "key": "forge.enforce",
+      "type": {
+        "canonical": "string",
+        "original": "{ enabled: boolean; minVisibility: Visibility | \"public\" | \"beta\" | \"internal\" | \"private\"; strict: boolean; rules: EnforceRules; ignoreFile?: string; }"
+      },
+      "description": "Enforce TSDoc on all public exports.",
+      "required": true,
+      "default": null
     },
     {
-      "key": "ForgeConfig.doctest",
-      "type": "{ enabled: boolean; cacheDir: string; }",
-      "description": "DocTest configuration."
+      "key": "forge.doctest",
+      "type": {
+        "canonical": "object",
+        "original": "{ enabled: boolean; cacheDir: string; }"
+      },
+      "description": "DocTest configuration.",
+      "required": true,
+      "default": null
     },
     {
-      "key": "ForgeConfig.api",
-      "type": "{ enabled: boolean; openapi: boolean; openapiPath: string; }",
-      "description": "API generation configuration."
+      "key": "forge.api",
+      "type": {
+        "canonical": "object",
+        "original": "{ enabled: boolean; openapi: boolean; openapiPath: string; }"
+      },
+      "description": "API generation configuration.",
+      "required": true,
+      "default": null
     },
     {
-      "key": "ForgeConfig.gen",
-      "type": "{ enabled: boolean; formats: Array<\"markdown\" | \"mdx\">; llmsTxt: boolean; readmeSync: boolean; ssgTarget?: \"docusaurus\" | \"mintlify\" | \"nextra\" | \"vitepress\"; ckm?: boolean; }",
-      "description": "Output generation configuration."
+      "key": "forge.gen",
+      "type": {
+        "canonical": "string",
+        "original": "{ enabled: boolean; formats: Array<\"markdown\" | \"mdx\">; llmsTxt: boolean; readmeSync: boolean; ssgTarget?: \"docusaurus\" | \"mintlify\" | \"nextra\" | \"vitepress\"; ckm?: boolean; }"
+      },
+      "description": "Output generation configuration.",
+      "required": true,
+      "default": null
     },
     {
-      "key": "ForgeConfig.skill",
-      "type": "{ enabled?: boolean; customSections?: Array<{ heading: string; content: string; }>; extraGotchas?: string[]; }",
-      "description": "Skill package generation settings. Custom sections here are merged into the generated SKILL.md, allowing projects to inject workflow knowledge, domain gotchas, and other context that cannot be derived from symbols alone."
+      "key": "forge.skill",
+      "type": {
+        "canonical": "array",
+        "original": "{ enabled?: boolean; customSections?: Array<{ heading: string; content: string; }>; extraGotchas?: string[]; }"
+      },
+      "description": "Skill package generation settings. Custom sections here are merged into the generated SKILL.md, allowing projects to inject workflow knowledge, domain gotchas, and other context that cannot be derived from symbols alone.",
+      "required": true,
+      "default": null
     },
     {
-      "key": "ForgeConfig.tsdoc",
-      "type": "{ writeConfig: boolean; customTags: Array<{ tagName: string; syntaxKind: \"block\" | \"inline\" | \"modifier\"; }>; enforce: { core: \"error\" | \"warn\" | \"off\"; extended: \"error\" | \"warn\" | \"off\"; discretionary: \"error\" | \"warn\" | \"off\"; }; }",
-      "description": "TSDoc ecosystem configuration."
+      "key": "forge.tsdoc",
+      "type": {
+        "canonical": "string",
+        "original": "{ writeConfig: boolean; customTags: Array<{ tagName: string; syntaxKind: \"block\" | \"inline\" | \"modifier\"; }>; enforce: { core: \"error\" | \"warn\" | \"off\"; extended: \"error\" | \"warn\" | \"off\"; discretionary: \"error\" | \"warn\" | \"off\"; }; }"
+      },
+      "description": "TSDoc ecosystem configuration.",
+      "required": true,
+      "default": null
     },
     {
-      "key": "ForgeConfig.bypass",
-      "type": "{ dailyBudget: number; durationHours: number; }",
-      "description": "Bypass budget configuration for temporary rule overrides."
+      "key": "forge.bypass",
+      "type": {
+        "canonical": "object",
+        "original": "{ dailyBudget: number; durationHours: number; }"
+      },
+      "description": "Bypass budget configuration for temporary rule overrides.",
+      "required": true,
+      "default": null
     },
     {
-      "key": "ForgeConfig.guides",
-      "type": "{ enabled: boolean; autoDiscover: boolean; custom: Array<{ slug: string; title: string; sources: string[]; }>; }",
-      "description": "Guide generation configuration."
+      "key": "forge.guides",
+      "type": {
+        "canonical": "array",
+        "original": "{ enabled: boolean; autoDiscover: boolean; custom: Array<{ slug: string; title: string; sources: string[]; }>; }"
+      },
+      "description": "Guide generation configuration.",
+      "required": true,
+      "default": null
     },
     {
-      "key": "ForgeConfig.guards",
-      "type": "{ tsconfig: { enabled: boolean; requiredFlags: string[]; }; biome: { enabled: boolean; lockedRules: string[]; }; packageJson: { enabled: boolean; minNodeVersion: string; requiredFields: string[]; }; }",
-      "description": "Downstream config drift guards."
+      "key": "forge.guards",
+      "type": {
+        "canonical": "array",
+        "original": "{ tsconfig: { enabled: boolean; requiredFlags: string[]; }; biome: { enabled: boolean; lockedRules: string[]; }; packageJson: { enabled: boolean; minNodeVersion: string; requiredFields: string[]; }; }"
+      },
+      "description": "Downstream config drift guards.",
+      "required": true,
+      "default": null
     },
     {
-      "key": "ForgeConfig._configWarnings",
-      "type": "string[] | undefined",
+      "key": "forge._configWarnings",
+      "type": {
+        "canonical": "array",
+        "original": "string[] | undefined"
+      },
       "description": "Warnings generated during config loading (e.g., unknown keys). Populated by loadConfig(). Agents should surface these in output.",
-      "default": "undefined"
+      "default": "undefined",
+      "required": true
     },
     {
-      "key": "ForgeConfig.project",
-      "type": "{ repository?: string; homepage?: string; packageName?: string; description?: string; version?: string; bin?: Record<string, string>; scripts?: Record<string, string>; keywords?: string[]; }",
-      "description": "Project metadata — auto-detected from package.json if not provided."
+      "key": "forge.project",
+      "type": {
+        "canonical": "array",
+        "original": "{ repository?: string; homepage?: string; packageName?: string; description?: string; version?: string; bin?: Record<string, string>; scripts?: Record<string, string>; keywords?: string[]; }"
+      },
+      "description": "Project metadata — auto-detected from package.json if not provided.",
+      "required": true,
+      "default": null
     },
     {
-      "key": "ForgeLoggerOptions.quiet",
-      "type": "boolean | undefined",
-      "description": "Suppress all consola output (--quiet flag)."
+      "key": "forgelogger.quiet",
+      "type": {
+        "canonical": "string",
+        "original": "boolean | undefined"
+      },
+      "description": "Suppress all consola output (--quiet flag).",
+      "required": true,
+      "default": null
     },
     {
-      "key": "ForgeLoggerOptions.json",
-      "type": "boolean | undefined",
-      "description": "JSON output mode (--json flag). LAFS handles JSON; suppress consola."
+      "key": "forgelogger.json",
+      "type": {
+        "canonical": "string",
+        "original": "boolean | undefined"
+      },
+      "description": "JSON output mode (--json flag). LAFS handles JSON; suppress consola.",
+      "required": true,
+      "default": null
     },
     {
-      "key": "ForgeLoggerOptions.verbose",
-      "type": "boolean | undefined",
-      "description": "Enable debug-level output (--verbose flag)."
+      "key": "forgelogger.verbose",
+      "type": {
+        "canonical": "string",
+        "original": "boolean | undefined"
+      },
+      "description": "Enable debug-level output (--verbose flag).",
+      "required": true,
+      "default": null
     },
     {
-      "key": "SiteGeneratorOptions.format",
-      "type": "\"markdown\" | \"mdx\"",
-      "description": "Output format"
+      "key": "sitegenerator.format",
+      "type": {
+        "canonical": "string",
+        "original": "\"markdown\" | \"mdx\""
+      },
+      "description": "Output format",
+      "required": true,
+      "default": null
     },
     {
-      "key": "SiteGeneratorOptions.ssgTarget",
-      "type": "\"docusaurus\" | \"mintlify\" | \"nextra\" | \"vitepress\" | undefined",
+      "key": "sitegenerator.ssgTarget",
+      "type": {
+        "canonical": "string",
+        "original": "\"docusaurus\" | \"mintlify\" | \"nextra\" | \"vitepress\" | undefined"
+      },
       "description": "SSG target for frontmatter.",
-      "default": "undefined"
+      "default": "undefined",
+      "required": true
     },
     {
-      "key": "SiteGeneratorOptions.projectName",
-      "type": "string",
-      "description": "Project name"
+      "key": "sitegenerator.projectName",
+      "type": {
+        "canonical": "string"
+      },
+      "description": "Project name",
+      "required": true,
+      "default": null
     },
     {
-      "key": "SiteGeneratorOptions.projectDescription",
-      "type": "string | undefined",
+      "key": "sitegenerator.projectDescription",
+      "type": {
+        "canonical": "string",
+        "original": "string | undefined"
+      },
       "description": "Project description.",
-      "default": "undefined"
+      "default": "undefined",
+      "required": true
     },
     {
-      "key": "SiteGeneratorOptions.repositoryUrl",
-      "type": "string | undefined",
+      "key": "sitegenerator.repositoryUrl",
+      "type": {
+        "canonical": "string",
+        "original": "string | undefined"
+      },
       "description": "Repository URL (auto-detected from package.json).",
-      "default": "undefined"
+      "default": "undefined",
+      "required": true
     },
     {
-      "key": "SiteGeneratorOptions.packageName",
-      "type": "string | undefined",
+      "key": "sitegenerator.packageName",
+      "type": {
+        "canonical": "string",
+        "original": "string | undefined"
+      },
       "description": "npm package name for install commands.",
-      "default": "undefined"
+      "default": "undefined",
+      "required": true
     },
     {
-      "key": "CKMConfigEntry.key",
-      "type": "string",
-      "description": "Dot-path key for this config entry (e.g., \"enforce.strict\")."
+      "key": "ckmconfigentry.key",
+      "type": {
+        "canonical": "string"
+      },
+      "description": "Dot-path key for this config entry (e.g., \"enforce.strict\").",
+      "required": true,
+      "default": null
     },
     {
-      "key": "CKMConfigEntry.type",
-      "type": "string",
-      "description": "TypeScript type of this config entry."
+      "key": "ckmconfigentry.type",
+      "type": {
+        "canonical": "string"
+      },
+      "description": "TypeScript type of this config entry.",
+      "required": true,
+      "default": null
     },
     {
-      "key": "CKMConfigEntry.default",
-      "type": "string | undefined",
-      "description": "Default value from `@defaultValue` tag, if present."
+      "key": "ckmconfigentry.default",
+      "type": {
+        "canonical": "string",
+        "original": "string | undefined"
+      },
+      "description": "Default value from `@defaultValue` tag, if present.",
+      "required": true,
+      "default": null
     },
     {
-      "key": "CKMConfigEntry.description",
-      "type": "string",
-      "description": "Human-readable description from the property summary."
+      "key": "ckmconfigentry.description",
+      "type": {
+        "canonical": "string"
+      },
+      "description": "Human-readable description from the property summary.",
+      "required": true,
+      "default": null
     },
     {
-      "key": "CKMConfigEntry.effect",
-      "type": "string | undefined",
-      "description": "Downstream effect or behaviour this config entry controls, from `@remarks`."
+      "key": "ckmconfigentry.effect",
+      "type": {
+        "canonical": "string",
+        "original": "string | undefined"
+      },
+      "description": "Downstream effect or behaviour this config entry controls, from `@remarks`.",
+      "required": true,
+      "default": null
     },
     {
-      "key": "MarkdownOptions.mdx",
-      "type": "boolean | undefined",
+      "key": "markdown.mdx",
+      "type": {
+        "canonical": "string",
+        "original": "boolean | undefined"
+      },
       "description": "Whether to use MDX syntax (default: Markdown).",
-      "default": "false"
+      "default": "false",
+      "required": true
     },
     {
-      "key": "ReadmeSyncOptions.badge",
-      "type": "boolean | undefined",
+      "key": "readmesync.badge",
+      "type": {
+        "canonical": "string",
+        "original": "boolean | undefined"
+      },
       "description": "Include a \"Documented with forge-ts\" badge above the API table.",
-      "default": "false"
+      "default": "false",
+      "required": true
     },
     {
-      "key": "ReadmeSyncOptions.includeExamples",
-      "type": "boolean | undefined",
+      "key": "readmesync.includeExamples",
+      "type": {
+        "canonical": "string",
+        "original": "boolean | undefined"
+      },
       "description": "Include first",
-      "default": "false"
+      "default": "false",
+      "required": true
     },
     {
-      "key": "SSGConfigFile.path",
-      "type": "string",
-      "description": "Relative path from outDir (e.g., \"mint.json\", \"_meta.json\")"
+      "key": "ssgconfigfile.path",
+      "type": {
+        "canonical": "string"
+      },
+      "description": "Relative path from outDir (e.g., \"mint.json\", \"_meta.json\")",
+      "required": true,
+      "default": null
     },
     {
-      "key": "SSGConfigFile.content",
-      "type": "string",
-      "description": "File content"
+      "key": "ssgconfigfile.content",
+      "type": {
+        "canonical": "string"
+      },
+      "description": "File content",
+      "required": true,
+      "default": null
     },
     {
-      "key": "GenerateOptions.forceStubs",
-      "type": "boolean | undefined",
+      "key": "generate.forceStubs",
+      "type": {
+        "canonical": "string",
+        "original": "boolean | undefined"
+      },
       "description": "When true, overwrite stub pages even if they already exist on disk. Normally stub pages (concepts, guides, faq, contributing, changelog) are only created on the first build to preserve manual edits. Use this to reset stubs to their scaffolding state.",
-      "default": "false"
+      "default": "false",
+      "required": true
     },
     {
-      "key": "FormatOptions.colors",
-      "type": "boolean",
-      "description": "Emit ANSI colour escape sequences when `true`."
+      "key": "format.colors",
+      "type": {
+        "canonical": "boolean"
+      },
+      "description": "Emit ANSI colour escape sequences when `true`.",
+      "required": true,
+      "default": null
     },
     {
-      "key": "FormatOptions.verbose",
-      "type": "boolean",
-      "description": "When `true`, include the symbol's type signature alongside each diagnostic so the reader has immediate context."
+      "key": "format.verbose",
+      "type": {
+        "canonical": "boolean"
+      },
+      "description": "When `true`, include the symbol's type signature alongside each diagnostic so the reader has immediate context.",
+      "required": true,
+      "default": null
     },
     {
-      "key": "GeneratorOptions.cacheDir",
-      "type": "string",
-      "description": "Directory where virtual test files will be written."
+      "key": "generator.cacheDir",
+      "type": {
+        "canonical": "string"
+      },
+      "description": "Directory where virtual test files will be written.",
+      "required": true,
+      "default": null
     }
   ]
 }

@@ -124,6 +124,32 @@ const output = await runBarometer({ cwd: process.cwd() });
 console.log(`Generated ${output.data.questions.length} questions`);
 ```
 
+## runBarometerScore(args)
+
+Scores agent answers against the barometer answer key.
+
+**Signature**
+
+```typescript
+(args: { cwd?: string; answersPath: string; }) => Promise<CommandOutput<BarometerScoreResult>>
+```
+
+**Parameters**
+
+| Name   | Type                                     | Description                                                          |
+| ------ | ---------------------------------------- | -------------------------------------------------------------------- |
+| `args` | `{ cwd?: string; answersPath: string; }` | CLI arguments including project root and path to agent answers file. |
+
+**Returns** — A typed `CommandOutput<BarometerScoreResult>`.
+
+**Example**
+
+```typescript
+import { runBarometerScore } from "@forge-ts/cli/commands/barometer";
+const output = await runBarometerScore({ answersPath: "answers.json" });
+console.log(`Score: ${output.data.score}%`);
+```
+
 ## runBuild(args)
 
 Runs the full build pipeline and returns a typed command output.

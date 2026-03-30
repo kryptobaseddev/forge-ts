@@ -185,6 +185,9 @@ importers:
         specifier: ^5.1.0
         version: 5.1.0
     devDependencies:
+      ckm-sdk:
+        specifier: ^2026.3.3
+        version: 2026.3.3
       tsup:
         specifier: ^8.3.5
         version: 8.5.1(postcss@8.5.8)(typescript@6.0.2)
@@ -1039,6 +1042,11 @@ packages:
 
   citty@0.2.1:
     resolution: {integrity: sha512-kEV95lFBhQgtogAPlQfJJ0WGVSokvLr/UEoFPiKKOXF7pl98HfUVUD0ejsuTCld/9xH9vogSywZ5KqHzXrZpqg==}
+
+  ckm-sdk@2026.3.3:
+    resolution: {integrity: sha512-KK/HrtUpX7mgLgPVgC9bdzO0TOqBD/qnvowTKcTkR1sDCCmZPXBHn0efDUTLDjf+1pTSe05j8abvBDLcYMFv5A==}
+    engines: {node: '>=18'}
+    hasBin: true
 
   color-convert@2.0.1:
     resolution: {integrity: sha512-RRECPsj7iu/xb5oKYcsFHSppFNnsj/52OVTRKb4zP5onXwVF3zVmmToNcOfGC+CRDpfK/U584fMg38ZHCaElKQ==}
@@ -3123,6 +3131,8 @@ snapshots:
       readdirp: 4.1.2
 
   citty@0.2.1: {}
+
+  ckm-sdk@2026.3.3: {}
 
   color-convert@2.0.1:
     dependencies:

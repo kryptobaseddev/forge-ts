@@ -117,19 +117,57 @@ A single rating band in the barometer scoring rubric.
 | `rating`      | `string` | Yes      | Short label for this band.               |
 | `description` | `string` | Yes      | Description of what this band means.     |
 
+## BarometerInstructions
+
+Agent instructions included in `--questions-only` output.
+
+| Property         | Type                                                                                      | Required | Description                                           |
+| ---------------- | ----------------------------------------------------------------------------------------- | -------- | ----------------------------------------------------- |
+| `task`           | `string`                                                                                  | Yes      | Task description for the agent.                       |
+| `docsPath`       | `string`                                                                                  | Yes      | Path to generated documentation the agent should use. |
+| `responseFormat` | `{ description: string; example: { answers: Array<{ id: string; answer: string; }>; }; }` | Yes      | Expected response format.                             |
+
 ## BarometerResult
 
 Full barometer output written to `.forge/barometer.json`.
 
-| Property      | Type                                                 | Required | Description                                                |
-| ------------- | ---------------------------------------------------- | -------- | ---------------------------------------------------------- |
-| `$schema`     | `string`                                             | Yes      | JSON schema URL.                                           |
-| `version`     | `string`                                             | Yes      | Barometer format version.                                  |
-| `project`     | `string`                                             | Yes      | Project name from package.json or config.                  |
-| `generated`   | `string`                                             | Yes      | ISO 8601 timestamp of when the barometer was generated.    |
-| `symbolCount` | `number`                                             | Yes      | Total number of exported symbols analyzed.                 |
-| `questions`   | `BarometerQuestion[]`                                | Yes      | Generated questions with ground-truth answers.             |
-| `rubric`      | `{ scale: BarometerRatingBand[]; scoring: string; }` | Yes      | Scoring rubric for evaluating documentation effectiveness. |
+| Property       | Type                                                 | Required | Description                                                     |
+| -------------- | ---------------------------------------------------- | -------- | --------------------------------------------------------------- |
+| `$schema`      | `string`                                             | Yes      | JSON schema URL.                                                |
+| `version`      | `string`                                             | Yes      | Barometer format version.                                       |
+| `project`      | `string`                                             | Yes      | Project name from package.json or config.                       |
+| `generated`    | `string`                                             | Yes      | ISO 8601 timestamp of when the barometer was generated.         |
+| `symbolCount`  | `number`                                             | Yes      | Total number of exported symbols analyzed.                      |
+| `questions`    | `BarometerQuestion[]`                                | Yes      | Generated questions with ground-truth answers.                  |
+| `rubric`       | `{ scale: BarometerRatingBand[]; scoring: string; }` | Yes      | Scoring rubric for evaluating documentation effectiveness.      |
+| `instructions` | `BarometerInstructions \| undefined`                 | No       | Agent instructions — present only in `--questions-only` output. |
+
+## BarometerScoredAnswer
+
+A single scored answer in the barometer score output.
+
+| Property   | Type                                | Required | Description                               |
+| ---------- | ----------------------------------- | -------- | ----------------------------------------- |
+| `id`       | `string`                            | Yes      | Question ID.                              |
+| `expected` | `string`                            | Yes      | Expected answer from the answer key.      |
+| `got`      | `string`                            | Yes      | Agent's submitted answer.                 |
+| `verdict`  | `"correct" \| "partial" \| "wrong"` | Yes      | Scoring verdict.                          |
+| `category` | `string`                            | Yes      | Question category for aggregate analysis. |
+
+## BarometerScoreResult
+
+Full barometer score output.
+
+| Property            | Type                      | Required | Description                            |
+| ------------------- | ------------------------- | -------- | -------------------------------------- |
+| `score`             | `number`                  | Yes      | Score as a percentage (0-100).         |
+| `rating`            | `string`                  | Yes      | Rating band label (e.g. "Elite SSoT"). |
+| `ratingDescription` | `string`                  | Yes      | Rating band description.               |
+| `correct`           | `number`                  | Yes      | Number of fully correct answers.       |
+| `partial`           | `number`                  | Yes      | Number of partially correct answers.   |
+| `wrong`             | `number`                  | Yes      | Number of wrong answers.               |
+| `total`             | `number`                  | Yes      | Total questions scored.                |
+| `missed`            | `BarometerScoredAnswer[]` | Yes      | Details for every non-correct answer.  |
 
 ## BarometerArgs
 

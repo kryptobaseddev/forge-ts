@@ -1,6 +1,6 @@
 # forge-ts
 > Universal TypeScript documentation compiler — enforces TSDoc as a build gate, then generates all artifacts from source in one pass
-> Version: 0.21.1
+> Version: 0.22.0
 
 ## Install
 
@@ -16,7 +16,7 @@ npm install -D forge-ts
 ## Packages
 
 ### core
-23 functions, 26 types
+23 functions, 26 types, 1 variables
 
 - getCurrentUser() — Returns the current OS username, or "unknown" if unavailable.
 - appendAuditEvent() — Appends a single audit event to the `.forge-audit.jsonl` file.
@@ -69,6 +69,8 @@ npm install -D forge-ts
 - OpenAPIDocument — Complete OpenAPI 3.2 document.
 - ASTWalker — The return type of `createWalker`.
 
+- RULE_GROUP_MAP — Maps each rule key in `EnforceRules` to its TSDoc standardisation group.  - **core**: Tags defined in the TSDoc core standard (`@param`, `@returns`, etc.). - **extended**: Tags from the extended standard (`@example`, `@defaultValue`, etc.). - **discretionary**: Release-tag family (`@public`, `@beta`, `@internal`). - Rules not listed here are **guard rules** and are not affected by group settings.
+
 ### api
 10 functions, 6 types
 
@@ -91,13 +93,14 @@ npm install -D forge-ts
 - ReferenceEntry — A single entry in the generated API reference.
 
 ### cli
-30 functions, 45 types
+31 functions, 48 types, 16 variables
 
 - configureLogger() — Configures the global `forgeLogger` based on CLI flags.  Call this once at the start of a command's `run()` handler to align consola's output level with the user's intent:  - `quiet` or `json` sets level to 0 (silent) so only LAFS output appears. - `verbose` sets level to 4 (debug) for maximum detail. - Default level is 3 (info) which covers info, warn, error, and success.
 - emitResult() — Wraps a command result in a LAFS envelope and emits it.  Output format is determined by LAFS flag resolution: - TTY terminals default to human-readable output. - Non-TTY (piped, CI, agents) defaults to JSON. - Explicit `--json` or `--human` flags always take precedence.  On failure, the full result is included alongside the error so agents get actionable data (e.g., suggestedFix) in a single response.
 - resolveExitCode() — Returns the LAFS-compliant exit code for a command output.
 - runAudit() — Reads the audit log and returns a typed command output.
 - runBarometer() — Runs the barometer generation pass.  Loads the project config, walks the symbol graph, extracts testable facts from five categories, generates questions with ground-truth answers, and writes the result to `.forge/barometer.json`.
+- runBarometerScore() — Scores agent answers against the barometer answer key.
 - runBuild() — Runs the full build pipeline and returns a typed command output.
 - runBypassCreate() — Runs the bypass creation: creates a new bypass record with budget enforcement.
 - runBypassStatus() — Runs the bypass status query: shows active bypasses and remaining budget.
@@ -134,7 +137,10 @@ npm install -D forge-ts
 - BarometerSource — Source provenance for a barometer question.
 - BarometerQuestion — A single barometer question with its ground-truth answer.
 - BarometerRatingBand — A single rating band in the barometer scoring rubric.
+- BarometerInstructions — Agent instructions included in `--questions-only` output.
 - BarometerResult — Full barometer output written to `.forge/barometer.json`.
+- BarometerScoredAnswer — A single scored answer in the barometer score output.
+- BarometerScoreResult — Full barometer score output.
 - BarometerArgs — Arguments for the `barometer` command.
 - BuildArgs — Arguments for the `build` command.
 - BuildStep — A single step in the build pipeline.
@@ -170,8 +176,25 @@ npm install -D forge-ts
 - TestResult — Typed result for the `test` command.
 - UnlockResult — Typed result for the `unlock` command.
 
+- forgeLogger — Pre-configured consola instance branded for forge-ts.
+- auditCommand — Citty command definition for `forge-ts audit`.
+- barometerCommand — Citty command definition for `forge-ts barometer`.  Generates a documentation effectiveness test (questions + answers + rubric) from the project's source code. Includes a `score` subcommand for evaluating agent answers.
+- buildCommand — Citty command definition for `forge-ts build`.
+- bypassCommand — Citty command definition for `forge-ts bypass`.
+- checkCommand — Citty command definition for `forge-ts check`.
+- docsDevCommand — Citty command definition for `forge-ts docs dev`.
+- initHooksCommand — Citty command definition for `forge-ts init hooks`.  Scaffolds git hook integration for the project by detecting the hook manager (husky or lefthook) and generating pre-commit hooks.
+- initProjectCommand — Citty command definition for `forge-ts init` (bare — full project setup).  Detects the project environment, writes default configuration files, validates tsconfig/package.json, and reports a summary.
+- doctorCommand — Citty command definition for `forge-ts doctor`.  Performs project integrity checks and optionally auto-fixes resolvable issues with `--fix`.
+- initDocsCommand — Citty command definition for `forge-ts init docs`.  Scaffolds a complete documentation site for the target SSG platform. Use `--json` for LAFS JSON envelope output (agent/CI-friendly).
+- initCommand — Citty command definition for `forge-ts init`.  Exposes subcommands for scaffolding project artefacts.
+- lockCommand — Citty command definition for `forge-ts lock`.
+- prepublishCommand — Citty command definition for `forge-ts prepublish`.  Runs check then build as a publish safety gate. Add to package.json as: `"prepublishOnly": "forge-ts prepublish"`
+- testCommand — Citty command definition for `forge-ts test`.
+- unlockCommand — Citty command definition for `forge-ts unlock`.
+
 ### gen
-34 functions, 43 types
+34 functions, 42 types, 6 variables
 
 - discoverGuides() — Analyze the symbol graph and discover guides using multiple heuristics.  Each heuristic produces zero or more `DiscoveredGuide` entries. When multiple heuristics produce a guide with the same slug, the first one wins (priority order: guide-tag, config-interface, error-types, category, entry-point).
 - serializeMarkdown() — Serialize an mdast tree to a well-formed markdown string.  Uses remark-stringify with GFM table support. The serializer handles all escaping (pipes in table cells, special characters in text, etc.) so callers never need manual escape functions.
@@ -240,17 +263,23 @@ npm install -D forge-ts
 - DevServerCommand — Command to start a local dev server for doc preview.
 - SSGAdapter — The central SSG adapter interface. Every doc platform provider implements this contract. One file per provider. No shared mutable state.
 - CKMConcept — A domain concept extracted from the codebase.
-- CKMOperationInput — A single input parameter for a CKM operation.
 - CKMOperation — A user-facing operation extracted from the codebase.
 - CKMConstraint — An enforced constraint or validation rule extracted from the codebase.
 - CKMWorkflow — A multi-step workflow for achieving a common goal.
 - CKMConfigEntry — A single entry in the configuration schema.
-- CKMManifest — The top-level Codebase Knowledge Manifest.
+- CKMManifest — The top-level Codebase Knowledge Manifest (v2).
 - MarkdownOptions — Options controlling Markdown output.
 - ReadmeSyncOptions — Options controlling README sync behaviour.
 - SkillPackage — A generated skill package following the agentskills.io directory structure. Contains SKILL.md plus optional references and scripts files.
 - SSGConfigFile — A single generated SSG configuration file.
 - GenerateOptions — Options for the generation pipeline.
+
+- md — Concise factory functions for building mdast nodes.  Usage:
+- DEFAULT_TARGET — The default SSG target when none is specified.
+- mintlifyAdapter — Mintlify SSG adapter. Implements the `SSGAdapter` contract for the Mintlify platform.
+- docusaurusAdapter — Docusaurus SSG adapter. Implements the `SSGAdapter` contract for the Docusaurus platform.
+- nextraAdapter — Nextra SSG adapter (v4, App Router). Implements the `SSGAdapter` contract for the Nextra platform.
+- vitepressAdapter — VitePress SSG adapter. Implements the `SSGAdapter` contract for the VitePress platform.
 
 ### enforcer
 6 functions, 4 types

@@ -1,5 +1,20 @@
 # @forge-ts/cli
 
+## 0.23.0
+
+### Minor Changes
+
+- [`9a502df`](https://github.com/kryptobaseddev/forge-ts/commit/9a502dfc60d0007d55daa268f83ad2df1bd16cdc) Thanks [@kryptobaseddev](https://github.com/kryptobaseddev)! - feat: integrate ckm-sdk — typed manifest generation with runtime validation, 36 browsable topics
+
+### Patch Changes
+
+- Updated dependencies [[`9a502df`](https://github.com/kryptobaseddev/forge-ts/commit/9a502dfc60d0007d55daa268f83ad2df1bd16cdc)]:
+  - @forge-ts/gen@0.23.0
+  - @forge-ts/core@0.23.0
+  - @forge-ts/enforcer@0.23.0
+  - @forge-ts/doctest@0.23.0
+  - @forge-ts/api@0.23.0
+
 ## 0.22.1
 
 ### Patch Changes

@@ -3,7 +3,7 @@
 > Universal TypeScript documentation compiler — enforces TSDoc as a build gate, then generates all artifacts from source in one pass
 
 Version: 0.22.0
-Generated: 2026-03-30T19:07:11.553Z
+Generated: 2026-03-30T23:47:21.829Z
 
 ## Package: core
 

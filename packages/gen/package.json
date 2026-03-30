@@ -40,10 +40,10 @@
 		"remark-parse": "^11.0.0",
 		"remark-stringify": "^11.0.0",
 		"unified": "^11.0.5",
-		"unist-util-visit": "^5.1.0"
+		"unist-util-visit": "^5.1.0",
+		"ckm-sdk": "^2026.3.3"
 	},
 	"devDependencies": {
-		"ckm-sdk": "^2026.3.3",
 		"tsup": "^8.3.5",
 		"typescript": "^6.0.2"
 	}

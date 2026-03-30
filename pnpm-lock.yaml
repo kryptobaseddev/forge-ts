@@ -160,6 +160,9 @@ importers:
       '@forge-ts/core':
         specifier: workspace:*
         version: link:../core
+      ckm-sdk:
+        specifier: ^2026.3.3
+        version: 2026.3.3
       gray-matter:
         specifier: ^4.0.3
         version: 4.0.3
@@ -185,9 +188,6 @@ importers:
         specifier: ^5.1.0
         version: 5.1.0
     devDependencies:
-      ckm-sdk:
-        specifier: ^2026.3.3
-        version: 2026.3.3
       tsup:
         specifier: ^8.3.5
         version: 8.5.1(postcss@8.5.8)(typescript@6.0.2)

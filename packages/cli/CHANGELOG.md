@@ -1,5 +1,16 @@
 # @forge-ts/cli
 
+## 0.23.1
+
+### Patch Changes
+
+- Updated dependencies [[`9d88919`](https://github.com/kryptobaseddev/forge-ts/commit/9d88919b26fed6ab8be131faf0a8768f395065f3)]:
+  - @forge-ts/core@0.23.1
+  - @forge-ts/api@0.23.1
+  - @forge-ts/doctest@0.23.1
+  - @forge-ts/enforcer@0.23.1
+  - @forge-ts/gen@0.23.1
+
 ## 0.23.0
 
 ### Minor Changes

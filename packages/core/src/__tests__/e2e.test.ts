@@ -1,4 +1,4 @@
-import { mkdirSync, rmSync, writeFileSync } from "node:fs";
+import { mkdirSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { extractSDKTypes, generateOpenAPISpec } from "@forge-ts/api";
@@ -522,6 +522,57 @@ export function doSomethingElse(): void {}
 		const parseMessages = doSomethingElse?.documentation?.parseMessages ?? [];
 		const customTagWarnings = parseMessages.filter((m) => m.text.includes("@myCustomTag"));
 		expect(customTagWarnings.length).toBeGreaterThan(0);
+	});
+
+	it("walker never emits compiled artifacts into src/ (GH-28)", () => {
+		mkdirSync(join(tempDir, "src"), { recursive: true });
+
+		writeFileSync(
+			join(tempDir, "tsconfig.json"),
+			JSON.stringify({
+				compilerOptions: {
+					target: "ESNext",
+					module: "NodeNext",
+					moduleResolution: "NodeNext",
+					strict: true,
+					outDir: "dist",
+					rootDir: "src",
+					declaration: true,
+					sourceMap: true,
+				},
+				include: ["src/**/*"],
+			}),
+		);
+
+		writeFileSync(
+			join(tempDir, "src", "index.ts"),
+			`/**
+ * A function.
+ * @public
+ */
+export function hello(): string { return "hi"; }
+`,
+		);
+
+		const config = makeFixtureConfig({
+			rootDir: tempDir,
+			tsconfig: join(tempDir, "tsconfig.json"),
+			outDir: join(tempDir, "docs"),
+		});
+
+		const walker = createWalker(config);
+		walker.walk();
+
+		// src/ must contain only the original .ts file — no .js, .d.ts, or .map artifacts
+		const srcFiles = readdirSync(join(tempDir, "src"));
+		const emittedArtifacts = srcFiles.filter(
+			(f) =>
+				f.endsWith(".js") ||
+				f.endsWith(".d.ts") ||
+				f.endsWith(".js.map") ||
+				f.endsWith(".d.ts.map"),
+		);
+		expect(emittedArtifacts).toHaveLength(0);
 	});
 });
 

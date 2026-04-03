@@ -826,7 +826,14 @@ export function createWalker(config: ForgeConfig): ASTWalker {
 
 			const program = ts.createProgram({
 				rootNames: parsedCommandLine.fileNames,
-				options: parsedCommandLine.options,
+				options: {
+					...parsedCommandLine.options,
+					noEmit: true,
+					declaration: false,
+					declarationMap: false,
+					sourceMap: false,
+					emitDeclarationOnly: false,
+				},
 			});
 
 			const checker = program.getTypeChecker();

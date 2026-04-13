@@ -42,17 +42,17 @@ jobs:
         run: node packages/cli/dist/index.js build --human
 
       - name: Install docs site dependencies
-        working-directory: docs/generated/site
+        working-directory: docs/site
         run: npm install --legacy-peer-deps
 
       - name: Build docs site
-        working-directory: docs/generated/site
+        working-directory: docs/site
         run: npx next build
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: docs/generated/site/out
+          path: docs/site/out
 
   deploy:
     name: Deploy to GitHub Pages

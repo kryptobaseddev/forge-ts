@@ -1,0 +1,9 @@
+1:"$Sreact.fragment"
+2:I[40343,["/_next/static/chunks/0jrd43f_ya135.js","/_next/static/chunks/0aazqae-iux6r.js","/_next/static/chunks/0zgbt2jab4.jt.js","/_next/static/chunks/16zzfjjcifhxj.js","/_next/static/chunks/0bqspuuph8eb_.js","/_next/static/chunks/0r.zvoacu5y_y.js"],"DocsPage"]
+3:I[40343,["/_next/static/chunks/0jrd43f_ya135.js","/_next/static/chunks/0aazqae-iux6r.js","/_next/static/chunks/0zgbt2jab4.jt.js","/_next/static/chunks/16zzfjjcifhxj.js","/_next/static/chunks/0bqspuuph8eb_.js","/_next/static/chunks/0r.zvoacu5y_y.js"],"DocsTitle"]
+4:I[40343,["/_next/static/chunks/0jrd43f_ya135.js","/_next/static/chunks/0aazqae-iux6r.js","/_next/static/chunks/0zgbt2jab4.jt.js","/_next/static/chunks/16zzfjjcifhxj.js","/_next/static/chunks/0bqspuuph8eb_.js","/_next/static/chunks/0r.zvoacu5y_y.js"],"DocsDescription"]
+5:I[40343,["/_next/static/chunks/0jrd43f_ya135.js","/_next/static/chunks/0aazqae-iux6r.js","/_next/static/chunks/0zgbt2jab4.jt.js","/_next/static/chunks/16zzfjjcifhxj.js","/_next/static/chunks/0bqspuuph8eb_.js","/_next/static/chunks/0r.zvoacu5y_y.js"],"DocsBody"]
+6:I[26522,["/_next/static/chunks/0jrd43f_ya135.js","/_next/static/chunks/0aazqae-iux6r.js"],"OutletBoundary"]
+7:"$Sreact.suspense"
+0:{"rsc":["$","$1","c",{"children":[["$","$L2",null,{"toc":[],"children":[["$","$L3",null,{"children":". — Types"}],["$","$L4",null,{"children":"Type contracts for the . package"}],["$","$L5",null,{"children":["$","p",null,{"children":"Type contracts exported by this package: interfaces, type aliases, and enums."}]}]]}],[["$","script","script-0",{"src":"/_next/static/chunks/0bqspuuph8eb_.js","async":true}],["$","script","script-1",{"src":"/_next/static/chunks/0r.zvoacu5y_y.js","async":true}]],["$","$L6",null,{"children":["$","$7",null,{"name":"Next.MetadataOutlet","children":"$@8"}]}]]}],"isPartial":false,"staleTime":300,"varyParams":null,"buildId":"A9-z5BCrQgoLHfz88mRRB"}
+8:null

@@ -9,7 +9,7 @@
  * @public
  */
 
-import { stringifyWithFrontmatter, stripFrontmatter } from "../markdown-utils.js";
+import { sanitizeForMdx, stringifyWithFrontmatter, stripFrontmatter } from "../markdown-utils.js";
 import type { DocPage } from "../site-generator.js";
 import { registerAdapter } from "./registry.js";
 import type {
@@ -149,6 +149,10 @@ function buildSourceConfig(contentDir: string): string {
 		`import { defineDocs, defineConfig } from "fumadocs-mdx/config";\n\n` +
 		`export const docs = defineDocs({\n` +
 		`  dir: "${contentDir}",\n` +
+		`  docs: {\n` +
+		`    // Only include .mdx files, ignore other content in the output dir\n` +
+		`    files: ["**/*.mdx"],\n` +
+		`  },\n` +
 		`});\n\n` +
 		`export default defineConfig({\n` +
 		`  mdxOptions: {\n` +
@@ -254,7 +258,7 @@ function buildCatchAllPage(): string {
 /** Build the source loader at src/lib/source.ts. */
 function buildSourceLoader(): string {
 	return (
-		`import { docs } from "../../.source";\n` +
+		`import { docs } from "../../.source/server";\n` +
 		`import { loader } from "fumadocs-core/source";\n\n` +
 		`export const source = loader({\n` +
 		`  baseUrl: "/docs",\n` +
@@ -278,11 +282,13 @@ function buildPackageJson(context: AdapterContext): string {
 			"fumadocs-core": "^16",
 			"fumadocs-mdx": "^14",
 			"fumadocs-ui": "^16",
-			next: "^15",
+			next: "^16",
 			react: "^19",
 			"react-dom": "^19",
 		},
 		devDependencies: {
+			"@types/react": "^19",
+			typescript: "^5",
 			tailwindcss: "^4",
 			"@tailwindcss/postcss": "^4",
 		},
@@ -329,18 +335,21 @@ function buildGlobalCss(): string {
 	return `@import "tailwindcss";\n@import "fumadocs-ui/css/neutral.css";\n@import "fumadocs-ui/css/preset.css";\n`;
 }
 
-/** Add Fumadocs-compatible frontmatter (title + description) to a doc page. */
+/** Add Fumadocs-compatible frontmatter and sanitize MDX content. */
 function addFumadocsFrontmatter(page: DocPage): string {
 	const title = String(page.frontmatter.title ?? "");
 	const description = String(page.frontmatter.description ?? "");
 
-	const body = stripFrontmatter(page.content);
+	let body = stripFrontmatter(page.content);
+	// Sanitize HTML comments and unsafe chars for strict MDX
+	body = sanitizeForMdx(body);
+
 	const data: Record<string, string> = {};
 	if (title) data.title = title;
 	if (description) data.description = description;
 
 	if (Object.keys(data).length === 0) {
-		return page.content;
+		return body;
 	}
 	return stringifyWithFrontmatter(body, data);
 }
@@ -370,33 +379,35 @@ export const fumadocsAdapter: SSGAdapter = {
 	scaffold(context: AdapterContext): ScaffoldManifest {
 		// The Fumadocs site scaffold lives in a sibling "site/" directory
 		// next to outDir. source.config.ts points back to outDir for content.
-		const contentDir = "..";
+		const contentDir = "../generated";
 		return {
 			target: "fumadocs",
 			files: [
-				{ path: "site/source.config.ts", content: buildSourceConfig(contentDir) },
-				{ path: "site/next.config.mjs", content: buildNextConfig() },
-				{ path: "site/package.json", content: buildPackageJson(context) },
-				{ path: "site/tsconfig.json", content: buildTsConfig() },
-				{ path: "site/postcss.config.mjs", content: buildPostcssConfig() },
-				{ path: "site/src/app/layout.tsx", content: buildAppLayout(context) },
-				{ path: "site/src/app/global.css", content: buildGlobalCss() },
-				{ path: "site/src/app/docs/layout.tsx", content: buildDocsLayout() },
+				{ path: "../site/source.config.ts", content: buildSourceConfig(contentDir) },
+				{ path: "../site/next.config.mjs", content: buildNextConfig() },
+				{ path: "../site/package.json", content: buildPackageJson(context) },
+				{ path: "../site/tsconfig.json", content: buildTsConfig() },
+				{ path: "../site/postcss.config.mjs", content: buildPostcssConfig() },
+				{ path: "../site/src/app/layout.tsx", content: buildAppLayout(context) },
+				{ path: "../site/src/app/global.css", content: buildGlobalCss() },
+				{ path: "../site/src/app/docs/layout.tsx", content: buildDocsLayout() },
 				{
-					path: "site/src/app/docs/[[...slug]]/page.tsx",
+					path: "../site/src/app/docs/[[...slug]]/page.tsx",
 					content: buildCatchAllPage(),
 				},
-				{ path: "site/src/lib/source.ts", content: buildSourceLoader() },
+				{ path: "../site/src/lib/source.ts", content: buildSourceLoader() },
 			],
 			dependencies: {
 				"fumadocs-core": "^16",
 				"fumadocs-mdx": "^14",
 				"fumadocs-ui": "^16",
-				next: "^15",
+				next: "^16",
 				react: "^19",
 				"react-dom": "^19",
 			},
 			devDependencies: {
+				"@types/react": "^19",
+				typescript: "^5",
 				tailwindcss: "^4",
 				"@tailwindcss/postcss": "^4",
 			},
@@ -406,7 +417,7 @@ export const fumadocsAdapter: SSGAdapter = {
 				"docs:serve": "next start",
 			},
 			instructions: [
-				`Run \`pnpm install && pnpm run docs:dev\` inside ${context.outDir}/site to preview your docs`,
+				`Run \`pnpm install && pnpm run docs:dev\` inside docs/site to preview your docs`,
 			],
 		};
 	},
@@ -427,7 +438,7 @@ export const fumadocsAdapter: SSGAdapter = {
 		return {
 			bin: "npx",
 			args: ["next", "dev"],
-			cwd: `${outDir}/site`,
+			cwd: `${outDir}/../site`,
 			label: "Fumadocs Dev Server (Next.js)",
 			url: "http://localhost:3000",
 		};
@@ -437,8 +448,8 @@ export const fumadocsAdapter: SSGAdapter = {
 		const { existsSync } = await import("node:fs");
 		const { join } = await import("node:path");
 		return (
-			existsSync(join(outDir, "site/source.config.ts")) ||
-			existsSync(join(outDir, "site/next.config.mjs"))
+			existsSync(join(outDir, "../site/source.config.ts")) ||
+			existsSync(join(outDir, "../site/next.config.mjs"))
 		);
 	},
 };

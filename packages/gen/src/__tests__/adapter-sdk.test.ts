@@ -409,16 +409,16 @@ describe("scaffold — key files present", () => {
 		expect(manifest.scripts["docs:preview"]).toBe("vitepress preview");
 	});
 
-	it("fumadocs scaffold includes site/source.config.ts and site/src/app/layout.tsx", () => {
+	it("fumadocs scaffold includes ../site/source.config.ts and ../site/src/app/layout.tsx", () => {
 		const manifest = getAdapter("fumadocs").scaffold(makeContext());
-		expect(manifest.files.some((f) => f.path === "site/source.config.ts")).toBe(true);
-		expect(manifest.files.some((f) => f.path === "site/src/app/layout.tsx")).toBe(true);
+		expect(manifest.files.some((f) => f.path === "../site/source.config.ts")).toBe(true);
+		expect(manifest.files.some((f) => f.path === "../site/src/app/layout.tsx")).toBe(true);
 	});
 
-	it("fumadocs scaffold includes docs layout and catch-all page in site/", () => {
+	it("fumadocs scaffold includes docs layout and catch-all page in ../site/", () => {
 		const manifest = getAdapter("fumadocs").scaffold(makeContext());
-		expect(manifest.files.some((f) => f.path === "site/src/app/docs/layout.tsx")).toBe(true);
-		expect(manifest.files.some((f) => f.path === "site/src/app/docs/[[...slug]]/page.tsx")).toBe(true);
+		expect(manifest.files.some((f) => f.path === "../site/src/app/docs/layout.tsx")).toBe(true);
+		expect(manifest.files.some((f) => f.path === "../site/src/app/docs/[[...slug]]/page.tsx")).toBe(true);
 	});
 
 	it("fumadocs scaffold has correct dependencies", () => {
@@ -426,7 +426,7 @@ describe("scaffold — key files present", () => {
 		expect(manifest.dependencies["fumadocs-core"]).toBe("^16");
 		expect(manifest.dependencies["fumadocs-mdx"]).toBe("^14");
 		expect(manifest.dependencies["fumadocs-ui"]).toBe("^16");
-		expect(manifest.dependencies.next).toBe("^15");
+		expect(manifest.dependencies.next).toBe("^16");
 	});
 
 	it("fumadocs scaffold has Tailwind v4 devDependencies", () => {

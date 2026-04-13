@@ -17,3 +17,10 @@ clawmsgr-agent.json
 clawmsgr-*.json
 clawmsgr-*.json
 .scratch/
+
+# Docs site build artifacts
+docs/site/node_modules
+docs/site/.next
+docs/site/out
+docs/site/.source
+docs/site/package-lock.json

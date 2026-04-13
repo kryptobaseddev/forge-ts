@@ -41,7 +41,8 @@
 			"!.cache",
 			"!*.tsbuildinfo",
 			"!.cleo",
-			"!docs/generated"
+			"!docs/generated",
+			"!docs/site"
 		]
 	}
 }

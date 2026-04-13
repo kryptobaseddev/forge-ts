@@ -164,7 +164,9 @@ function buildNextConfig(): string {
 		`import { createMDX } from "fumadocs-mdx/next";\n\n` +
 		`const withMDX = createMDX();\n\n` +
 		`/** @type {import('next').NextConfig} */\n` +
-		`const config = {};\n\n` +
+		`const config = {\n` +
+		`  output: "export",\n` +
+		`};\n\n` +
 		`export default withMDX(config);\n`
 	);
 }

@@ -39,15 +39,15 @@ jobs:
         run: pnpm build
 
       - name: Generate docs with forge-ts
-        run: npx forge-ts build --human
+        run: node packages/cli/dist/index.js build --human
 
       - name: Install docs site dependencies
         working-directory: docs/generated/site
-        run: pnpm install
+        run: npm install --legacy-peer-deps
 
       - name: Build docs site
         working-directory: docs/generated/site
-        run: pnpm run docs:build
+        run: npx next build
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3

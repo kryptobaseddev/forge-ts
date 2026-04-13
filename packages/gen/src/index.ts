@@ -1,8 +1,46 @@
 /**
- * @forge-ts/gen — Markdown/MDX documentation and llms.txt generator.
+ * Documentation generation pipeline for the forge-ts toolchain.
  *
- * Generates human- and machine-readable documentation from the forge-ts
- * symbol graph, with optional README injection.
+ * Converts the `ForgeSymbol[]` graph produced by `@forge-ts/core` into
+ * human- and machine-readable output: multi-page Markdown or MDX site files,
+ * `llms.txt` / `llms-full.txt` LLM-context companions, a Codebase Knowledge
+ * Manifest (`ckm.json`), SKILL.md agent skill packages, and OpenAPI-compatible
+ * site scaffolding for Docusaurus, Mintlify, Nextra, VitePress, and Fumadocs.
+ *
+ * @remarks
+ * The top-level `generate()` function orchestrates the full pipeline in a
+ * single call: walk → render → write. Auto-generated pages are always
+ * overwritten from source; stub pages (concepts, guides, FAQ) are written only
+ * once so manual edits survive subsequent builds. Pass `{ forceStubs: true }`
+ * to reset stubs to their scaffolded state.
+ *
+ * SSG adapters are selected via `config.gen.ssgTarget`. Each adapter
+ * transforms `DocPage` objects into platform-specific frontmatter and file
+ * extensions, and optionally emits platform config files (e.g.,
+ * `mint.json` for Mintlify, `_meta.ts` for Fumadocs).
+ *
+ * Key exports:
+ * - `generate` — Run the full walk → render → write pipeline.
+ * - `generateDocSite` — Produce per-page `DocPage[]` from a symbol graph.
+ * - `getAdapter` — Retrieve the SSG adapter for a given `SSGTarget`.
+ * - `generateMarkdown` — Render symbols to a single flat Markdown/MDX string.
+ * - `generateLlmsTxt` / `generateLlmsFullTxt` — Produce `llms.txt` companions.
+ * - `generateCKM` — Build a `CKMManifest` (Codebase Knowledge Manifest).
+ * - `generateSkillPackage` — Produce a SKILL.md agent skill package.
+ * - `syncReadme` — Inject auto-generated sections back into `README.md`.
+ * - `GenerateOptions` — Options accepted by `generate()`.
+ * - `SiteGeneratorOptions` / `DocPage` — Page-level generation types.
+ * - `SSGConfigFile` — A platform config file emitted by an SSG adapter.
+ *
+ * @example
+ * ```typescript
+ * import { loadConfig } from "@forge-ts/core";
+ * import { generate } from "@forge-ts/gen";
+ *
+ * const config = await loadConfig();
+ * const result = await generate(config);
+ * console.log(result.writtenFiles?.length); // number of files written
+ * ```
  *
  * @packageDocumentation
  * @public
@@ -85,28 +123,52 @@ export interface GenerateOptions {
 }
 
 /**
- * Runs the full generation pipeline: walk → render → write.
+ * Runs the full documentation generation pipeline: walk → render → write.
  *
- * Auto-generated pages are always regenerated from source code.
- * Stub pages (scaffolding for human/agent editing) are only created
- * if they don't already exist, preserving manual edits across builds.
- * Pass `{ forceStubs: true }` to overwrite stubs.
+ * Auto-generated pages are always regenerated from source code on each run.
+ * Stub pages (concepts, guides, FAQ, contributing, changelog) are written
+ * only the first time, preserving manual edits across subsequent builds.
+ * Pass `{ forceStubs: true }` to reset stubs to their scaffolded state.
  *
  * @remarks
- * Orchestrates the walker, site generator, llms.txt, and OpenAPI renderers
- * in sequence, writing all output files to `config.outDir`.
+ * Orchestrates the following stages in order:
  *
- * @param config - The resolved {@link ForgeConfig} for the project.
- * @param options - Optional generation flags (e.g., forceStubs).
- * @returns A {@link ForgeResult} describing the outcome.
+ * 1. **Walk** — `createWalker(config).walk()` produces the `ForgeSymbol[]` graph.
+ *
+ * 2. **Flat output** — For each format in `config.gen.formats`, writes a legacy
+ *    single-file `api-reference.md` / `api-reference.mdx` to `config.outDir`.
+ *
+ * 3. **Multi-page site** — `generateDocSite` produces `DocPage[]`; the selected
+ *    SSG adapter (`getAdapter(config.gen.ssgTarget)`) transforms them into
+ *    platform-specific files with correct frontmatter and extensions. Stub
+ *    pages that already exist on disk are merged rather than overwritten via
+ *    `updateAutoSections`, preserving the `FORGE:AUTO` marker regions while
+ *    leaving manually authored content untouched.
+ *
+ * 4. **llms.txt** — When `config.gen.llmsTxt` is enabled, writes `llms.txt`
+ *    and `llms-full.txt` to `config.outDir`, and generates a SKILL.md skill
+ *    package unless `config.skill.enabled` is explicitly `false`.
+ *
+ * 5. **CKM** — When `config.gen.ckm` is enabled (the default), writes
+ *    `ckm.json` (a Codebase Knowledge Manifest) to `config.outDir`.
+ *
+ * 6. **README sync** — When `config.gen.readmeSync` is enabled, updates
+ *    auto-generated sections in the project `README.md`.
+ *
+ * @param config - The resolved `ForgeConfig` for the project.
+ * @param options - Optional generation flags (see `GenerateOptions`).
+ * @returns A `ForgeResult` whose `writtenFiles` lists every path written.
+ *   `success` is always `true` on normal completion; file-system errors throw.
  * @example
  * ```typescript
+ * import { loadConfig } from "@forge-ts/core";
  * import { generate } from "@forge-ts/gen";
+ *
+ * const config = await loadConfig();
  * const result = await generate(config);
- * console.log(result.success); // true if all files were written
+ * console.log(`Wrote ${result.writtenFiles?.length ?? 0} files`);
  * ```
  * @public
- * @packageDocumentation
  */
 export async function generate(
 	config: ForgeConfig,

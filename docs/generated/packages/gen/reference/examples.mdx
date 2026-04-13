@@ -437,12 +437,30 @@ console.log(configs[0].path); // ".vitepress/sidebar.json"
 
 ## `generate()`
 
-*Runs the full generation pipeline: walk → render → write.  Auto-generated pages are always regenerated from source code. Stub pages (scaffolding for human/agent editing) are only created if they don't already exist, preserving manual edits across builds. Pass `{ forceStubs: true }` to overwrite stubs.*
+*Runs the full documentation generation pipeline: walk → render → write.  Auto-generated pages are always regenerated from source code on each run. Stub pages (concepts, guides, FAQ, contributing, changelog) are written only the first time, preserving manual edits across subsequent builds. Pass `{ forceStubs: true }` to reset stubs to their scaffolded state.*
 
 [View in API reference](/packages/gen/reference/functions#generate)
 
 ```typescript
+import { loadConfig } from "@forge-ts/core";
 import { generate } from "@forge-ts/gen";
+
+const config = await loadConfig();
 const result = await generate(config);
-console.log(result.success); // true if all files were written
+console.log(`Wrote ${result.writtenFiles?.length ?? 0} files`);
+```
+
+## `index.ts`
+
+*Documentation generation pipeline for the forge-ts toolchain.  Converts the `ForgeSymbol[]` graph produced by `@forge-ts/core` into human- and machine-readable output: multi-page Markdown or MDX site files, `llms.txt` / `llms-full.txt` LLM-context companions, a Codebase Knowledge Manifest (`ckm.json`), SKILL.md agent skill packages, and OpenAPI-compatible site scaffolding for Docusaurus, Mintlify, Nextra, VitePress, and Fumadocs.*
+
+[View in API reference](/packages/gen/reference/functions#indexts)
+
+```typescript
+import { loadConfig } from "@forge-ts/core";
+import { generate } from "@forge-ts/gen";
+
+const config = await loadConfig();
+const result = await generate(config);
+console.log(result.writtenFiles?.length); // number of files written
 ```

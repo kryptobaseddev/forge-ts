@@ -156,7 +156,7 @@ When `--json --mvi full`, each error includes `suggestedFix` with the exact TSDo
 - **`ForgeSymbol`** — A single extracted and annotated symbol from the TypeScript AST.
 - **`RuleSeverity`** — Severity level for an individual enforcement rule. - `"error"` — violation fails the build. - `"warn"`  — violation is reported but does not fail the build. - `"off"`   — rule is disabled entirely.
 - **`EnforceRules`** — Per-rule severity configuration for the TSDoc enforcer. 40 rules across 5 layers: API (E001-E008, W003-W004), Dev (E013-E015, E017-E018, W005-W006, W009), Consumer (E016, W007-W008, W010-W011), LLM Anti-Pattern (E019-E020, W012-W013), Staleness (W014-W017), CKM Truthfulness (W018-W020).
-- **`ForgeConfig`** — Full configuration for a forge-ts run. Loaded from forge-ts.config.ts or the "forge-ts" key in package.json.
+- **`ForgeConfig`** — Full configuration for a forge-ts run.
 
 ## References
 

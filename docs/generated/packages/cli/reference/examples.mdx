@@ -410,3 +410,19 @@ import { runUnlock } from "@forge-ts/cli/commands/unlock";
 const output = await runUnlock({ cwd: process.cwd(), reason: "Relaxing rules for migration" });
 console.log(output.data.success); // true
 ```
+
+## `index.ts`
+
+*Unified command-line interface for the forge-ts toolchain.  Provides the `forge-ts` binary with subcommands that wrap every pipeline stage — TSDoc enforcement, doctest execution, documentation generation, OpenAPI spec output, and project health diagnostics — behind a consistent flag surface and structured JSON/human output modes.*
+
+[View in API reference](/packages/cli/reference/functions#indexts)
+
+```typescript
+// Programmatic usage — run enforcement without spawning a subprocess
+import { loadConfig } from "@forge-ts/core";
+import { runBarometer } from "@forge-ts/cli";
+
+const config = await loadConfig();
+const result = await runBarometer({ cwd: config.rootDir });
+console.log(`Documentation score: ${result.score}/100`);
+```

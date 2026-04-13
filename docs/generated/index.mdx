@@ -20,21 +20,24 @@ npm install -D forge-ts
 ## Quick Example
 
 ```typescript
+import { loadConfig } from "@forge-ts/core";
 import { generateApi } from "@forge-ts/api";
+
+const config = await loadConfig();
 const result = await generateApi(config);
-console.log(result.success); // true if spec was written successfully
+console.log(result.success); // true if the spec was written successfully
 ```
 
 ## Packages
 
 | Package                                | Description                                                                        |
 | -------------------------------------- | ---------------------------------------------------------------------------------- |
-| [`core`](/packages/core/index)         | forge-ts/core — Shared types, interfaces, config loader, and AST walker.  Thi...   |
-| [`api`](/packages/api/index)           | forge-ts/api — OpenAPI spec and API reference generator.  Extracts public SDK...   |
-| [`cli`](/packages/cli/index)           | forge-ts/cli — Command-line interface for the forge-ts toolchain.  Usage:   f...   |
+| [`core`](/packages/core/index)         | Foundation package for the forge-ts toolchain — shared types, config loader,...    |
+| [`api`](/packages/api/index)           | OpenAPI 3.2 spec generator and structured API reference builder for forge-ts....   |
+| [`cli`](/packages/cli/index)           | Unified command-line interface for the forge-ts toolchain.  Provides the...        |
 | [`gen`](/packages/gen/index)           | SSG adapter registry for documentation generation.  Provides pluggable adapte...   |
-| [`enforcer`](/packages/enforcer/index) | forge-ts/enforcer — TSDoc enforcement linter.  Walks all exported symbols and...   |
-| [`doctest`](/packages/doctest/index)   | forge-ts/doctest — TSDoc \`@example\` block extractor and test runner.  Extract... |
+| [`enforcer`](/packages/enforcer/index) | TSDoc enforcement engine for TypeScript projects.  Walks all exported symbols...   |
+| [`doctest`](/packages/doctest/index)   | TSDoc \`@example\` block extractor and test runner for forge-ts projects.  Extr... |
 
 ## Next Steps
 

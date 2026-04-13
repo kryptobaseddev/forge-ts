@@ -3,7 +3,7 @@
 > Universal TypeScript documentation compiler — enforces TSDoc as a build gate, then generates all artifacts from source in one pass
 
 Version: 0.22.0
-Generated: 2026-04-13T20:37:47.821Z
+Generated: 2026-04-13T23:10:12.257Z
 
 ## Package: core
 
@@ -811,7 +811,19 @@ W020: `\@constraint`-tagged symbol missing `\@throws` to document constraint vio
 
 ForgeConfig
 
-Full configuration for a forge-ts run. Loaded from forge-ts.config.ts or the "forge-ts" key in package.json.
+Full configuration for a forge-ts run.
+
+This is the root configuration object consumed by every forge-ts command. It is loaded from `forge-ts.config.ts` (preferred), `forge-ts.config.js`, or the `"forge-ts"` key inside `package.json`, in that order. Any field left unset in the user config is filled with a sensible default by `loadConfig`. Use `defineConfig` to get full type checking when authoring the config file.
+
+Example:
+  // forge-ts.config.ts
+  import { defineConfig } from "@forge-ts/core";
+  
+  export default defineConfig({
+    outDir: "docs/generated",
+    enforce: { strict: true },
+    gen: { formats: ["mdx"], ssgTarget: "fumadocs" },
+  });
 
 Members:
 
@@ -821,83 +833,111 @@ string
 
 Root directory of the project.
 
+All relative paths inside the config (e.g. `tsconfig`, `outDir`) are resolved against this directory. When loaded via `loadConfig` this is set to `process.cwd()` automatically; override only when invoking the API programmatically from a different working directory.
+
 ##### tsconfig
 
 string
 
-Path to the tsconfig.json to compile against.
+Path to the `tsconfig.json` used for TypeScript compilation and type resolution.
+
+forge-ts passes this file to the TypeScript compiler API for AST walking and type extraction. The path may be absolute or relative to `rootDir`. If the file does not exist the run fails immediately with a clear error.
 
 ##### outDir
 
 string
 
-Output directory for generated files.
+Output directory for all generated documentation artifacts.
+
+All generated files — MDX/Markdown pages, `llms.txt`, `llms-full.txt`, `meta.json` sidebar files, `openapi.json`, and `ckm.json` — are written relative to this directory. The directory is created automatically if it does not exist. Commit this directory or add it to `.gitignore` depending on your workflow.
 
 ##### enforce
 
 { enabled: boolean; minVisibility: Visibility | "public" | "beta" | "internal" | "private"; strict: boolean; rules: EnforceRules; ignoreFile?: string; }
 
-Enforce TSDoc on all public exports.
+Enforcement configuration — controls which TSDoc rules run and at what severity.
+
+When `enforce.enabled` is `true`, `forge check` validates every exported symbol against the active rule set. Rules produce either errors (which fail the build) or warnings (which are reported but do not fail). The `tsdoc.enforce` group severities act as coarse-grained defaults; individual entries in `enforce.rules` take precedence over group defaults.
 
 ##### doctest
 
 { enabled: boolean; cacheDir: string; }
 
-DocTest configuration.
+DocTest configuration — controls execution of `@example` blocks as live tests.
+
+When `doctest.enabled` is `true`, `forge doctest` extracts every `@example` code block from the TSDoc of exported symbols, wraps each block in a Vitest test file, and executes it. Failures are reported as test errors. This ensures examples in documentation stay runnable as the codebase evolves.
 
 ##### api
 
 { enabled: boolean; openapi: boolean; openapiPath: string; }
 
-API generation configuration.
+API generation configuration — controls OpenAPI spec output.
+
+When `api.enabled` is `true`, forge-ts scans exported functions annotated with `@route` tags and assembles an OpenAPI 3.1 specification. This requires `api.openapi` to be `true` as well. The feature is disabled by default because most projects do not expose HTTP routes through exported TypeScript functions.
 
 ##### gen
 
 { enabled: boolean; formats: Array<"markdown" | "mdx">; llmsTxt: boolean; readmeSync: boolean; ssgTarget?: "docusaurus" | "mintlify" | "nextra" | "vitepress" | "fumadocs"; ckm?: boolean; }
 
-Output generation configuration.
+Documentation generation configuration — controls what files are written by `forge gen`.
+
+`forge gen` extracts symbols, enriches them with TSDoc metadata, and writes human- and machine-readable documentation artifacts to `outDir`. The output format and target SSG platform are controlled here.
 
 ##### skill
 
 { enabled?: boolean; customSections?: Array<{ heading: string; content: string; }>; extraGotchas?: string[]; }
 
-Skill package generation settings. Custom sections here are merged into the generated SKILL.md, allowing projects to inject workflow knowledge, domain gotchas, and other context that cannot be derived from symbols alone.
+SKILL.md generation settings.
+
+`forge gen` can produce a `SKILL.md` package alongside `llms.txt`. This file is a structured knowledge document intended for AI coding assistants that need deep project-specific context: workflow steps, domain gotchas, and architectural invariants that cannot be inferred from symbol signatures alone. Custom sections defined here are merged into the auto-generated body.
 
 ##### tsdoc
 
 { writeConfig: boolean; customTags: Array<{ tagName: string; syntaxKind: "block" | "inline" | "modifier"; }>; enforce: { core: "error" | "warn" | "off"; extended: "error" | "warn" | "off"; discretionary: "error" | "warn" | "off"; }; }
 
-TSDoc ecosystem configuration.
+TSDoc ecosystem configuration — tag definitions and group-level enforcement.
+
+Controls two concerns: (1) which custom TSDoc tags are registered in the generated `tsdoc.json` preset, and (2) how the three TSDoc standardisation groups map to default severities for enforcement rules. Individual rule overrides in `enforce.rules` always take precedence over group severities.
 
 ##### bypass
 
 { dailyBudget: number; durationHours: number; }
 
-Bypass budget configuration for temporary rule overrides.
+Bypass budget — controls how many temporary rule suppressions are allowed.
+
+The bypass system lets developers temporarily suppress a failing rule on a specific symbol using a `@forgeBypass` tag without disabling the rule project-wide. Each bypass is time-limited and counted against a daily budget to prevent bypass sprawl. Bypasses that exceed the budget or have expired are reported by `forge check`.
 
 ##### guides
 
 { enabled: boolean; autoDiscover: boolean; custom: Array<{ slug: string; title: string; sources: string[]; }>; }
 
-Guide generation configuration.
+Guide generation configuration — controls intelligent guide page output.
+
+`forge gen` can auto-discover logical guide topics from code patterns and write narrative guide pages alongside the API reference. Guides are written to `<outDir>/guides/` and are intended for human readers learning the API, as opposed to the symbol-level API reference pages.
 
 ##### guards
 
 { tsconfig: { enabled: boolean; requiredFlags: string[]; }; biome: { enabled: boolean; lockedRules: string[]; }; packageJson: { enabled: boolean; minNodeVersion: string; requiredFields: string[]; }; }
 
-Downstream config drift guards.
+Downstream config drift guards — validate tooling config files stay in sync.
+
+Guards run during `forge check` and validate that key configuration files (`tsconfig.json`, `biome.json`, `package.json`) meet minimum quality requirements. They catch configuration drift that could silently weaken type safety or code quality enforcement.
 
 ##### _configWarnings
 
 string[] | undefined
 
-Warnings generated during config loading (e.g., unknown keys). Populated by loadConfig(). Agents should surface these in output.
+Warnings generated during config loading (e.g., unknown keys, failed imports).
+
+Populated by `loadConfig` when the user's config contains keys that forge-ts does not recognise, or when the config file exists but cannot be imported (e.g. missing `"type": "module"`). Agents and CI scripts should surface these warnings in their output so problems are caught early. This field is never set in user-authored config files.
 
 ##### project
 
 { repository?: string; homepage?: string; packageName?: string; description?: string; version?: string; bin?: Record<string, string>; scripts?: Record<string, string>; keywords?: string[]; }
 
-Project metadata — auto-detected from package.json if not provided.
+Project metadata — auto-detected from `package.json` when not provided.
+
+forge-ts reads `package.json` after loading the user config and fills in any `project.*` fields that were not explicitly set. Explicit values always win over auto-detected ones. This data is embedded in generated docs, `llms.txt`, and the CKM manifest.
 
 #### ForgeResult
 
@@ -1700,17 +1740,20 @@ Example:
 
 Runs the API generation pipeline: walk → extract → generate → write.
 
-Creates an AST walker from config, extracts SDK types from the symbol graph, generates an OpenAPI 3.2 spec, and writes it to the configured output path.
+Composes four sub-stages in sequence:  1. **Walk** — `createWalker(config).walk()` produces the `ForgeSymbol[]`    graph by traversing all source files referenced by `config.tsconfig`.  2. **Extract** — `extractSDKTypes` filters the symbol graph to the subset    relevant to the public SDK surface (functions, interfaces, and type aliases    that are `@public` or `@beta`), and maps their signatures to `SDKType`    records that carry property shapes for schema generation.  3. **Generate** — `generateOpenAPISpec` builds a complete OpenAPI 3.2    document. Functions annotated with `@route METHOD /path` become path    items; `@query`, `@header`, `@body`, and `@response` tags populate the    corresponding parameter and response objects. TypeScript signatures are    converted to JSON Schema via `signatureToSchema`.  4. **Write** — The resulting document is serialised to JSON and written to    `config.api.openapiPath`, creating parent directories as needed.
 
 Parameters:
-- config: The resolved `ForgeConfig` for the project.
+- config: The resolved `ForgeConfig` for the project. The relevant   fields are `config.api.openapiPath` (output destination), `config.rootDir`,   and `config.tsconfig`.
 
-Returns: A `ForgeResult` with success/failure and any diagnostics.
+Returns: A `ForgeResult` whose `success` field is `true` when the spec was   written without error. `symbols` contains the full symbol graph from the   walk step. `errors` and `warnings` are empty on success; file-system or   walker errors are thrown rather than returned.
 
 Example:
+  import { loadConfig } from "@forge-ts/core";
   import { generateApi } from "@forge-ts/api";
+  
+  const config = await loadConfig();
   const result = await generateApi(config);
-  console.log(result.success); // true if spec was written successfully
+  console.log(result.success); // true if the spec was written successfully
 
 #### signatureToSchema()
 
@@ -5020,20 +5063,23 @@ Example:
 
 (config: ForgeConfig, options?: GenerateOptions) => Promise<ForgeResult>
 
-Runs the full generation pipeline: walk → render → write.  Auto-generated pages are always regenerated from source code. Stub pages (scaffolding for human/agent editing) are only created if they don't already exist, preserving manual edits across builds. Pass `{ forceStubs: true }` to overwrite stubs.
+Runs the full documentation generation pipeline: walk → render → write.  Auto-generated pages are always regenerated from source code on each run. Stub pages (concepts, guides, FAQ, contributing, changelog) are written only the first time, preserving manual edits across subsequent builds. Pass `{ forceStubs: true }` to reset stubs to their scaffolded state.
 
-Orchestrates the walker, site generator, llms.txt, and OpenAPI renderers in sequence, writing all output files to `config.outDir`.
+Orchestrates the following stages in order:  1. **Walk** — `createWalker(config).walk()` produces the `ForgeSymbol[]` graph.  2. **Flat output** — For each format in `config.gen.formats`, writes a legacy    single-file `api-reference.md` / `api-reference.mdx` to `config.outDir`.  3. **Multi-page site** — `generateDocSite` produces `DocPage[]`; the selected    SSG adapter (`getAdapter(config.gen.ssgTarget)`) transforms them into    platform-specific files with correct frontmatter and extensions. Stub    pages that already exist on disk are merged rather than overwritten via    `updateAutoSections`, preserving the `FORGE:AUTO` marker regions while    leaving manually authored content untouched.  4. **llms.txt** — When `config.gen.llmsTxt` is enabled, writes `llms.txt`    and `llms-full.txt` to `config.outDir`, and generates a SKILL.md skill    package unless `config.skill.enabled` is explicitly `false`.  5. **CKM** — When `config.gen.ckm` is enabled (the default), writes    `ckm.json` (a Codebase Knowledge Manifest) to `config.outDir`.  6. **README sync** — When `config.gen.readmeSync` is enabled, updates    auto-generated sections in the project `README.md`.
 
 Parameters:
 - config: The resolved `ForgeConfig` for the project.
-- options: Optional generation flags (e.g., forceStubs).
+- options: Optional generation flags (see `GenerateOptions`).
 
-Returns: A `ForgeResult` describing the outcome.
+Returns: A `ForgeResult` whose `writtenFiles` lists every path written.   `success` is always `true` on normal completion; file-system errors throw.
 
 Example:
+  import { loadConfig } from "@forge-ts/core";
   import { generate } from "@forge-ts/gen";
+  
+  const config = await loadConfig();
   const result = await generate(config);
-  console.log(result.success); // true if all files were written
+  console.log(`Wrote ${result.writtenFiles?.length ?? 0} files`);
 
 ### Interfaces
 
@@ -6405,20 +6451,22 @@ Example:
 
 Runs the full doctest pipeline: extract → generate → run.
 
-Creates an AST walker, extracts `@example` blocks, generates virtual `node:test` files, and executes them via the native Node test runner.
+Composes three sub-stages in sequence:  1. **Extract** — `createWalker(config).walk()` produces the `ForgeSymbol[]`    graph; `extractExamples` collects every fenced code block found inside an    `@example` tag, recording the originating symbol name and source line.  2. **Generate** — `generateTestFiles` wraps each snippet in a `node:test`    `it()` call and writes the resulting `.mjs` files to `config.doctest.cacheDir`.    Files are keyed by a hash of their content so unchanged examples are not    re-emitted on subsequent runs.  3. **Run** — `runTests` spawns `node --test` against the generated files,    captures TAP output, and parses it into structured `TestCaseResult` records.    A non-zero exit code or any failed test causes `result.success` to be `false`.  Error code `D001` is emitted when one or more tests fail (the count is included in the message). Error code `D002` is emitted when the runner exits non-zero without any parsed test failures, which typically indicates a compilation or import error in the generated files.
 
 Parameters:
-- config: The resolved `ForgeConfig` for the project.
+- config: The resolved `ForgeConfig` for the project. The   `config.doctest.cacheDir` field controls where generated test files are   written; all other doctest behaviour uses `config.rootDir` and `config.tsconfig`.
 
-Returns: A `ForgeResult` with success/failure and any diagnostics.
+Returns: A `ForgeResult` whose `success` field is `true` only when every   extracted example passes. `errors` contains `D001`/`D002` diagnostics on   failure; `symbols` is the full symbol graph from the walk step.
 
 Example:
   import { loadConfig } from "@forge-ts/core";
   import { doctest } from "@forge-ts/doctest";
+  
   const config = await loadConfig();
   const result = await doctest(config);
   if (!result.success) {
     console.error(`${result.errors.length} doctest failure(s)`);
+    process.exit(1);
   }
 
 #### extractExamples()

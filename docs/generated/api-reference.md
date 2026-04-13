@@ -937,7 +937,7 @@ console.log(entries[0].name); // first symbol name, alphabetically
 
 ### `generateApi()`
 
-*Defined in `packages/api/src/index.ts:38`*
+*Defined in `packages/api/src/index.ts:96`*
 
 ```typescript
 (config: ForgeConfig) => Promise<ForgeResult>
@@ -947,16 +947,19 @@ Runs the API generation pipeline: walk → extract → generate → write.
 
 **Parameters**
 
-- `config` — The resolved `ForgeConfig` for the project.
+- `config` — The resolved `ForgeConfig` for the project. The relevant   fields are `config.api.openapiPath` (output destination), `config.rootDir`,   and `config.tsconfig`.
 
-**Returns**: A `ForgeResult` with success/failure and any diagnostics.
+**Returns**: A `ForgeResult` whose `success` field is `true` when the spec was   written without error. `symbols` contains the full symbol graph from the   walk step. `errors` and `warnings` are empty on success; file-system or   walker errors are thrown rather than returned.
 
 **Examples**
 
 ```typescript
+import { loadConfig } from "@forge-ts/core";
 import { generateApi } from "@forge-ts/api";
+
+const config = await loadConfig();
 const result = await generateApi(config);
-console.log(result.success); // true if spec was written successfully
+console.log(result.success); // true if the spec was written successfully
 ```
 
 ### `signatureToSchema()`
@@ -1696,7 +1699,7 @@ console.log(grouped.has("core")); // true for monorepo
 
 ### `generateDocSite()`
 
-*Defined in `packages/gen/src/site-generator.ts:1477`*
+*Defined in `packages/gen/src/site-generator.ts:1780`*
 
 ```typescript
 (symbolsByPackage: Map<string, ForgeSymbol[]>, config: ForgeConfig, options: SiteGeneratorOptions) => DocPage[]
@@ -1994,27 +1997,30 @@ console.log(configs[0].path); // ".vitepress/sidebar.json"
 
 ### `generate()`
 
-*Defined in `packages/gen/src/index.ts:111`*
+*Defined in `packages/gen/src/index.ts:173`*
 
 ```typescript
 (config: ForgeConfig, options?: GenerateOptions) => Promise<ForgeResult>
 ```
 
-Runs the full generation pipeline: walk → render → write.  Auto-generated pages are always regenerated from source code. Stub pages (scaffolding for human/agent editing) are only created if they don't already exist, preserving manual edits across builds. Pass `{ forceStubs: true }` to overwrite stubs.
+Runs the full documentation generation pipeline: walk → render → write.  Auto-generated pages are always regenerated from source code on each run. Stub pages (concepts, guides, FAQ, contributing, changelog) are written only the first time, preserving manual edits across subsequent builds. Pass `{ forceStubs: true }` to reset stubs to their scaffolded state.
 
 **Parameters**
 
 - `config` — The resolved `ForgeConfig` for the project.
-- `options` — Optional generation flags (e.g., forceStubs).
+- `options` — Optional generation flags (see `GenerateOptions`).
 
-**Returns**: A `ForgeResult` describing the outcome.
+**Returns**: A `ForgeResult` whose `writtenFiles` lists every path written.   `success` is always `true` on normal completion; file-system errors throw.
 
 **Examples**
 
 ```typescript
+import { loadConfig } from "@forge-ts/core";
 import { generate } from "@forge-ts/gen";
+
+const config = await loadConfig();
 const result = await generate(config);
-console.log(result.success); // true if all files were written
+console.log(`Wrote ${result.writtenFiles?.length ?? 0} files`);
 ```
 
 ### `runBuild()`
@@ -2634,7 +2640,7 @@ if (!result.success) {
 
 ### `doctest()`
 
-*Defined in `packages/doctest/src/index.ts:44`*
+*Defined in `packages/doctest/src/index.ts:104`*
 
 ```typescript
 (config: ForgeConfig) => Promise<ForgeResult>
@@ -2644,19 +2650,21 @@ Runs the full doctest pipeline: extract → generate → run.
 
 **Parameters**
 
-- `config` — The resolved `ForgeConfig` for the project.
+- `config` — The resolved `ForgeConfig` for the project. The   `config.doctest.cacheDir` field controls where generated test files are   written; all other doctest behaviour uses `config.rootDir` and `config.tsconfig`.
 
-**Returns**: A `ForgeResult` with success/failure and any diagnostics.
+**Returns**: A `ForgeResult` whose `success` field is `true` only when every   extracted example passes. `errors` contains `D001`/`D002` diagnostics on   failure; `symbols` is the full symbol graph from the walk step.
 
 **Examples**
 
 ```typescript
 import { loadConfig } from "@forge-ts/core";
 import { doctest } from "@forge-ts/doctest";
+
 const config = await loadConfig();
 const result = await doctest(config);
 if (!result.success) {
   console.error(`${result.errors.length} doctest failure(s)`);
+  process.exit(1);
 }
 ```
 
@@ -3518,17 +3526,30 @@ W020: `\@constraint`-tagged symbol missing `\@throws` to document constraint vio
 
 ### `ForgeConfig`
 
-*Defined in `packages/core/src/types.ts:163`*
+*Defined in `packages/core/src/types.ts:182`*
 
 ```typescript
 ForgeConfig
 ```
 
-Full configuration for a forge-ts run. Loaded from forge-ts.config.ts or the "forge-ts" key in package.json.
+Full configuration for a forge-ts run.
+
+**Examples**
+
+```typescript
+// forge-ts.config.ts
+import { defineConfig } from "@forge-ts/core";
+
+export default defineConfig({
+  outDir: "docs/generated",
+  enforce: { strict: true },
+  gen: { formats: ["mdx"], ssgTarget: "fumadocs" },
+});
+```
 
 #### `rootDir`
 
-*Defined in `packages/core/src/types.ts:165`*
+*Defined in `packages/core/src/types.ts:194`*
 
 ```typescript
 string
@@ -3538,137 +3559,137 @@ Root directory of the project.
 
 #### `tsconfig`
 
-*Defined in `packages/core/src/types.ts:167`*
+*Defined in `packages/core/src/types.ts:206`*
 
 ```typescript
 string
 ```
 
-Path to the tsconfig.json to compile against.
+Path to the `tsconfig.json` used for TypeScript compilation and type resolution.
 
 #### `outDir`
 
-*Defined in `packages/core/src/types.ts:169`*
+*Defined in `packages/core/src/types.ts:220`*
 
 ```typescript
 string
 ```
 
-Output directory for generated files.
+Output directory for all generated documentation artifacts.
 
 #### `enforce`
 
-*Defined in `packages/core/src/types.ts:171`*
+*Defined in `packages/core/src/types.ts:234`*
 
 ```typescript
 { enabled: boolean; minVisibility: Visibility | "public" | "beta" | "internal" | "private"; strict: boolean; rules: EnforceRules; ignoreFile?: string; }
 ```
 
-Enforce TSDoc on all public exports.
+Enforcement configuration — controls which TSDoc rules run and at what severity.
 
 #### `doctest`
 
-*Defined in `packages/core/src/types.ts:193`*
+*Defined in `packages/core/src/types.ts:337`*
 
 ```typescript
 { enabled: boolean; cacheDir: string; }
 ```
 
-DocTest configuration.
+DocTest configuration — controls execution of `@example` blocks as live tests.
 
 #### `api`
 
-*Defined in `packages/core/src/types.ts:199`*
+*Defined in `packages/core/src/types.ts:375`*
 
 ```typescript
 { enabled: boolean; openapi: boolean; openapiPath: string; }
 ```
 
-API generation configuration.
+API generation configuration — controls OpenAPI spec output.
 
 #### `gen`
 
-*Defined in `packages/core/src/types.ts:207`*
+*Defined in `packages/core/src/types.ts:422`*
 
 ```typescript
 { enabled: boolean; formats: Array<"markdown" | "mdx">; llmsTxt: boolean; readmeSync: boolean; ssgTarget?: "docusaurus" | "mintlify" | "nextra" | "vitepress" | "fumadocs"; ckm?: boolean; }
 ```
 
-Output generation configuration.
+Documentation generation configuration — controls what files are written by `forge gen`.
 
 #### `skill`
 
-*Defined in `packages/core/src/types.ts:226`*
+*Defined in `packages/core/src/types.ts:523`*
 
 ```typescript
 { enabled?: boolean; customSections?: Array<{ heading: string; content: string; }>; extraGotchas?: string[]; }
 ```
 
-Skill package generation settings. Custom sections here are merged into the generated SKILL.md, allowing projects to inject workflow knowledge, domain gotchas, and other context that cannot be derived from symbols alone.
+SKILL.md generation settings.
 
 #### `tsdoc`
 
-*Defined in `packages/core/src/types.ts:250`*
+*Defined in `packages/core/src/types.ts:579`*
 
 ```typescript
 { writeConfig: boolean; customTags: Array<{ tagName: string; syntaxKind: "block" | "inline" | "modifier"; }>; enforce: { core: "error" | "warn" | "off"; extended: "error" | "warn" | "off"; discretionary: "error" | "warn" | "off"; }; }
 ```
 
-TSDoc ecosystem configuration.
+TSDoc ecosystem configuration — tag definitions and group-level enforcement.
 
 #### `bypass`
 
-*Defined in `packages/core/src/types.ts:269`*
+*Defined in `packages/core/src/types.ts:682`*
 
 ```typescript
 { dailyBudget: number; durationHours: number; }
 ```
 
-Bypass budget configuration for temporary rule overrides.
+Bypass budget — controls how many temporary rule suppressions are allowed.
 
 #### `guides`
 
-*Defined in `packages/core/src/types.ts:276`*
+*Defined in `packages/core/src/types.ts:719`*
 
 ```typescript
 { enabled: boolean; autoDiscover: boolean; custom: Array<{ slug: string; title: string; sources: string[]; }>; }
 ```
 
-Guide generation configuration.
+Guide generation configuration — controls intelligent guide page output.
 
 #### `guards`
 
-*Defined in `packages/core/src/types.ts:292`*
+*Defined in `packages/core/src/types.ts:788`*
 
 ```typescript
 { tsconfig: { enabled: boolean; requiredFlags: string[]; }; biome: { enabled: boolean; lockedRules: string[]; }; packageJson: { enabled: boolean; minNodeVersion: string; requiredFields: string[]; }; }
 ```
 
-Downstream config drift guards.
+Downstream config drift guards — validate tooling config files stay in sync.
 
 #### `_configWarnings`
 
-*Defined in `packages/core/src/types.ts:320`*
+*Defined in `packages/core/src/types.ts:918`*
 
 ```typescript
 string[] | undefined
 ```
 
-Warnings generated during config loading (e.g., unknown keys). Populated by loadConfig(). Agents should surface these in output.
+Warnings generated during config loading (e.g., unknown keys, failed imports).
 
 #### `project`
 
-*Defined in `packages/core/src/types.ts:322`*
+*Defined in `packages/core/src/types.ts:931`*
 
 ```typescript
 { repository?: string; homepage?: string; packageName?: string; description?: string; version?: string; bin?: Record<string, string>; scripts?: Record<string, string>; keywords?: string[]; }
 ```
 
-Project metadata — auto-detected from package.json if not provided.
+Project metadata — auto-detected from `package.json` when not provided.
 
 ### `ForgeResult`
 
-*Defined in `packages/core/src/types.ts:347`*
+*Defined in `packages/core/src/types.ts:1040`*
 
 ```typescript
 ForgeResult
@@ -3678,7 +3699,7 @@ The result of a forge-ts compilation pass.
 
 #### `success`
 
-*Defined in `packages/core/src/types.ts:349`*
+*Defined in `packages/core/src/types.ts:1042`*
 
 ```typescript
 boolean
@@ -3688,7 +3709,7 @@ Whether the run succeeded without errors.
 
 #### `symbols`
 
-*Defined in `packages/core/src/types.ts:351`*
+*Defined in `packages/core/src/types.ts:1044`*
 
 ```typescript
 ForgeSymbol[]
@@ -3698,7 +3719,7 @@ All symbols extracted during this run.
 
 #### `errors`
 
-*Defined in `packages/core/src/types.ts:353`*
+*Defined in `packages/core/src/types.ts:1046`*
 
 ```typescript
 ForgeError[]
@@ -3708,7 +3729,7 @@ Errors that caused or would cause failure.
 
 #### `warnings`
 
-*Defined in `packages/core/src/types.ts:355`*
+*Defined in `packages/core/src/types.ts:1048`*
 
 ```typescript
 ForgeWarning[]
@@ -3718,7 +3739,7 @@ Non-fatal warnings.
 
 #### `duration`
 
-*Defined in `packages/core/src/types.ts:357`*
+*Defined in `packages/core/src/types.ts:1050`*
 
 ```typescript
 number
@@ -3728,7 +3749,7 @@ Wall-clock duration of the run in milliseconds.
 
 #### `writtenFiles`
 
-*Defined in `packages/core/src/types.ts:362`*
+*Defined in `packages/core/src/types.ts:1055`*
 
 ```typescript
 string[] | undefined
@@ -3738,7 +3759,7 @@ Absolute paths of files written during this run (populated by gen).
 
 ### `ForgeError`
 
-*Defined in `packages/core/src/types.ts:370`*
+*Defined in `packages/core/src/types.ts:1063`*
 
 ```typescript
 ForgeError
@@ -3748,7 +3769,7 @@ A diagnostic error produced during a forge-ts run.
 
 #### `code`
 
-*Defined in `packages/core/src/types.ts:372`*
+*Defined in `packages/core/src/types.ts:1065`*
 
 ```typescript
 string
@@ -3758,7 +3779,7 @@ Machine-readable error code (e.g. "E001").
 
 #### `message`
 
-*Defined in `packages/core/src/types.ts:374`*
+*Defined in `packages/core/src/types.ts:1067`*
 
 ```typescript
 string
@@ -3768,7 +3789,7 @@ Human-readable description of the error.
 
 #### `filePath`
 
-*Defined in `packages/core/src/types.ts:376`*
+*Defined in `packages/core/src/types.ts:1069`*
 
 ```typescript
 string
@@ -3778,7 +3799,7 @@ Absolute path of the file where the error occurred.
 
 #### `line`
 
-*Defined in `packages/core/src/types.ts:378`*
+*Defined in `packages/core/src/types.ts:1071`*
 
 ```typescript
 number
@@ -3788,7 +3809,7 @@ number
 
 #### `column`
 
-*Defined in `packages/core/src/types.ts:380`*
+*Defined in `packages/core/src/types.ts:1073`*
 
 ```typescript
 number
@@ -3798,7 +3819,7 @@ number
 
 #### `suggestedFix`
 
-*Defined in `packages/core/src/types.ts:385`*
+*Defined in `packages/core/src/types.ts:1078`*
 
 ```typescript
 string | undefined
@@ -3808,7 +3829,7 @@ Suggested fix for the agent — exact TSDoc block to add.
 
 #### `symbolName`
 
-*Defined in `packages/core/src/types.ts:390`*
+*Defined in `packages/core/src/types.ts:1083`*
 
 ```typescript
 string | undefined
@@ -3818,7 +3839,7 @@ The symbol name that needs fixing.
 
 #### `symbolKind`
 
-*Defined in `packages/core/src/types.ts:395`*
+*Defined in `packages/core/src/types.ts:1088`*
 
 ```typescript
 string | undefined
@@ -3828,7 +3849,7 @@ The symbol kind (function, class, interface, etc.).
 
 ### `ForgeWarning`
 
-*Defined in `packages/core/src/types.ts:403`*
+*Defined in `packages/core/src/types.ts:1096`*
 
 ```typescript
 ForgeWarning
@@ -3838,7 +3859,7 @@ A diagnostic warning produced during a forge-ts run.
 
 #### `code`
 
-*Defined in `packages/core/src/types.ts:405`*
+*Defined in `packages/core/src/types.ts:1098`*
 
 ```typescript
 string
@@ -3848,7 +3869,7 @@ Machine-readable warning code (e.g. "W001").
 
 #### `message`
 
-*Defined in `packages/core/src/types.ts:407`*
+*Defined in `packages/core/src/types.ts:1100`*
 
 ```typescript
 string
@@ -3858,7 +3879,7 @@ Human-readable description of the warning.
 
 #### `filePath`
 
-*Defined in `packages/core/src/types.ts:409`*
+*Defined in `packages/core/src/types.ts:1102`*
 
 ```typescript
 string
@@ -3868,7 +3889,7 @@ Absolute path of the file where the warning occurred.
 
 #### `line`
 
-*Defined in `packages/core/src/types.ts:411`*
+*Defined in `packages/core/src/types.ts:1104`*
 
 ```typescript
 number
@@ -3878,7 +3899,7 @@ number
 
 #### `column`
 
-*Defined in `packages/core/src/types.ts:413`*
+*Defined in `packages/core/src/types.ts:1106`*
 
 ```typescript
 number
@@ -7502,7 +7523,7 @@ File content
 
 ### `GenerateOptions`
 
-*Defined in `packages/gen/src/index.ts:71`*
+*Defined in `packages/gen/src/index.ts:109`*
 
 ```typescript
 GenerateOptions
@@ -7512,7 +7533,7 @@ Options for the generation pipeline.
 
 #### `forceStubs`
 
-*Defined in `packages/gen/src/index.ts:84`*
+*Defined in `packages/gen/src/index.ts:122`*
 
 ```typescript
 boolean | undefined

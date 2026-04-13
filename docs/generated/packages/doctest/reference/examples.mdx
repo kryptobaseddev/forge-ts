@@ -55,6 +55,25 @@ if (!result.success) {
 ```typescript
 import { loadConfig } from "@forge-ts/core";
 import { doctest } from "@forge-ts/doctest";
+
+const config = await loadConfig();
+const result = await doctest(config);
+if (!result.success) {
+  console.error(`${result.errors.length} doctest failure(s)`);
+  process.exit(1);
+}
+```
+
+## `index.ts`
+
+*TSDoc `@example` block extractor and test runner for forge-ts projects.  Extracts fenced TypeScript code blocks from `@example` tags in TSDoc comments, transpiles them into virtual `node:test` test files, and executes those files using the native Node.js test runner — turning documentation examples into living tests that break the build when they go stale.*
+
+[View in API reference](/packages/doctest/reference/functions#indexts)
+
+```typescript
+import { loadConfig } from "@forge-ts/core";
+import { doctest } from "@forge-ts/doctest";
+
 const config = await loadConfig();
 const result = await doctest(config);
 if (!result.success) {

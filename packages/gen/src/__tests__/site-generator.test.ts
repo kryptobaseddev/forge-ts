@@ -487,16 +487,16 @@ describe("package overview page", () => {
 		expect(overview?.content).toContain("CalculatorConfig");
 	});
 
-	it("links symbols to api/index", () => {
+	it("links function symbols to reference/functions", () => {
 		const map = makeSymbolsByPackage([fnAdd]);
 		const pages = generateDocSite(map, makeConfig(), baseOptions);
 		const overview = pages.find((p) => p.path === "packages/core/index.md");
-		expect(overview?.content).toContain("api/index");
+		expect(overview?.content).toContain("reference/functions");
 	});
 });
 
 // ---------------------------------------------------------------------------
-// API index page (packages/<name>/api/index)
+// API index page (packages/<name>/reference/index)
 // ---------------------------------------------------------------------------
 
 describe("api/index page", () => {

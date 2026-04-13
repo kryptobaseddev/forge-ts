@@ -1,23 +1,52 @@
 /**
- * @forge-ts/cli — Command-line interface for the forge-ts toolchain.
+ * Unified command-line interface for the forge-ts toolchain.
  *
- * Usage:
- *   forge-ts check [--cwd <dir>] [--strict] [--verbose]
- *   forge-ts test  [--cwd <dir>]
- *   forge-ts build [--cwd <dir>] [--skip-api] [--skip-gen]
- *   forge-ts docs init [--target <ssg>] [--out-dir <dir>] [--force]
- *   forge-ts docs dev [--target <ssg>] [--port <port>]
- *   forge-ts lock  [--cwd <dir>]
- *   forge-ts unlock --reason="..." [--cwd <dir>]
- *   forge-ts bypass --reason="..." [--rule E009]
- *   forge-ts bypass --status
- *   forge-ts audit [--limit N] [--type <eventType>]
- *   forge-ts init [--cwd <dir>]               (full project setup)
- *   forge-ts init docs [--target <ssg>]        (scaffold doc site)
- *   forge-ts init hooks [--cwd <dir>] [--force] (scaffold pre-commit hooks)
- *   forge-ts prepublish [--cwd <dir>] [--strict]
- *   forge-ts doctor [--cwd <dir>] [--fix]
- *   forge-ts barometer [--cwd <dir>] [--json] [--human] [--questions-only]
+ * Provides the `forge-ts` binary with subcommands that wrap every pipeline
+ * stage — TSDoc enforcement, doctest execution, documentation generation,
+ * OpenAPI spec output, and project health diagnostics — behind a consistent
+ * flag surface and structured JSON/human output modes.
+ *
+ * @remarks
+ * The CLI is built with `citty` and exports both the runnable command objects
+ * and their underlying `run*` functions so that programmatic callers can
+ * invoke the same logic without spawning a subprocess. All commands accept
+ * `--json` (LAFS envelope), `--human` (formatted text), and `--quiet` output
+ * flags alongside a `--cwd` working-directory override.
+ *
+ * Available subcommands:
+ * - `check` — Run TSDoc enforcement; exits non-zero on rule violations.
+ * - `test` — Execute `@example` doctest blocks via `@forge-ts/doctest`.
+ * - `build` — Run enforce + doctest + gen + api in sequence.
+ * - `docs init` — Scaffold a documentation site for a chosen SSG target.
+ * - `docs dev` — Start the SSG dev server (delegates to the platform CLI).
+ * - `init` — Full project setup: config, tsdoc.json, hooks, and guides.
+ * - `init hooks` — Scaffold pre-commit hooks only.
+ * - `lock` — Snapshot current config severities into `.forge-lock.json`.
+ * - `unlock` — Remove the lock file with an audit-logged reason.
+ * - `bypass` — Grant a temporary rule exemption within the daily budget.
+ * - `audit` — Display the structured audit log of bypass and lock events.
+ * - `prepublish` — Pre-publish gate: enforce + doctest with strict mode.
+ * - `doctor` — Diagnose configuration and dependency health issues.
+ * - `barometer` — Score documentation quality across 20 weighted questions.
+ * - `version` — Print the installed forge-ts version.
+ *
+ * Key programmatic exports:
+ * - `checkCommand` / `buildCommand` / `testCommand` — citty command objects.
+ * - `runBarometer` / `runDoctor` / `runInitProject` / `runLock` — imperative runners.
+ * - `emitResult` / `resolveExitCode` — Output formatting utilities.
+ * - `forgeLogger` / `configureLogger` — Centralised logger (consola-backed).
+ * - `CheckResult` / `BuildResult` / `BarometerResult` / `DoctorResult` — Result types.
+ *
+ * @example
+ * ```typescript
+ * // Programmatic usage — run enforcement without spawning a subprocess
+ * import { loadConfig } from "@forge-ts/core";
+ * import { runBarometer } from "@forge-ts/cli";
+ *
+ * const config = await loadConfig();
+ * const result = await runBarometer({ cwd: config.rootDir });
+ * console.log(`Documentation score: ${result.score}/100`);
+ * ```
  *
  * @packageDocumentation
  * @public

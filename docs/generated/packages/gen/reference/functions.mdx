@@ -848,7 +848,7 @@ console.log(configs[0].path); // ".vitepress/sidebar.json"
 
 ## generate(config, options)
 
-Runs the full generation pipeline: walk → render → write.  Auto-generated pages are always regenerated from source code. Stub pages (scaffolding for human/agent editing) are only created if they don't already exist, preserving manual edits across builds. Pass `{ forceStubs: true }` to overwrite stubs.
+Runs the full documentation generation pipeline: walk → render → write.  Auto-generated pages are always regenerated from source code on each run. Stub pages (concepts, guides, FAQ, contributing, changelog) are written only the first time, preserving manual edits across subsequent builds. Pass `{ forceStubs: true }` to reset stubs to their scaffolded state.
 
 **Signature**
 
@@ -858,17 +858,20 @@ Runs the full generation pipeline: walk → render → write.  Auto-generated pa
 
 **Parameters**
 
-| Name      | Type                | Description                                   |
-| --------- | ------------------- | --------------------------------------------- |
-| `config`  | `ForgeConfig`       | The resolved `ForgeConfig` for the project.   |
-| `options` | `: GenerateOptions` | Optional generation flags (e.g., forceStubs). |
+| Name      | Type                | Description                                        |
+| --------- | ------------------- | -------------------------------------------------- |
+| `config`  | `ForgeConfig`       | The resolved `ForgeConfig` for the project.        |
+| `options` | `: GenerateOptions` | Optional generation flags (see `GenerateOptions`). |
 
-**Returns** — A `ForgeResult` describing the outcome.
+**Returns** — A `ForgeResult` whose `writtenFiles` lists every path written.   `success` is always `true` on normal completion; file-system errors throw.
 
 **Example**
 
 ```typescript
+import { loadConfig } from "@forge-ts/core";
 import { generate } from "@forge-ts/gen";
+
+const config = await loadConfig();
 const result = await generate(config);
-console.log(result.success); // true if all files were written
+console.log(`Wrote ${result.writtenFiles?.length ?? 0} files`);
 ```

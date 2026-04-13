@@ -7,48 +7,63 @@ Get up and running with **forge-ts** in minutes.
 
 ## Step 1: Install
 
+Install the `forge-ts` package using your preferred package manager:
+
 ```bash
 npm install -D forge-ts
 ```
 
-## Step 2: Add TSDoc to your code
+Or with pnpm:
 
-Add TSDoc comments to your exported functions and types:
+```bash
+pnpm add -D forge-ts
+```
+
+## Step 2: Configure
+
+Create a `forge-ts.config.ts` file in your project root:
+
+```typescript
+import { defineConfig } from "@forge-ts/core";
+
+export default defineConfig({
+  rootDir: ".",
+  outDir: "docs/generated",
+  gen: { enabled: true, formats: ["markdown"] },
+});
+```
+
+## Step 3: Write TSDoc
+
+Add TSDoc comments to your exported functions and types. Good TSDoc includes a summary, @param tags, @returns, @example blocks, and a visibility tag:
 
 ````typescript
 /**
  * Adds two numbers together.
- * @param a - First number
- * @param b - Second number
- * @returns The sum of a and b
+ *
+ * @param a - The first operand.
+ * @param b - The second operand.
+ * @returns The sum of a and b.
  * @example
  * ```typescript
- * const result = add(1, 2); // => 3
+ * add(1, 2); // => 3
  * ```
+ * @public
  */
 export function add(a: number, b: number): number {
   return a + b;
 }
 ````
 
-## Step 3: Run forge-ts check
+## Step 4: Generate docs
 
-Lint your TSDoc coverage before generating docs:
+Run forge-ts check to validate TSDoc coverage, then build your docs:
 
 ```bash
 npx forge-ts check
 ```
 
-Expected output:
-
-```
-forge-ts: checking TSDoc coverage...
-  ✓ All public symbols documented
-```
-
-## Step 4: Generate docs
-
-Build your documentation site:
+Then build the documentation site:
 
 ```bash
 npx forge-ts build
@@ -57,10 +72,25 @@ npx forge-ts build
 Your code examples become live documentation:
 
 ```typescript
+import { loadConfig } from "@forge-ts/core";
 import { generateApi } from "@forge-ts/api";
+
+const config = await loadConfig();
 const result = await generateApi(config);
-console.log(result.success); // true if spec was written successfully
+console.log(result.success); // true if the spec was written successfully
 ```
+
+## CLI Commands
+
+Quick reference for all forge-ts CLI commands:
+
+| Command                                | Description                                      |
+| -------------------------------------- | ------------------------------------------------ |
+| `forge-ts check`                       | Lint TSDoc coverage and report rule violations   |
+| `forge-ts build`                       | Generate documentation from source code          |
+| `forge-ts docs init --target fumadocs` | Scaffold a documentation site for an SSG target  |
+| `forge-ts docs dev`                    | Preview the generated documentation site locally |
+| `forge-ts test`                        | Run @example blocks as executable doctests       |
 
 ## What's Next?
 

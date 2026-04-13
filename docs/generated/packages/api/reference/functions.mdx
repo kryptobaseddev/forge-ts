@@ -124,18 +124,21 @@ Runs the API generation pipeline: walk → extract → generate → write.
 
 **Parameters**
 
-| Name     | Type          | Description                                 |
-| -------- | ------------- | ------------------------------------------- |
-| `config` | `ForgeConfig` | The resolved `ForgeConfig` for the project. |
+| Name     | Type          | Description                                                                                                                                                     |
+| -------- | ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `config` | `ForgeConfig` | The resolved `ForgeConfig` for the project. The relevant   fields are `config.api.openapiPath` (output destination), `config.rootDir`,   and `config.tsconfig`. |
 
-**Returns** — A `ForgeResult` with success/failure and any diagnostics.
+**Returns** — A `ForgeResult` whose `success` field is `true` when the spec was   written without error. `symbols` contains the full symbol graph from the   walk step. `errors` and `warnings` are empty on success; file-system or   walker errors are thrown rather than returned.
 
 **Example**
 
 ```typescript
+import { loadConfig } from "@forge-ts/core";
 import { generateApi } from "@forge-ts/api";
+
+const config = await loadConfig();
 const result = await generateApi(config);
-console.log(result.success); // true if spec was written successfully
+console.log(result.success); // true if the spec was written successfully
 ```
 
 ## signatureToSchema(signature)

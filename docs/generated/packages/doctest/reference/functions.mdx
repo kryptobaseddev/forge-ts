@@ -101,21 +101,23 @@ Runs the full doctest pipeline: extract → generate → run.
 
 **Parameters**
 
-| Name     | Type          | Description                                 |
-| -------- | ------------- | ------------------------------------------- |
-| `config` | `ForgeConfig` | The resolved `ForgeConfig` for the project. |
+| Name     | Type          | Description                                                                                                                                                                                                   |
+| -------- | ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `config` | `ForgeConfig` | The resolved `ForgeConfig` for the project. The   `config.doctest.cacheDir` field controls where generated test files are   written; all other doctest behaviour uses `config.rootDir` and `config.tsconfig`. |
 
-**Returns** — A `ForgeResult` with success/failure and any diagnostics.
+**Returns** — A `ForgeResult` whose `success` field is `true` only when every   extracted example passes. `errors` contains `D001`/`D002` diagnostics on   failure; `symbols` is the full symbol graph from the walk step.
 
 **Example**
 
 ```typescript
 import { loadConfig } from "@forge-ts/core";
 import { doctest } from "@forge-ts/doctest";
+
 const config = await loadConfig();
 const result = await doctest(config);
 if (!result.success) {
   console.error(`${result.errors.length} doctest failure(s)`);
+  process.exit(1);
 }
 ```
 

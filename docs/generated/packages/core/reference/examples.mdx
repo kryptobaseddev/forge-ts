@@ -114,6 +114,23 @@ const removed = expireOldBypasses("/path/to/project");
 console.log(`${removed} expired bypass(es) removed`);
 ```
 
+## `ForgeConfig`
+
+*Full configuration for a forge-ts run.*
+
+[View in API reference](/packages/core/reference/functions#forgeconfig)
+
+```typescript
+// forge-ts.config.ts
+import { defineConfig } from "@forge-ts/core";
+
+export default defineConfig({
+  outDir: "docs/generated",
+  enforce: { strict: true },
+  gen: { formats: ["mdx"], ssgTarget: "fumadocs" },
+});
+```
+
 ## `defineConfig()`
 
 *Type-safe helper for defining a partial forge-ts configuration.*
@@ -269,4 +286,19 @@ const config = await loadConfig();
 const walker = createWalker(config);
 const symbols = walker.walk();
 console.log(`Found ${symbols.length} symbols`);
+```
+
+## `index.ts`
+
+*Foundation package for the forge-ts toolchain — shared types, config loader, and TypeScript AST walker.  Every other `@forge-ts` package depends on this one. It provides the single AST traversal pass (`createWalker`) that produces a `ForgeSymbol[]` graph, the config resolution pipeline (`loadConfig`), and all shared types used across enforcement, generation, and API extraction.*
+
+[View in API reference](/packages/core/reference/functions#indexts)
+
+```typescript
+import { loadConfig, createWalker } from "@forge-ts/core";
+
+const config = await loadConfig(); // reads forge-ts.config.ts or defaults
+const walker = createWalker(config);
+const symbols = walker.walk();     // ForgeSymbol[]
+console.log(`Found ${symbols.length} exported symbols`);
 ```

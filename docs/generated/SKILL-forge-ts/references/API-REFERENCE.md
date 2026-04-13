@@ -561,14 +561,17 @@ Runs the API generation pipeline: walk → extract → generate → write.
 
 **Parameters:**
 
-- `config` — The resolved `ForgeConfig` for the project.
+- `config` — The resolved `ForgeConfig` for the project. The relevant   fields are `config.api.openapiPath` (output destination), `config.rootDir`,   and `config.tsconfig`.
 
-**Returns:** A `ForgeResult` with success/failure and any diagnostics.
+**Returns:** A `ForgeResult` whose `success` field is `true` when the spec was   written without error. `symbols` contains the full symbol graph from the   walk step. `errors` and `warnings` are empty on success; file-system or   walker errors are thrown rather than returned.
 
 ```typescript
+import { loadConfig } from "@forge-ts/core";
 import { generateApi } from "@forge-ts/api";
+
+const config = await loadConfig();
 const result = await generateApi(config);
-console.log(result.success); // true if spec was written successfully
+console.log(result.success); // true if the spec was written successfully
 ```
 
 ### `signatureToSchema`
@@ -1432,7 +1435,7 @@ console.log(configs[0].path); // ".vitepress/sidebar.json"
 
 ### `generate`
 
-Runs the full generation pipeline: walk → render → write.  Auto-generated pages are always regenerated from source code. Stub pages (scaffolding for human/agent editing) are only created if they don't already exist, preserving manual edits across builds. Pass `{ forceStubs: true }` to overwrite stubs.
+Runs the full documentation generation pipeline: walk → render → write.  Auto-generated pages are always regenerated from source code on each run. Stub pages (concepts, guides, FAQ, contributing, changelog) are written only the first time, preserving manual edits across subsequent builds. Pass `{ forceStubs: true }` to reset stubs to their scaffolded state.
 
 ```typescript
 (config: ForgeConfig, options?: GenerateOptions) => Promise<ForgeResult>
@@ -1441,14 +1444,17 @@ Runs the full generation pipeline: walk → render → write.  Auto-generated pa
 **Parameters:**
 
 - `config` — The resolved `ForgeConfig` for the project.
-- `options` — Optional generation flags (e.g., forceStubs).
+- `options` — Optional generation flags (see `GenerateOptions`).
 
-**Returns:** A `ForgeResult` describing the outcome.
+**Returns:** A `ForgeResult` whose `writtenFiles` lists every path written.   `success` is always `true` on normal completion; file-system errors throw.
 
 ```typescript
+import { loadConfig } from "@forge-ts/core";
 import { generate } from "@forge-ts/gen";
+
+const config = await loadConfig();
 const result = await generate(config);
-console.log(result.success); // true if all files were written
+console.log(`Wrote ${result.writtenFiles?.length ?? 0} files`);
 ```
 
 ### `runBuild`
@@ -1980,17 +1986,19 @@ Runs the full doctest pipeline: extract → generate → run.
 
 **Parameters:**
 
-- `config` — The resolved `ForgeConfig` for the project.
+- `config` — The resolved `ForgeConfig` for the project. The   `config.doctest.cacheDir` field controls where generated test files are   written; all other doctest behaviour uses `config.rootDir` and `config.tsconfig`.
 
-**Returns:** A `ForgeResult` with success/failure and any diagnostics.
+**Returns:** A `ForgeResult` whose `success` field is `true` only when every   extracted example passes. `errors` contains `D001`/`D002` diagnostics on   failure; `symbols` is the full symbol graph from the walk step.
 
 ```typescript
 import { loadConfig } from "@forge-ts/core";
 import { doctest } from "@forge-ts/doctest";
+
 const config = await loadConfig();
 const result = await doctest(config);
 if (!result.success) {
   console.error(`${result.errors.length} doctest failure(s)`);
+  process.exit(1);
 }
 ```
 
@@ -2349,7 +2357,7 @@ EnforceRules
 
 ### `ForgeConfig`
 
-Full configuration for a forge-ts run. Loaded from forge-ts.config.ts or the "forge-ts" key in package.json.
+Full configuration for a forge-ts run.
 
 ```typescript
 ForgeConfig
@@ -2358,19 +2366,30 @@ ForgeConfig
 **Members:**
 
 - `rootDir` — Root directory of the project.
-- `tsconfig` — Path to the tsconfig.json to compile against.
-- `outDir` — Output directory for generated files.
-- `enforce` — Enforce TSDoc on all public exports.
-- `doctest` — DocTest configuration.
-- `api` — API generation configuration.
-- `gen` — Output generation configuration.
-- `skill` — Skill package generation settings. Custom sections here are merged into the generated SKILL.md, allowing projects to inject workflow knowledge, domain gotchas, and other context that cannot be derived from symbols alone.
-- `tsdoc` — TSDoc ecosystem configuration.
-- `bypass` — Bypass budget configuration for temporary rule overrides.
-- `guides` — Guide generation configuration.
-- `guards` — Downstream config drift guards.
-- `_configWarnings` — Warnings generated during config loading (e.g., unknown keys). Populated by loadConfig(). Agents should surface these in output.
-- `project` — Project metadata — auto-detected from package.json if not provided.
+- `tsconfig` — Path to the `tsconfig.json` used for TypeScript compilation and type resolution.
+- `outDir` — Output directory for all generated documentation artifacts.
+- `enforce` — Enforcement configuration — controls which TSDoc rules run and at what severity.
+- `doctest` — DocTest configuration — controls execution of `@example` blocks as live tests.
+- `api` — API generation configuration — controls OpenAPI spec output.
+- `gen` — Documentation generation configuration — controls what files are written by `forge gen`.
+- `skill` — SKILL.md generation settings.
+- `tsdoc` — TSDoc ecosystem configuration — tag definitions and group-level enforcement.
+- `bypass` — Bypass budget — controls how many temporary rule suppressions are allowed.
+- `guides` — Guide generation configuration — controls intelligent guide page output.
+- `guards` — Downstream config drift guards — validate tooling config files stay in sync.
+- `_configWarnings` — Warnings generated during config loading (e.g., unknown keys, failed imports).
+- `project` — Project metadata — auto-detected from `package.json` when not provided.
+
+```typescript
+// forge-ts.config.ts
+import { defineConfig } from "@forge-ts/core";
+
+export default defineConfig({
+  outDir: "docs/generated",
+  enforce: { strict: true },
+  gen: { formats: ["mdx"], ssgTarget: "fumadocs" },
+});
+```
 
 ### `ForgeResult`
 

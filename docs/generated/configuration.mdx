@@ -3,7 +3,7 @@ title: Configuration
 description: Configuration reference for forge-ts
 ---
 
-Configuration reference for **forge-ts**.
+**forge-ts** is configured through a single `forge-ts.config.ts` file in your project root. The configuration controls TSDoc enforcement rules, documentation generation, doctest execution, OpenAPI output, and AI context file generation.
 
 ## forge-ts.config.ts
 
@@ -15,6 +15,16 @@ import { defineConfig } from "@forge-ts/core";
 export default defineConfig({
   rootDir: ".",
   outDir: "docs/generated",
+  enforce: {
+    enabled: true,
+    rules: { E001: "error", E016: "error" },
+  },
+  gen: {
+    enabled: true,
+    formats: ["markdown"],
+    llmsTxt: true,
+  },
+  doctest: { enabled: true },
 });
 ```
 
@@ -26,3 +36,62 @@ Configuration for the bypass budget system.
 | --------------- | -------- | -------- | -------------------------------------------------------------------- |
 | `dailyBudget`   | `number` | Yes      | Maximum number of bypasses allowed per calendar day. Default: 3      |
 | `durationHours` | `number` | Yes      | Duration in hours before a bypass automatically expires. Default: 24 |
+
+## Enforcement Rules
+
+forge-ts ships with 40 enforcement rules: 20 error-level (E001-E020) and 20 warning-level (W001-W020). Configure them in the enforce.rules object.
+
+| Code   | Rule                         | Severity | Description                                               |
+| ------ | ---------------------------- | -------- | --------------------------------------------------------- |
+| `E001` | `require-summary`            | `error`  | Exported symbol missing TSDoc summary                     |
+| `E002` | `require-param`              | `error`  | Function parameter missing @param tag                     |
+| `E003` | `require-returns`            | `error`  | Function missing @returns tag                             |
+| `E004` | `require-example`            | `error`  | Exported symbol missing @example block                    |
+| `E005` | `no-unresolved-link`         | `error`  | \{@link\} target cannot be resolved                         |
+| `E006` | `no-broken-param`            | `error`  | @param tag references nonexistent parameter               |
+| `E007` | `no-duplicate-param`         | `error`  | Duplicate @param tag for the same parameter               |
+| `E008` | `require-throws`             | `error`  | Function throws without @throws tag                       |
+| `E009` | `no-missing-type`            | `error`  | Type annotation missing on exported symbol                |
+| `E010` | `require-package-doc`        | `error`  | Package entry point missing @packageDocumentation         |
+| `E011` | `no-internal-export`         | `error`  | @internal symbol is publicly exported                     |
+| `E012` | `require-deprecation-notice` | `error`  | Deprecated symbol missing @deprecated description         |
+| `E013` | `no-any-type`                | `error`  | Exported symbol uses the \`any\` type                     |
+| `E014` | `require-readonly`           | `error`  | Public interface property should be readonly              |
+| `E015` | `no-empty-doc`               | `error`  | TSDoc comment is empty or whitespace-only                 |
+| `E016` | `require-release-tag`        | `error`  | Exported symbol missing @public, @beta, or @internal tag  |
+| `E017` | `no-untagged-override`       | `error`  | Overriding method missing @override tag                   |
+| `E018` | `require-generic-doc`        | `error`  | Generic type parameter missing @typeParam tag             |
+| `E019` | `no-floating-promise`        | `error`  | Async function result not documented or handled           |
+| `E020` | `require-module-doc`         | `error`  | Module file missing file-level documentation              |
+| `W001` | `prefer-remarks`             | `warn`   | Complex symbol benefits from @remarks section             |
+| `W002` | `prefer-example`             | `warn`   | Public API symbol has no @example block                   |
+| `W003` | `prefer-returns-type`        | `warn`   | @returns tag missing type annotation                      |
+| `W004` | `prefer-param-type`          | `warn`   | @param tag missing type annotation                        |
+| `W005` | `prefer-see-also`            | `warn`   | Symbol references related items without @see              |
+| `W006` | `prefer-since`               | `warn`   | New public symbol missing @since tag                      |
+| `W007` | `prefer-default-value`       | `warn`   | Optional property missing @defaultValue tag               |
+| `W008` | `prefer-alpha-tag`           | `warn`   | Unstable API missing @alpha tag                           |
+| `W009` | `prefer-short-summary`       | `warn`   | Summary line exceeds recommended length                   |
+| `W010` | `prefer-verb-summary`        | `warn`   | Summary should begin with a verb                          |
+| `W011` | `prefer-period-summary`      | `warn`   | Summary line should end with a period                     |
+| `W012` | `prefer-capitalized-summary` | `warn`   | Summary line should begin with a capital letter           |
+| `W013` | `prefer-no-this`             | `warn`   | TSDoc should not use first-person pronouns                |
+| `W014` | `prefer-throws-type`         | `warn`   | @throws tag missing exception type                        |
+| `W015` | `prefer-consistent-returns`  | `warn`   | Return type inconsistent with @returns tag                |
+| `W016` | `prefer-no-html`             | `warn`   | TSDoc contains raw HTML instead of markdown               |
+| `W017` | `prefer-explicit-visibility` | `warn`   | Exported symbol missing explicit visibility tag           |
+| `W018` | `prefer-description-length`  | `warn`   | @param description is too short to be useful              |
+| `W019` | `prefer-example-title`       | `warn`   | @example block missing a descriptive title comment        |
+| `W020` | `prefer-no-magic-numbers`    | `warn`   | Numeric literal in signature should have a named constant |
+
+## SSG Targets
+
+The gen.ssgTarget option controls which documentation platform the generated files target. Each platform receives platform-specific frontmatter and link formats.
+
+| Target       | Description                                                          |
+| ------------ | -------------------------------------------------------------------- |
+| `fumadocs`   | Next.js-based doc site with full-text search and MDX support         |
+| `docusaurus` | React-based docs with versioning, i18n, and sidebar navigation       |
+| `nextra`     | Next.js docs theme with MDX, built-in search, and GitHub integration |
+| `vitepress`  | Vite + Vue-based static docs with deep Markdown customization        |
+| `mintlify`   | Hosted docs platform with OpenAPI integration and analytics          |

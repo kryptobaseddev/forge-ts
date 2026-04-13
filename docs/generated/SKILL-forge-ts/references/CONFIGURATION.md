@@ -22,7 +22,7 @@ const config: Partial<BypassConfig> = {
 
 ## `ForgeConfig`
 
-Full configuration for a forge-ts run. Loaded from forge-ts.config.ts or the "forge-ts" key in package.json.
+Full configuration for a forge-ts run.
 
 ```typescript
 import type { ForgeConfig } from "forge-ts";
@@ -30,31 +30,31 @@ import type { ForgeConfig } from "forge-ts";
 const config: Partial<ForgeConfig> = {
   // Root directory of the project.
   rootDir: "...",
-  // Path to the tsconfig.json to compile against.
+  // Path to the `tsconfig.json` used for TypeScript compilation and type resolution.
   tsconfig: "...",
-  // Output directory for generated files.
+  // Output directory for all generated documentation artifacts.
   outDir: "...",
-  // Enforce TSDoc on all public exports.
+  // Enforcement configuration — controls which TSDoc rules run and at what severity.
   enforce: { /* ... */ },
-  // DocTest configuration.
+  // DocTest configuration — controls execution of `@example` blocks as live tests.
   doctest: { /* ... */ },
-  // API generation configuration.
+  // API generation configuration — controls OpenAPI spec output.
   api: { /* ... */ },
-  // Output generation configuration.
+  // Documentation generation configuration — controls what files are written by `forge gen`.
   gen: { /* ... */ },
-  // Skill package generation settings. Custom sections here are merged into the generated SKILL.md, allowing projects to inject workflow knowledge, domain gotchas, and other context that cannot be derived from symbols alone.
+  // SKILL.md generation settings.
   skill: [],
-  // TSDoc ecosystem configuration.
+  // TSDoc ecosystem configuration — tag definitions and group-level enforcement.
   tsdoc: { /* ... */ },
-  // Bypass budget configuration for temporary rule overrides.
+  // Bypass budget — controls how many temporary rule suppressions are allowed.
   bypass: { /* ... */ },
-  // Guide generation configuration.
+  // Guide generation configuration — controls intelligent guide page output.
   guides: [],
-  // Downstream config drift guards.
+  // Downstream config drift guards — validate tooling config files stay in sync.
   guards: [],
-  // Warnings generated during config loading (e.g., unknown keys). Populated by loadConfig(). Agents should surface these in output.
+  // Warnings generated during config loading (e.g., unknown keys, failed imports).
   _configWarnings: "...",
-  // Project metadata — auto-detected from package.json if not provided.
+  // Project metadata — auto-detected from `package.json` when not provided.
   project: [],
 };
 ```
@@ -62,19 +62,19 @@ const config: Partial<ForgeConfig> = {
 | Property | Type | Description |
 |----------|------|-------------|
 | `rootDir` | `string` | Root directory of the project. |
-| `tsconfig` | `string` | Path to the tsconfig.json to compile against. |
-| `outDir` | `string` | Output directory for generated files. |
-| `enforce` | `{ enabled: boolean; minVisibility: Visibility | "public" | "beta" | "internal" | "private"; strict: boolean; rules: EnforceRules; ignoreFile?: string; }` | Enforce TSDoc on all public exports. |
-| `doctest` | `{ enabled: boolean; cacheDir: string; }` | DocTest configuration. |
-| `api` | `{ enabled: boolean; openapi: boolean; openapiPath: string; }` | API generation configuration. |
-| `gen` | `{ enabled: boolean; formats: Array<"markdown" | "mdx">; llmsTxt: boolean; readmeSync: boolean; ssgTarget?: "docusaurus" | "mintlify" | "nextra" | "vitepress" | "fumadocs"; ckm?: boolean; }` | Output generation configuration. |
-| `skill` | `{ enabled?: boolean; customSections?: Array<{ heading: string; content: string; }>; extraGotchas?: string[]; }` | Skill package generation settings. Custom sections here are merged into the generated SKILL.md, allowing projects to inject workflow knowledge, domain gotchas, and other context that cannot be derived from symbols alone. |
-| `tsdoc` | `{ writeConfig: boolean; customTags: Array<{ tagName: string; syntaxKind: "block" | "inline" | "modifier"; }>; enforce: { core: "error" | "warn" | "off"; extended: "error" | "warn" | "off"; discretionary: "error" | "warn" | "off"; }; }` | TSDoc ecosystem configuration. |
-| `bypass` | `{ dailyBudget: number; durationHours: number; }` | Bypass budget configuration for temporary rule overrides. |
-| `guides` | `{ enabled: boolean; autoDiscover: boolean; custom: Array<{ slug: string; title: string; sources: string[]; }>; }` | Guide generation configuration. |
-| `guards` | `{ tsconfig: { enabled: boolean; requiredFlags: string[]; }; biome: { enabled: boolean; lockedRules: string[]; }; packageJson: { enabled: boolean; minNodeVersion: string; requiredFields: string[]; }; }` | Downstream config drift guards. |
-| `_configWarnings` | `string[] | undefined` | Warnings generated during config loading (e.g., unknown keys). Populated by loadConfig(). Agents should surface these in output. |
-| `project` | `{ repository?: string; homepage?: string; packageName?: string; description?: string; version?: string; bin?: Record<string, string>; scripts?: Record<string, string>; keywords?: string[]; }` | Project metadata — auto-detected from package.json if not provided. |
+| `tsconfig` | `string` | Path to the `tsconfig.json` used for TypeScript compilation and type resolution. |
+| `outDir` | `string` | Output directory for all generated documentation artifacts. |
+| `enforce` | `{ enabled: boolean; minVisibility: Visibility | "public" | "beta" | "internal" | "private"; strict: boolean; rules: EnforceRules; ignoreFile?: string; }` | Enforcement configuration — controls which TSDoc rules run and at what severity. |
+| `doctest` | `{ enabled: boolean; cacheDir: string; }` | DocTest configuration — controls execution of `@example` blocks as live tests. |
+| `api` | `{ enabled: boolean; openapi: boolean; openapiPath: string; }` | API generation configuration — controls OpenAPI spec output. |
+| `gen` | `{ enabled: boolean; formats: Array<"markdown" | "mdx">; llmsTxt: boolean; readmeSync: boolean; ssgTarget?: "docusaurus" | "mintlify" | "nextra" | "vitepress" | "fumadocs"; ckm?: boolean; }` | Documentation generation configuration — controls what files are written by `forge gen`. |
+| `skill` | `{ enabled?: boolean; customSections?: Array<{ heading: string; content: string; }>; extraGotchas?: string[]; }` | SKILL.md generation settings. |
+| `tsdoc` | `{ writeConfig: boolean; customTags: Array<{ tagName: string; syntaxKind: "block" | "inline" | "modifier"; }>; enforce: { core: "error" | "warn" | "off"; extended: "error" | "warn" | "off"; discretionary: "error" | "warn" | "off"; }; }` | TSDoc ecosystem configuration — tag definitions and group-level enforcement. |
+| `bypass` | `{ dailyBudget: number; durationHours: number; }` | Bypass budget — controls how many temporary rule suppressions are allowed. |
+| `guides` | `{ enabled: boolean; autoDiscover: boolean; custom: Array<{ slug: string; title: string; sources: string[]; }>; }` | Guide generation configuration — controls intelligent guide page output. |
+| `guards` | `{ tsconfig: { enabled: boolean; requiredFlags: string[]; }; biome: { enabled: boolean; lockedRules: string[]; }; packageJson: { enabled: boolean; minNodeVersion: string; requiredFields: string[]; }; }` | Downstream config drift guards — validate tooling config files stay in sync. |
+| `_configWarnings` | `string[] | undefined` | Warnings generated during config loading (e.g., unknown keys, failed imports). |
+| `project` | `{ repository?: string; homepage?: string; packageName?: string; description?: string; version?: string; bin?: Record<string, string>; scripts?: Record<string, string>; keywords?: string[]; }` | Project metadata — auto-detected from `package.json` when not provided. |
 
 ## `SSGConfigFile`
 

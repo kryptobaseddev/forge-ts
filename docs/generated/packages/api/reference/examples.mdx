@@ -61,9 +61,27 @@ console.log(entries[0].name); // first symbol name, alphabetically
 [View in API reference](/packages/api/reference/functions#generateapi)
 
 ```typescript
+import { loadConfig } from "@forge-ts/core";
 import { generateApi } from "@forge-ts/api";
+
+const config = await loadConfig();
 const result = await generateApi(config);
-console.log(result.success); // true if spec was written successfully
+console.log(result.success); // true if the spec was written successfully
+```
+
+## `index.ts`
+
+*OpenAPI 3.2 spec generator and structured API reference builder for forge-ts.  Inspects the `ForgeSymbol[]` graph produced by `@forge-ts/core`, extracts TypeScript types annotated with `@route` tags, maps their signatures to JSON Schema objects, and writes a complete OpenAPI 3.2 document alongside a structured API reference catalogue. Integrates with the broader documentation pipeline via `config.api.openapiPath`.*
+
+[View in API reference](/packages/api/reference/functions#indexts)
+
+```typescript
+import { loadConfig } from "@forge-ts/core";
+import { generateApi } from "@forge-ts/api";
+
+const config = await loadConfig();
+const result = await generateApi(config);
+console.log(result.success); // true if the spec was written successfully
 ```
 
 ## `signatureToSchema()`

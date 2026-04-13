@@ -5,7 +5,7 @@
     "project": "forge-ts",
     "language": "typescript",
     "generator": "forge-ts@0.22.0",
-    "generated": "2026-04-13T20:37:47.832Z"
+    "generated": "2026-04-13T23:10:12.265Z"
   },
   "concepts": [
     {
@@ -205,7 +205,7 @@
       "id": "concept-ForgeConfig",
       "name": "ForgeConfig",
       "slug": "forge",
-      "what": "Full configuration for a forge-ts run. Loaded from forge-ts.config.ts or the \"forge-ts\" key in package.json.",
+      "what": "Full configuration for a forge-ts run.",
       "tags": [
         "config"
       ],
@@ -224,7 +224,7 @@
           "type": {
             "canonical": "string"
           },
-          "description": "Path to the tsconfig.json to compile against.",
+          "description": "Path to the `tsconfig.json` used for TypeScript compilation and type resolution.",
           "required": true,
           "default": null
         },
@@ -233,7 +233,7 @@
           "type": {
             "canonical": "string"
           },
-          "description": "Output directory for generated files.",
+          "description": "Output directory for all generated documentation artifacts.",
           "required": true,
           "default": null
         },
@@ -243,7 +243,7 @@
             "canonical": "string",
             "original": "{ enabled: boolean; minVisibility: Visibility | \"public\" | \"beta\" | \"internal\" | \"private\"; strict: boolean; rules: EnforceRules; ignoreFile?: string; }"
           },
-          "description": "Enforce TSDoc on all public exports.",
+          "description": "Enforcement configuration — controls which TSDoc rules run and at what severity.",
           "required": true,
           "default": null
         },
@@ -253,7 +253,7 @@
             "canonical": "object",
             "original": "{ enabled: boolean; cacheDir: string; }"
           },
-          "description": "DocTest configuration.",
+          "description": "DocTest configuration — controls execution of `@example` blocks as live tests.",
           "required": true,
           "default": null
         },
@@ -263,7 +263,7 @@
             "canonical": "object",
             "original": "{ enabled: boolean; openapi: boolean; openapiPath: string; }"
           },
-          "description": "API generation configuration.",
+          "description": "API generation configuration — controls OpenAPI spec output.",
           "required": true,
           "default": null
         },
@@ -273,7 +273,7 @@
             "canonical": "string",
             "original": "{ enabled: boolean; formats: Array<\"markdown\" | \"mdx\">; llmsTxt: boolean; readmeSync: boolean; ssgTarget?: \"docusaurus\" | \"mintlify\" | \"nextra\" | \"vitepress\" | \"fumadocs\"; ckm?: boolean; }"
           },
-          "description": "Output generation configuration.",
+          "description": "Documentation generation configuration — controls what files are written by `forge gen`.",
           "required": true,
           "default": null
         },
@@ -283,7 +283,7 @@
             "canonical": "array",
             "original": "{ enabled?: boolean; customSections?: Array<{ heading: string; content: string; }>; extraGotchas?: string[]; }"
           },
-          "description": "Skill package generation settings. Custom sections here are merged into the generated SKILL.md, allowing projects to inject workflow knowledge, domain gotchas, and other context that cannot be derived from symbols alone.",
+          "description": "SKILL.md generation settings.",
           "required": true,
           "default": null
         },
@@ -293,7 +293,7 @@
             "canonical": "string",
             "original": "{ writeConfig: boolean; customTags: Array<{ tagName: string; syntaxKind: \"block\" | \"inline\" | \"modifier\"; }>; enforce: { core: \"error\" | \"warn\" | \"off\"; extended: \"error\" | \"warn\" | \"off\"; discretionary: \"error\" | \"warn\" | \"off\"; }; }"
           },
-          "description": "TSDoc ecosystem configuration.",
+          "description": "TSDoc ecosystem configuration — tag definitions and group-level enforcement.",
           "required": true,
           "default": null
         },
@@ -303,7 +303,7 @@
             "canonical": "object",
             "original": "{ dailyBudget: number; durationHours: number; }"
           },
-          "description": "Bypass budget configuration for temporary rule overrides.",
+          "description": "Bypass budget — controls how many temporary rule suppressions are allowed.",
           "required": true,
           "default": null
         },
@@ -313,7 +313,7 @@
             "canonical": "array",
             "original": "{ enabled: boolean; autoDiscover: boolean; custom: Array<{ slug: string; title: string; sources: string[]; }>; }"
           },
-          "description": "Guide generation configuration.",
+          "description": "Guide generation configuration — controls intelligent guide page output.",
           "required": true,
           "default": null
         },
@@ -323,7 +323,7 @@
             "canonical": "array",
             "original": "{ tsconfig: { enabled: boolean; requiredFlags: string[]; }; biome: { enabled: boolean; lockedRules: string[]; }; packageJson: { enabled: boolean; minNodeVersion: string; requiredFields: string[]; }; }"
           },
-          "description": "Downstream config drift guards.",
+          "description": "Downstream config drift guards — validate tooling config files stay in sync.",
           "required": true,
           "default": null
         },
@@ -333,7 +333,7 @@
             "canonical": "array",
             "original": "string[] | undefined"
           },
-          "description": "Warnings generated during config loading (e.g., unknown keys). Populated by loadConfig(). Agents should surface these in output.",
+          "description": "Warnings generated during config loading (e.g., unknown keys, failed imports).",
           "required": true,
           "default": null
         },
@@ -343,7 +343,7 @@
             "canonical": "array",
             "original": "{ repository?: string; homepage?: string; packageName?: string; description?: string; version?: string; bin?: Record<string, string>; scripts?: Record<string, string>; keywords?: string[]; }"
           },
-          "description": "Project metadata — auto-detected from package.json if not provided.",
+          "description": "Project metadata — auto-detected from `package.json` when not provided.",
           "required": true,
           "default": null
         }
@@ -2155,15 +2155,15 @@
             "original": "unknown"
           },
           "required": true,
-          "description": "The resolved `ForgeConfig` for the project."
+          "description": "The resolved `ForgeConfig` for the project. The relevant   fields are `config.api.openapiPath` (output destination), `config.rootDir`,   and `config.tsconfig`."
         }
       ],
       "outputs": {
         "type": {
           "canonical": "object",
-          "original": "A `ForgeResult` with success/failure and any diagnostics."
+          "original": "A `ForgeResult` whose `success` field is `true` when the spec was   written without error. `symbols` contains the full symbol graph from the   walk step. `errors` and `warnings` are empty on success; file-system or   walker errors are thrown rather than returned."
         },
-        "description": "A `ForgeResult` with success/failure and any diagnostics."
+        "description": "A `ForgeResult` whose `success` field is `true` when the spec was   written without error. `symbols` contains the full symbol graph from the   walk step. `errors` and `warnings` are empty on success; file-system or   walker errors are thrown rather than returned."
       }
     },
     {
@@ -2587,7 +2587,7 @@
     {
       "id": "op-generate",
       "name": "generate",
-      "what": "Runs the full generation pipeline: walk → render → write.  Auto-generated pages are always regenerated from source code. Stub pages (scaffolding for human/agent editing) are only created if they don't already exist, preserving manual edits across builds. Pass `{ forceStubs: true }` to overwrite stubs.",
+      "what": "Runs the full documentation generation pipeline: walk → render → write.  Auto-generated pages are always regenerated from source code on each run. Stub pages (concepts, guides, FAQ, contributing, changelog) are written only the first time, preserving manual edits across subsequent builds. Pass `{ forceStubs: true }` to reset stubs to their scaffolded state.",
       "tags": [
         "generate",
         "build",
@@ -2610,15 +2610,15 @@
             "original": "unknown"
           },
           "required": true,
-          "description": "Optional generation flags (e.g., forceStubs)."
+          "description": "Optional generation flags (see `GenerateOptions`)."
         }
       ],
       "outputs": {
         "type": {
           "canonical": "object",
-          "original": "A `ForgeResult` describing the outcome."
+          "original": "A `ForgeResult` whose `writtenFiles` lists every path written.   `success` is always `true` on normal completion; file-system errors throw."
         },
-        "description": "A `ForgeResult` describing the outcome."
+        "description": "A `ForgeResult` whose `writtenFiles` lists every path written.   `success` is always `true` on normal completion; file-system errors throw."
       }
     },
     {
@@ -3327,25 +3327,28 @@
       },
       "description": "Root directory of the project.",
       "required": true,
-      "default": null
+      "default": "`process.cwd()` (resolved by `loadConfig`)",
+      "effect": "All relative paths inside the config (e.g. `tsconfig`, `outDir`) are resolved against this directory. When loaded via `loadConfig` this is set to `process.cwd()` automatically; override only when invoking the API programmatically from a different working directory."
     },
     {
       "key": "forge.tsconfig",
       "type": {
         "canonical": "string"
       },
-      "description": "Path to the tsconfig.json to compile against.",
+      "description": "Path to the `tsconfig.json` used for TypeScript compilation and type resolution.",
       "required": true,
-      "default": null
+      "default": "`\"<rootDir>/tsconfig.json\"`",
+      "effect": "forge-ts passes this file to the TypeScript compiler API for AST walking and type extraction. The path may be absolute or relative to `rootDir`. If the file does not exist the run fails immediately with a clear error."
     },
     {
       "key": "forge.outDir",
       "type": {
         "canonical": "string"
       },
-      "description": "Output directory for generated files.",
+      "description": "Output directory for all generated documentation artifacts.",
       "required": true,
-      "default": null
+      "default": "`\"<rootDir>/docs\"`",
+      "effect": "All generated files — MDX/Markdown pages, `llms.txt`, `llms-full.txt`, `meta.json` sidebar files, `openapi.json`, and `ckm.json` — are written relative to this directory. The directory is created automatically if it does not exist. Commit this directory or add it to `.gitignore` depending on your workflow."
     },
     {
       "key": "forge.enforce",
@@ -3353,9 +3356,10 @@
         "canonical": "string",
         "original": "{ enabled: boolean; minVisibility: Visibility | \"public\" | \"beta\" | \"internal\" | \"private\"; strict: boolean; rules: EnforceRules; ignoreFile?: string; }"
       },
-      "description": "Enforce TSDoc on all public exports.",
+      "description": "Enforcement configuration — controls which TSDoc rules run and at what severity.",
       "required": true,
-      "default": null
+      "default": "See individual sub-properties.",
+      "effect": "When `enforce.enabled` is `true`, `forge check` validates every exported symbol against the active rule set. Rules produce either errors (which fail the build) or warnings (which are reported but do not fail). The `tsdoc.enforce` group severities act as coarse-grained defaults; individual entries in `enforce.rules` take precedence over group defaults."
     },
     {
       "key": "forge.doctest",
@@ -3363,9 +3367,10 @@
         "canonical": "object",
         "original": "{ enabled: boolean; cacheDir: string; }"
       },
-      "description": "DocTest configuration.",
+      "description": "DocTest configuration — controls execution of `@example` blocks as live tests.",
       "required": true,
-      "default": null
+      "default": "See individual sub-properties.",
+      "effect": "When `doctest.enabled` is `true`, `forge doctest` extracts every `@example` code block from the TSDoc of exported symbols, wraps each block in a Vitest test file, and executes it. Failures are reported as test errors. This ensures examples in documentation stay runnable as the codebase evolves."
     },
     {
       "key": "forge.api",
@@ -3373,9 +3378,10 @@
         "canonical": "object",
         "original": "{ enabled: boolean; openapi: boolean; openapiPath: string; }"
       },
-      "description": "API generation configuration.",
+      "description": "API generation configuration — controls OpenAPI spec output.",
       "required": true,
-      "default": null
+      "default": "See individual sub-properties.",
+      "effect": "When `api.enabled` is `true`, forge-ts scans exported functions annotated with `@route` tags and assembles an OpenAPI 3.1 specification. This requires `api.openapi` to be `true` as well. The feature is disabled by default because most projects do not expose HTTP routes through exported TypeScript functions."
     },
     {
       "key": "forge.gen",
@@ -3383,9 +3389,10 @@
         "canonical": "string",
         "original": "{ enabled: boolean; formats: Array<\"markdown\" | \"mdx\">; llmsTxt: boolean; readmeSync: boolean; ssgTarget?: \"docusaurus\" | \"mintlify\" | \"nextra\" | \"vitepress\" | \"fumadocs\"; ckm?: boolean; }"
       },
-      "description": "Output generation configuration.",
+      "description": "Documentation generation configuration — controls what files are written by `forge gen`.",
       "required": true,
-      "default": null
+      "default": "See individual sub-properties.",
+      "effect": "`forge gen` extracts symbols, enriches them with TSDoc metadata, and writes human- and machine-readable documentation artifacts to `outDir`. The output format and target SSG platform are controlled here."
     },
     {
       "key": "forge.skill",
@@ -3393,9 +3400,10 @@
         "canonical": "array",
         "original": "{ enabled?: boolean; customSections?: Array<{ heading: string; content: string; }>; extraGotchas?: string[]; }"
       },
-      "description": "Skill package generation settings. Custom sections here are merged into the generated SKILL.md, allowing projects to inject workflow knowledge, domain gotchas, and other context that cannot be derived from symbols alone.",
+      "description": "SKILL.md generation settings.",
       "required": true,
-      "default": null
+      "default": "See individual sub-properties.",
+      "effect": "`forge gen` can produce a `SKILL.md` package alongside `llms.txt`. This file is a structured knowledge document intended for AI coding assistants that need deep project-specific context: workflow steps, domain gotchas, and architectural invariants that cannot be inferred from symbol signatures alone. Custom sections defined here are merged into the auto-generated body."
     },
     {
       "key": "forge.tsdoc",
@@ -3403,9 +3411,10 @@
         "canonical": "string",
         "original": "{ writeConfig: boolean; customTags: Array<{ tagName: string; syntaxKind: \"block\" | \"inline\" | \"modifier\"; }>; enforce: { core: \"error\" | \"warn\" | \"off\"; extended: \"error\" | \"warn\" | \"off\"; discretionary: \"error\" | \"warn\" | \"off\"; }; }"
       },
-      "description": "TSDoc ecosystem configuration.",
+      "description": "TSDoc ecosystem configuration — tag definitions and group-level enforcement.",
       "required": true,
-      "default": null
+      "default": "See individual sub-properties.",
+      "effect": "Controls two concerns: (1) which custom TSDoc tags are registered in the generated `tsdoc.json` preset, and (2) how the three TSDoc standardisation groups map to default severities for enforcement rules. Individual rule overrides in `enforce.rules` always take precedence over group severities."
     },
     {
       "key": "forge.bypass",
@@ -3413,9 +3422,10 @@
         "canonical": "object",
         "original": "{ dailyBudget: number; durationHours: number; }"
       },
-      "description": "Bypass budget configuration for temporary rule overrides.",
+      "description": "Bypass budget — controls how many temporary rule suppressions are allowed.",
       "required": true,
-      "default": null
+      "default": "See individual sub-properties.",
+      "effect": "The bypass system lets developers temporarily suppress a failing rule on a specific symbol using a `@forgeBypass` tag without disabling the rule project-wide. Each bypass is time-limited and counted against a daily budget to prevent bypass sprawl. Bypasses that exceed the budget or have expired are reported by `forge check`."
     },
     {
       "key": "forge.guides",
@@ -3423,9 +3433,10 @@
         "canonical": "array",
         "original": "{ enabled: boolean; autoDiscover: boolean; custom: Array<{ slug: string; title: string; sources: string[]; }>; }"
       },
-      "description": "Guide generation configuration.",
+      "description": "Guide generation configuration — controls intelligent guide page output.",
       "required": true,
-      "default": null
+      "default": "See individual sub-properties.",
+      "effect": "`forge gen` can auto-discover logical guide topics from code patterns and write narrative guide pages alongside the API reference. Guides are written to `<outDir>/guides/` and are intended for human readers learning the API, as opposed to the symbol-level API reference pages."
     },
     {
       "key": "forge.guards",
@@ -3433,9 +3444,10 @@
         "canonical": "array",
         "original": "{ tsconfig: { enabled: boolean; requiredFlags: string[]; }; biome: { enabled: boolean; lockedRules: string[]; }; packageJson: { enabled: boolean; minNodeVersion: string; requiredFields: string[]; }; }"
       },
-      "description": "Downstream config drift guards.",
+      "description": "Downstream config drift guards — validate tooling config files stay in sync.",
       "required": true,
-      "default": null
+      "default": "See individual sub-properties.",
+      "effect": "Guards run during `forge check` and validate that key configuration files (`tsconfig.json`, `biome.json`, `package.json`) meet minimum quality requirements. They catch configuration drift that could silently weaken type safety or code quality enforcement."
     },
     {
       "key": "forge._configWarnings",
@@ -3443,9 +3455,10 @@
         "canonical": "array",
         "original": "string[] | undefined"
       },
-      "description": "Warnings generated during config loading (e.g., unknown keys). Populated by loadConfig(). Agents should surface these in output.",
+      "description": "Warnings generated during config loading (e.g., unknown keys, failed imports).",
       "required": true,
-      "default": "undefined"
+      "default": "`undefined`",
+      "effect": "Populated by `loadConfig` when the user's config contains keys that forge-ts does not recognise, or when the config file exists but cannot be imported (e.g. missing `\"type\": \"module\"`). Agents and CI scripts should surface these warnings in their output so problems are caught early. This field is never set in user-authored config files."
     },
     {
       "key": "forge.project",
@@ -3453,9 +3466,10 @@
         "canonical": "array",
         "original": "{ repository?: string; homepage?: string; packageName?: string; description?: string; version?: string; bin?: Record<string, string>; scripts?: Record<string, string>; keywords?: string[]; }"
       },
-      "description": "Project metadata — auto-detected from package.json if not provided.",
+      "description": "Project metadata — auto-detected from `package.json` when not provided.",
       "required": true,
-      "default": null
+      "default": "`{}` (all fields auto-detected from `package.json`)",
+      "effect": "forge-ts reads `package.json` after loading the user config and fills in any `project.*` fields that were not explicitly set. Explicit values always win over auto-detected ones. This data is embedded in generated docs, `llms.txt`, and the CKM manifest."
     },
     {
       "key": "forgelogger.quiet",

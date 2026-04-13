@@ -3,38 +3,62 @@ title: enforcer
 description: enforcer package overview
 ---
 
+npm package: `@forge-ts/enforcer`
+
+## Installation
+
+```bash
+npm install @forge-ts/enforcer
+```
+
+## Description
+
+The `enforcer` package.
+
+## Key Concepts
+
+The enforcer performs a single AST traversal via `@forge-ts/core`'s `createWalker`, then applies each enabled rule to every exported symbol that meets the configured `minVisibility` threshold. Individual rules can be set to `"error"`, `"warn"`, or `"off"` in `forge-ts.config.ts`; setting `enforce.strict: true` promotes all warnings to errors. A bypass system (`forge-ts bypass`) allows temporary rule overrides within a daily budget.  Key exports: - `enforce` — Run the full enforcement pass; returns a `ForgeResult`. - `formatResults` — Format a `ForgeResult` for human or JSON output. - `findDeprecatedUsages` — Detect cross-package usage of `@deprecated` symbols. - `FormatOptions` — Options for `formatResults` (color, groupBy, etc.). - `DeprecatedUsage` — Record of a deprecated symbol referenced by another file.
+
+## Quick Usage
+
+```typescript
+import { findDeprecatedUsages } from "@forge-ts/enforcer";
+const usages = findDeprecatedUsages(symbols);
+console.log(usages.length); // number of deprecated cross-package imports
+```
+
 ## Functions & Classes
 
-| Symbol                                                                        | Kind     | Description                                                                      |
-| ----------------------------------------------------------------------------- | -------- | -------------------------------------------------------------------------------- |
-| [`findDeprecatedUsages()`](/packages/enforcer/api/index#finddeprecatedusages) | function | Scans symbols for imports of deprecated exports from other packages.             |
-| [`enforce()`](/packages/enforcer/api/index#enforce)                           | function | Runs the TSDoc enforcement pass against a project.  The enforcer walks all ex... |
-| [`formatResults()`](/packages/enforcer/api/index#formatresults)               | function | Formats a `ForgeResult` into a human-readable string suitable for printing to... |
-| [`findDeprecatedUsages()`](/packages/enforcer/api/index#finddeprecatedusages) | function | Scans symbols for imports of deprecated exports from other packages.             |
-| [`enforce()`](/packages/enforcer/api/index#enforce)                           | function | Runs the TSDoc enforcement pass against a project.  The enforcer walks all ex... |
-| [`formatResults()`](/packages/enforcer/api/index#formatresults)               | function | Formats a `ForgeResult` into a human-readable string suitable for printing to... |
+| Symbol                                                                                  | Kind     | Description                                                                      |
+| --------------------------------------------------------------------------------------- | -------- | -------------------------------------------------------------------------------- |
+| [`findDeprecatedUsages()`](/packages/enforcer/reference/functions#finddeprecatedusages) | function | Scans symbols for imports of deprecated exports from other packages.             |
+| [`enforce()`](/packages/enforcer/reference/functions#enforce)                           | function | Runs the TSDoc enforcement pass against a project.  The enforcer walks all ex... |
+| [`formatResults()`](/packages/enforcer/reference/functions#formatresults)               | function | Formats a `ForgeResult` into a human-readable string suitable for printing to... |
+| [`findDeprecatedUsages()`](/packages/enforcer/reference/functions#finddeprecatedusages) | function | Scans symbols for imports of deprecated exports from other packages.             |
+| [`enforce()`](/packages/enforcer/reference/functions#enforce)                           | function | Runs the TSDoc enforcement pass against a project.  The enforcer walks all ex... |
+| [`formatResults()`](/packages/enforcer/reference/functions#formatresults)               | function | Formats a `ForgeResult` into a human-readable string suitable for printing to... |
 
 ## Types & Interfaces
 
-| Symbol                                                            | Kind      | Description                                                  |
-| ----------------------------------------------------------------- | --------- | ------------------------------------------------------------ |
-| [`DeprecatedUsage`](/packages/enforcer/api/index#deprecatedusage) | interface | A detected usage of a deprecated symbol.                     |
-| [`FormatOptions`](/packages/enforcer/api/index#formatoptions)     | interface | Options that control how `formatResults` renders its output. |
-| [`DeprecatedUsage`](/packages/enforcer/api/index#deprecatedusage) | interface | A detected usage of a deprecated symbol.                     |
-| [`FormatOptions`](/packages/enforcer/api/index#formatoptions)     | interface | Options that control how `formatResults` renders its output. |
+| Symbol                                                                  | Kind      | Description                                                  |
+| ----------------------------------------------------------------------- | --------- | ------------------------------------------------------------ |
+| [`DeprecatedUsage`](/packages/enforcer/reference/types#deprecatedusage) | interface | A detected usage of a deprecated symbol.                     |
+| [`FormatOptions`](/packages/enforcer/reference/types#formatoptions)     | interface | Options that control how `formatResults` renders its output. |
+| [`DeprecatedUsage`](/packages/enforcer/reference/types#deprecatedusage) | interface | A detected usage of a deprecated symbol.                     |
+| [`FormatOptions`](/packages/enforcer/reference/types#formatoptions)     | interface | Options that control how `formatResults` renders its output. |
 
 ## Other Exports
 
-| Symbol                                                                         | Kind | Description                                                                      |
-| ------------------------------------------------------------------------------ | ---- | -------------------------------------------------------------------------------- |
-| [`deprecation-tracker.ts`](/packages/enforcer/api/index#deprecation-trackerts) | file |                                                                                  |
-| [`enforcer.ts`](/packages/enforcer/api/index#enforcerts)                       | file |                                                                                  |
-| [`formatter.ts`](/packages/enforcer/api/index#formatterts)                     | file |                                                                                  |
-| [`index.ts`](/packages/enforcer/api/index#indexts)                             | file | forge-ts/enforcer — TSDoc enforcement linter.  Walks all exported symbols and... |
-| [`tsup.config.ts`](/packages/enforcer/api/index#tsupconfigts)                  | file |                                                                                  |
-| [`enforcer.test.ts`](/packages/enforcer/api/index#enforcertestts)              | file |                                                                                  |
-| [`deprecation-tracker.ts`](/packages/enforcer/api/index#deprecation-trackerts) | file |                                                                                  |
-| [`enforcer.ts`](/packages/enforcer/api/index#enforcerts)                       | file |                                                                                  |
-| [`formatter.ts`](/packages/enforcer/api/index#formatterts)                     | file |                                                                                  |
-| [`index.ts`](/packages/enforcer/api/index#indexts)                             | file | forge-ts/enforcer — TSDoc enforcement linter.  Walks all exported symbols and... |
-| [`enforcer.test.ts`](/packages/enforcer/api/index#enforcertestts)              | file |                                                                                  |
+| Symbol                                                                                   | Kind | Description                                                                      |
+| ---------------------------------------------------------------------------------------- | ---- | -------------------------------------------------------------------------------- |
+| [`deprecation-tracker.ts`](/packages/enforcer/reference/functions#deprecation-trackerts) | file |                                                                                  |
+| [`enforcer.ts`](/packages/enforcer/reference/functions#enforcerts)                       | file |                                                                                  |
+| [`formatter.ts`](/packages/enforcer/reference/functions#formatterts)                     | file |                                                                                  |
+| [`index.ts`](/packages/enforcer/reference/functions#indexts)                             | file | TSDoc enforcement engine for TypeScript projects.  Walks all exported symbols... |
+| [`tsup.config.ts`](/packages/enforcer/reference/functions#tsupconfigts)                  | file |                                                                                  |
+| [`enforcer.test.ts`](/packages/enforcer/reference/functions#enforcertestts)              | file |                                                                                  |
+| [`deprecation-tracker.ts`](/packages/enforcer/reference/functions#deprecation-trackerts) | file |                                                                                  |
+| [`enforcer.ts`](/packages/enforcer/reference/functions#enforcerts)                       | file |                                                                                  |
+| [`formatter.ts`](/packages/enforcer/reference/functions#formatterts)                     | file |                                                                                  |
+| [`index.ts`](/packages/enforcer/reference/functions#indexts)                             | file | forge-ts/enforcer — TSDoc enforcement linter.  Walks all exported symbols and... |
+| [`enforcer.test.ts`](/packages/enforcer/reference/functions#enforcertestts)              | file |                                                                                  |

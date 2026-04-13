@@ -490,7 +490,7 @@
         ]
       },
       "ForgeConfig": {
-        "description": "Full configuration for a forge-ts run. Loaded from forge-ts.config.ts or the \"forge-ts\" key in package.json.",
+        "description": "Full configuration for a forge-ts run.",
         "type": "object",
         "properties": {
           "rootDir": {
@@ -499,11 +499,11 @@
           },
           "tsconfig": {
             "type": "string",
-            "description": "Path to the tsconfig.json to compile against."
+            "description": "Path to the `tsconfig.json` used for TypeScript compilation and type resolution."
           },
           "outDir": {
             "type": "string",
-            "description": "Output directory for generated files."
+            "description": "Output directory for all generated documentation artifacts."
           },
           "enforce": {
             "oneOf": [
@@ -523,15 +523,15 @@
                 "type": "object"
               }
             ],
-            "description": "Enforce TSDoc on all public exports."
+            "description": "Enforcement configuration — controls which TSDoc rules run and at what severity."
           },
           "doctest": {
             "type": "object",
-            "description": "DocTest configuration."
+            "description": "DocTest configuration — controls execution of `@example` blocks as live tests."
           },
           "api": {
             "type": "object",
-            "description": "API generation configuration."
+            "description": "API generation configuration — controls OpenAPI spec output."
           },
           "gen": {
             "oneOf": [
@@ -551,31 +551,31 @@
                 "type": "object"
               }
             ],
-            "description": "Output generation configuration."
+            "description": "Documentation generation configuration — controls what files are written by `forge gen`."
           },
           "skill": {
             "type": "object",
-            "description": "Skill package generation settings. Custom sections here are merged into the generated SKILL.md, allowing projects to inject workflow knowledge, domain gotchas, and other context that cannot be derived from symbols alone."
+            "description": "SKILL.md generation settings."
           },
           "tsdoc": {
             "type": "object",
-            "description": "TSDoc ecosystem configuration."
+            "description": "TSDoc ecosystem configuration — tag definitions and group-level enforcement."
           },
           "bypass": {
             "type": "object",
-            "description": "Bypass budget configuration for temporary rule overrides."
+            "description": "Bypass budget — controls how many temporary rule suppressions are allowed."
           },
           "guides": {
             "type": "object",
-            "description": "Guide generation configuration."
+            "description": "Guide generation configuration — controls intelligent guide page output."
           },
           "guards": {
             "type": "object",
-            "description": "Downstream config drift guards."
+            "description": "Downstream config drift guards — validate tooling config files stay in sync."
           },
           "project": {
             "type": "object",
-            "description": "Project metadata — auto-detected from package.json if not provided."
+            "description": "Project metadata — auto-detected from `package.json` when not provided."
           }
         },
         "required": [

@@ -16,3 +16,4 @@ dist
 clawmsgr-agent.json
 clawmsgr-*.json
 clawmsgr-*.json
+.scratch/

@@ -3,7 +3,7 @@
 > Universal TypeScript documentation compiler — enforces TSDoc as a build gate, then generates all artifacts from source in one pass
 
 Version: 0.22.0
-Generated: 2026-03-30T23:47:21.829Z
+Generated: 2026-04-13T16:58:22.685Z
 
 ## Package: core
 
@@ -853,7 +853,7 @@ API generation configuration.
 
 ##### gen
 
-{ enabled: boolean; formats: Array<"markdown" | "mdx">; llmsTxt: boolean; readmeSync: boolean; ssgTarget?: "docusaurus" | "mintlify" | "nextra" | "vitepress"; ckm?: boolean; }
+{ enabled: boolean; formats: Array<"markdown" | "mdx">; llmsTxt: boolean; readmeSync: boolean; ssgTarget?: "docusaurus" | "mintlify" | "nextra" | "vitepress" | "fumadocs"; ckm?: boolean; }
 
 Output generation configuration.
 
@@ -4388,7 +4388,7 @@ Example:
 
 #### initDocsCommand
 
-import("citty").CommandDef<{ readonly target: { readonly type: "string"; readonly description: `SSG target: ${string} (default: docusaurus)` | `SSG target: ${string} (default: mintlify)` | `SSG target: ${string} (default: nextra)` | `SSG target: ${string} (default: vitepress)`; }; readonly cwd: { readonly type: "string"; readonly description: "Project root directory"; }; readonly "out-dir": { readonly type: "string"; readonly description: "Output directory for doc site (default: ./docs)"; }; readonly force: { readonly type: "boolean"; readonly description: "Overwrite existing scaffold"; readonly default: false; }; readonly json: { readonly type: "boolean"; readonly description: "Output as LAFS JSON envelope"; readonly default: false; }; readonly human: { readonly type: "boolean"; readonly description: "Output as formatted text"; readonly default: false; }; readonly quiet: { readonly type: "boolean"; readonly description: "Suppress non-essential output"; readonly default: false; }; readonly mvi: { readonly type: "string"; readonly description: "MVI verbosity level: minimal, standard, full"; }; }>
+import("citty").CommandDef<{ readonly target: { readonly type: "string"; readonly description: `SSG target: ${string} (default: docusaurus)` | `SSG target: ${string} (default: mintlify)` | `SSG target: ${string} (default: nextra)` | `SSG target: ${string} (default: vitepress)` | `SSG target: ${string} (default: fumadocs)`; }; readonly cwd: { readonly type: "string"; readonly description: "Project root directory"; }; readonly "out-dir": { readonly type: "string"; readonly description: "Output directory for doc site (default: ./docs)"; }; readonly force: { readonly type: "boolean"; readonly description: "Overwrite existing scaffold"; readonly default: false; }; readonly json: { readonly type: "boolean"; readonly description: "Output as LAFS JSON envelope"; readonly default: false; }; readonly human: { readonly type: "boolean"; readonly description: "Output as formatted text"; readonly default: false; }; readonly quiet: { readonly type: "boolean"; readonly description: "Suppress non-essential output"; readonly default: false; }; readonly mvi: { readonly type: "string"; readonly description: "MVI verbosity level: minimal, standard, full"; }; }>
 
 Citty command definition for `forge-ts init docs`.  Scaffolds a complete documentation site for the target SSG platform. Use `--json` for LAFS JSON envelope output (agent/CI-friendly).
 
@@ -5519,7 +5519,7 @@ Output format
 
 ##### ssgTarget
 
-"docusaurus" | "mintlify" | "nextra" | "vitepress" | undefined
+"docusaurus" | "mintlify" | "nextra" | "vitepress" | "fumadocs" | undefined
 
 SSG target for frontmatter.
 
@@ -6076,6 +6076,18 @@ Example:
   const adapter = getAdapter("vitepress");
   const configs = adapter.generateConfig(context);
   console.log(configs[0].path); // ".vitepress/config.mts"
+
+#### fumadocsAdapter
+
+SSGAdapter
+
+Fumadocs SSG adapter (App Router, content/docs layout). Implements the `SSGAdapter` contract for the Fumadocs platform.
+
+Example:
+  import { getAdapter } from "@forge-ts/gen";
+  const adapter = getAdapter("fumadocs");
+  const configs = adapter.generateConfig(context);
+  console.log(configs[0].path); // "content/docs/meta.json"
 
 ## Package: enforcer
 

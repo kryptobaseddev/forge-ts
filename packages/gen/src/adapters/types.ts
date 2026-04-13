@@ -5,7 +5,7 @@ import type { DocPage } from "../site-generator.js";
  * Supported SSG target identifiers.
  * @public
  */
-export type SSGTarget = "mintlify" | "docusaurus" | "nextra" | "vitepress";
+export type SSGTarget = "mintlify" | "docusaurus" | "nextra" | "vitepress" | "fumadocs";
 
 /**
  * A file to write to disk during scaffolding or generation.

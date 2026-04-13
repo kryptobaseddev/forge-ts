@@ -1,0 +1,11 @@
+{
+  "title": "Packages",
+  "pages": [
+    "api",
+    "cli",
+    "core",
+    "doctest",
+    "enforcer",
+    "gen"
+  ]
+}

@@ -48,7 +48,7 @@ export interface SiteGeneratorOptions {
 	 * SSG target for frontmatter.
 	 * @defaultValue undefined
 	 */
-	ssgTarget?: "docusaurus" | "mintlify" | "nextra" | "vitepress";
+	ssgTarget?: "docusaurus" | "mintlify" | "nextra" | "vitepress" | "fumadocs";
 	/** Project name */
 	projectName: string;
 	/**
@@ -153,6 +153,13 @@ function buildFrontmatterFields(
 			return { title };
 		case "vitepress": {
 			const fields: Record<string, string | number | boolean> = { title, outline: "deep" };
+			if (description) {
+				fields.description = description;
+			}
+			return fields;
+		}
+		case "fumadocs": {
+			const fields: Record<string, string | number | boolean> = { title };
 			if (description) {
 				fields.description = description;
 			}

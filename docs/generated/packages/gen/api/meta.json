@@ -1,0 +1,9 @@
+{
+  "title": "Api",
+  "pages": [
+    "index",
+    "examples",
+    "functions",
+    "types"
+  ]
+}

@@ -1,7 +1,7 @@
 /**
  * SSG adapter registry for documentation generation.
  *
- * Provides pluggable adapters for Mintlify, Docusaurus, Nextra, and VitePress
+ * Provides pluggable adapters for Fumadocs, Mintlify, Docusaurus, Nextra, and VitePress
  * that transform forge-ts output into framework-specific documentation files.
  *
  * @packageDocumentation
@@ -29,3 +29,4 @@ import "./mintlify.js";
 import "./docusaurus.js";
 import "./nextra.js";
 import "./vitepress.js";
+import "./fumadocs.js";

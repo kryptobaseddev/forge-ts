@@ -213,7 +213,7 @@ export interface ForgeConfig {
 		/** Synchronise summaries back into README.md. */
 		readmeSync: boolean;
 		/** Static site generator to target for output format. */
-		ssgTarget?: "docusaurus" | "mintlify" | "nextra" | "vitepress";
+		ssgTarget?: "docusaurus" | "mintlify" | "nextra" | "vitepress" | "fumadocs";
 		/** Generate a Codebase Knowledge Manifest (ckm.json) alongside other outputs. */
 		ckm?: boolean;
 	};

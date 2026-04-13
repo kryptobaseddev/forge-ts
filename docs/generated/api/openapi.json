@@ -546,6 +546,9 @@
               },
               {
                 "type": "object"
+              },
+              {
+                "type": "object"
               }
             ],
             "description": "Output generation configuration."
@@ -2436,6 +2439,9 @@
           },
           "ssgTarget": {
             "oneOf": [
+              {
+                "type": "object"
+              },
               {
                 "type": "object"
               },

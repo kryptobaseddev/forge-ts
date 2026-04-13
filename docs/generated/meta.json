@@ -1,0 +1,16 @@
+{
+  "title": "Documentation",
+  "pages": [
+    "index",
+    "changelog",
+    "concepts",
+    "configuration",
+    "contributing",
+    "faq",
+    "getting-started",
+    "---Guides---",
+    "guides",
+    "---Packages---",
+    "packages"
+  ]
+}

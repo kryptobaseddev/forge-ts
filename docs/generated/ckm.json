@@ -5,7 +5,7 @@
     "project": "forge-ts",
     "language": "typescript",
     "generator": "forge-ts@0.22.0",
-    "generated": "2026-03-30T23:47:21.837Z"
+    "generated": "2026-04-13T16:58:22.714Z"
   },
   "concepts": [
     {
@@ -271,7 +271,7 @@
           "name": "gen",
           "type": {
             "canonical": "string",
-            "original": "{ enabled: boolean; formats: Array<\"markdown\" | \"mdx\">; llmsTxt: boolean; readmeSync: boolean; ssgTarget?: \"docusaurus\" | \"mintlify\" | \"nextra\" | \"vitepress\"; ckm?: boolean; }"
+            "original": "{ enabled: boolean; formats: Array<\"markdown\" | \"mdx\">; llmsTxt: boolean; readmeSync: boolean; ssgTarget?: \"docusaurus\" | \"mintlify\" | \"nextra\" | \"vitepress\" | \"fumadocs\"; ckm?: boolean; }"
           },
           "description": "Output generation configuration.",
           "required": true,
@@ -851,7 +851,7 @@
           "name": "ssgTarget",
           "type": {
             "canonical": "string",
-            "original": "\"docusaurus\" | \"mintlify\" | \"nextra\" | \"vitepress\" | undefined"
+            "original": "\"docusaurus\" | \"mintlify\" | \"nextra\" | \"vitepress\" | \"fumadocs\" | undefined"
           },
           "description": "SSG target for frontmatter.",
           "required": true,
@@ -3381,7 +3381,7 @@
       "key": "forge.gen",
       "type": {
         "canonical": "string",
-        "original": "{ enabled: boolean; formats: Array<\"markdown\" | \"mdx\">; llmsTxt: boolean; readmeSync: boolean; ssgTarget?: \"docusaurus\" | \"mintlify\" | \"nextra\" | \"vitepress\"; ckm?: boolean; }"
+        "original": "{ enabled: boolean; formats: Array<\"markdown\" | \"mdx\">; llmsTxt: boolean; readmeSync: boolean; ssgTarget?: \"docusaurus\" | \"mintlify\" | \"nextra\" | \"vitepress\" | \"fumadocs\"; ckm?: boolean; }"
       },
       "description": "Output generation configuration.",
       "required": true,
@@ -3501,7 +3501,7 @@
       "key": "sitegenerator.ssgTarget",
       "type": {
         "canonical": "string",
-        "original": "\"docusaurus\" | \"mintlify\" | \"nextra\" | \"vitepress\" | undefined"
+        "original": "\"docusaurus\" | \"mintlify\" | \"nextra\" | \"vitepress\" | \"fumadocs\" | undefined"
       },
       "description": "SSG target for frontmatter.",
       "required": true,

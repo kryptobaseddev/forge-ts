@@ -325,6 +325,19 @@ const configs = adapter.generateConfig(context);
 console.log(configs[0].path); // ".vitepress/config.mts"
 ```
 
+## `fumadocsAdapter`
+
+*Fumadocs SSG adapter (App Router, content/docs layout). Implements the `SSGAdapter` contract for the Fumadocs platform.*
+
+[View in API reference](/packages/gen/api/functions#fumadocsadapter)
+
+```typescript
+import { getAdapter } from "@forge-ts/gen";
+const adapter = getAdapter("fumadocs");
+const configs = adapter.generateConfig(context);
+console.log(configs[0].path); // "content/docs/meta.json"
+```
+
 ## `generateCKM()`
 
 *Generates a Codebase Knowledge Manifest from the symbol graph.*

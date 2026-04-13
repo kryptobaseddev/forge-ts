@@ -13,6 +13,7 @@ import "../adapters/mintlify.js";
 import "../adapters/docusaurus.js";
 import "../adapters/nextra.js";
 import "../adapters/vitepress.js";
+import "../adapters/fumadocs.js";
 
 // ---------------------------------------------------------------------------
 // Fixtures
@@ -76,23 +77,24 @@ describe("registry — registerAdapter / getAdapter", () => {
 });
 
 describe("registry — getAvailableTargets", () => {
-	it("returns all four targets", () => {
+	it("returns all five targets", () => {
 		const targets = getAvailableTargets();
 		expect(targets).toContain("mintlify");
 		expect(targets).toContain("docusaurus");
 		expect(targets).toContain("nextra");
 		expect(targets).toContain("vitepress");
+		expect(targets).toContain("fumadocs");
 	});
 
-	it("returns exactly four targets", () => {
+	it("returns exactly five targets", () => {
 		const targets = getAvailableTargets();
-		expect(targets).toHaveLength(4);
+		expect(targets).toHaveLength(5);
 	});
 });
 
 describe("registry — DEFAULT_TARGET", () => {
-	it('is "mintlify"', () => {
-		expect(DEFAULT_TARGET).toBe("mintlify");
+	it('is "fumadocs"', () => {
+		expect(DEFAULT_TARGET).toBe("fumadocs");
 	});
 });
 
@@ -100,7 +102,7 @@ describe("registry — DEFAULT_TARGET", () => {
 // Interface contract — each adapter
 // ---------------------------------------------------------------------------
 
-const ALL_TARGETS: SSGTarget[] = ["mintlify", "docusaurus", "nextra", "vitepress"];
+const ALL_TARGETS: SSGTarget[] = ["mintlify", "docusaurus", "nextra", "vitepress", "fumadocs"];
 
 describe("SSGAdapter interface contract", () => {
 	for (const target of ALL_TARGETS) {
@@ -206,6 +208,13 @@ describe("styleGuide values", () => {
 		expect(styleGuide.supportsMdx).toBe(false);
 		expect(styleGuide.requiresFrontmatter).toBe(true);
 	});
+
+	it("fumadocs: pageExtension is mdx, supportsMdx is true, requiresFrontmatter is true", () => {
+		const { styleGuide } = getAdapter("fumadocs");
+		expect(styleGuide.pageExtension).toBe("mdx");
+		expect(styleGuide.supportsMdx).toBe(true);
+		expect(styleGuide.requiresFrontmatter).toBe(true);
+	});
 });
 
 // ---------------------------------------------------------------------------
@@ -242,6 +251,12 @@ describe("transformPages — file extensions", () => {
 		const files = adapter.transformPages([page("test.md")], makeContext());
 		expect(files[0].path).toBe("test.md");
 	});
+
+	it("fumadocs: .md pages become .mdx", () => {
+		const adapter = getAdapter("fumadocs");
+		const files = adapter.transformPages([page("test.md")], makeContext());
+		expect(files[0].path).toBe("test.mdx");
+	});
 });
 
 // ---------------------------------------------------------------------------
@@ -267,6 +282,11 @@ describe("generateConfig — primary config file paths", () => {
 	it("vitepress produces .vitepress/config.mts", () => {
 		const configs = getAdapter("vitepress").generateConfig(makeContext());
 		expect(configs.some((f) => f.path === ".vitepress/config.mts")).toBe(true);
+	});
+
+	it("fumadocs produces meta.json", () => {
+		const configs = getAdapter("fumadocs").generateConfig(makeContext());
+		expect(configs.some((f) => f.path === "meta.json")).toBe(true);
 	});
 });
 
@@ -301,6 +321,22 @@ describe("generateConfig — content validity", () => {
 	it("docusaurus sidebars.ts uses SidebarsConfig type", () => {
 		const [file] = getAdapter("docusaurus").generateConfig(makeContext());
 		expect(file.content).toContain("SidebarsConfig");
+	});
+
+	it("fumadocs meta.json files are valid JSON", () => {
+		const files = getAdapter("fumadocs").generateConfig(makeContext());
+		for (const file of files) {
+			expect(() => JSON.parse(file.content), `${file.path} should be valid JSON`).not.toThrow();
+		}
+	});
+
+	it("fumadocs meta.json has pages array", () => {
+		const files = getAdapter("fumadocs").generateConfig(makeContext());
+		const root = files.find((f) => f.path === "meta.json");
+		expect(root).toBeDefined();
+		const parsed = JSON.parse(root!.content);
+		expect(parsed.title).toBe("Documentation");
+		expect(Array.isArray(parsed.pages)).toBe(true);
 	});
 });
 
@@ -371,5 +407,93 @@ describe("scaffold — key files present", () => {
 	it("vitepress scaffold includes docs:preview script", () => {
 		const manifest = getAdapter("vitepress").scaffold(makeContext());
 		expect(manifest.scripts["docs:preview"]).toBe("vitepress preview");
+	});
+
+	it("fumadocs scaffold includes site/source.config.ts and site/src/app/layout.tsx", () => {
+		const manifest = getAdapter("fumadocs").scaffold(makeContext());
+		expect(manifest.files.some((f) => f.path === "site/source.config.ts")).toBe(true);
+		expect(manifest.files.some((f) => f.path === "site/src/app/layout.tsx")).toBe(true);
+	});
+
+	it("fumadocs scaffold includes docs layout and catch-all page in site/", () => {
+		const manifest = getAdapter("fumadocs").scaffold(makeContext());
+		expect(manifest.files.some((f) => f.path === "site/src/app/docs/layout.tsx")).toBe(true);
+		expect(manifest.files.some((f) => f.path === "site/src/app/docs/[[...slug]]/page.tsx")).toBe(true);
+	});
+
+	it("fumadocs scaffold has correct dependencies", () => {
+		const manifest = getAdapter("fumadocs").scaffold(makeContext());
+		expect(manifest.dependencies["fumadocs-core"]).toBe("^16");
+		expect(manifest.dependencies["fumadocs-mdx"]).toBe("^14");
+		expect(manifest.dependencies["fumadocs-ui"]).toBe("^16");
+		expect(manifest.dependencies.next).toBe("^15");
+	});
+
+	it("fumadocs scaffold has Tailwind v4 devDependencies", () => {
+		const manifest = getAdapter("fumadocs").scaffold(makeContext());
+		expect(manifest.devDependencies.tailwindcss).toBe("^4");
+		expect(manifest.devDependencies["@tailwindcss/postcss"]).toBe("^4");
+	});
+
+	it("fumadocs scaffold includes docs:dev script", () => {
+		const manifest = getAdapter("fumadocs").scaffold(makeContext());
+		expect(manifest.scripts["docs:dev"]).toBe("next dev");
+	});
+
+	it("fumadocs scaffold instructions mention dev", () => {
+		const manifest = getAdapter("fumadocs").scaffold(makeContext());
+		const combined = manifest.instructions.join(" ");
+		expect(combined).toContain("docs:dev");
+	});
+});
+
+// ---------------------------------------------------------------------------
+// transformPages — frontmatter
+// ---------------------------------------------------------------------------
+
+describe("transformPages — frontmatter", () => {
+	it("fumadocs transformPages adds title and description frontmatter", () => {
+		const adapter = getAdapter("fumadocs");
+		const pages: DocPage[] = [
+			{ path: "test.md", content: "# Hello\n\nBody.\n", frontmatter: { title: "Hello", description: "A test" } },
+		];
+		const files = adapter.transformPages(pages, makeContext());
+		expect(files[0].content).toContain("title: Hello");
+		expect(files[0].content).toContain("description: A test");
+	});
+
+	it("fumadocs transformPages preserves stub flag", () => {
+		const adapter = getAdapter("fumadocs");
+		const pages: DocPage[] = [
+			{ path: "test.md", content: "# Stub\n", frontmatter: { title: "Stub" }, stub: true },
+		];
+		const files = adapter.transformPages(pages, makeContext());
+		expect(files[0].stub).toBe(true);
+	});
+});
+
+// ---------------------------------------------------------------------------
+// generateConfig — Fumadocs meta.json structure
+// ---------------------------------------------------------------------------
+
+describe("generateConfig — fumadocs meta.json structure", () => {
+	it("fumadocs generateConfig creates per-package meta.json", () => {
+		const configs = getAdapter("fumadocs").generateConfig(makeContext());
+		expect(configs.some((f) => f.path === "packages/core/meta.json")).toBe(true);
+	});
+
+	it("fumadocs generateConfig root includes packages separator", () => {
+		const configs = getAdapter("fumadocs").generateConfig(makeContext());
+		const root = configs.find((f) => f.path === "meta.json");
+		const parsed = JSON.parse(root!.content);
+		expect(parsed.pages).toContain("---Packages---");
+		expect(parsed.pages).toContain("packages");
+	});
+
+	it("fumadocs generateConfig puts index first in page ordering", () => {
+		const configs = getAdapter("fumadocs").generateConfig(makeContext());
+		const root = configs.find((f) => f.path === "meta.json");
+		const parsed = JSON.parse(root!.content);
+		expect(parsed.pages[0]).toBe("index");
 	});
 });

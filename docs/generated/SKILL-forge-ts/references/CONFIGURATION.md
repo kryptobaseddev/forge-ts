@@ -67,7 +67,7 @@ const config: Partial<ForgeConfig> = {
 | `enforce` | `{ enabled: boolean; minVisibility: Visibility | "public" | "beta" | "internal" | "private"; strict: boolean; rules: EnforceRules; ignoreFile?: string; }` | Enforce TSDoc on all public exports. |
 | `doctest` | `{ enabled: boolean; cacheDir: string; }` | DocTest configuration. |
 | `api` | `{ enabled: boolean; openapi: boolean; openapiPath: string; }` | API generation configuration. |
-| `gen` | `{ enabled: boolean; formats: Array<"markdown" | "mdx">; llmsTxt: boolean; readmeSync: boolean; ssgTarget?: "docusaurus" | "mintlify" | "nextra" | "vitepress"; ckm?: boolean; }` | Output generation configuration. |
+| `gen` | `{ enabled: boolean; formats: Array<"markdown" | "mdx">; llmsTxt: boolean; readmeSync: boolean; ssgTarget?: "docusaurus" | "mintlify" | "nextra" | "vitepress" | "fumadocs"; ckm?: boolean; }` | Output generation configuration. |
 | `skill` | `{ enabled?: boolean; customSections?: Array<{ heading: string; content: string; }>; extraGotchas?: string[]; }` | Skill package generation settings. Custom sections here are merged into the generated SKILL.md, allowing projects to inject workflow knowledge, domain gotchas, and other context that cannot be derived from symbols alone. |
 | `tsdoc` | `{ writeConfig: boolean; customTags: Array<{ tagName: string; syntaxKind: "block" | "inline" | "modifier"; }>; enforce: { core: "error" | "warn" | "off"; extended: "error" | "warn" | "off"; discretionary: "error" | "warn" | "off"; }; }` | TSDoc ecosystem configuration. |
 | `bypass` | `{ dailyBudget: number; durationHours: number; }` | Bypass budget configuration for temporary rule overrides. |

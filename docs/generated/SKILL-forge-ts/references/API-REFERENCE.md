@@ -4381,6 +4381,21 @@ const configs = adapter.generateConfig(context);
 console.log(configs[0].path); // ".vitepress/config.mts"
 ```
 
+### `fumadocsAdapter`
+
+Fumadocs SSG adapter (App Router, content/docs layout). Implements the `SSGAdapter` contract for the Fumadocs platform.
+
+```typescript
+SSGAdapter
+```
+
+```typescript
+import { getAdapter } from "@forge-ts/gen";
+const adapter = getAdapter("fumadocs");
+const configs = adapter.generateConfig(context);
+console.log(configs[0].path); // "content/docs/meta.json"
+```
+
 ### `buildCommand`
 
 Citty command definition for `forge-ts build`.
@@ -4461,7 +4476,7 @@ import { doctorCommand } from "@forge-ts/cli/commands/doctor";
 Citty command definition for `forge-ts init docs`.  Scaffolds a complete documentation site for the target SSG platform. Use `--json` for LAFS JSON envelope output (agent/CI-friendly).
 
 ```typescript
-import("citty").CommandDef<{ readonly target: { readonly type: "string"; readonly description: `SSG target: ${string} (default: docusaurus)` | `SSG target: ${string} (default: mintlify)` | `SSG target: ${string} (default: nextra)` | `SSG target: ${string} (default: vitepress)`; }; readonly cwd: { readonly type: "string"; readonly description: "Project root directory"; }; readonly "out-dir": { readonly type: "string"; readonly description: "Output directory for doc site (default: ./docs)"; }; readonly force: { readonly type: "boolean"; readonly description: "Overwrite existing scaffold"; readonly default: false; }; readonly json: { readonly type: "boolean"; readonly description: "Output as LAFS JSON envelope"; readonly default: false; }; readonly human: { readonly type: "boolean"; readonly description: "Output as formatted text"; readonly default: false; }; readonly quiet: { readonly type: "boolean"; readonly description: "Suppress non-essential output"; readonly default: false; }; readonly mvi: { readonly type: "string"; readonly description: "MVI verbosity level: minimal, standard, full"; }; }>
+import("citty").CommandDef<{ readonly target: { readonly type: "string"; readonly description: `SSG target: ${string} (default: docusaurus)` | `SSG target: ${string} (default: mintlify)` | `SSG target: ${string} (default: nextra)` | `SSG target: ${string} (default: vitepress)` | `SSG target: ${string} (default: fumadocs)`; }; readonly cwd: { readonly type: "string"; readonly description: "Project root directory"; }; readonly "out-dir": { readonly type: "string"; readonly description: "Output directory for doc site (default: ./docs)"; }; readonly force: { readonly type: "boolean"; readonly description: "Overwrite existing scaffold"; readonly default: false; }; readonly json: { readonly type: "boolean"; readonly description: "Output as LAFS JSON envelope"; readonly default: false; }; readonly human: { readonly type: "boolean"; readonly description: "Output as formatted text"; readonly default: false; }; readonly quiet: { readonly type: "boolean"; readonly description: "Suppress non-essential output"; readonly default: false; }; readonly mvi: { readonly type: "string"; readonly description: "MVI verbosity level: minimal, standard, full"; }; }>
 ```
 
 ```typescript

@@ -73,4 +73,4 @@ export function getAvailableTargets(): SSGTarget[] {
  * The default SSG target when none is specified.
  * @public
  */
-export const DEFAULT_TARGET: SSGTarget = "mintlify";
+export const DEFAULT_TARGET: SSGTarget = "fumadocs";

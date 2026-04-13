@@ -23,7 +23,7 @@ export default {
 		formats: ["markdown"],
 		llmsTxt: true,
 		readmeSync: false,
-		ssgTarget: "mintlify",
+		ssgTarget: "fumadocs",
 	},
 	skill: {
 		customSections: [
@@ -38,7 +38,7 @@ export default {
 					"  v",
 					"forge-ts build   -->  Generates ALL artifacts from TSDoc",
 					"  v",
-					"forge-ts docs init --target mintlify  -->  Scaffolds SSG project",
+					"forge-ts docs init --target fumadocs  -->  Scaffolds SSG project",
 					"  v",
 					"forge-ts docs dev  -->  Preview locally",
 					"```",
@@ -54,8 +54,8 @@ export default {
 					"| `forge-ts test` | Extract and execute @example blocks |",
 					"| `forge-ts build` | Generate all docs, OpenAPI, llms.txt, SKILL.md |",
 					"| `forge-ts build --force-stubs` | Reset stub pages to scaffolding state |",
-					"| `forge-ts docs init --target mintlify` | Scaffold SSG doc site |",
-					"| `forge-ts docs dev` | Launch dev server (`npx @mintlify/cli dev`) |",
+					"| `forge-ts docs init --target fumadocs` | Scaffold SSG doc site |",
+					"| `forge-ts docs dev` | Launch dev server (`npx next dev`) |",
 					"",
 					"**Output format**: TTY gets human-readable output by default. " +
 						"Piped/non-TTY (agents, CI) gets JSON (LAFS envelope). " +
@@ -131,7 +131,7 @@ export default {
 			"`// => value` in examples auto-converts to `assert.strictEqual()` during doctest.",
 			'`@internal` symbols excluded from ALL output. `@beta` filtered at `minVisibility: "public"`.',
 			"OpenAPI paths require `@route GET /path` tags. No `@route` = empty `paths`.",
-			"Mintlify adapter generates `docs.json` (v4 format), not `mint.json`.",
+			"Fumadocs adapter generates `meta.json` per directory for navigation.",
 			"Stub pages use FORGE:AUTO markers — manual content outside markers is safe.",
 			"`--force-stubs` resets stubs to scaffolding; use with care on edited stubs.",
 		],

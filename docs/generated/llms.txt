@@ -194,7 +194,7 @@ npm install -D forge-ts
 - unlockCommand — Citty command definition for `forge-ts unlock`.
 
 ### gen
-34 functions, 42 types, 6 variables
+34 functions, 42 types, 7 variables
 
 - discoverGuides() — Analyze the symbol graph and discover guides using multiple heuristics.  Each heuristic produces zero or more `DiscoveredGuide` entries. When multiple heuristics produce a guide with the same slug, the first one wins (priority order: guide-tag, config-interface, error-types, category, entry-point).
 - serializeMarkdown() — Serialize an mdast tree to a well-formed markdown string.  Uses remark-stringify with GFM table support. The serializer handles all escaping (pipes in table cells, special characters in text, etc.) so callers never need manual escape functions.
@@ -280,6 +280,7 @@ npm install -D forge-ts
 - docusaurusAdapter — Docusaurus SSG adapter. Implements the `SSGAdapter` contract for the Docusaurus platform.
 - nextraAdapter — Nextra SSG adapter (v4, App Router). Implements the `SSGAdapter` contract for the Nextra platform.
 - vitepressAdapter — VitePress SSG adapter. Implements the `SSGAdapter` contract for the VitePress platform.
+- fumadocsAdapter — Fumadocs SSG adapter (App Router, content/docs layout). Implements the `SSGAdapter` contract for the Fumadocs platform.
 
 ### enforcer
 6 functions, 4 types

@@ -38,7 +38,7 @@
 		"@changesets/changelog-github": "^0.6.0",
 		"@changesets/cli": "^2.30.0",
 		"@cleocode/lafs": "^2026.4.0",
-		"@codluv/versionguard": "^0.4.0",
+		"@codluv/versionguard": "^1.2.0",
 		"@forge-ts/cli": "^0.19.4",
 		"@microsoft/tsdoc": "^0.16.0",
 		"@types/node": "^25.5.2",

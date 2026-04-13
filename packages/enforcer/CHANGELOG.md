@@ -1,5 +1,12 @@
 # @forge-ts/enforcer
 
+## 0.24.0
+
+### Patch Changes
+
+- Updated dependencies [[`8b1224b`](https://github.com/kryptobaseddev/forge-ts/commit/8b1224b8ff26cdf9ca0db3d847a475d459791082)]:
+  - @forge-ts/core@0.24.0
+
 ## 0.23.1
 
 ### Patch Changes

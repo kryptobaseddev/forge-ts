@@ -1,5 +1,27 @@
 # @forge-ts/cli
 
+## 0.24.0
+
+### Minor Changes
+
+- [`8b1224b`](https://github.com/kryptobaseddev/forge-ts/commit/8b1224b8ff26cdf9ca0db3d847a475d459791082) Thanks [@kryptobaseddev](https://github.com/kryptobaseddev)! - feat: add Fumadocs SSG adapter and set as default target
+
+  - New `fumadocs` SSG adapter with full scaffold, meta.json navigation, and Fumadocs UI integration
+  - Fumadocs is now the default SSG target (was Mintlify)
+  - Scaffold generates a complete Next.js app in `outDir/site/` that reads content from `outDir/`
+  - Per-directory `meta.json` navigation files generated at every level
+  - Tailwind v4 + fumadocs-ui CSS preset included in scaffold
+  - `buildFrontmatterFields` handles fumadocs target (title + description)
+
+### Patch Changes
+
+- Updated dependencies [[`8b1224b`](https://github.com/kryptobaseddev/forge-ts/commit/8b1224b8ff26cdf9ca0db3d847a475d459791082)]:
+  - @forge-ts/core@0.24.0
+  - @forge-ts/gen@0.24.0
+  - @forge-ts/api@0.24.0
+  - @forge-ts/doctest@0.24.0
+  - @forge-ts/enforcer@0.24.0
+
 ## 0.23.1
 
 ### Patch Changes

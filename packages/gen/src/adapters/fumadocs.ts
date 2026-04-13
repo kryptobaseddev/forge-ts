@@ -167,6 +167,8 @@ function buildNextConfig(): string {
 		`/** @type {import('next').NextConfig} */\n` +
 		`const config = {\n` +
 		`  output: "export",\n` +
+		`  // Set basePath for GitHub Pages (e.g., "/repo-name")\n` +
+		`  // basePath: "/your-repo",\n` +
 		`};\n\n` +
 		`export default withMDX(config);\n`
 	);

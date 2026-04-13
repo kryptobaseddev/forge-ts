@@ -5,6 +5,7 @@ const withMDX = createMDX();
 /** @type {import('next').NextConfig} */
 const config = {
   output: "export",
+  basePath: "/forge-ts",
 };
 
 export default withMDX(config);

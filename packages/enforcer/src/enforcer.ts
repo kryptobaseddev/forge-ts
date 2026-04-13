@@ -77,7 +77,7 @@ function undocumentedParams(symbol: ForgeSymbol): string[] {
 	// Signatures look like: "(a: string, b: number) => void"
 	// Must handle nested generics: "(tags: Record<string, string[]>) => void"
 	const parenMatch = sig.match(/^\(([^)]*)\)/);
-	if (!parenMatch || !parenMatch[1].trim()) return [];
+	if (!parenMatch?.[1].trim()) return [];
 
 	const rawParams = splitParams(parenMatch[1])
 		.map((p) =>
@@ -146,7 +146,7 @@ function parseParamNames(signature: string | undefined): string[] {
 	// Strip leading generic: <T, U extends Foo>(...) => ...
 	const withoutGeneric = signature.replace(/^<[^>]*(?:<[^>]*>[^>]*)*>\s*/, "");
 	const match = /^\(([^)]*)\)/.exec(withoutGeneric);
-	if (!match || !match[1].trim()) return [];
+	if (!match?.[1].trim()) return [];
 	// Split respecting nested generics: "a: string, b: Record<string, number>"
 	const params: string[] = [];
 	let depth = 0;
@@ -180,7 +180,7 @@ function parseParamNames(signature: string | undefined): string[] {
  * @internal
  */
 function extractGenericTypeParams(signature: string | undefined): string[] {
-	if (!signature || !signature.startsWith("<")) return [];
+	if (!signature?.startsWith("<")) return [];
 	// Find the matching closing '>' respecting nesting
 	let depth = 0;
 	let endIdx = -1;

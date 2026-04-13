@@ -334,7 +334,7 @@ describe("generateConfig — content validity", () => {
 		const files = getAdapter("fumadocs").generateConfig(makeContext());
 		const root = files.find((f) => f.path === "meta.json");
 		expect(root).toBeDefined();
-		const parsed = JSON.parse(root!.content);
+		const parsed = JSON.parse(root?.content ?? "{}");
 		expect(parsed.title).toBe("Documentation");
 		expect(Array.isArray(parsed.pages)).toBe(true);
 	});
@@ -418,7 +418,9 @@ describe("scaffold — key files present", () => {
 	it("fumadocs scaffold includes docs layout and catch-all page in ../site/", () => {
 		const manifest = getAdapter("fumadocs").scaffold(makeContext());
 		expect(manifest.files.some((f) => f.path === "../site/src/app/docs/layout.tsx")).toBe(true);
-		expect(manifest.files.some((f) => f.path === "../site/src/app/docs/[[...slug]]/page.tsx")).toBe(true);
+		expect(manifest.files.some((f) => f.path === "../site/src/app/docs/[[...slug]]/page.tsx")).toBe(
+			true,
+		);
 	});
 
 	it("fumadocs scaffold has correct dependencies", () => {
@@ -455,7 +457,11 @@ describe("transformPages — frontmatter", () => {
 	it("fumadocs transformPages adds title and description frontmatter", () => {
 		const adapter = getAdapter("fumadocs");
 		const pages: DocPage[] = [
-			{ path: "test.md", content: "# Hello\n\nBody.\n", frontmatter: { title: "Hello", description: "A test" } },
+			{
+				path: "test.md",
+				content: "# Hello\n\nBody.\n",
+				frontmatter: { title: "Hello", description: "A test" },
+			},
 		];
 		const files = adapter.transformPages(pages, makeContext());
 		expect(files[0].content).toContain("title: Hello");
@@ -485,7 +491,7 @@ describe("generateConfig — fumadocs meta.json structure", () => {
 	it("fumadocs generateConfig root includes packages separator", () => {
 		const configs = getAdapter("fumadocs").generateConfig(makeContext());
 		const root = configs.find((f) => f.path === "meta.json");
-		const parsed = JSON.parse(root!.content);
+		const parsed = JSON.parse(root?.content ?? "{}");
 		expect(parsed.pages).toContain("---Packages---");
 		expect(parsed.pages).toContain("packages");
 	});
@@ -493,7 +499,7 @@ describe("generateConfig — fumadocs meta.json structure", () => {
 	it("fumadocs generateConfig puts index first in page ordering", () => {
 		const configs = getAdapter("fumadocs").generateConfig(makeContext());
 		const root = configs.find((f) => f.path === "meta.json");
-		const parsed = JSON.parse(root!.content);
+		const parsed = JSON.parse(root?.content ?? "{}");
 		expect(parsed.pages[0]).toBe("index");
 	});
 });

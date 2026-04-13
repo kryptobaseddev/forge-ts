@@ -77,7 +77,8 @@ function buildMetaFiles(pages: DocPage[]): GeneratedFile[] {
 			if (!dirEntries.has(dirPath)) {
 				dirEntries.set(dirPath, new Set());
 			}
-			dirEntries.get(dirPath)!.add(child);
+			const entries = dirEntries.get(dirPath);
+			if (entries) entries.add(child);
 
 			// Track which children are themselves directories
 			if (i < parts.length) {
@@ -127,12 +128,8 @@ function buildMetaFiles(pages: DocPage[]): GeneratedFile[] {
 			pagesArray.push(...subDirChildren);
 		}
 
-		const title = dirPath
-			? slugToLabel(dirPath.split("/").pop()!)
-			: "Documentation";
-		const metaPath = dirPath
-			? `${dirPath}/meta.json`
-			: "meta.json";
+		const title = dirPath ? slugToLabel(dirPath.split("/").pop() ?? dirPath) : "Documentation";
+		const metaPath = dirPath ? `${dirPath}/meta.json` : "meta.json";
 
 		files.push({
 			path: metaPath,

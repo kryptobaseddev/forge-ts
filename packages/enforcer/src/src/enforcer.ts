@@ -77,7 +77,7 @@ function undocumentedParams(symbol: ForgeSymbol): string[] {
 	// Signatures look like: "(a: string, b: number) => void"
 	// Must handle nested generics: "(tags: Record<string, string[]>) => void"
 	const parenMatch = sig.match(/^\(([^)]*)\)/);
-	if (!parenMatch || !parenMatch[1].trim()) return [];
+	if (!parenMatch?.[1].trim()) return [];
 
 	const rawParams = splitParams(parenMatch[1])
 		.map((p) =>
@@ -142,7 +142,7 @@ function deprecatedWithoutReason(symbol: ForgeSymbol): boolean {
  * @internal
  */
 function extractGenericTypeParams(signature: string | undefined): string[] {
-	if (!signature || !signature.startsWith("<")) return [];
+	if (!signature?.startsWith("<")) return [];
 	// Find the matching closing '>' respecting nesting
 	let depth = 0;
 	let endIdx = -1;

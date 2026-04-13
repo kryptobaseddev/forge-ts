@@ -9,7 +9,7 @@ All usage examples from the package, aggregated for quick reference.
 
 *Pre-configured consola instance branded for forge-ts.*
 
-[View in API reference](/packages/cli/api/functions#forgelogger)
+[View in API reference](/packages/cli/reference/functions#forgelogger)
 
 ```typescript
 import { forgeLogger } from "./forge-logger.js";
@@ -24,7 +24,7 @@ forgeLogger.debug("Resolved config from forge-ts.config.ts");
 
 *Configures the global `forgeLogger` based on CLI flags.  Call this once at the start of a command's `run()` handler to align consola's output level with the user's intent:  - `quiet` or `json` sets level to 0 (silent) so only LAFS output appears. - `verbose` sets level to 4 (debug) for maximum detail. - Default level is 3 (info) which covers info, warn, error, and success.*
 
-[View in API reference](/packages/cli/api/functions#configurelogger)
+[View in API reference](/packages/cli/reference/functions#configurelogger)
 
 ```typescript
 import { configureLogger, forgeLogger } from "./forge-logger.js";
@@ -36,7 +36,7 @@ forgeLogger.info("This respects the configured level");
 
 *Wraps a command result in a LAFS envelope and emits it.  Output format is determined by LAFS flag resolution: - TTY terminals default to human-readable output. - Non-TTY (piped, CI, agents) defaults to JSON. - Explicit `--json` or `--human` flags always take precedence.  On failure, the full result is included alongside the error so agents get actionable data (e.g., suggestedFix) in a single response.*
 
-[View in API reference](/packages/cli/api/functions#emitresult)
+[View in API reference](/packages/cli/reference/functions#emitresult)
 
 ```typescript
 import { emitResult } from "@forge-ts/cli/output";
@@ -47,7 +47,7 @@ emitResult(output, { human: true }, (data) => `Done: ${data.summary.duration}ms`
 
 *Reads the audit log and returns a typed command output.*
 
-[View in API reference](/packages/cli/api/functions#runaudit)
+[View in API reference](/packages/cli/reference/functions#runaudit)
 
 ```typescript
 import { runAudit } from "@forge-ts/cli/commands/audit";
@@ -59,7 +59,7 @@ console.log(output.data.count); // number of events returned
 
 *Runs the barometer generation pass.  Loads the project config, walks the symbol graph, extracts testable facts from five categories, generates questions with ground-truth answers, and writes the result to `.forge/barometer.json`.*
 
-[View in API reference](/packages/cli/api/functions#runbarometer)
+[View in API reference](/packages/cli/reference/functions#runbarometer)
 
 ```typescript
 import { runBarometer } from "@forge-ts/cli/commands/barometer";
@@ -71,7 +71,7 @@ console.log(`Generated ${output.data.questions.length} questions`);
 
 *Scores agent answers against the barometer answer key.*
 
-[View in API reference](/packages/cli/api/functions#runbarometerscore)
+[View in API reference](/packages/cli/reference/functions#runbarometerscore)
 
 ```typescript
 import { runBarometerScore } from "@forge-ts/cli/commands/barometer";
@@ -83,7 +83,7 @@ console.log(`Score: ${output.data.score}%`);
 
 *Citty command definition for `forge-ts barometer`.  Generates a documentation effectiveness test (questions + answers + rubric) from the project's source code. Includes a `score` subcommand for evaluating agent answers.*
 
-[View in API reference](/packages/cli/api/functions#barometercommand)
+[View in API reference](/packages/cli/reference/functions#barometercommand)
 
 ```typescript
 import { barometerCommand } from "@forge-ts/cli/commands/barometer";
@@ -94,7 +94,7 @@ import { barometerCommand } from "@forge-ts/cli/commands/barometer";
 
 *Runs the full build pipeline and returns a typed command output.*
 
-[View in API reference](/packages/cli/api/functions#runbuild)
+[View in API reference](/packages/cli/reference/functions#runbuild)
 
 ```typescript
 import { runBuild } from "@forge-ts/cli/commands/build";
@@ -106,7 +106,7 @@ console.log(output.success); // true if all steps succeeded
 
 *Runs the bypass creation: creates a new bypass record with budget enforcement.*
 
-[View in API reference](/packages/cli/api/functions#runbypasscreate)
+[View in API reference](/packages/cli/reference/functions#runbypasscreate)
 
 ```typescript
 import { runBypassCreate } from "@forge-ts/cli/commands/bypass";
@@ -122,7 +122,7 @@ console.log(output.data.remainingBudget);
 
 *Runs the bypass status query: shows active bypasses and remaining budget.*
 
-[View in API reference](/packages/cli/api/functions#runbypassstatus)
+[View in API reference](/packages/cli/reference/functions#runbypassstatus)
 
 ```typescript
 import { runBypassStatus } from "@forge-ts/cli/commands/bypass";
@@ -134,7 +134,7 @@ console.log(output.data.activeBypasses.length);
 
 *Runs the TSDoc enforcement pass and returns a typed command output.*
 
-[View in API reference](/packages/cli/api/functions#runcheck)
+[View in API reference](/packages/cli/reference/functions#runcheck)
 
 ```typescript
 import { runCheck } from "@forge-ts/cli/commands/check";
@@ -146,7 +146,7 @@ console.log(output.data.summary.errors); // number of TSDoc errors found
 
 *Starts the local dev server for the configured SSG target.  Reads `gen.ssgTarget` from the forge-ts config, resolves the adapter, and spawns the platform's dev server in the output directory.*
 
-[View in API reference](/packages/cli/api/functions#rundocsdev)
+[View in API reference](/packages/cli/reference/functions#rundocsdev)
 
 ```typescript
 import { runDocsDev } from "@forge-ts/cli";
@@ -157,7 +157,7 @@ await runDocsDev({ cwd: "./my-project" });
 
 *Citty command definition for `forge-ts docs dev`.*
 
-[View in API reference](/packages/cli/api/functions#docsdevcommand)
+[View in API reference](/packages/cli/reference/functions#docsdevcommand)
 
 ```typescript
 import { docsDevCommand } from "@forge-ts/cli";
@@ -167,7 +167,7 @@ import { docsDevCommand } from "@forge-ts/cli";
 
 *Result of the `init hooks` command.*
 
-[View in API reference](/packages/cli/api/functions#inithooksresult)
+[View in API reference](/packages/cli/reference/functions#inithooksresult)
 
 ```typescript
 import { runInitHooks } from "@forge-ts/cli/commands/init-hooks";
@@ -179,7 +179,7 @@ console.log(output.data.hookManager); // "husky" | "lefthook" | "none"
 
 *Detects which hook manager is present in the project.  Checks for: - husky: `.husky/` directory or `husky` in package.json devDependencies - lefthook: `lefthook.yml` or `lefthook` in package.json devDependencies*
 
-[View in API reference](/packages/cli/api/functions#detecthookmanager)
+[View in API reference](/packages/cli/reference/functions#detecthookmanager)
 
 ```typescript
 import { detectHookManager } from "@forge-ts/cli/commands/init-hooks";
@@ -191,7 +191,7 @@ console.log(manager); // "husky" | "lefthook" | "none"
 
 *Checks whether a versionguard config file exists in the project root.  When detected, forge-ts appends versionguard's hook lines to the generated hook files so both tools run cooperatively.*
 
-[View in API reference](/packages/cli/api/functions#detectversionguard)
+[View in API reference](/packages/cli/reference/functions#detectversionguard)
 
 ```typescript
 import { detectVersionGuard } from "@forge-ts/cli/commands/init-hooks";
@@ -204,7 +204,7 @@ if (detectVersionGuard("/path/to/project")) {
 
 *Scaffolds git hook integration for the project.  Detects the hook manager (husky or lefthook), generates appropriate hook files, and reports what was written.*
 
-[View in API reference](/packages/cli/api/functions#runinithooks)
+[View in API reference](/packages/cli/reference/functions#runinithooks)
 
 ```typescript
 import { runInitHooks } from "@forge-ts/cli/commands/init-hooks";
@@ -216,7 +216,7 @@ console.log(output.data.files); // [".husky/pre-commit"]
 
 *Citty command definition for `forge-ts init hooks`.  Scaffolds git hook integration for the project by detecting the hook manager (husky or lefthook) and generating pre-commit hooks.*
 
-[View in API reference](/packages/cli/api/functions#inithookscommand)
+[View in API reference](/packages/cli/reference/functions#inithookscommand)
 
 ```typescript
 import { initHooksCommand } from "@forge-ts/cli/commands/init-hooks";
@@ -227,7 +227,7 @@ import { initHooksCommand } from "@forge-ts/cli/commands/init-hooks";
 
 *Result of the `init` (project setup) command.*
 
-[View in API reference](/packages/cli/api/functions#initprojectresult)
+[View in API reference](/packages/cli/reference/functions#initprojectresult)
 
 ```typescript
 import { runInitProject } from "@forge-ts/cli/commands/init-project";
@@ -239,7 +239,7 @@ console.log(output.data.created); // list of created files
 
 *Runs the full project init flow.*
 
-[View in API reference](/packages/cli/api/functions#runinitproject)
+[View in API reference](/packages/cli/reference/functions#runinitproject)
 
 ```typescript
 import { runInitProject } from "@forge-ts/cli/commands/init-project";
@@ -251,7 +251,7 @@ console.log(output.data.created); // ["forge-ts.config.ts", "tsdoc.json"]
 
 *Citty command definition for `forge-ts init` (bare — full project setup).  Detects the project environment, writes default configuration files, validates tsconfig/package.json, and reports a summary.*
 
-[View in API reference](/packages/cli/api/functions#initprojectcommand)
+[View in API reference](/packages/cli/reference/functions#initprojectcommand)
 
 ```typescript
 import { initProjectCommand } from "@forge-ts/cli/commands/init-project";
@@ -262,7 +262,7 @@ import { initProjectCommand } from "@forge-ts/cli/commands/init-project";
 
 *Result of the `doctor` command.*
 
-[View in API reference](/packages/cli/api/functions#doctorresult)
+[View in API reference](/packages/cli/reference/functions#doctorresult)
 
 ```typescript
 import { runDoctor } from "@forge-ts/cli/commands/doctor";
@@ -274,7 +274,7 @@ console.log(output.data.summary.passed); // number of passed checks
 
 *Runs the doctor integrity check flow.*
 
-[View in API reference](/packages/cli/api/functions#rundoctor)
+[View in API reference](/packages/cli/reference/functions#rundoctor)
 
 ```typescript
 import { runDoctor } from "@forge-ts/cli/commands/doctor";
@@ -286,7 +286,7 @@ console.log(output.data.summary); // { passed: 7, warnings: 2, errors: 1, info: 
 
 *Citty command definition for `forge-ts doctor`.  Performs project integrity checks and optionally auto-fixes resolvable issues with `--fix`.*
 
-[View in API reference](/packages/cli/api/functions#doctorcommand)
+[View in API reference](/packages/cli/reference/functions#doctorcommand)
 
 ```typescript
 import { doctorCommand } from "@forge-ts/cli/commands/doctor";
@@ -297,7 +297,7 @@ import { doctorCommand } from "@forge-ts/cli/commands/doctor";
 
 *Result of the `init docs` command.*
 
-[View in API reference](/packages/cli/api/functions#initdocsresult)
+[View in API reference](/packages/cli/reference/functions#initdocsresult)
 
 ```typescript
 import { runInitDocs } from "@forge-ts/cli/commands/init-docs";
@@ -309,7 +309,7 @@ console.log(output.data.summary.filesCreated); // number of files written
 
 *Scaffolds a documentation site for the target SSG platform.  Resolves the target from args, validates it, checks for an existing scaffold, calls the adapter's `scaffold()` method, and writes all files produced by the manifest to `outDir`.*
 
-[View in API reference](/packages/cli/api/functions#runinitdocs)
+[View in API reference](/packages/cli/reference/functions#runinitdocs)
 
 ```typescript
 import { runInitDocs } from "@forge-ts/cli/commands/init-docs";
@@ -321,7 +321,7 @@ console.log(output.data.files); // list of created file paths
 
 *Citty command definition for `forge-ts init docs`.  Scaffolds a complete documentation site for the target SSG platform. Use `--json` for LAFS JSON envelope output (agent/CI-friendly).*
 
-[View in API reference](/packages/cli/api/functions#initdocscommand)
+[View in API reference](/packages/cli/reference/functions#initdocscommand)
 
 ```typescript
 import { initDocsCommand } from "@forge-ts/cli/commands/init-docs";
@@ -332,7 +332,7 @@ import { initDocsCommand } from "@forge-ts/cli/commands/init-docs";
 
 *Citty command definition for `forge-ts init`.  Exposes subcommands for scaffolding project artefacts.*
 
-[View in API reference](/packages/cli/api/functions#initcommand)
+[View in API reference](/packages/cli/reference/functions#initcommand)
 
 ```typescript
 import { initCommand } from "@forge-ts/cli/commands/init-docs";
@@ -343,7 +343,7 @@ import { initCommand } from "@forge-ts/cli/commands/init-docs";
 
 *Runs the lock command: reads current config and creates `.forge-lock.json`.*
 
-[View in API reference](/packages/cli/api/functions#runlock)
+[View in API reference](/packages/cli/reference/functions#runlock)
 
 ```typescript
 import { runLock } from "@forge-ts/cli/commands/lock";
@@ -355,7 +355,7 @@ console.log(output.data.locked.rules); // number of rules locked
 
 *Typed result for the `prepublish` command.*
 
-[View in API reference](/packages/cli/api/functions#prepublishresult)
+[View in API reference](/packages/cli/reference/functions#prepublishresult)
 
 ```typescript
 import { runPrepublish } from "@forge-ts/cli/commands/prepublish";
@@ -368,7 +368,7 @@ console.log(output.data.build?.success); // true if build passed
 
 *Runs the prepublish safety gate: check then build.  If the check step fails, the build step is skipped entirely. Both steps use the same project root (cwd).*
 
-[View in API reference](/packages/cli/api/functions#runprepublish)
+[View in API reference](/packages/cli/reference/functions#runprepublish)
 
 ```typescript
 import { runPrepublish } from "@forge-ts/cli/commands/prepublish";
@@ -380,7 +380,7 @@ if (!output.success) process.exit(1);
 
 *Citty command definition for `forge-ts prepublish`.  Runs check then build as a publish safety gate. Add to package.json as: `"prepublishOnly": "forge-ts prepublish"`*
 
-[View in API reference](/packages/cli/api/functions#prepublishcommand)
+[View in API reference](/packages/cli/reference/functions#prepublishcommand)
 
 ```typescript
 import { prepublishCommand } from "@forge-ts/cli/commands/prepublish";
@@ -391,7 +391,7 @@ import { prepublishCommand } from "@forge-ts/cli/commands/prepublish";
 
 *Runs the doctest pipeline and returns a typed command output.*
 
-[View in API reference](/packages/cli/api/functions#runtest)
+[View in API reference](/packages/cli/reference/functions#runtest)
 
 ```typescript
 import { runTest } from "@forge-ts/cli/commands/test";
@@ -403,7 +403,7 @@ console.log(output.data.summary.passed); // number of passing doctests
 
 *Runs the unlock command: removes `.forge-lock.json` with a mandatory reason.*
 
-[View in API reference](/packages/cli/api/functions#rununlock)
+[View in API reference](/packages/cli/reference/functions#rununlock)
 
 ```typescript
 import { runUnlock } from "@forge-ts/cli/commands/unlock";

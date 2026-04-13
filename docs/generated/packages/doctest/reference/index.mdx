@@ -1,0 +1,51 @@
+---
+title: doctest — API Reference
+description: Full API reference for the doctest package
+---
+
+API reference for the `doctest` package.
+
+## Functions & Classes
+
+| Symbol                                                                           | Kind     | Description                                                                      |
+| -------------------------------------------------------------------------------- | -------- | -------------------------------------------------------------------------------- |
+| [`extractExamples()`](/packages/doctest/reference/functions#extractexamples)     | function | Extracts all `@example` blocks from a list of `ForgeSymbol` objects.             |
+| [`generateTestFiles()`](/packages/doctest/reference/functions#generatetestfiles) | function | Generates a virtual test file for a set of extracted examples.  Each example...  |
+| [`runTests()`](/packages/doctest/reference/functions#runtests)                   | function | Writes virtual test files to disk and executes them with Node 24 native TypeS... |
+| [`doctest()`](/packages/doctest/reference/functions#doctest)                     | function | Runs the full doctest pipeline: extract → generate → run.                        |
+| [`extractExamples()`](/packages/doctest/reference/functions#extractexamples)     | function | Extracts all `@example` blocks from a list of `ForgeSymbol` objects.             |
+| [`generateTestFiles()`](/packages/doctest/reference/functions#generatetestfiles) | function | Generates a virtual test file for a set of extracted examples.  Each example...  |
+| [`runTests()`](/packages/doctest/reference/functions#runtests)                   | function | Writes virtual test files to disk and executes them with Node 24 native TypeS... |
+| [`doctest()`](/packages/doctest/reference/functions#doctest)                     | function | Runs the full doctest pipeline: extract → generate → run.                        |
+
+## Types & Interfaces
+
+| Symbol                                                                   | Kind      | Description                                                    |
+| ------------------------------------------------------------------------ | --------- | -------------------------------------------------------------- |
+| [`ExtractedExample`](/packages/doctest/reference/types#extractedexample) | interface | A single extracted `@example` block ready for test generation. |
+| [`GeneratorOptions`](/packages/doctest/reference/types#generatoroptions) | interface | Options for virtual test file generation.                      |
+| [`VirtualTestFile`](/packages/doctest/reference/types#virtualtestfile)   | interface | A generated virtual test file.                                 |
+| [`RunResult`](/packages/doctest/reference/types#runresult)               | interface | Result of running the generated test files.                    |
+| [`TestCaseResult`](/packages/doctest/reference/types#testcaseresult)     | interface | The result of a single test case.                              |
+| [`ExtractedExample`](/packages/doctest/reference/types#extractedexample) | interface | A single extracted `@example` block ready for test generation. |
+| [`GeneratorOptions`](/packages/doctest/reference/types#generatoroptions) | interface | Options for virtual test file generation.                      |
+| [`VirtualTestFile`](/packages/doctest/reference/types#virtualtestfile)   | interface | A generated virtual test file.                                 |
+| [`RunResult`](/packages/doctest/reference/types#runresult)               | interface | Result of running the generated test files.                    |
+| [`TestCaseResult`](/packages/doctest/reference/types#testcaseresult)     | interface | The result of a single test case.                              |
+
+## Other Exports
+
+| Symbol                                                                     | Kind | Description                                                                      |
+| -------------------------------------------------------------------------- | ---- | -------------------------------------------------------------------------------- |
+| [`extractor.ts`](/packages/doctest/reference/functions#extractorts)        | file |                                                                                  |
+| [`generator.ts`](/packages/doctest/reference/functions#generatorts)        | file |                                                                                  |
+| [`runner.ts`](/packages/doctest/reference/functions#runnerts)              | file |                                                                                  |
+| [`index.ts`](/packages/doctest/reference/functions#indexts)                | file | forge-ts/doctest — TSDoc `@example` block extractor and test runner.  Extract... |
+| [`tsup.config.ts`](/packages/doctest/reference/functions#tsupconfigts)     | file |                                                                                  |
+| [`vitest.config.ts`](/packages/doctest/reference/functions#vitestconfigts) | file |                                                                                  |
+| [`doctest.test.ts`](/packages/doctest/reference/functions#doctesttestts)   | file |                                                                                  |
+| [`extractor.ts`](/packages/doctest/reference/functions#extractorts)        | file |                                                                                  |
+| [`generator.ts`](/packages/doctest/reference/functions#generatorts)        | file |                                                                                  |
+| [`runner.ts`](/packages/doctest/reference/functions#runnerts)              | file |                                                                                  |
+| [`index.ts`](/packages/doctest/reference/functions#indexts)                | file | forge-ts/doctest — TSDoc `@example` block extractor and test runner.  Extract... |
+| [`doctest.test.ts`](/packages/doctest/reference/functions#doctesttestts)   | file |                                                                                  |

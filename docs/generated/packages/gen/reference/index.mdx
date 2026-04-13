@@ -1,0 +1,131 @@
+---
+title: gen — API Reference
+description: Full API reference for the gen package
+---
+
+API reference for the `gen` package.
+
+## Functions & Classes
+
+| Symbol                                                                                     | Kind     | Description                                                                      |
+| ------------------------------------------------------------------------------------------ | -------- | -------------------------------------------------------------------------------- |
+| [`discoverGuides()`](/packages/gen/reference/functions#discoverguides)                     | function | Analyze the symbol graph and discover guides using multiple heuristics.  Each... |
+| [`serializeMarkdown()`](/packages/gen/reference/functions#serializemarkdown)               | function | Serialize an mdast tree to a well-formed markdown string.  Uses remark-string... |
+| [`textP()`](/packages/gen/reference/functions#textp)                                       | function | Shorthand: paragraph containing a single text node.                              |
+| [`boldIntroP()`](/packages/gen/reference/functions#boldintrop)                             | function | Shorthand: paragraph with bold intro text followed by regular text.              |
+| [`textListItem()`](/packages/gen/reference/functions#textlistitem)                         | function | Shorthand: list item containing a single text paragraph.                         |
+| [`rawBlock()`](/packages/gen/reference/functions#rawblock)                                 | function | Wrap a raw markdown string as an HTML node. Use for TSDoc content that may co... |
+| [`truncate()`](/packages/gen/reference/functions#truncate)                                 | function | Truncate a string to at most maxLen chars. Avoids cutting inside backtick-del... |
+| [`toAnchor()`](/packages/gen/reference/functions#toanchor)                                 | function | Convert a label to a GitHub-compatible anchor slug.                              |
+| [`slugLink()`](/packages/gen/reference/functions#sluglink)                                 | function | Strip extension from a link path and normalize to a slug. Produces bare slug...  |
+| [`parseFrontmatter()`](/packages/gen/reference/functions#parsefrontmatter)                 | function | Parse frontmatter from markdown/MDX content.  Uses gray-matter for robust YAM... |
+| [`stringifyWithFrontmatter()`](/packages/gen/reference/functions#stringifywithfrontmatter) | function | Serialize content with frontmatter prepended.  Produces the standard format:     |
+| [`stripFrontmatter()`](/packages/gen/reference/functions#stripfrontmatter)                 | function | Strip frontmatter from content, returning only the body.                         |
+| [`parseInline()`](/packages/gen/reference/functions#parseinline)                           | function | Parse a markdown string and extract inline (phrasing) content.  Use for TSDoc... |
+| [`parseBlocks()`](/packages/gen/reference/functions#parseblocks)                           | function | Parse a markdown string and extract block-level content.  Use for multi-line...  |
+| [`sanitizeForMdx()`](/packages/gen/reference/functions#sanitizeformdx)                     | function | Sanitize markdown content for MDX compatibility using AST-aware processing....   |
+| [`updateAutoSections()`](/packages/gen/reference/functions#updateautosections)             | function | Updates auto-enriched sections in an existing stub file.  Uses AST-aware pars... |
+| [`stubHash()`](/packages/gen/reference/functions#stubhash)                                 | function | Compute a short fingerprint hash for content change detection.  Uses a simple... |
+| [`isStubModified()`](/packages/gen/reference/functions#isstubmodified)                     | function | Checks if a FORGE:STUB section has been modified by the user.  Compares the e... |
+| [`updateStubSections()`](/packages/gen/reference/functions#updatestubsections)             | function | Updates FORGE:STUB sections in existing content.  Behavior for each stub: - I... |
+| [`escapeMdx()`](/packages/gen/reference/functions#escapemdx)                               | function | Escape MDX-unsafe characters in text that appears outside code fences.  MDX p... |
+| [`groupSymbolsByPackage()`](/packages/gen/reference/functions#groupsymbolsbypackage)       | function | Groups symbols by their package based on file path.  For monorepos (symbols u... |
+| [`generateDocSite()`](/packages/gen/reference/functions#generatedocsite)                   | function | Generates a full multi-page documentation site from symbols grouped by packag... |
+| [`registerAdapter()`](/packages/gen/reference/functions#registeradapter)                   | function | Register an SSG adapter. Called once per provider at module load time.           |
+| [`getAdapter()`](/packages/gen/reference/functions#getadapter)                             | function | Get a registered adapter by target name. Throws if the target is not registered. |
+| [`getAvailableTargets()`](/packages/gen/reference/functions#getavailabletargets)           | function | Get all registered adapter targets.                                              |
+| [`generateCKM()`](/packages/gen/reference/functions#generateckm)                           | function | Generates a Codebase Knowledge Manifest from the symbol graph.                   |
+| [`generateLlmsTxt()`](/packages/gen/reference/functions#generatellmstxt)                   | function | Generates an `llms.txt` routing manifest from the extracted symbols.  The fil... |
+| [`generateLlmsFullTxt()`](/packages/gen/reference/functions#generatellmsfulltxt)           | function | Generates an `llms-full.txt` dense context file from the extracted symbols....   |
+| [`generateMarkdown()`](/packages/gen/reference/functions#generatemarkdown)                 | function | Generates a Markdown (or MDX) string from a list of symbols.                     |
+| [`syncReadme()`](/packages/gen/reference/functions#syncreadme)                             | function | Injects a summary of exported symbols into a `README.md` file.  The content i... |
+| [`generateSkillPackage()`](/packages/gen/reference/functions#generateskillpackage)         | function | Generates an agentskills.io-compliant skill package for ANY TypeScript projec... |
+| [`generateSkillMd()`](/packages/gen/reference/functions#generateskillmd)                   | function | Generates a SKILL.md string following the Agent Skills specification. Generic... |
+| [`generateSSGConfigs()`](/packages/gen/reference/functions#generatessgconfigs)             | function | Generate navigation configuration file(s) for the given SSG target.  Returns...  |
+| [`generate()`](/packages/gen/reference/functions#generate)                                 | function | Runs the full generation pipeline: walk → render → write.  Auto-generated pag... |
+
+## Types & Interfaces
+
+| Symbol                                                                       | Kind      | Description                                                                      |
+| ---------------------------------------------------------------------------- | --------- | -------------------------------------------------------------------------------- |
+| [`GuideSource`](/packages/gen/reference/types#guidesource)                   | type      | The source heuristic that discovered a guide.                                    |
+| [`DiscoveredGuide`](/packages/gen/reference/types#discoveredguide)           | interface | A guide discovered from the symbol graph by code analysis heuristics.            |
+| [`MdText`](/packages/gen/reference/types#mdtext)                             | interface | Inline leaf node: literal text.                                                  |
+| [`MdInlineCode`](/packages/gen/reference/types#mdinlinecode)                 | interface | Inline leaf node: code span.                                                     |
+| [`MdStrong`](/packages/gen/reference/types#mdstrong)                         | interface | Inline container: strong emphasis (bold).                                        |
+| [`MdEmphasis`](/packages/gen/reference/types#mdemphasis)                     | interface | Inline container: emphasis (italic).                                             |
+| [`MdLink`](/packages/gen/reference/types#mdlink)                             | interface | Inline container: hyperlink.                                                     |
+| [`MdPhrasing`](/packages/gen/reference/types#mdphrasing)                     | type      | Union of all inline (phrasing) content types.                                    |
+| [`MdHeading`](/packages/gen/reference/types#mdheading)                       | interface | Block node: heading (depth 1-6).                                                 |
+| [`MdParagraph`](/packages/gen/reference/types#mdparagraph)                   | interface | Block node: paragraph.                                                           |
+| [`MdCode`](/packages/gen/reference/types#mdcode)                             | interface | Block node: fenced code block.                                                   |
+| [`MdBlockquote`](/packages/gen/reference/types#mdblockquote)                 | interface | Block node: blockquote.                                                          |
+| [`MdHtml`](/packages/gen/reference/types#mdhtml)                             | interface | Block node: raw HTML (including comments).                                       |
+| [`MdThematicBreak`](/packages/gen/reference/types#mdthematicbreak)           | interface | Block node: horizontal rule.                                                     |
+| [`MdListItem`](/packages/gen/reference/types#mdlistitem)                     | interface | List item container.                                                             |
+| [`MdList`](/packages/gen/reference/types#mdlist)                             | interface | Block node: ordered or unordered list.                                           |
+| [`MdTableCell`](/packages/gen/reference/types#mdtablecell)                   | interface | GFM table cell.                                                                  |
+| [`MdTableRow`](/packages/gen/reference/types#mdtablerow)                     | interface | GFM table row.                                                                   |
+| [`MdTable`](/packages/gen/reference/types#mdtable)                           | interface | GFM table.                                                                       |
+| [`MdBlock`](/packages/gen/reference/types#mdblock)                           | type      | Union of all block content types.                                                |
+| [`MdRoot`](/packages/gen/reference/types#mdroot)                             | interface | Document root.                                                                   |
+| [`FrontmatterResult`](/packages/gen/reference/types#frontmatterresult)       | interface | Result of parsing frontmatter from markdown/MDX content.                         |
+| [`DocPage`](/packages/gen/reference/types#docpage)                           | interface | A single generated documentation page.                                           |
+| [`SiteGeneratorOptions`](/packages/gen/reference/types#sitegeneratoroptions) | interface | Options controlling the doc site generator.                                      |
+| [`SSGTarget`](/packages/gen/reference/types#ssgtarget)                       | type      | Supported SSG target identifiers.                                                |
+| [`GeneratedFile`](/packages/gen/reference/types#generatedfile)               | interface | A file to write to disk during scaffolding or generation.                        |
+| [`SSGStyleGuide`](/packages/gen/reference/types#ssgstyleguide)               | interface | Style guide configuration for the SSG target.                                    |
+| [`ScaffoldManifest`](/packages/gen/reference/types#scaffoldmanifest)         | interface | Scaffold manifest describing what `init docs` creates.                           |
+| [`AdapterContext`](/packages/gen/reference/types#adaptercontext)             | interface | Context passed to adapter methods.                                               |
+| [`DevServerCommand`](/packages/gen/reference/types#devservercommand)         | interface | Command to start a local dev server for doc preview.                             |
+| [`SSGAdapter`](/packages/gen/reference/types#ssgadapter)                     | interface | The central SSG adapter interface. Every doc platform provider implements thi... |
+| [`CKMConcept`](/packages/gen/reference/types#ckmconcept)                     | type      | A domain concept extracted from the codebase.                                    |
+| [`CKMOperation`](/packages/gen/reference/types#ckmoperation)                 | type      | A user-facing operation extracted from the codebase.                             |
+| [`CKMConstraint`](/packages/gen/reference/types#ckmconstraint)               | type      | An enforced constraint or validation rule extracted from the codebase.           |
+| [`CKMWorkflow`](/packages/gen/reference/types#ckmworkflow)                   | type      | A multi-step workflow for achieving a common goal.                               |
+| [`CKMConfigEntry`](/packages/gen/reference/types#ckmconfigentry)             | type      | A single entry in the configuration schema.                                      |
+| [`CKMManifest`](/packages/gen/reference/types#ckmmanifest)                   | type      | The top-level Codebase Knowledge Manifest (v2).                                  |
+| [`MarkdownOptions`](/packages/gen/reference/types#markdownoptions)           | interface | Options controlling Markdown output.                                             |
+| [`ReadmeSyncOptions`](/packages/gen/reference/types#readmesyncoptions)       | interface | Options controlling README sync behaviour.                                       |
+| [`SkillPackage`](/packages/gen/reference/types#skillpackage)                 | interface | A generated skill package following the agentskills.io directory structure. C... |
+| [`SSGConfigFile`](/packages/gen/reference/types#ssgconfigfile)               | interface | A single generated SSG configuration file.                                       |
+| [`GenerateOptions`](/packages/gen/reference/types#generateoptions)           | interface | Options for the generation pipeline.                                             |
+
+## Other Exports
+
+| Symbol                                                                               | Kind     | Description                                                                      |
+| ------------------------------------------------------------------------------------ | -------- | -------------------------------------------------------------------------------- |
+| [`guide-discovery.ts`](/packages/gen/reference/functions#guide-discoveryts)          | file     |                                                                                  |
+| [`md`](/packages/gen/reference/functions#md)                                         | variable | Concise factory functions for building mdast nodes.  Usage:                      |
+| [`mdast-builders.ts`](/packages/gen/reference/functions#mdast-buildersts)            | file     |                                                                                  |
+| [`markdown-utils.ts`](/packages/gen/reference/functions#markdown-utilsts)            | file     |                                                                                  |
+| [`site-generator.ts`](/packages/gen/reference/functions#site-generatorts)            | file     |                                                                                  |
+| [`types.ts`](/packages/gen/reference/functions#typests)                              | file     |                                                                                  |
+| [`DEFAULT_TARGET`](/packages/gen/reference/functions#defaulttarget)                  | variable | The default SSG target when none is specified.                                   |
+| [`registry.ts`](/packages/gen/reference/functions#registryts)                        | file     |                                                                                  |
+| [`mintlifyAdapter`](/packages/gen/reference/functions#mintlifyadapter)               | variable | Mintlify SSG adapter. Implements the `SSGAdapter` contract for the Mintlify p... |
+| [`mintlify.ts`](/packages/gen/reference/functions#mintlifyts)                        | file     |                                                                                  |
+| [`docusaurusAdapter`](/packages/gen/reference/functions#docusaurusadapter)           | variable | Docusaurus SSG adapter. Implements the `SSGAdapter` contract for the Docusaur... |
+| [`docusaurus.ts`](/packages/gen/reference/functions#docusaurusts)                    | file     |                                                                                  |
+| [`nextraAdapter`](/packages/gen/reference/functions#nextraadapter)                   | variable | Nextra SSG adapter (v4, App Router). Implements the `SSGAdapter` contract for... |
+| [`nextra.ts`](/packages/gen/reference/functions#nextrats)                            | file     |                                                                                  |
+| [`vitepressAdapter`](/packages/gen/reference/functions#vitepressadapter)             | variable | VitePress SSG adapter. Implements the `SSGAdapter` contract for the VitePress... |
+| [`vitepress.ts`](/packages/gen/reference/functions#vitepressts)                      | file     |                                                                                  |
+| [`fumadocsAdapter`](/packages/gen/reference/functions#fumadocsadapter)               | variable | Fumadocs SSG adapter (App Router, content/docs layout). Implements the...        |
+| [`fumadocs.ts`](/packages/gen/reference/functions#fumadocsts)                        | file     | Fumadocs SSG adapter (App Router, content/docs layout).  Implements the...       |
+| [`index.ts`](/packages/gen/reference/functions#indexts)                              | file     | SSG adapter registry for documentation generation.  Provides pluggable adapte... |
+| [`ckm-generator.ts`](/packages/gen/reference/functions#ckm-generatorts)              | file     | Codebase Knowledge Manifest (CKM) generator.  Extracts operational knowledge...  |
+| [`llms.ts`](/packages/gen/reference/functions#llmsts)                                | file     |                                                                                  |
+| [`markdown.ts`](/packages/gen/reference/functions#markdownts)                        | file     |                                                                                  |
+| [`readme-sync.ts`](/packages/gen/reference/functions#readme-syncts)                  | file     |                                                                                  |
+| [`skill.ts`](/packages/gen/reference/functions#skillts)                              | file     |                                                                                  |
+| [`ssg-config.ts`](/packages/gen/reference/functions#ssg-configts)                    | file     |                                                                                  |
+| [`index.ts`](/packages/gen/reference/functions#indexts)                              | file     | forge-ts/gen — Markdown/MDX documentation and llms.txt generator.  Generates...  |
+| [`tsup.config.ts`](/packages/gen/reference/functions#tsupconfigts)                   | file     |                                                                                  |
+| [`adapter-sdk.test.ts`](/packages/gen/reference/functions#adapter-sdktestts)         | file     |                                                                                  |
+| [`gen.test.ts`](/packages/gen/reference/functions#gentestts)                         | file     |                                                                                  |
+| [`guide-discovery.test.ts`](/packages/gen/reference/functions#guide-discoverytestts) | file     |                                                                                  |
+| [`site-generator.test.ts`](/packages/gen/reference/functions#site-generatortestts)   | file     |                                                                                  |
+| [`skill.test.ts`](/packages/gen/reference/functions#skilltestts)                     | file     |                                                                                  |
+| [`ssg-config.test.ts`](/packages/gen/reference/functions#ssg-configtestts)           | file     |                                                                                  |
+| [`stub-zones.test.ts`](/packages/gen/reference/functions#stub-zonestestts)           | file     |                                                                                  |

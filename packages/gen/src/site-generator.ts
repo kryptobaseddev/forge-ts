@@ -868,9 +868,9 @@ function renderApiIndexPage(pkgName: string, symbols: ForgeSymbol[]): string {
 		nodes.push(md.table(null, headerRow, ...dataRows));
 	};
 
-	renderGroup(functions, "Functions & Classes", "api/functions");
-	renderGroup(types, "Types & Interfaces", "api/types");
-	renderGroup(others, "Other Exports", "api/functions");
+	renderGroup(functions, "Functions & Classes", "reference/functions");
+	renderGroup(types, "Types & Interfaces", "reference/types");
+	renderGroup(others, "Other Exports", "reference/functions");
 
 	return serializeMarkdown(md.root(...nodes));
 }
@@ -1205,7 +1205,7 @@ function renderExamplesPage(
 		nodes.push(
 			md.paragraph(
 				md.link(
-					`${slugLink(`packages/${packageName}/api/functions`)}#${toAnchor(s.name)}`,
+					`${slugLink(`packages/${packageName}/reference/functions`)}#${toAnchor(s.name)}`,
 					md.text("View in API reference"),
 				),
 			),
@@ -1536,7 +1536,12 @@ export function generateDocSite(
 	// BUILD — Guide discovery and generation
 	// -------------------------------------------------------------------------
 
-	const discoveredGuides = discoverGuides(symbolsByPackage, config);
+	// Filter out guides whose slug collides with root-level pages
+	// (getting-started, configuration already exist as canonical root pages).
+	const ROOT_PAGE_SLUGS = new Set(["getting-started", "configuration", "concepts"]);
+	const discoveredGuides = discoverGuides(symbolsByPackage, config).filter(
+		(g) => !ROOT_PAGE_SLUGS.has(g.slug),
+	);
 
 	const guidesContent = renderGuidesIndexPage(discoveredGuides);
 	const guidesFrontmatter = buildFrontmatterFields(
@@ -1586,7 +1591,7 @@ export function generateDocSite(
 			frontmatter: overviewFrontmatter,
 		});
 
-		// api/index — symbol table overview
+		// reference/index — symbol table overview
 		const apiIndexContent = renderApiIndexPage(pkgName, symbols);
 		const apiIndexFrontmatter = buildFrontmatterFields(
 			`${pkgName} — API Reference`,
@@ -1594,12 +1599,12 @@ export function generateDocSite(
 			options.ssgTarget,
 		);
 		pages.push({
-			path: `${pkgBase}/api/index.${ext}`,
+			path: `${pkgBase}/reference/index.${ext}`,
 			content: `${serializeFrontmatter(apiIndexFrontmatter)}${apiIndexContent.trimEnd()}\n`,
 			frontmatter: apiIndexFrontmatter,
 		});
 
-		// api/functions
+		// reference/functions
 		const functionsContent = renderFunctionsPage(pkgName, symbols, options);
 		const functionsFrontmatter = buildFrontmatterFields(
 			`${pkgName} — Functions`,
@@ -1607,12 +1612,12 @@ export function generateDocSite(
 			options.ssgTarget,
 		);
 		pages.push({
-			path: `${pkgBase}/api/functions.${ext}`,
+			path: `${pkgBase}/reference/functions.${ext}`,
 			content: `${serializeFrontmatter(functionsFrontmatter)}${functionsContent.trimEnd()}\n`,
 			frontmatter: functionsFrontmatter,
 		});
 
-		// api/types
+		// reference/types
 		const typesContent = renderTypesPage(pkgName, symbols, options);
 		const typesFrontmatter = buildFrontmatterFields(
 			`${pkgName} — Types`,
@@ -1620,12 +1625,12 @@ export function generateDocSite(
 			options.ssgTarget,
 		);
 		pages.push({
-			path: `${pkgBase}/api/types.${ext}`,
+			path: `${pkgBase}/reference/types.${ext}`,
 			content: `${serializeFrontmatter(typesFrontmatter)}${typesContent.trimEnd()}\n`,
 			frontmatter: typesFrontmatter,
 		});
 
-		// api/examples
+		// reference/examples
 		const examplesContent = renderExamplesPage(pkgName, symbols, options);
 		const examplesFrontmatter = buildFrontmatterFields(
 			`${pkgName} — Examples`,
@@ -1633,7 +1638,7 @@ export function generateDocSite(
 			options.ssgTarget,
 		);
 		pages.push({
-			path: `${pkgBase}/api/examples.${ext}`,
+			path: `${pkgBase}/reference/examples.${ext}`,
 			content: `${serializeFrontmatter(examplesFrontmatter)}${examplesContent.trimEnd()}\n`,
 			frontmatter: examplesFrontmatter,
 		});

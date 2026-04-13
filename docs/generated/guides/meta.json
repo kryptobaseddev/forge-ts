@@ -2,8 +2,6 @@
   "title": "Guides",
   "pages": [
     "index",
-    "configuration",
-    "error-handling",
-    "getting-started"
+    "error-handling"
   ]
 }

@@ -10261,7 +10261,7 @@ console.log(configs[0].path); // ".vitepress/config.mts"
 
 ### `fumadocsAdapter`
 
-*Defined in `packages/gen/src/adapters/fumadocs.ts:374`*
+*Defined in `packages/gen/src/adapters/fumadocs.ts:373`*
 
 ```typescript
 SSGAdapter

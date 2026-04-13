@@ -592,31 +592,36 @@ describe("slug deduplication", () => {
 // ---------------------------------------------------------------------------
 
 describe("site-generator integration", () => {
-	it("generates guide pages for discovered config interfaces", () => {
+	it("generates guide pages for discovered error types", () => {
+		const errorClass = sym({
+			name: "AppError",
+			kind: "class",
+			signature: "class AppError extends Error",
+			documentation: { summary: "Application error." },
+		});
+
+		const pages = generateDocSite(makeSymbolsByPackage([errorClass]), makeConfig(), baseOptions);
+		const paths = pages.map((p) => p.path);
+
+		expect(paths).toContain("guides/error-handling.md");
+
+		const errorGuidePage = pages.find((p) => p.path === "guides/error-handling.md");
+		expect(errorGuidePage?.content).toContain("Error Types");
+		expect(errorGuidePage?.content).toContain("AppError");
+	});
+
+	it("filters out guides whose slug collides with root pages", () => {
 		const configIface = sym({
 			name: "AppConfig",
 			kind: "interface",
 			documentation: { summary: "Application configuration." },
-			children: [
-				sym({
-					name: "port",
-					kind: "property",
-					signature: "port: number",
-					documentation: { summary: "Server port." },
-				}),
-			],
 		});
 
 		const pages = generateDocSite(makeSymbolsByPackage([configIface]), makeConfig(), baseOptions);
 		const paths = pages.map((p) => p.path);
 
-		// Should have a guides/configuration.md page
-		expect(paths).toContain("guides/configuration.md");
-
-		const configGuidePage = pages.find((p) => p.path === "guides/configuration.md");
-		expect(configGuidePage?.content).toContain("Configuration Interfaces");
-		expect(configGuidePage?.content).toContain("AppConfig");
-		expect(configGuidePage?.content).toContain("port");
+		// configuration guide should be filtered (collides with root configuration page)
+		expect(paths).not.toContain("guides/configuration.md");
 	});
 
 	it("generates guide pages for @guide tagged symbols", () => {
@@ -679,17 +684,18 @@ describe("site-generator integration", () => {
 	});
 
 	it("updates the guides index with discovered guide listing", () => {
-		const configIface = sym({
-			name: "AppConfig",
-			kind: "interface",
-			documentation: { summary: "App config." },
+		const errorClass = sym({
+			name: "AppError",
+			kind: "class",
+			signature: "class AppError extends Error",
+			documentation: { summary: "App error." },
 		});
 
-		const pages = generateDocSite(makeSymbolsByPackage([configIface]), makeConfig(), baseOptions);
+		const pages = generateDocSite(makeSymbolsByPackage([errorClass]), makeConfig(), baseOptions);
 		const guidesIndex = pages.find((p) => p.path === "guides/index.md");
 
 		expect(guidesIndex?.content).toContain("Available Guides");
-		expect(guidesIndex?.content).toContain("Configuration Guide");
+		expect(guidesIndex?.content).toContain("Error Handling Guide");
 		expect(guidesIndex?.content).toContain("FORGE:AUTO-START guide-listing");
 		expect(guidesIndex?.content).toContain("FORGE:AUTO-END guide-listing");
 	});
@@ -712,44 +718,47 @@ describe("site-generator integration", () => {
 	});
 
 	it("guide pages include FORGE:AUTO markers for progressive enrichment", () => {
-		const configIface = sym({
-			name: "AppConfig",
-			kind: "interface",
-			documentation: { summary: "App config." },
+		const errorClass = sym({
+			name: "AppError",
+			kind: "class",
+			signature: "class AppError extends Error",
+			documentation: { summary: "App error." },
 		});
 
-		const pages = generateDocSite(makeSymbolsByPackage([configIface]), makeConfig(), baseOptions);
-		const configGuidePage = pages.find((p) => p.path === "guides/configuration.md");
+		const pages = generateDocSite(makeSymbolsByPackage([errorClass]), makeConfig(), baseOptions);
+		const errorGuidePage = pages.find((p) => p.path === "guides/error-handling.md");
 
-		expect(configGuidePage?.content).toContain("<!-- FORGE:AUTO-START guide-configuration -->");
-		expect(configGuidePage?.content).toContain("<!-- FORGE:AUTO-END guide-configuration -->");
+		expect(errorGuidePage?.content).toContain("<!-- FORGE:AUTO-START guide-error-handling -->");
+		expect(errorGuidePage?.content).toContain("<!-- FORGE:AUTO-END guide-error-handling -->");
 	});
 
 	it("guide pages are marked as stubs", () => {
-		const configIface = sym({
-			name: "AppConfig",
-			kind: "interface",
-			documentation: { summary: "App config." },
+		const errorClass = sym({
+			name: "AppError",
+			kind: "class",
+			signature: "class AppError extends Error",
+			documentation: { summary: "App error." },
 		});
 
-		const pages = generateDocSite(makeSymbolsByPackage([configIface]), makeConfig(), baseOptions);
-		const configGuidePage = pages.find((p) => p.path === "guides/configuration.md");
-		expect(configGuidePage?.stub).toBe(true);
+		const pages = generateDocSite(makeSymbolsByPackage([errorClass]), makeConfig(), baseOptions);
+		const errorGuidePage = pages.find((p) => p.path === "guides/error-handling.md");
+		expect(errorGuidePage?.stub).toBe(true);
 	});
 
 	it("guide pages include TODO placeholder for user content", () => {
-		const configIface = sym({
-			name: "AppConfig",
-			kind: "interface",
-			documentation: { summary: "App config." },
+		const errorClass = sym({
+			name: "AppError",
+			kind: "class",
+			signature: "class AppError extends Error",
+			documentation: { summary: "App error." },
 		});
 
-		const pages = generateDocSite(makeSymbolsByPackage([configIface]), makeConfig(), baseOptions);
-		const configGuidePage = pages.find((p) => p.path === "guides/configuration.md");
-		expect(configGuidePage?.content).toContain("TODO");
+		const pages = generateDocSite(makeSymbolsByPackage([errorClass]), makeConfig(), baseOptions);
+		const errorGuidePage = pages.find((p) => p.path === "guides/error-handling.md");
+		expect(errorGuidePage?.content).toContain("TODO");
 	});
 
-	it("entry point guide includes function signatures and examples", () => {
+	it("entry point guide (getting-started) is filtered out because it collides with root page", () => {
 		const fn = sym({
 			name: "init",
 			kind: "function",
@@ -763,12 +772,9 @@ describe("site-generator integration", () => {
 		});
 
 		const pages = generateDocSite(makeSymbolsByPackage([fn]), makeConfig(), baseOptions);
+		const paths = pages.map((p) => p.path);
 
-		const entryGuidePage = pages.find((p) => p.path === "guides/getting-started.md");
-		expect(entryGuidePage).toBeDefined();
-		expect(entryGuidePage?.content).toContain("Key Functions");
-		expect(entryGuidePage?.content).toContain("init(config)");
-		expect(entryGuidePage?.content).toContain("function init(config: Config): void");
-		expect(entryGuidePage?.content).toContain("init({ port: 3000 })");
+		// getting-started guide is filtered because root getting-started.md is canonical
+		expect(paths).not.toContain("guides/getting-started.md");
 	});
 });

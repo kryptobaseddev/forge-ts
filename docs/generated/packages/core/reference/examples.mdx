@@ -9,7 +9,7 @@ All usage examples from the package, aggregated for quick reference.
 
 *Returns the current OS username, or "unknown" if unavailable.*
 
-[View in API reference](/packages/core/api/functions#getcurrentuser)
+[View in API reference](/packages/core/reference/functions#getcurrentuser)
 
 ```typescript
 import { getCurrentUser } from "@forge-ts/core/audit";
@@ -20,7 +20,7 @@ const user = getCurrentUser(); // e.g. "alice"
 
 *Appends a single audit event to the `.forge-audit.jsonl` file.*
 
-[View in API reference](/packages/core/api/functions#appendauditevent)
+[View in API reference](/packages/core/reference/functions#appendauditevent)
 
 ```typescript
 import { appendAuditEvent } from "@forge-ts/core";
@@ -32,7 +32,7 @@ appendAuditEvent("/path/to/project", event);
 
 *Reads the `.forge-audit.jsonl` file and returns parsed audit events.*
 
-[View in API reference](/packages/core/api/functions#readauditlog)
+[View in API reference](/packages/core/reference/functions#readauditlog)
 
 ```typescript
 import { readAuditLog } from "@forge-ts/core";
@@ -44,7 +44,7 @@ console.log(events.length); // up to 10
 
 *Formats a single audit event as a human-readable string.*
 
-[View in API reference](/packages/core/api/functions#formatauditevent)
+[View in API reference](/packages/core/reference/functions#formatauditevent)
 
 ```typescript
 import { formatAuditEvent } from "@forge-ts/core";
@@ -57,7 +57,7 @@ console.log(line);
 
 *Creates a new bypass record, writes it to `.forge-bypass.json`, and appends an audit event.*
 
-[View in API reference](/packages/core/api/functions#createbypass)
+[View in API reference](/packages/core/reference/functions#createbypass)
 
 ```typescript
 import { createBypass } from "@forge-ts/core";
@@ -69,7 +69,7 @@ console.log(bypass.id);
 
 *Returns all currently active (non-expired) bypass records.*
 
-[View in API reference](/packages/core/api/functions#getactivebypasses)
+[View in API reference](/packages/core/reference/functions#getactivebypasses)
 
 ```typescript
 import { getActiveBypasses } from "@forge-ts/core";
@@ -81,7 +81,7 @@ console.log(`${active.length} active bypass(es)`);
 
 *Checks whether a specific rule has an active bypass.*
 
-[View in API reference](/packages/core/api/functions#isrulebypassed)
+[View in API reference](/packages/core/reference/functions#isrulebypassed)
 
 ```typescript
 import { isRuleBypassed } from "@forge-ts/core";
@@ -94,7 +94,7 @@ if (isRuleBypassed("/path/to/project", "E009")) {
 
 *Returns the number of bypass budget slots remaining for today.*
 
-[View in API reference](/packages/core/api/functions#getremainingbudget)
+[View in API reference](/packages/core/reference/functions#getremainingbudget)
 
 ```typescript
 import { getRemainingBudget } from "@forge-ts/core";
@@ -106,7 +106,7 @@ console.log(`${remaining} bypass(es) remaining today`);
 
 *Removes expired bypass records from `.forge-bypass.json`.*
 
-[View in API reference](/packages/core/api/functions#expireoldbypasses)
+[View in API reference](/packages/core/reference/functions#expireoldbypasses)
 
 ```typescript
 import { expireOldBypasses } from "@forge-ts/core";
@@ -118,7 +118,7 @@ console.log(`${removed} expired bypass(es) removed`);
 
 *Type-safe helper for defining a partial forge-ts configuration.*
 
-[View in API reference](/packages/core/api/functions#defineconfig)
+[View in API reference](/packages/core/reference/functions#defineconfig)
 
 ```typescript
 import { defineConfig } from "@forge-ts/core";
@@ -131,7 +131,7 @@ export default defineConfig(config);
 
 *Constructs a sensible default `ForgeConfig` rooted at `rootDir`.*
 
-[View in API reference](/packages/core/api/functions#defaultconfig)
+[View in API reference](/packages/core/reference/functions#defaultconfig)
 
 ```typescript
 import { defaultConfig } from "@forge-ts/core";
@@ -143,7 +143,7 @@ console.log(config.enforce.enabled); // true
 
 *Loads the forge-ts configuration for a project.*
 
-[View in API reference](/packages/core/api/functions#loadconfig)
+[View in API reference](/packages/core/reference/functions#loadconfig)
 
 ```typescript
 import { loadConfig } from "@forge-ts/core";
@@ -155,7 +155,7 @@ const config = await loadConfig("/path/to/project");
 
 *Reads the `.forge-lock.json` file from the given project root.*
 
-[View in API reference](/packages/core/api/functions#readlockfile)
+[View in API reference](/packages/core/reference/functions#readlockfile)
 
 ```typescript
 import { readLockFile } from "@forge-ts/core";
@@ -169,7 +169,7 @@ if (lock) {
 
 *Writes a `ForgeLockManifest` to `.forge-lock.json` in the project root.*
 
-[View in API reference](/packages/core/api/functions#writelockfile)
+[View in API reference](/packages/core/reference/functions#writelockfile)
 
 ```typescript
 import { writeLockFile, createLockManifest, loadConfig } from "@forge-ts/core";
@@ -182,7 +182,7 @@ writeLockFile("/path/to/project", manifest);
 
 *Removes the `.forge-lock.json` file from the project root.*
 
-[View in API reference](/packages/core/api/functions#removelockfile)
+[View in API reference](/packages/core/reference/functions#removelockfile)
 
 ```typescript
 import { removeLockFile } from "@forge-ts/core";
@@ -194,7 +194,7 @@ console.log(removed ? "Lock removed" : "No lock file found");
 
 *Creates a `ForgeLockManifest` from the current project config.*
 
-[View in API reference](/packages/core/api/functions#createlockmanifest)
+[View in API reference](/packages/core/reference/functions#createlockmanifest)
 
 ```typescript
 import { createLockManifest, loadConfig } from "@forge-ts/core";
@@ -207,7 +207,7 @@ console.log(manifest.config.rules);
 
 *Validates the current config against a locked manifest.*
 
-[View in API reference](/packages/core/api/functions#validateagainstlock)
+[View in API reference](/packages/core/reference/functions#validateagainstlock)
 
 ```typescript
 import { validateAgainstLock, readLockFile, loadConfig } from "@forge-ts/core";
@@ -225,7 +225,7 @@ if (lock) {
 
 *Determines the visibility level of a symbol from its TSDoc release tags.*
 
-[View in API reference](/packages/core/api/functions#resolvevisibility)
+[View in API reference](/packages/core/reference/functions#resolvevisibility)
 
 ```typescript
 import { resolveVisibility } from "@forge-ts/core";
@@ -237,7 +237,7 @@ const vis = resolveVisibility({ internal: [] });
 
 *Returns whether `candidate` meets or exceeds the required minimum visibility.*
 
-[View in API reference](/packages/core/api/functions#meetsvisibility)
+[View in API reference](/packages/core/reference/functions#meetsvisibility)
 
 ```typescript
 import { meetsVisibility, Visibility } from "@forge-ts/core";
@@ -250,7 +250,7 @@ meetsVisibility("public", "beta"); // true (string literals also accepted)
 
 *Filters an array of `ForgeSymbol` objects to only include symbols whose visibility meets or exceeds `minVisibility`.*
 
-[View in API reference](/packages/core/api/functions#filterbyvisibility)
+[View in API reference](/packages/core/reference/functions#filterbyvisibility)
 
 ```typescript
 import { filterByVisibility, Visibility } from "@forge-ts/core";
@@ -261,7 +261,7 @@ const publicOnly = filterByVisibility(symbols, Visibility.Public);
 
 *Creates an `ASTWalker` configured for the given forge config.*
 
-[View in API reference](/packages/core/api/functions#createwalker)
+[View in API reference](/packages/core/reference/functions#createwalker)
 
 ```typescript
 import { loadConfig, createWalker } from "@forge-ts/core";

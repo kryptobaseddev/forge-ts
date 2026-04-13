@@ -1,0 +1,50 @@
+---
+title: api — API Reference
+description: Full API reference for the api package
+---
+
+API reference for the `api` package.
+
+## Functions & Classes
+
+| Symbol                                                                           | Kind     | Description                                                                      |
+| -------------------------------------------------------------------------------- | -------- | -------------------------------------------------------------------------------- |
+| [`signatureToSchema()`](/packages/api/reference/functions#signaturetoschema)     | function | Maps a TypeScript type signature string to an OpenAPI 3.2 schema object.  Han... |
+| [`extractSDKTypes()`](/packages/api/reference/functions#extractsdktypes)         | function | Extracts SDK-relevant types (interfaces, type aliases, classes, enums) from a... |
+| [`generateOpenAPISpec()`](/packages/api/reference/functions#generateopenapispec) | function | Generates a production-quality OpenAPI 3.2 document from the extracted SDK ty... |
+| [`buildReference()`](/packages/api/reference/functions#buildreference)           | function | Builds a structured API reference from a list of exported symbols.  Unlike th... |
+| [`generateApi()`](/packages/api/reference/functions#generateapi)                 | function | Runs the API generation pipeline: walk → extract → generate → write.             |
+| [`signatureToSchema()`](/packages/api/reference/functions#signaturetoschema)     | function | Maps a TypeScript type signature string to an OpenAPI 3.2 schema object.  Han... |
+| [`extractSDKTypes()`](/packages/api/reference/functions#extractsdktypes)         | function | Extracts SDK-relevant types (interfaces, type aliases, classes, enums) from a... |
+| [`generateOpenAPISpec()`](/packages/api/reference/functions#generateopenapispec) | function | Generates a production-quality OpenAPI 3.2 document from the extracted SDK ty... |
+| [`buildReference()`](/packages/api/reference/functions#buildreference)           | function | Builds a structured API reference from a list of exported symbols.  Unlike th... |
+| [`generateApi()`](/packages/api/reference/functions#generateapi)                 | function | Runs the API generation pipeline: walk → extract → generate → write.             |
+
+## Types & Interfaces
+
+| Symbol                                                           | Kind      | Description                                                    |
+| ---------------------------------------------------------------- | --------- | -------------------------------------------------------------- |
+| [`SDKProperty`](/packages/api/reference/types#sdkproperty)       | interface | A single property extracted from an interface or class symbol. |
+| [`SDKType`](/packages/api/reference/types#sdktype)               | interface | An SDK type descriptor extracted from the symbol graph.        |
+| [`ReferenceEntry`](/packages/api/reference/types#referenceentry) | interface | A single entry in the generated API reference.                 |
+| [`SDKProperty`](/packages/api/reference/types#sdkproperty)       | interface | A single property extracted from an interface or class symbol. |
+| [`SDKType`](/packages/api/reference/types#sdktype)               | interface | An SDK type descriptor extracted from the symbol graph.        |
+| [`ReferenceEntry`](/packages/api/reference/types#referenceentry) | interface | A single entry in the generated API reference.                 |
+
+## Other Exports
+
+| Symbol                                                                  | Kind | Description                                                                      |
+| ----------------------------------------------------------------------- | ---- | -------------------------------------------------------------------------------- |
+| [`tsup.config.ts`](/packages/api/reference/functions#tsupconfigts)      | file |                                                                                  |
+| [`schema-mapper.ts`](/packages/api/reference/functions#schema-mapperts) | file |                                                                                  |
+| [`sdk-extractor.ts`](/packages/api/reference/functions#sdk-extractorts) | file |                                                                                  |
+| [`openapi.ts`](/packages/api/reference/functions#openapits)             | file |                                                                                  |
+| [`reference.ts`](/packages/api/reference/functions#referencets)         | file |                                                                                  |
+| [`index.ts`](/packages/api/reference/functions#indexts)                 | file | forge-ts/api — OpenAPI spec and API reference generator.  Extracts public SDK... |
+| [`api.test.ts`](/packages/api/reference/functions#apitestts)            | file |                                                                                  |
+| [`schema-mapper.ts`](/packages/api/reference/functions#schema-mapperts) | file |                                                                                  |
+| [`sdk-extractor.ts`](/packages/api/reference/functions#sdk-extractorts) | file |                                                                                  |
+| [`openapi.ts`](/packages/api/reference/functions#openapits)             | file |                                                                                  |
+| [`reference.ts`](/packages/api/reference/functions#referencets)         | file |                                                                                  |
+| [`index.ts`](/packages/api/reference/functions#indexts)                 | file | forge-ts/api — OpenAPI spec and API reference generator.  Extracts public SDK... |
+| [`api.test.ts`](/packages/api/reference/functions#apitestts)            | file |                                                                                  |

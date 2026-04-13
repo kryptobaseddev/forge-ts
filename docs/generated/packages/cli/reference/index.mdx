@@ -1,0 +1,141 @@
+---
+title: cli — API Reference
+description: Full API reference for the cli package
+---
+
+API reference for the `cli` package.
+
+## Functions & Classes
+
+| Symbol                                                                                     | Kind     | Description                                                                      |
+| ------------------------------------------------------------------------------------------ | -------- | -------------------------------------------------------------------------------- |
+| [`configureLogger()`](/packages/cli/reference/functions#configurelogger)                   | function | Configures the global `forgeLogger` based on CLI flags.  Call this once at th... |
+| [`emitResult()`](/packages/cli/reference/functions#emitresult)                             | function | Wraps a command result in a LAFS envelope and emits it.  Output format is det... |
+| [`resolveExitCode()`](/packages/cli/reference/functions#resolveexitcode)                   | function | Returns the LAFS-compliant exit code for a command output.                       |
+| [`runAudit()`](/packages/cli/reference/functions#runaudit)                                 | function | Reads the audit log and returns a typed command output.                          |
+| [`runBarometer()`](/packages/cli/reference/functions#runbarometer)                         | function | Runs the barometer generation pass.  Loads the project config, walks the symb... |
+| [`runBarometerScore()`](/packages/cli/reference/functions#runbarometerscore)               | function | Scores agent answers against the barometer answer key.                           |
+| [`runBuild()`](/packages/cli/reference/functions#runbuild)                                 | function | Runs the full build pipeline and returns a typed command output.                 |
+| [`runBypassCreate()`](/packages/cli/reference/functions#runbypasscreate)                   | function | Runs the bypass creation: creates a new bypass record with budget enforcement.   |
+| [`runBypassStatus()`](/packages/cli/reference/functions#runbypassstatus)                   | function | Runs the bypass status query: shows active bypasses and remaining budget.        |
+| [`getStagedFiles()`](/packages/cli/reference/functions#getstagedfiles)                     | function | Returns the list of staged .ts/.tsx files (relative paths) by querying git. R... |
+| [`runCheck()`](/packages/cli/reference/functions#runcheck)                                 | function | Runs the TSDoc enforcement pass and returns a typed command output.              |
+| [`runDocsDev()`](/packages/cli/reference/functions#rundocsdev)                             | function | Starts the local dev server for the configured SSG target.  Reads...             |
+| [`readPkgJson()`](/packages/cli/reference/functions#readpkgjson)                           | function | Read and parse package.json from a project root.  Detects indent style and tr... |
+| [`serializePkgJson()`](/packages/cli/reference/functions#serializepkgjson)                 | function | Serialize a package.json object preserving original formatting.                  |
+| [`writePkgJson()`](/packages/cli/reference/functions#writepkgjson)                         | function | Write a modified package.json back to disk, preserving formatting.               |
+| [`addScripts()`](/packages/cli/reference/functions#addscripts)                             | function | Add scripts to package.json idempotently.  Only adds scripts where the key do... |
+| [`detectHookManager()`](/packages/cli/reference/functions#detecthookmanager)               | function | Detects which hook manager is present in the project.  Checks for: - husky:...   |
+| [`generateHuskyHook()`](/packages/cli/reference/functions#generatehuskyhook)               | function | Generates the husky pre-commit hook file content (modern husky v9+).             |
+| [`generateHuskyPrePushHook()`](/packages/cli/reference/functions#generatehuskyprepushhook) | function | Generates the husky pre-push hook file content (modern husky v9+).               |
+| [`generateLefthookBlock()`](/packages/cli/reference/functions#generatelefthookblock)       | function | Generates the lefthook block with both pre-commit and pre-push sections.         |
+| [`detectVersionGuard()`](/packages/cli/reference/functions#detectversionguard)             | function | Checks whether a versionguard config file exists in the project root.  When d... |
+| [`runInitHooks()`](/packages/cli/reference/functions#runinithooks)                         | function | Scaffolds git hook integration for the project.  Detects the hook manager (hu... |
+| [`detectEnvironment()`](/packages/cli/reference/functions#detectenvironment)               | function | Detects the project environment by checking for files and dependencies.          |
+| [`buildTsdocContent()`](/packages/cli/reference/functions#buildtsdoccontent)               | function | Builds tsdoc.json content, merging in customTags from the forge config.  When... |
+| [`runInitProject()`](/packages/cli/reference/functions#runinitproject)                     | function | Runs the full project init flow.                                                 |
+| [`runDoctor()`](/packages/cli/reference/functions#rundoctor)                               | function | Runs the doctor integrity check flow.                                            |
+| [`runInitDocs()`](/packages/cli/reference/functions#runinitdocs)                           | function | Scaffolds a documentation site for the target SSG platform.  Resolves the tar... |
+| [`runLock()`](/packages/cli/reference/functions#runlock)                                   | function | Runs the lock command: reads current config and creates `.forge-lock.json`.      |
+| [`runPrepublish()`](/packages/cli/reference/functions#runprepublish)                       | function | Runs the prepublish safety gate: check then build.  If the check step fails,...  |
+| [`runTest()`](/packages/cli/reference/functions#runtest)                                   | function | Runs the doctest pipeline and returns a typed command output.                    |
+| [`runUnlock()`](/packages/cli/reference/functions#rununlock)                               | function | Runs the unlock command: removes `.forge-lock.json` with a mandatory reason.     |
+
+## Types & Interfaces
+
+| Symbol                                                                           | Kind      | Description                                                                      |
+| -------------------------------------------------------------------------------- | --------- | -------------------------------------------------------------------------------- |
+| [`ForgeLoggerOptions`](/packages/cli/reference/types#forgeloggeroptions)         | interface | Options for configuring the forge-ts logger at CLI startup.                      |
+| [`CommandOutput`](/packages/cli/reference/types#commandoutput)                   | interface | Typed result from a forge-ts command.                                            |
+| [`ForgeCliError`](/packages/cli/reference/types#forgeclierror)                   | interface | Structured error for CLI commands.                                               |
+| [`ForgeCliWarning`](/packages/cli/reference/types#forgecliwarning)               | interface | Structured warning for CLI commands.                                             |
+| [`OutputFlags`](/packages/cli/reference/types#outputflags)                       | interface | Output format flags passed through from citty args.                              |
+| [`AuditArgs`](/packages/cli/reference/types#auditargs)                           | interface | Arguments for the `audit` command.                                               |
+| [`AuditResult`](/packages/cli/reference/types#auditresult)                       | interface | Typed result for the `audit` command.                                            |
+| [`BarometerSource`](/packages/cli/reference/types#barometersource)               | interface | Source provenance for a barometer question.                                      |
+| [`BarometerQuestion`](/packages/cli/reference/types#barometerquestion)           | interface | A single barometer question with its ground-truth answer.                        |
+| [`BarometerRatingBand`](/packages/cli/reference/types#barometerratingband)       | interface | A single rating band in the barometer scoring rubric.                            |
+| [`BarometerInstructions`](/packages/cli/reference/types#barometerinstructions)   | interface | Agent instructions included in `--questions-only` output.                        |
+| [`BarometerResult`](/packages/cli/reference/types#barometerresult)               | interface | Full barometer output written to `.forge/barometer.json`.                        |
+| [`BarometerScoredAnswer`](/packages/cli/reference/types#barometerscoredanswer)   | interface | A single scored answer in the barometer score output.                            |
+| [`BarometerScoreResult`](/packages/cli/reference/types#barometerscoreresult)     | interface | Full barometer score output.                                                     |
+| [`BarometerArgs`](/packages/cli/reference/types#barometerargs)                   | interface | Arguments for the `barometer` command.                                           |
+| [`BuildArgs`](/packages/cli/reference/types#buildargs)                           | interface | Arguments for the `build` command.                                               |
+| [`BuildStep`](/packages/cli/reference/types#buildstep)                           | interface | A single step in the build pipeline.                                             |
+| [`BuildResult`](/packages/cli/reference/types#buildresult)                       | interface | Typed result for the `build` command.                                            |
+| [`BypassCreateResult`](/packages/cli/reference/types#bypasscreateresult)         | interface | Typed result for the `bypass` command when creating a bypass.                    |
+| [`BypassStatusResult`](/packages/cli/reference/types#bypassstatusresult)         | interface | Typed result for the `bypass --status` command.                                  |
+| [`CheckArgs`](/packages/cli/reference/types#checkargs)                           | interface | Arguments for the `check` command.                                               |
+| [`CheckFileError`](/packages/cli/reference/types#checkfileerror)                 | interface | A single error entry within a file group.                                        |
+| [`CheckFileWarning`](/packages/cli/reference/types#checkfilewarning)             | interface | A single warning entry within a file group.                                      |
+| [`CheckFileGroup`](/packages/cli/reference/types#checkfilegroup)                 | interface | Errors and warnings grouped by file.                                             |
+| [`CheckRuleCount`](/packages/cli/reference/types#checkrulecount)                 | interface | Error breakdown by rule code, sorted by count descending.                        |
+| [`CheckTriage`](/packages/cli/reference/types#checktriage)                       | interface | Triage data for prioritizing fixes. Always present when the check has errors,... |
+| [`CheckPage`](/packages/cli/reference/types#checkpage)                           | interface | Pagination metadata for byFile results.                                          |
+| [`CheckResult`](/packages/cli/reference/types#checkresult)                       | interface | Typed result for the `check` command.                                            |
+| [`PkgJson`](/packages/cli/reference/types#pkgjson)                               | interface | Parsed package.json with formatting metadata for lossless round-tripping.        |
+| [`HookManager`](/packages/cli/reference/types#hookmanager)                       | type      | Detected hook manager in the project.                                            |
+| [`InitHooksResult`](/packages/cli/reference/types#inithooksresult)               | interface | Result of the `init hooks` command.                                              |
+| [`InitHooksArgs`](/packages/cli/reference/types#inithooksargs)                   | interface | Arguments for the `init hooks` command.                                          |
+| [`InitProjectEnvironment`](/packages/cli/reference/types#initprojectenvironment) | interface | Detected project environment from Step 1 of the init flow.                       |
+| [`InitProjectResult`](/packages/cli/reference/types#initprojectresult)           | interface | Result of the `init` (project setup) command.                                    |
+| [`InitProjectArgs`](/packages/cli/reference/types#initprojectargs)               | interface | Arguments for the `init` (project setup) command.                                |
+| [`DoctorCheckStatus`](/packages/cli/reference/types#doctorcheckstatus)           | type      | Status of a single doctor check.                                                 |
+| [`DoctorCheckResult`](/packages/cli/reference/types#doctorcheckresult)           | interface | Result of a single doctor check.                                                 |
+| [`DoctorResult`](/packages/cli/reference/types#doctorresult)                     | interface | Result of the `doctor` command.                                                  |
+| [`DoctorArgs`](/packages/cli/reference/types#doctorargs)                         | interface | Arguments for the `doctor` command.                                              |
+| [`InitDocsResult`](/packages/cli/reference/types#initdocsresult)                 | interface | Result of the `init docs` command.                                               |
+| [`InitDocsArgs`](/packages/cli/reference/types#initdocsargs)                     | interface | Arguments for the `init docs` command.                                           |
+| [`LockResult`](/packages/cli/reference/types#lockresult)                         | interface | Typed result for the `lock` command.                                             |
+| [`PrepublishResult`](/packages/cli/reference/types#prepublishresult)             | interface | Typed result for the `prepublish` command.                                       |
+| [`PrepublishArgs`](/packages/cli/reference/types#prepublishargs)                 | interface | Arguments for the `prepublish` command.                                          |
+| [`TestArgs`](/packages/cli/reference/types#testargs)                             | interface | Arguments for the `test` command.                                                |
+| [`TestFailure`](/packages/cli/reference/types#testfailure)                       | interface | A single test failure entry, included at standard and full MVI levels.           |
+| [`TestResult`](/packages/cli/reference/types#testresult)                         | interface | Typed result for the `test` command.                                             |
+| [`UnlockResult`](/packages/cli/reference/types#unlockresult)                     | interface | Typed result for the `unlock` command.                                           |
+
+## Other Exports
+
+| Symbol                                                                         | Kind     | Description                                                                      |
+| ------------------------------------------------------------------------------ | -------- | -------------------------------------------------------------------------------- |
+| [`tsup.config.ts`](/packages/cli/reference/functions#tsupconfigts)             | file     |                                                                                  |
+| [`forgeLogger`](/packages/cli/reference/functions#forgelogger)                 | variable | Pre-configured consola instance branded for forge-ts.                            |
+| [`forge-logger.ts`](/packages/cli/reference/functions#forge-loggerts)          | file     | Forge-ts branded logger built on consola from the UnJS ecosystem.  Provides a... |
+| [`output.ts`](/packages/cli/reference/functions#outputts)                      | file     | Central output layer for forge-ts CLI.  Wraps all command results in LAFS env... |
+| [`auditCommand`](/packages/cli/reference/functions#auditcommand)               | variable | Citty command definition for `forge-ts audit`.                                   |
+| [`audit.ts`](/packages/cli/reference/functions#auditts)                        | file     | CLI command for reading the forge-ts audit trail.  Reads `.forge-audit.jsonl`... |
+| [`barometerCommand`](/packages/cli/reference/functions#barometercommand)       | variable | Citty command definition for `forge-ts barometer`.  Generates a documentation... |
+| [`barometer.ts`](/packages/cli/reference/functions#barometerts)                | file     | `forge-ts barometer` command — documentation effectiveness test generator.  A... |
+| [`buildCommand`](/packages/cli/reference/functions#buildcommand)               | variable | Citty command definition for `forge-ts build`.                                   |
+| [`build.ts`](/packages/cli/reference/functions#buildts)                        | file     |                                                                                  |
+| [`bypassCommand`](/packages/cli/reference/functions#bypasscommand)             | variable | Citty command definition for `forge-ts bypass`.                                  |
+| [`bypass.ts`](/packages/cli/reference/functions#bypassts)                      | file     | `forge-ts bypass` command — create or inspect temporary rule bypasses.  Bypas... |
+| [`checkCommand`](/packages/cli/reference/functions#checkcommand)               | variable | Citty command definition for `forge-ts check`.                                   |
+| [`check.ts`](/packages/cli/reference/functions#checkts)                        | file     |                                                                                  |
+| [`docsDevCommand`](/packages/cli/reference/functions#docsdevcommand)           | variable | Citty command definition for `forge-ts docs dev`.                                |
+| [`docs-dev.ts`](/packages/cli/reference/functions#docs-devts)                  | file     | The `forge-ts docs dev` command — starts a local doc preview server.  Reads t... |
+| [`pkg-json.ts`](/packages/cli/reference/functions#pkg-jsonts)                  | file     | Shared utilities for idempotent package.json read-modify-write operations.  E... |
+| [`initHooksCommand`](/packages/cli/reference/functions#inithookscommand)       | variable | Citty command definition for `forge-ts init hooks`.  Scaffolds git hook integ... |
+| [`init-hooks.ts`](/packages/cli/reference/functions#init-hooksts)              | file     | `forge-ts init hooks` command — scaffolds git hook integration.  Detects husk... |
+| [`initProjectCommand`](/packages/cli/reference/functions#initprojectcommand)   | variable | Citty command definition for `forge-ts init` (bare — full project setup).  De... |
+| [`init-project.ts`](/packages/cli/reference/functions#init-projectts)          | file     | `forge-ts init` command — full project setup.  Detects the project environmen... |
+| [`doctorCommand`](/packages/cli/reference/functions#doctorcommand)             | variable | Citty command definition for `forge-ts doctor`.  Performs project integrity c... |
+| [`doctor.ts`](/packages/cli/reference/functions#doctorts)                      | file     | `forge-ts doctor` command — project integrity check and repair.  Validates th... |
+| [`initDocsCommand`](/packages/cli/reference/functions#initdocscommand)         | variable | Citty command definition for `forge-ts init docs`.  Scaffolds a complete docu... |
+| [`initCommand`](/packages/cli/reference/functions#initcommand)                 | variable | Citty command definition for `forge-ts init`.  Exposes subcommands for scaffo... |
+| [`init-docs.ts`](/packages/cli/reference/functions#init-docsts)                | file     |                                                                                  |
+| [`lockCommand`](/packages/cli/reference/functions#lockcommand)                 | variable | Citty command definition for `forge-ts lock`.                                    |
+| [`lock.ts`](/packages/cli/reference/functions#lockts)                          | file     | `forge-ts lock` command — snapshots the current config and creates...            |
+| [`prepublishCommand`](/packages/cli/reference/functions#prepublishcommand)     | variable | Citty command definition for `forge-ts prepublish`.  Runs check then build as... |
+| [`prepublish.ts`](/packages/cli/reference/functions#prepublishts)              | file     | `forge-ts prepublish` command — safety gate for npm publish.  Runs...            |
+| [`testCommand`](/packages/cli/reference/functions#testcommand)                 | variable | Citty command definition for `forge-ts test`.                                    |
+| [`test.ts`](/packages/cli/reference/functions#testts)                          | file     |                                                                                  |
+| [`unlockCommand`](/packages/cli/reference/functions#unlockcommand)             | variable | Citty command definition for `forge-ts unlock`.                                  |
+| [`unlock.ts`](/packages/cli/reference/functions#unlockts)                      | file     | `forge-ts unlock` command — removes `.forge-lock.json` with a mandatory reaso... |
+| [`index.ts`](/packages/cli/reference/functions#indexts)                        | file     | forge-ts/cli — Command-line interface for the forge-ts toolchain.  Usage:   f... |
+| [`cli.test.ts`](/packages/cli/reference/functions#clitestts)                   | file     |                                                                                  |
+| [`doctor.test.ts`](/packages/cli/reference/functions#doctortestts)             | file     |                                                                                  |
+| [`init-docs.test.ts`](/packages/cli/reference/functions#init-docstestts)       | file     |                                                                                  |
+| [`init-hooks.test.ts`](/packages/cli/reference/functions#init-hookstestts)     | file     |                                                                                  |
+| [`init-project.test.ts`](/packages/cli/reference/functions#init-projecttestts) | file     |                                                                                  |
+| [`prepublish.test.ts`](/packages/cli/reference/functions#prepublishtestts)     | file     |                                                                                  |

@@ -216,10 +216,10 @@ describe("generateDocSite", () => {
 		const pages = generateDocSite(map, makeConfig(), baseOptions);
 		const paths = pages.map((p) => p.path);
 		expect(paths).toContain("packages/core/index.md");
-		expect(paths).toContain("packages/core/api/index.md");
-		expect(paths).toContain("packages/core/api/types.md");
-		expect(paths).toContain("packages/core/api/functions.md");
-		expect(paths).toContain("packages/core/api/examples.md");
+		expect(paths).toContain("packages/core/reference/index.md");
+		expect(paths).toContain("packages/core/reference/types.md");
+		expect(paths).toContain("packages/core/reference/functions.md");
+		expect(paths).toContain("packages/core/reference/examples.md");
 	});
 
 	it("does NOT generate old flat api-reference path", () => {
@@ -257,7 +257,7 @@ describe("generateDocSite", () => {
 		});
 		const paths = pages.map((p) => p.path);
 		expect(paths).toContain("index.mdx");
-		expect(paths).toContain("packages/core/api/index.mdx");
+		expect(paths).toContain("packages/core/reference/index.mdx");
 	});
 });
 
@@ -429,8 +429,15 @@ describe("concepts page", () => {
 
 describe("guides/index page", () => {
 	it("shows Available Guides listing when guides are discovered", () => {
-		// fnAdd is at /project/src/index.ts so the entry-point heuristic fires
-		const map = makeSymbolsByPackage([fnAdd]);
+		// Use an error class to trigger the error-handling heuristic (not filtered)
+		const errorClass = sym({
+			name: "AppError",
+			kind: "class",
+			filePath: "/project/src/errors.ts",
+			signature: "class AppError extends Error",
+			documentation: { summary: "App error." },
+		});
+		const map = makeSymbolsByPackage([fnAdd, errorClass]);
 		const pages = generateDocSite(map, makeConfig(), baseOptions);
 		const guides = pages.find((p) => p.path === "guides/index.md");
 		expect(guides?.content).toContain("Available Guides");
@@ -496,50 +503,50 @@ describe("api/index page", () => {
 	it("includes all exported symbols in a table", () => {
 		const map = makeSymbolsByPackage([fnAdd, ifaceConfig, typeAlias]);
 		const pages = generateDocSite(map, makeConfig(), baseOptions);
-		const api = pages.find((p) => p.path === "packages/core/api/index.md");
+		const api = pages.find((p) => p.path === "packages/core/reference/index.md");
 		expect(api?.content).toContain("add");
 		expect(api?.content).toContain("CalculatorConfig");
 		expect(api?.content).toContain("ID");
 	});
 
-	it("links functions to api/functions page", () => {
+	it("links functions to reference/functions page", () => {
 		const map = makeSymbolsByPackage([fnAdd]);
 		const pages = generateDocSite(map, makeConfig(), baseOptions);
-		const api = pages.find((p) => p.path === "packages/core/api/index.md");
-		expect(api?.content).toContain("api/functions");
+		const api = pages.find((p) => p.path === "packages/core/reference/index.md");
+		expect(api?.content).toContain("reference/functions");
 	});
 
-	it("links types to api/types page", () => {
+	it("links types to reference/types page", () => {
 		const map = makeSymbolsByPackage([ifaceConfig]);
 		const pages = generateDocSite(map, makeConfig(), baseOptions);
-		const api = pages.find((p) => p.path === "packages/core/api/index.md");
-		expect(api?.content).toContain("api/types");
+		const api = pages.find((p) => p.path === "packages/core/reference/index.md");
+		expect(api?.content).toContain("reference/types");
 	});
 
 	it("has a Symbol Kind Description header row", () => {
 		const map = makeSymbolsByPackage([fnAdd]);
 		const pages = generateDocSite(map, makeConfig(), baseOptions);
-		const api = pages.find((p) => p.path === "packages/core/api/index.md");
+		const api = pages.find((p) => p.path === "packages/core/reference/index.md");
 		expect(api?.content).toMatch(/\| Symbol\s+\| Kind\s+\| Description\s+\|/);
 	});
 });
 
 // ---------------------------------------------------------------------------
-// Types page (packages/<name>/api/types)
+// Types page (packages/<name>/reference/types)
 // ---------------------------------------------------------------------------
 
-describe("api/types page", () => {
-	it("is at the new api/types path", () => {
+describe("reference/types page", () => {
+	it("is at the new reference/types path", () => {
 		const map = makeSymbolsByPackage([ifaceConfig]);
 		const pages = generateDocSite(map, makeConfig(), baseOptions);
-		const typesPage = pages.find((p) => p.path === "packages/core/api/types.md");
+		const typesPage = pages.find((p) => p.path === "packages/core/reference/types.md");
 		expect(typesPage).toBeDefined();
 	});
 
 	it("includes interfaces with property tables", () => {
 		const map = makeSymbolsByPackage([ifaceConfig]);
 		const pages = generateDocSite(map, makeConfig(), baseOptions);
-		const typesPage = pages.find((p) => p.path === "packages/core/api/types.md");
+		const typesPage = pages.find((p) => p.path === "packages/core/reference/types.md");
 		expect(typesPage?.content).toContain("CalculatorConfig");
 		expect(typesPage?.content).toMatch(/\| Property\s+\| Type\s+\| Required\s+\| Description\s+\|/);
 		expect(typesPage?.content).toContain("`precision`");
@@ -550,7 +557,7 @@ describe("api/types page", () => {
 	it("includes type aliases with their signature", () => {
 		const map = makeSymbolsByPackage([typeAlias]);
 		const pages = generateDocSite(map, makeConfig(), baseOptions);
-		const typesPage = pages.find((p) => p.path === "packages/core/api/types.md");
+		const typesPage = pages.find((p) => p.path === "packages/core/reference/types.md");
 		expect(typesPage?.content).toContain("ID");
 		expect(typesPage?.content).toContain("type ID = string | number");
 	});
@@ -558,42 +565,42 @@ describe("api/types page", () => {
 	it("does not include function symbols", () => {
 		const map = makeSymbolsByPackage([fnAdd, ifaceConfig]);
 		const pages = generateDocSite(map, makeConfig(), baseOptions);
-		const typesPage = pages.find((p) => p.path === "packages/core/api/types.md");
+		const typesPage = pages.find((p) => p.path === "packages/core/reference/types.md");
 		expect(typesPage?.content).not.toContain("## add");
 	});
 
 	it("marks optional properties with No in Required column", () => {
 		const map = makeSymbolsByPackage([ifaceConfig]);
 		const pages = generateDocSite(map, makeConfig(), baseOptions);
-		const typesPage = pages.find((p) => p.path === "packages/core/api/types.md");
+		const typesPage = pages.find((p) => p.path === "packages/core/reference/types.md");
 		// label? is optional, so Required = No
 		expect(typesPage?.content).toMatch(/`label`[^|]*\|[^|]*\| No\s+\|/);
 	});
 });
 
 // ---------------------------------------------------------------------------
-// Functions page (packages/<name>/api/functions)
+// Functions page (packages/<name>/reference/functions)
 // ---------------------------------------------------------------------------
 
-describe("api/functions page", () => {
-	it("is at the new api/functions path", () => {
+describe("reference/functions page", () => {
+	it("is at the new reference/functions path", () => {
 		const map = makeSymbolsByPackage([fnAdd]);
 		const pages = generateDocSite(map, makeConfig(), baseOptions);
-		const fnPage = pages.find((p) => p.path === "packages/core/api/functions.md");
+		const fnPage = pages.find((p) => p.path === "packages/core/reference/functions.md");
 		expect(fnPage).toBeDefined();
 	});
 
 	it("includes function headings with parameter names", () => {
 		const map = makeSymbolsByPackage([fnAdd]);
 		const pages = generateDocSite(map, makeConfig(), baseOptions);
-		const fnPage = pages.find((p) => p.path === "packages/core/api/functions.md");
+		const fnPage = pages.find((p) => p.path === "packages/core/reference/functions.md");
 		expect(fnPage?.content).toContain("## add(a, b)");
 	});
 
 	it("includes a parameter table", () => {
 		const map = makeSymbolsByPackage([fnAdd]);
 		const pages = generateDocSite(map, makeConfig(), baseOptions);
-		const fnPage = pages.find((p) => p.path === "packages/core/api/functions.md");
+		const fnPage = pages.find((p) => p.path === "packages/core/reference/functions.md");
 		expect(fnPage?.content).toMatch(/\| Name\s+\| Type\s+\| Description\s+\|/);
 		expect(fnPage?.content).toContain("`a`");
 		expect(fnPage?.content).toContain("`b`");
@@ -602,7 +609,7 @@ describe("api/functions page", () => {
 	it("includes the Returns line", () => {
 		const map = makeSymbolsByPackage([fnAdd]);
 		const pages = generateDocSite(map, makeConfig(), baseOptions);
-		const fnPage = pages.find((p) => p.path === "packages/core/api/functions.md");
+		const fnPage = pages.find((p) => p.path === "packages/core/reference/functions.md");
 		expect(fnPage?.content).toContain("**Returns**");
 		expect(fnPage?.content).toContain("The sum of a and b");
 	});
@@ -610,7 +617,7 @@ describe("api/functions page", () => {
 	it("includes the first example", () => {
 		const map = makeSymbolsByPackage([fnAdd]);
 		const pages = generateDocSite(map, makeConfig(), baseOptions);
-		const fnPage = pages.find((p) => p.path === "packages/core/api/functions.md");
+		const fnPage = pages.find((p) => p.path === "packages/core/reference/functions.md");
 		expect(fnPage?.content).toContain("**Example**");
 		expect(fnPage?.content).toContain("add(1, 2)");
 	});
@@ -618,7 +625,7 @@ describe("api/functions page", () => {
 	it("includes the code signature block", () => {
 		const map = makeSymbolsByPackage([fnAdd]);
 		const pages = generateDocSite(map, makeConfig(), baseOptions);
-		const fnPage = pages.find((p) => p.path === "packages/core/api/functions.md");
+		const fnPage = pages.find((p) => p.path === "packages/core/reference/functions.md");
 		expect(fnPage?.content).toContain("**Signature**");
 		expect(fnPage?.content).toContain("function add(a: number, b: number): number");
 	});
@@ -626,7 +633,7 @@ describe("api/functions page", () => {
 	it("does not include type-only symbols", () => {
 		const map = makeSymbolsByPackage([ifaceConfig, typeAlias]);
 		const pages = generateDocSite(map, makeConfig(), baseOptions);
-		const fnPage = pages.find((p) => p.path === "packages/core/api/functions.md");
+		const fnPage = pages.find((p) => p.path === "packages/core/reference/functions.md");
 		expect(fnPage?.content).not.toContain("## CalculatorConfig");
 		expect(fnPage?.content).not.toContain("## ID");
 	});
@@ -634,49 +641,49 @@ describe("api/functions page", () => {
 	it("includes deprecation notices", () => {
 		const map = makeSymbolsByPackage([fnSubtract]);
 		const pages = generateDocSite(map, makeConfig(), baseOptions);
-		const fnPage = pages.find((p) => p.path === "packages/core/api/functions.md");
+		const fnPage = pages.find((p) => p.path === "packages/core/reference/functions.md");
 		expect(fnPage?.content).toContain("**Deprecated**");
 		expect(fnPage?.content).toContain("math.sub()");
 	});
 });
 
 // ---------------------------------------------------------------------------
-// Examples page (packages/<name>/api/examples)
+// Examples page (packages/<name>/reference/examples)
 // ---------------------------------------------------------------------------
 
-describe("api/examples page", () => {
-	it("is at the new api/examples path", () => {
+describe("reference/examples page", () => {
+	it("is at the new reference/examples path", () => {
 		const map = makeSymbolsByPackage([fnAdd]);
 		const pages = generateDocSite(map, makeConfig(), baseOptions);
-		const exPage = pages.find((p) => p.path === "packages/core/api/examples.md");
+		const exPage = pages.find((p) => p.path === "packages/core/reference/examples.md");
 		expect(exPage).toBeDefined();
 	});
 
 	it("aggregates all @example blocks from the package", () => {
 		const map = makeSymbolsByPackage([fnAdd]);
 		const pages = generateDocSite(map, makeConfig(), baseOptions);
-		const exPage = pages.find((p) => p.path === "packages/core/api/examples.md");
+		const exPage = pages.find((p) => p.path === "packages/core/reference/examples.md");
 		expect(exPage?.content).toContain("add(1, 2)");
 	});
 
 	it("shows which symbol each example belongs to", () => {
 		const map = makeSymbolsByPackage([fnAdd]);
 		const pages = generateDocSite(map, makeConfig(), baseOptions);
-		const exPage = pages.find((p) => p.path === "packages/core/api/examples.md");
+		const exPage = pages.find((p) => p.path === "packages/core/reference/examples.md");
 		expect(exPage?.content).toContain("`add()`");
 	});
 
-	it("links back to the api/functions page", () => {
+	it("links back to the reference/functions page", () => {
 		const map = makeSymbolsByPackage([fnAdd]);
 		const pages = generateDocSite(map, makeConfig(), baseOptions);
-		const exPage = pages.find((p) => p.path === "packages/core/api/examples.md");
-		expect(exPage?.content).toContain("api/functions");
+		const exPage = pages.find((p) => p.path === "packages/core/reference/examples.md");
+		expect(exPage?.content).toContain("reference/functions");
 	});
 
 	it("shows a placeholder when no examples exist", () => {
 		const map = makeSymbolsByPackage([ifaceConfig]);
 		const pages = generateDocSite(map, makeConfig(), baseOptions);
-		const exPage = pages.find((p) => p.path === "packages/core/api/examples.md");
+		const exPage = pages.find((p) => p.path === "packages/core/reference/examples.md");
 		expect(exPage?.content).toContain("No examples documented yet");
 	});
 });

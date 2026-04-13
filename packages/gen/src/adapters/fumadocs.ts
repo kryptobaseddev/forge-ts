@@ -174,7 +174,7 @@ function buildNextConfig(): string {
 /** Build the root app/layout.tsx for Fumadocs. */
 function buildAppLayout(_context: AdapterContext): string {
 	return (
-		`import { RootProvider } from "fumadocs-ui/provider";\n` +
+		`import { RootProvider } from "fumadocs-ui/provider/next";\n` +
 		`import "./global.css";\n` +
 		`import type { ReactNode } from "react";\n\n` +
 		`export default function RootLayout({ children }: { children: ReactNode }) {\n` +
@@ -254,7 +254,7 @@ function buildCatchAllPage(): string {
 /** Build the source loader at src/lib/source.ts. */
 function buildSourceLoader(): string {
 	return (
-		`import { docs } from "@/../.source";\n` +
+		`import { docs } from "../../.source";\n` +
 		`import { loader } from "fumadocs-core/source";\n\n` +
 		`export const source = loader({\n` +
 		`  baseUrl: "/docs",\n` +
@@ -370,7 +370,7 @@ export const fumadocsAdapter: SSGAdapter = {
 	scaffold(context: AdapterContext): ScaffoldManifest {
 		// The Fumadocs site scaffold lives in a sibling "site/" directory
 		// next to outDir. source.config.ts points back to outDir for content.
-		const contentDir = "../generated";
+		const contentDir = "..";
 		return {
 			target: "fumadocs",
 			files: [

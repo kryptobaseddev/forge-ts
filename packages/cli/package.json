@@ -32,7 +32,7 @@
 		"typecheck": "tsc --noEmit"
 	},
 	"dependencies": {
-		"@cleocode/lafs": "^2026.4.0",
+		"@cleocode/lafs": "^2026.4.111",
 		"@forge-ts/api": "workspace:*",
 		"@forge-ts/core": "workspace:*",
 		"@forge-ts/doctest": "workspace:*",
@@ -43,6 +43,6 @@
 	},
 	"devDependencies": {
 		"tsup": "^8.3.5",
-		"typescript": "^6.0.2"
+		"typescript": "^6.0.3"
 	}
 }

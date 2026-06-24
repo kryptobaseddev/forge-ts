@@ -21,7 +21,7 @@ jobs:
     outputs:
       has-changesets: ${{ steps.check.outputs.has-changesets }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - id: check
         run: |
           if [ -n "$(ls .changeset/*.md 2>/dev/null | grep -v README.md)" ]; then
@@ -36,7 +36,7 @@ jobs:
     needs: [check-changesets]
     if: needs.check-changesets.outputs.has-changesets == 'true' || github.event_name == 'workflow_dispatch'
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
       - uses: pnpm/action-setup@v4
